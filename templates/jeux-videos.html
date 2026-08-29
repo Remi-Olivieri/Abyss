@@ -1,0 +1,4131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jeux Vidéos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Karla:wght@400;500;700&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style_jeuxvideos.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="back" href="/Abyss.html" aria-label="Retour à Abyss">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <div class="brand">
+      <button class="jnl" id="jnl" aria-haspopup="true" aria-expanded="false">
+        <b id="brand-title">Jeux Vidéos</b>
+        <svg class="jnl-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+      <span id="brand-sub"></span>
+      <div class="menu jnl-menu" id="jnlMenu" hidden role="menu"></div>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+    <div class="cog-wrap">
+      <button class="cog" id="cog" data-etat="offline" hidden aria-haspopup="true" aria-expanded="false" aria-label="Paramètres">
+        <span class="led"></span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3.1"/>
+          <path d="M19.4 15a1.6 1.6 0 0 0 .32 1.77l.06.06a1.9 1.9 0 1 1-2.7 2.7l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-.97 1.47V21a1.9 1.9 0 1 1-3.8 0v-.1a1.6 1.6 0 0 0-1.05-1.47 1.6 1.6 0 0 0-1.77.32l-.06.06a1.9 1.9 0 1 1-2.7-2.7l.06-.06a1.6 1.6 0 0 0 .32-1.77 1.6 1.6 0 0 0-1.47-.97H3a1.9 1.9 0 1 1 0-3.8h.1a1.6 1.6 0 0 0 1.47-1.05 1.6 1.6 0 0 0-.32-1.77l-.06-.06a1.9 1.9 0 1 1 2.7-2.7l.06.06a1.6 1.6 0 0 0 1.77.32H9a1.6 1.6 0 0 0 .97-1.47V3a1.9 1.9 0 1 1 3.8 0v.1a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a1.9 1.9 0 1 1 2.7 2.7l-.06.06a1.6 1.6 0 0 0-.32 1.77V9a1.6 1.6 0 0 0 1.47.97H21a1.9 1.9 0 1 1 0 3.8h-.1a1.6 1.6 0 0 0-1.47.97z"/>
+        </svg>
+      </button>
+      <div class="menu" id="menu" hidden role="menu">
+        <div class="menu-info" id="src"></div>
+        <button class="menu-item" id="reload" role="menuitem">Rafraîchir</button>
+        <button class="menu-item" id="bilanBtn" role="menuitem">Télécharger un résumé</button>
+        <button class="menu-item" id="igdbBtn" role="menuitem" hidden>Mettre à jour depuis IGDB</button>
+        <button class="menu-item" id="unlock" role="menuitem">Passer en mode éditeur</button>
+        <button class="menu-item quit" id="relock" role="menuitem" hidden>Repasser en lecture seule</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="wrap gate" id="gate" hidden>
+    <h2 id="gTitle">Aucun journal configuré</h2>
+    <p id="gMsg"></p>
+    <div class="gate-err" id="gErr" hidden></div>
+    <button class="cta" id="gRetry" hidden>Réessayer</button>
+  </section>
+
+  <div id="app" hidden>
+  <section class="wrap" id="statsWrap">
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section class="dist" id="dist">
+    <div class="wrap">
+      <div class="dist-head">
+        <h2>Répartition des notes</h2>
+        <span class="dist-hint" id="distHint"></span>
+        <button class="dist-clear" id="distClear" hidden></button>
+      </div>
+      <div class="hist-box">
+        <div class="hist" id="hist"></div>
+        <div class="haxis" id="haxis"></div>
+        <div class="tip" id="tip"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="tools">
+      <label class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input id="q" type="search" placeholder="Chercher un jeu..." autocomplete="off">
+      </label>
+      <!-- rempli par renderSort() : la liste dépend de l'onglet affiché -->
+      <select class="sel" id="sort" aria-label="Trier"></select>
+      <button class="add" id="addBtn" hidden>+ Ajouter un jeu</button>
+    </div>
+    <div id="out"></div>
+  </section>
+
+  <!-- suggestions IGDB, remplies par renderDecouverte() : wishlist seulement -->
+  <section class="wrap deco" id="deco" hidden></section>
+  </div>
+</main>
+
+<div class="sheet-back" id="sheet" hidden></div>
+<div class="sheet-back" id="form" hidden></div>
+<div class="sheet-back" id="jaq" hidden></div>
+<div class="sheet-back" id="bilan" hidden></div>
+<div class="sheet-back" id="igdb" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const SOURCES = [
+  { nom: 'Jokrem', url: 'https://script.google.com/macros/s/AKfycbzwnyJiuJ5LPszIF6Fcl4KpxpXLCiqr3PTAalbi7vnM8iigAK-awky7Ui_Wy7j6Gzsx/exec'},
+  { nom: 'Ilarak', url: 'https://script.google.com/macros/s/AKfycbzJvOpMSgiAcTKwc78VZQ91M4ejaVRXwWQa50S506abXX-X5gxaJB-DXd160MnVdclU/exec'}
+];
+
+const CONFIG = { // Configs pour les covers
+  imageDir: "/static/Cover/",
+  imageExt: "webp",
+  coverRatio: "3 / 4",
+};
+
+/* ---------- Utilitaires ---------- */
+const EUR = new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'});
+const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const norm = s => (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .toLowerCase().replace(/[’'`.:]/g,' ').replace(/\s+/g,' ').trim();
+const clean = s => (s||'').toString().replace(/\u00a0/g,' ').trim();
+const $ = id => document.getElementById(id);
+const esc = s => (s===null||s===undefined?'':String(s))
+  .replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fr = (n,d=1) => n.toFixed(d).replace('.',',');
+
+function money(v){ return (v===null||v===undefined||v==='') ? '—' : EUR.format(v); }
+function hoursFmt(h){
+  if(h===null||h===undefined) return '—';
+  const H = Math.floor(h), M = Math.round((h-H)*60);
+  return M ? `${H} h ${String(M).padStart(2,'0')}` : `${H} h`;
+}
+function toNum(v){
+  if(v===null||v===undefined) return null;
+  const s = clean(v).replace(/[€\s]/g,'').replace(',','.');
+  if(s==='') return null;
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+function toHours(v){
+  const s = clean(v);
+  if(!s) return null;
+  let m = s.match(/^PT(\d+)H(?:(\d+)M)?/i);
+  if(m) return +m[1] + (+(m[2]||0))/60;
+  m = s.match(/^(\d+)\s*[h:]\s*(\d+)?/i);
+  if(m) return +m[1] + (+(m[2]||0))/60;
+  const n = parseFloat(s.replace(',','.'));
+  return isNaN(n) ? null : n;
+}
+function toDate(v){
+  const s = clean(v);
+  if(!s) return null;
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return s.slice(0,10);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); // DD/MM/YYYY
+  if(m) return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  return s;
+}
+function dateFmt(d){
+  const m=(d||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return d || '—';
+  return `${+m[3]} ${MONTHS[+m[2]-1]} ${m[1]}`;
+}
+function yearOf(d){ const m=(d||'').match(/(\d{4})/); return m ? +m[1] : null; }
+
+/* ---------- compte à rebours d'une sortie ----------
+   Ce qu'on veut lire d'un jeu convoité : dans combien de temps il sort, ou
+   depuis combien de temps il est sorti. Renvoie null quand la date est
+   inconnue ou illisible — une wishlist contient des jeux sans date
+   annoncée, et « dans NaN jours » vaut moins que rien.
+
+   Le calcul porte sur des dates à minuit et pas sur des millisecondes :
+   sinon un jeu qui sort demain matin afficherait « dans 0 jour » dès qu'on
+   ouvre la page en fin d'après-midi. */
+function compteARebours(iso){
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return null;
+  const t = new Date();
+  const jours = Math.round(
+    (new Date(+m[1], +m[2] - 1, +m[3]) - new Date(t.getFullYear(), t.getMonth(), t.getDate()))
+    / 86400000);
+  if(jours === 0) return { avant:true, txt:"sort aujourd'hui" };
+
+  const n = Math.abs(jours);
+  let duree;
+  if(n < 31)       duree = `${n} jour${n > 1 ? 's' : ''}`;
+  else if(n < 365) duree = `${Math.round(n / 30.44)} mois`;
+  else { const a = Math.round(n / 365.25); duree = `${a} an${a > 1 ? 's' : ''}`; }
+
+  return jours > 0
+    ? { avant:true,  txt:`dans ${duree}` }
+    : { avant:false, txt:`sorti depuis ${duree}` };
+}
+
+/* Cinq fenêtres peuvent se recouvrir : la fiche, le formulaire, le choix de
+   jaquette, le bilan en image et la mise à jour depuis IGDB. Chacune décidait
+   du défilement de la page pour son propre compte, donc en fermer une pendant
+   qu'une autre est encore ouverte rendait la page défilable derrière. Un seul
+   endroit regarde maintenant l'état des cinq. */
+const FENETRES = ['sheet','form','jaq','bilan','igdb'];
+function verrouFond(){
+  const ouverte = FENETRES.some(id => { const e = $(id); return e && !e.hidden; });
+  document.body.style.overflow = ouverte ? 'hidden' : '';
+}
+
+/* ---------- Jeux en cours ---------- */
+
+const EN_COURS = 'En cours';
+const estEnCoursNom = nom => norm(nom) === norm(EN_COURS);
+const estEnCours = g => estEnCoursNom(g.bucket);
+/* le nom exact de l'onglet s'il existe déjà, sinon celui qu'on créera */
+function ongletEnCours(){
+  return BUCKETS.find(estEnCoursNom) || EN_COURS;
+}
+
+/* ---------- Wishlist ---------- */
+const WISHLIST = 'Wishlist';
+const estWishlistNom = nom => norm(nom) === norm(WISHLIST);
+const estWishlist = g => estWishlistNom(g.bucket);
+function ongletWishlist(){
+  return BUCKETS.find(estWishlistNom) || WISHLIST;
+}
+
+const estStatutNom = nom => estEnCoursNom(nom) || estWishlistNom(nom);
+const estStatut = g => estStatutNom(g.bucket);
+
+function statutDe(g){
+  return estWishlist(g) ? WISHLIST : (estEnCours(g) ? EN_COURS : '');
+}
+
+const TRIS = [
+  ['note',        'Note ↓'],
+  ['note_asc',    'Note ↑'],
+  ['chrono',      'Ordre où je les ai faits'],
+  ['solde',       'Solde ↓'],
+  ['release',     'Date de sortie ↓'],
+  ['release_asc', 'Date de sortie ↑'],
+  ['time',        'Temps de jeu ↓'],
+  ['az',          'A → Z'],
+];
+/* Les tris proposés selon la famille d'onglets ; null = tous. La wishlist a
+   la sienne parce qu'elle ne se lit pas comme le reste : c'est un
+   calendrier, la prochaine sortie doit être en haut, donc la date
+   croissante — celle qui ailleurs n'aurait aucun intérêt. */
+const TRIS_PAR_FAMILLE = {
+  periode:  null,
+  statut:   ['release', 'az'],
+  wishlist: ['solde', 'release_asc', 'release', 'az'],
+};
+const TRI_MEMO = { periode: 'note', statut: 'release', wishlist: 'solde' };
+
+/* ---------- Jaquettes ---------- */
+
+// Le titre en minuscules, sans accents, les mots reliés par des underscores -> nom_du_jeu.webp
+function slug(n){
+  return n.normalize('NFD').replace(/[̀-ͯ]/g,'')
+          .toLowerCase().replace(/[^a-z0-9]+/g,'_')
+          .replace(/^_+|_+$/g,'');
+}
+
+const IMG_DIR = CONFIG.imageDir.endsWith('/') ? CONFIG.imageDir : CONFIG.imageDir + '/';
+/* ---------- manifeste des jaquettes ----------
+   { slug: horodatage } pour chaque fichier réellement présent dans Cover/,
+   servi par /api/jaquettes. Il évite de demander une image qui n'existe pas :
+   sans lui, chaque jeu sans jaquette valait un 404 par rendu, et sa case
+   d'initiales n'arrivait qu'après l'échec réseau — d'où le clignotement.
+
+   Gardé en localStorage pour être là dès le premier pixel : la requête, si
+   rapide soit-elle, arrive après le premier rendu, et c'est ce rendu-là
+   qu'on veut juste.
+
+   null tant qu'on n'a jamais rien reçu. On tente alors l'adresse comme
+   avant, plutôt que de décréter qu'aucun jeu n'a de jaquette : le manifeste
+   est une amélioration, pas une dépendance. */
+const CLE_JAQUETTES = 'journal-de-jeu:jaquettes';
+let JAQUETTES = null;
+try{ JAQUETTES = JSON.parse(localStorage.getItem(CLE_JAQUETTES) || 'null'); }catch(e){}
+function retientManifeste(){
+  try{ localStorage.setItem(CLE_JAQUETTES, JSON.stringify(JAQUETTES)); }catch(e){}
+}
+/* Relit le disque et redessine si quelque chose y a bougé depuis la
+   dernière visite. En silence : si Flask ne répond pas, on garde ce qu'on
+   avait — au pire on retombe sur le comportement d'avant, un 404 par
+   jaquette manquante, ce qui reste une page qui marche. */
+async function chargeManifeste(){
+  let data;
+  try{
+    const r = await fetch('/api/jaquettes');
+    if(!r.ok) return;
+    data = await r.json();
+  }catch(e){ return; }
+  if(!data || data.etat !== 'ok' || !data.jaquettes) return;
+  const avant = JSON.stringify(JAQUETTES);
+  JAQUETTES = data.jaquettes;
+  retientManifeste();
+  if(JSON.stringify(JAQUETTES) === avant) return;   // le disque n'a pas bougé
+  /* Redessiner ne coûte presque rien : les tuiles sont réutilisées, seules
+     celles dont l'adresse de jaquette a changé sont refaites. */
+  renderWall();
+  if(!document.getElementById('sheet').hidden && S.open !== null) paintSheet();
+}
+/* ---------- prix du jour des jeux convoités ----------
+   { nom: {plein, actuel, remise} }. Rien de tout ça ne peut vivre dans le
+   classeur : une promotion change tous les jours, et c'est précisément
+   celle du moment qu'on veut voir. La page demande donc à Flask, qui
+   demande à Steam.
+
+   Gardé en localStorage pour que les pastilles soient là dès l'ouverture,
+   et rafraîchi derrière — les deux caches côté serveur, l'appid un mois et
+   le tarif six heures, rendent ce rafraîchissement quasi gratuit. */
+const CLE_TARIFS = 'journal-de-jeu:tarifs';
+let TARIFS = {};
+try{ TARIFS = JSON.parse(localStorage.getItem(CLE_TARIFS) || '{}') || {}; }catch(e){}
+
+const TARIFS_PAQUET = 8;    // assez petit pour voir les pastilles arriver
+let tarifsEnVol = false, tarifsVus = 0;
+async function majTarifs(){
+  if(tarifsEnVol || Date.now() - tarifsVus < 600000) return;   // déjà demandé
+  const jeux = GAMES.filter(estWishlist).map(x => ({nom:x.name, sortie:x.release || ''}));
+  if(!jeux.length) return;
+  tarifsEnVol = true;
+  try{
+    /* Par paquets, et redessiné après chacun : la première visite paie la
+       recherche IGDB pour chaque jeu, autant voir les pastilles apparaître
+       au fur et à mesure plutôt que rien pendant vingt secondes. */
+    for(let i = 0; i < jeux.length; i += TARIFS_PAQUET){
+      let data;
+      try{ data = await api('/api/wishlist/prix', {jeux: jeux.slice(i, i + TARIFS_PAQUET)}); }
+      catch(e){ return; }        // Flask muet : on garde ce qu'on avait
+      if(!data || data.etat !== 'ok' || !data.tarifs) return;
+      Object.assign(TARIFS, data.tarifs);
+      try{ localStorage.setItem(CLE_TARIFS, JSON.stringify(TARIFS)); }catch(e){}
+      renderWall();              // seules les tuiles concernées se refont
+      // la fiche ouverte affiche le même prix : elle aussi
+      if(!document.getElementById('sheet').hidden && S.open !== null) paintSheet();
+    }
+    tarifsVus = Date.now();
+  } finally { tarifsEnVol = false; }
+}
+/* La promotion fait partie de ce que la tuile montre : sans elle dans la
+   signature, une pastille arrivée après coup ne s'afficherait jamais. */
+function sigPromo(x){
+  const t = estWishlist(x) && TARIFS[x.name];
+  return t && t.remise > 0 ? t.remise + '@' + t.actuel : '';
+}
+/* Le pourcentage de remise, 0 quand il n'y en a pas ou qu'on ne sait pas
+   encore. Sert au tri « Solde », d'où le 0 plutôt que null : un jeu dont
+   Steam ne dit rien se range avec ceux qui ne sont pas soldés, pas devant. */
+function remiseDe(x){
+  const t = estWishlist(x) && TARIFS[x.name];
+  return t && t.remise > 0 ? t.remise : 0;
+}
+
+function coverURL(name){
+  const f = slug(name);
+  if(!f) return '';
+  // le manifeste dit ce qui existe : on ne demande jamais un fichier absent
+  if(JAQUETTES && !(f in JAQUETTES)) return '';
+  const url = IMG_DIR + encodeURIComponent(f) + '.' + CONFIG.imageExt;
+  /* l'horodatage du fichier fait office de numéro de version : une jaquette
+     remplacée sous le même nom change de date, donc d'adresse, et le cache
+     du navigateur ne peut pas renvoyer l'ancienne */
+  const v = JAQUETTES && JAQUETTES[f];
+  return v ? url + '?v=' + v : url;
+}
+function initials(n){
+  return n.replace(/[^\p{L}\p{N} ]/gu,' ').split(/\s+/).filter(Boolean).slice(0,2)
+          .map(w=>w[0].toUpperCase()).join('');
+}
+/* Les jaquettes du premier écran, celles qu'on voit avant d'avoir fait quoi
+   que ce soit. Six, c'est la première rangée du mur : .wall tient six
+   colonnes de 158 px dans les 1120 px de la page. */
+const PRIORITAIRES = 6;
+function coverTag(g, cls, prioritaire){
+  /* Les premières partent tout de suite et en priorité haute. « lazy »
+     n'aurait pas retardé leur affichage — elles sont dans le champ — mais
+     leur requête, que le navigateur ne lance qu'une fois la mise en page
+     connue. Les suivantes restent paresseuses : un mur de trois cents jeux
+     chargé d'un bloc saturerait les connexions, et les premières
+     attendraient derrière les autres. */
+  const charge = prioritaire
+    ? 'loading="eager" fetchpriority="high"'
+    : 'loading="lazy"';
+  return `<img class="cov ${cls}" alt="" ${charge} decoding="async"
+    data-name="${esc(g.name)}" data-release="${esc(g.release || '')}"
+    data-color="${noteColor(g.rating)}">`;
+}
+
+// Un bouton dans le coin de la cover pour télécharger l'image
+function boutonJaquette(nom, sortie){
+  const b = document.createElement('span');
+  b.className = 'cov-get';
+  b.setAttribute('role', 'button');
+  b.setAttribute('tabindex', '0');
+  b.title = 'Chercher une jaquette';
+  b.setAttribute('aria-label', `Chercher une jaquette pour ${nom}`);
+  b.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3v12M7 11l5 5 5-5M4 20h16"/></svg>`;
+  const lance = e=>{
+    e.stopPropagation(); e.preventDefault();
+    if(b.classList.contains('busy')) return;
+    b.classList.add('busy');
+    // force : le fichier existe peut-être déjà, mais le navigateur garde un vieil échec en cache
+    jaquetteAuto(nom, sortie, true).finally(()=> b.classList.remove('busy'));
+  };
+  b.addEventListener('click', lance);
+  b.addEventListener('keydown', e=>{ if(e.key === 'Enter' || e.key === ' ') lance(e); });
+  return b;
+}
+function hydrateCovers(root){
+  root.querySelectorAll('img.cov').forEach(img=>{
+    const url = coverURL(img.dataset.name);
+    const initiales = ()=>{
+      const d = document.createElement('div');
+      d.className = Array.from(img.classList).filter(c=>c!=='chargement').join(' ') + ' ph';
+      d.style.setProperty('--c', img.dataset.color);
+      d.textContent = initials(img.dataset.name);
+      d.appendChild(boutonJaquette(img.dataset.name, img.dataset.release));
+      img.replaceWith(d);
+    };
+    if(!url){ initiales(); return; }
+    /* le temps que la jaquette arrive, la case miroite doucement au lieu
+       de rester un rectangle mort : on sait que quelque chose est en route */
+    img.classList.add('chargement');
+    img.addEventListener('load', ()=>{ img.classList.remove('chargement'); }, {once:true});
+    img.addEventListener('error', ()=>{ if(!img.dataset.off) initiales(); });
+    img.src = url;
+  });
+}
+
+/* ---------- Échelle de couleur des notes ---------- */
+const SCALE = [[0,'#B4295C'],[3,'#DD5A3C'],[5,'#E9A13C'],[7,'#A8C24A'],[9,'#35C98D'],[10,'#22CFA8']];
+function hex2rgb(h){ return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); }
+function noteColor(n){
+  if(n===null||n===undefined) return '#6E6480';
+  const v = Math.max(0,Math.min(10,n));
+  for(let i=0;i<SCALE.length-1;i++){
+    const [a,ca]=SCALE[i], [b,cb]=SCALE[i+1];
+    if(v>=a && v<=b){
+      const t=(v-a)/(b-a), A=hex2rgb(ca), B=hex2rgb(cb);
+      return `rgb(${A.map((x,j)=>Math.round(x+(B[j]-x)*t)).join(',')})`;
+    }
+  }
+  return SCALE[SCALE.length-1][1];
+}
+
+/* ---------- Lecture d'un onglet ---------- */
+const HEAD = {
+  name:      ['nom du jeu', 'nom', 'jeu', 'titre'],
+  release:   ['date de sortie', 'sortie', 'date'],
+  base:      ['prix de base', 'prix officiel', 'prix fort'],
+  paid:      ['prix que j ai paye', 'prix paye', 'paye', 'prix reel'],
+  time:      ['temps de jeu', 'temps', 'duree', 'heures'],
+  rating:    ['note', 'score'],
+  month:     ['mois'],
+  played:    ['annee', 'annee faite', 'quand'],
+  review:    ['avis', 'commentaire', 'commentaires', 'points'],
+};
+function mapHeaders(row){
+  const idx = {}, heads = row.map(norm);
+  for(const key in HEAD){
+    let i = heads.findIndex(h => h && HEAD[key].includes(h));
+    if(i<0) i = heads.findIndex(h => h && HEAD[key].some(a=>h.startsWith(a)) && !Object.values(idx).includes(heads.indexOf(h)));
+    if(i>=0 && !Object.values(idx).includes(i)) idx[key]=i;
+  }
+  return idx;
+}
+function parseReview(txt){
+  return clean(txt).split(/\r?\n/).map(s=>clean(s)).filter(Boolean);
+}
+function guessMonthColumn(rows, idx){
+  const width = Math.max(...rows.map(r=>r.length));
+  for(let c=0;c<width;c++){
+    if(Object.values(idx).includes(c)) continue;
+    /* On saute une colonne qui porte déjà un intitulé — mais un intitulé,
+       c'est un mot. Un symbole isolé dans la première case (un « ² »,
+       une puce, une icône) n'en est pas un, et suffisait à masquer la
+       colonne des mois de tout un onglet : la feuille 2026 en portait un,
+       et ses jeux s'affichaient « 2026 » au lieu de « janvier 2026 », avec
+       le tri chronologique à plat. On ne renonce donc que devant un
+       en-tête qui contient de vraies lettres. */
+    if(/[a-z]/.test(norm(rows[0][c]))) continue;
+    let ok=0, bad=0;
+    for(let r=1;r<rows.length;r++){
+      const v = clean(rows[r][c]); if(!v) continue;
+      const n = +v.replace(',','.');
+      if(Number.isInteger(n) && n>=1 && n<=12) ok++; else bad++;
+    }
+    if(ok>=3 && bad===0) return c;
+  }
+  return undefined;
+}
+function noteFor(notes, r, nameCol, width){
+  if(notes[r+','+nameCol]) return {txt:notes[r+','+nameCol], col:nameCol};
+  for(let c=0;c<width;c++) if(notes[r+','+c]) return {txt:notes[r+','+c], col:c};
+  return {txt:'', col:null};
+}
+/* Renvoie null si l'onglet n'a pas de colonne "Nom du jeu" (feuille annexe),
+   sinon les colonnes repérées + les jeux. Chaque jeu garde son numéro de
+   ligne : c'est lui qui permet de réécrire au bon endroit. */
+function readSheet(rows, notes, sheetName){
+  if(!rows.length) return null;
+  const idx = mapHeaders(rows[0]);
+  if(idx.name===undefined) return null;
+  if(idx.month===undefined) idx.month = guessMonthColumn(rows, idx);
+  const sheetYear = /^\d{4}$/.test(sheetName.trim()) ? +sheetName.trim() : null;
+  const out = [];
+  for(let r=1;r<rows.length;r++){
+    const row = rows[r];
+    const name = clean(row[idx.name]);
+    if(!name) continue;
+    const g = {
+      name,
+      row: r+1,
+      noteCol: null,
+      bucket: sheetYear ? String(sheetYear) : sheetName,
+      year: sheetYear ?? (toNum(row[idx.played]) || null),
+      release: toDate(row[idx.release]),
+      base: toNum(row[idx.base]),
+      paid: toNum(row[idx.paid]),
+      hours: toHours(row[idx.time]),
+      rating: toNum(row[idx.rating]),
+      month: idx.month!==undefined ? toNum(row[idx.month]) : null,
+      review: idx.review!==undefined ? parseReview(row[idx.review]) : [],
+    };
+    // à défaut de colonne "Avis", on récupère le commentaire de cellule
+    if(!g.review.length){
+      const n = noteFor(notes, r, idx.name, row.length);
+      g.review = parseReview(n.txt);
+      g.noteCol = n.col;
+    }
+    out.push(g);
+  }
+  return { cols: idx, games: out };
+}
+
+/* ---------- Jetons : un par adresse ---------- */
+
+const CLE_JETONS = 'journal-de-jeu:jetons';
+const jetons = {
+  tous(){ try{ return JSON.parse(localStorage.getItem(CLE_JETONS) || '{}') || {}; }catch(e){ return {}; } },
+  get(url){ const j = this.tous()[url]; return typeof j === 'string' ? j : ''; },
+  set(url, jeton){
+    const j = this.tous();
+    if(jeton) j[url] = jeton; else delete j[url];
+    try{ localStorage.setItem(CLE_JETONS, JSON.stringify(j)); }catch(e){}
+  },
+};
+
+try{
+  if(localStorage.getItem('journal-de-jeu:version') !== 'abyss-3'){
+    localStorage.removeItem('journal-de-jeu:source');
+    localStorage.removeItem('journal-de-jeu:data');
+    localStorage.setItem('journal-de-jeu:version', 'abyss-3');
+  }
+}catch(e){}
+
+/* ---------- dernière réponse connue : affichée tout de suite au chargement,
+   le temps que la vraie requête reparte en arrière-plan ---------- */
+const cacheStore = {
+  cle(url){ return 'journal-de-jeu:data:' + url; },
+  get(url){ try{ return JSON.parse(localStorage.getItem(this.cle(url)) || 'null'); }catch(e){ return null; } },
+  set(url, v){ try{ localStorage.setItem(this.cle(url), JSON.stringify(v)); }catch(e){} },
+};
+
+let GAMES = [], BUCKETS = [], COLS = {}, CAN_WRITE = false, SRC = 0, PREMIERE_FOIS = true;
+/* le journal affiché, ou null si SOURCES est vide */
+const source = () => SOURCES[SRC] || null;
+
+/* Le classeur ouvert la dernière fois : on retient l'adresse, pas le rang,
+   pour que réordonner SOURCES ne rouvre pas le journal de quelqu'un d'autre. */
+const CLE_CLASSEUR = 'journal-de-jeu:classeur';
+function memoriseClasseur(){
+  try{ localStorage.setItem(CLE_CLASSEUR, source() ? source().url : ''); }catch(e){}
+}
+try{
+  const vu = localStorage.getItem(CLE_CLASSEUR);
+  const i = vu ? SOURCES.findIndex(s => s.url === vu) : -1;
+  if(i >= 0) SRC = i;
+}catch(e){}
+
+/* L'onglet le plus récent : la plus grande année parmi les onglets, et à
+   défaut d'onglet nommé comme une année, le dernier de la liste. */
+function derniereAnnee(){
+  const annees = BUCKETS.filter(b => /^\d{4}$/.test(String(b).trim()));
+  if(annees.length) return annees.reduce((a,b) => +String(b).trim() > +String(a).trim() ? b : a);
+  // ni « En cours » ni « Wishlist » ne sont des périodes : jamais d'onglet par défaut
+  const autres = BUCKETS.filter(b => !estStatutNom(b));
+  return autres[autres.length - 1] || BUCKETS[BUCKETS.length - 1] || 'all';
+}
+
+async function charger(opts = {}){
+  const s = source();
+  if(!s || !s.url){ showGate(null); return; }
+  // silencieux : rafraîchissement en arrière-plan pendant qu'on affiche déjà le cache
+  const silencieux = !!opts.silencieux;
+
+  /* le jeton n'est envoyé que si tu en as un : sans lui le script doit
+     répondre les mêmes données, avec write:false */
+  const jeton = jetons.get(s.url);
+  const p = new URLSearchParams({ t: String(Date.now()) });
+  if(jeton) p.set('token', jeton);
+  const url = `${s.url}${s.url.includes('?') ? '&' : '?'}${p}`;
+
+  let data = null, pourquoi = '';
+  try{
+    const r = await fetch(url);
+    if(r.ok) data = await r.json(); else pourquoi = 'réponse HTTP ' + r.status;
+  }catch(e){ pourquoi = 'script injoignable'; }
+
+  if(!data || !data.ok){
+    /* Un jeton refusé se jette et se rejoue sans lui — la lecture n'en a pas
+       besoin. Y compris pendant un rafraîchissement silencieux : sinon un
+       jeton devenu caduc (jeton changé, script redéployé) fige la page sur
+       « actualisation impossible » à chaque ouverture, sans rien à cliquer
+       pour s'en sortir, et vider le cache du navigateur devient le seul
+       remède. Le `&& jeton` évite de boucler : la relecture part sans jeton,
+       si elle échoue encore c'est autre chose. */
+    if(data && data.error === 'token' && jeton){
+      jetons.set(s.url, '');
+      toast('Jeton refusé : retour en lecture seule.', true);
+      return charger(opts);
+    }
+    if(silencieux){
+      majEtat('erreur', 'actualisation impossible');
+      return;
+    }
+    if(!data){
+      showGate(`<b>Impossible de joindre le script.</b> ${esc(pourquoi)}.`);
+    } else {
+      showGate(`<b>Le script a répondu une erreur :</b> <code>${esc(String(data.error||'inconnue').slice(0,180))}</code>`);
+    }
+    return;
+  }
+
+  cacheStore.set(s.url, data);
+  applyData(data, true);
+  showApp();
+  render();
+}
+
+/* L'état de la connexion tient dans la pastille de l'engrenage — verte quand
+   les données viennent du script, ambrée pendant une actualisation, rouge
+   quand celle-ci a échoué, éteinte quand rien n'a pu être joint — et en
+   toutes lettres dans le menu. */
+let DERNIERE_SYNC = 0;                      // horodatage, pas une heure toute faite
+let ETAT_MODE = 'offline', ETAT_TXT = '';   // ce que la pastille dit en ce moment
+
+/* « il y a 2 min » plutôt que « 21 h 14 » : en ouvrant le menu, ce qu'on
+   cherche à savoir c'est si les données sont fraîches, pas quelle heure il
+   était quand elles sont arrivées. Au-delà d'une journée le relatif cesse
+   d'être lisible — « il y a 37 h » ne dit rien à personne — on repasse donc
+   à une date. */
+function ilYa(t){
+  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if(s < 45) return "à l'instant";
+  const min = Math.round(s / 60);
+  if(min < 60) return `il y a ${min} min`;
+  const h = Math.round(min / 60);
+  if(h < 24) return `il y a ${h} h`;
+  return 'le ' + new Date(t).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
+}
+function majEtat(mode, txt){
+  const c = document.getElementById('cog');
+  if(mode === 'live') DERNIERE_SYNC = Date.now();
+  ETAT_MODE = mode; ETAT_TXT = txt;
+  c.dataset.etat = mode;
+  c.setAttribute('aria-label', 'Paramètres — ' + txt);
+  ecritEtat();
+}
+/* Réécrit la ligne du menu sans toucher à l'état. Appelée à chaque
+   ouverture : sans ça le texte resterait figé sur ce qu'il valait au moment
+   de la synchro, c'est-à-dire toujours « à l'instant ». */
+function ecritEtat(){
+  document.getElementById('src').innerHTML =
+    (ETAT_MODE === 'live' && DERNIERE_SYNC ? `synchronisé ${ilYa(DERNIERE_SYNC)}<br>` : '')
+    + esc(ETAT_TXT);
+}
+
+/* Range la réponse du script dans GAMES / BUCKETS / COLS. Appelée aussi
+   après chaque écriture : le script renvoie le classeur relu.
+   frais=false : c'est le cache local qui vient d'être affiché, la vraie
+   requête est encore en vol — on le dit au lieu d'annoncer une synchro. */
+function applyData(data, frais){
+  GAMES = []; BUCKETS = []; COLS = {};
+  (data.sheets || []).forEach(sh=>{
+    const res = readSheet(sh.rows || [], sh.notes || {}, sh.name);
+    if(!res) return; // onglet sans colonne "Nom du jeu"
+    if(BUCKETS.indexOf(sh.name) < 0) BUCKETS.push(sh.name);
+    COLS[sh.name] = res.cols;
+    GAMES.push(...res.games);
+  });
+  CAN_WRITE = data.write === true;
+  oublieTuiles();   // le mur garde ses tuiles : celles des jeux partis s'en vont
+  // à l'ouverture seulement : on se place sur l'année la plus récente
+  if(PREMIERE_FOIS && BUCKETS.length){ S.bucket = derniereAnnee(); PREMIERE_FOIS = false; }
+  if(S.bucket !== 'all' && BUCKETS.indexOf(S.bucket) < 0) S.bucket = 'all';
+  // le nom du classeur n'est plus répété ici : il tient lieu de titre
+  if(frais) majEtat('live', CAN_WRITE ? 'modifiable' : 'lecture seule');
+  else majEtat('stale', 'actualisation...');
+  majVerrou();
+}
+
+/* Envoi d'une écriture. Le jeton part en clair dans l'URL, comme avant :
+   c'est ce que doPost lit dans e.parameter.token. */
+async function envoyer(action, charge){
+  const s = source();
+  if(!s) throw new Error('aucun journal connecté');
+  if(!CAN_WRITE) throw new Error('lecture seule : déverrouille la modification');
+  const jeton = jetons.get(s.url);
+  const url = `${s.url}${s.url.includes('?') ? '&' : '?'}token=${encodeURIComponent(jeton)}`
+            + `&action=${encodeURIComponent(action)}&t=${Date.now()}`;
+  const corps = JSON.stringify(charge);
+  let data = null, pourquoi = '';
+  try{
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},   // évite le pré-vol CORS
+      body: corps,
+    });
+    if(r.ok) data = await r.json(); else pourquoi = 'réponse HTTP ' + r.status;
+  }catch(e){ pourquoi = 'script injoignable'; }
+  if(!data) throw new Error('écriture impossible — ' + pourquoi);
+  if(!data.ok) throw new Error(data.error === 'token' ? 'jeton refusé' : String(data.error || 'erreur inconnue'));
+  return data;
+}
+
+function closeMenu(){
+  document.getElementById('menu').hidden = true;
+  document.getElementById('cog').setAttribute('aria-expanded', 'false');
+}
+function toggleMenu(){
+  const m = document.getElementById('menu'), ouvert = m.hidden;
+  // un seul menu ouvert à la fois, et l'âge de la synchro relu au passage
+  if(ouvert){ closeJnl(); closePer(); ecritEtat(); }
+  m.hidden = !ouvert;
+  document.getElementById('cog').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+}
+document.getElementById('cog').addEventListener('click', e=>{ e.stopPropagation(); toggleMenu(); });
+document.addEventListener('click', e=>{
+  if(!document.getElementById('menu').hidden && !e.target.closest('.cog-wrap')) closeMenu();
+  if(!document.getElementById('jnlMenu').hidden && !e.target.closest('.brand')) closeJnl();
+  if(!e.target.closest('.tab-wrap')) closePer();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){
+    if(!document.getElementById('menu').hidden) closeMenu();
+    if(!document.getElementById('jnlMenu').hidden) closeJnl();
+    closePer();
+  }
+});
+
+/* ---------- changer de classeur ----------
+   Le titre est le bouton : « Journal de Jokrem » déroule la liste des
+   classeurs déclarés dans SOURCES, et un clic ouvre celui qu'on désigne. */
+function majEntete(){
+  const s = source();
+  document.getElementById('brand-title').textContent =
+    s && s.nom ? `Journal de ${s.nom}` : 'Journal de jeu';
+}
+function renderJournaux(){
+  const menu = document.getElementById('jnlMenu');
+  const items = SOURCES.map((s,i)=>
+    `<button class="menu-item${i===SRC?' on':''}" role="menuitem" data-i="${i}">
+       ${esc(s.nom || ('Classeur ' + (i+1)))}${i===SRC?'<span class="tick">✓</span>':''}</button>`).join('');
+  menu.innerHTML = items;
+  menu.querySelectorAll('.menu-item').forEach(b=>{
+    b.onclick = ()=> choisirClasseur(+b.dataset.i);
+  });
+}
+function closeJnl(){
+  document.getElementById('jnlMenu').hidden = true;
+  document.getElementById('jnl').setAttribute('aria-expanded', 'false');
+}
+function toggleJnl(){
+  const m = document.getElementById('jnlMenu'), ouvert = m.hidden;
+  if(ouvert){ closeMenu(); closePer(); renderJournaux(); }
+  m.hidden = !ouvert;
+  document.getElementById('jnl').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+}
+document.getElementById('jnl').addEventListener('click', e=>{ e.stopPropagation(); toggleJnl(); });
+
+function choisirClasseur(i){
+  closeJnl();
+  if(i === SRC || !SOURCES[i]) return;
+  SRC = i; memoriseClasseur();
+  GAMES = []; BUCKETS = []; COLS = {}; CAN_WRITE = false;
+  /* on change de journal : la fiche ouverte parle d'un jeu qui n'est plus
+     dans le classeur affiché. render() ne ferme plus rien de lui-même, donc
+     c'est ici que ça se dit. */
+  closeSheet();
+  PREMIERE_FOIS = true; S.bucket = 'all'; S.q = ''; S.range = null; S.open = null;
+  document.getElementById('q').value = '';
+  DERNIERE_SYNC = 0;   // autre journal : sa synchro n'a rien à voir avec l'ancienne
+  majEntete();
+  majEtat('offline', 'connexion...');
+  const s = source();
+  const cache = cacheStore.get(s.url);
+  if(cache && cache.sheets && cache.sheets.length){
+    applyData(cache, false); showApp(); render();
+    charger({silencieux:true});
+  } else {
+    // rien en cache : le mur de l'autre classeur ne doit pas rester à l'écran,
+    // et l'attente est la même qu'au tout premier chargement
+    squelette();
+    charger();
+  }
+}
+
+/* Écran d'aide : soit aucun journal n'est configuré, soit celui-ci ne
+   répond pas. Plus rien à saisir ici — l'adresse est dans le fichier. */
+function showGate(erreur){
+  closeSheet(); closeForm(); closeMenu(); closeJnl();
+  majEntete();
+  majEtat('offline', source() ? 'non connecté' : 'aucun journal');
+  document.getElementById('app').hidden = true;
+  document.getElementById('tabs').hidden = true;
+  document.getElementById('cog').hidden = !source();
+  document.getElementById('gate').hidden = false;
+  const s = source();
+  document.getElementById('gTitle').textContent =
+    s ? 'Ce journal ne répond pas' : 'Aucun journal configuré';
+  document.getElementById('gMsg').textContent = s
+    ? `Adresse interrogée : ${s.url}`
+    : "Ajoute l'adresse de ton script Apps Script dans le tableau SOURCES, tout en haut du fichier.";
+  const box = document.getElementById('gErr');
+  box.hidden = !erreur;
+  if(erreur) box.innerHTML = erreur;
+  document.getElementById('gRetry').hidden = !s;
+}
+function showApp(){
+  document.getElementById('gate').hidden = true;
+  document.getElementById('tabs').hidden = false;
+  document.getElementById('cog').hidden = false;
+  document.getElementById('app').hidden = false;
+  document.querySelector('.tools').hidden = false;
+  // le squelette les avait rendus inertes le temps de l'attente
+  document.getElementById('q').disabled = false;
+  document.getElementById('sort').disabled = false;
+}
+
+/* ---------- squelette du premier chargement ----------
+   Sans cache local il n'y a rien à montrer tant que le script n'a pas
+   répondu, et une page vide pendant deux secondes ressemble à une panne
+   plutôt qu'à une attente. On dresse donc la page entière en gris —
+   onglets, stats, histogramme, mur — à la forme exacte de ce qui va
+   arriver : les vraies données se posent dessus sans rien faire sauter.
+
+   Deux choses ne sont pas des fantômes, parce qu'elles n'ont pas besoin
+   des données pour être justes : le titre « Répartition des notes », déjà
+   dans le HTML, et la liste des tris, qui ne dépend que de l'onglet. Les
+   deux champs sont seulement désactivés — une recherche lancée maintenant
+   remplacerait le squelette par « aucun jeu trouvé ».
+
+   Tous les fantômes portent aria-hidden : ils ne décrivent rien. */
+const FANTOMES = 12;
+/* Hauteurs des barres, en % de la case. Volontairement irrégulières : une
+   belle courbe en cloche se lirait comme une vraie mesure. */
+const FANTOMES_HIST = [22,34,30,46,58,72,66,88,74,60,44,36,26,18];
+/* Largeurs des pastilles : « Tout », le menu des années, puis les deux
+   onglets de statut. */
+const FANTOMES_TABS = [46,84,92,98];
+
+function squelette(){
+  document.getElementById('gate').hidden = true;
+  document.getElementById('app').hidden = false;
+  document.getElementById('cog').hidden = false;
+  document.getElementById('tabs').hidden = false;
+  document.getElementById('statsWrap').hidden = false;
+  document.getElementById('dist').hidden = false;
+  document.querySelector('.tools').hidden = false;
+
+  renderSort();
+  document.getElementById('q').disabled = true;
+  document.getElementById('sort').disabled = true;
+
+  // le retard repart à zéro toutes les six cases : au-delà, la dernière
+  // scintillerait une demi-seconde après la première
+  const retard = i => `--d:${(i % 6) * 90}ms`;
+  const pose = (id, html) => { document.getElementById(id).innerHTML = html; };
+
+  pose('tabs', FANTOMES_TABS.map((w,i)=>
+    `<span class="fantome-tab" aria-hidden="true" style="width:${w}px;${retard(i)}"></span>`).join(''));
+
+  pose('stats', Array.from({length:4}, (_,i)=>
+    `<div class="stat" aria-hidden="true" style="${retard(i)}">
+       <span class="fantome-l f-u"></span>
+       <span class="fantome-l f-b"></span>
+       <span class="fantome-l f-i"></span>
+     </div>`).join(''));
+
+  pose('hist', FANTOMES_HIST.map((h,i)=>
+    `<span class="fantome-bar" aria-hidden="true" style="height:${h}%;${retard(i)}"></span>`).join(''));
+  pose('haxis', '');   // la graduation n'a pas de forme sans les notes
+
+  pose('out', `<div class="wall" aria-hidden="true">${
+    Array.from({length: FANTOMES}, (_, i) =>
+      `<div class="tile fantome" style="${retard(i)}">
+         <span class="cov big chargement"></span>
+         <span class="tcap">
+           <span class="fantome-l"></span>
+           <span class="fantome-l court"></span>
+         </span>
+       </div>`).join('')}</div>`);
+}
+
+/* ---------- verrou : lecture seule / modification ---------- */
+function majVerrou(){
+  document.getElementById('unlock').hidden = CAN_WRITE;
+  document.getElementById('relock').hidden = !CAN_WRITE;
+  document.getElementById('addBtn').hidden = !CAN_WRITE;
+  // la mise à jour de masse écrit dans le classeur : en lecture seule elle
+  // n'aurait rien à proposer d'autre qu'un refus, autant ne pas la montrer
+  document.getElementById('igdbBtn').hidden = !CAN_WRITE;
+}
+function openJeton(){
+  const s = source();
+  if(!s) return;
+  closeMenu();
+  const host = $('form');
+  host.innerHTML = `<div class="sheet form-sheet" role="dialog" aria-modal="true" aria-label="Déverrouiller la modification">
+    <div class="sheet-tools">
+      <span class="grp"><b class="fhead">Passer en mode éditeur</b></span>
+      <span class="grp"><button class="sbtn form-x" aria-label="Fermer">×</button></span>
+    </div>
+    <div class="form-in">
+      <label class="fld full"><u>Jeton</u>
+        <input id="j_tok" type="password" autocomplete="off" spellcheck="false"></label>
+      <div class="ferr" id="j_err" hidden></div>
+      <div class="frow">
+        <span class="spacer"></span>
+        <button class="ghost" id="j_cancel">Annuler</button>
+        <button class="cta auto" id="j_ok">Déverrouiller</button>
+      </div>
+    </div>
+  </div>`;
+  host.hidden = false;
+  verrouFond();
+  host.querySelector('.form-x').onclick = closeForm;
+  $('j_cancel').onclick = closeForm;
+  $('j_ok').onclick = validerJeton;
+  $('j_tok').addEventListener('keydown', e=>{ if(e.key === 'Enter') validerJeton(); });
+  $('j_tok').focus();
+}
+async function validerJeton(){
+  const s = source();
+  const jeton = $('j_tok').value.trim();
+  if(!jeton){
+    $('j_err').hidden = false;
+    $('j_err').textContent = 'Saisis le jeton, ou annule pour rester en lecture seule.';
+    return;
+  }
+  const btn = $('j_ok');
+  btn.disabled = true; btn.textContent = 'Vérification...';
+  jetons.set(s.url, jeton);
+  await charger();
+  /* charger() vide le jeton lui-même s'il est refusé ; CAN_WRITE ne passe
+     à true que si le script l'a confirmé, jamais parce qu'on a saisi
+     quelque chose */
+  if(CAN_WRITE){
+    closeForm();
+    toast('Passage en mode éditeur.');
+  } else if($('j_err')){
+    btn.disabled = false; btn.textContent = 'Déverrouiller';
+    $('j_err').hidden = false;
+    $('j_err').textContent = "Jeton incorrect.";
+  }
+}
+
+document.getElementById('gRetry').addEventListener('click', ()=> charger());
+document.getElementById('reload').addEventListener('click', ()=>{
+  closeMenu();
+  charger({silencieux:true});
+});
+document.getElementById('unlock').addEventListener('click', openJeton);
+document.getElementById('relock').addEventListener('click', ()=>{
+  const s = source();
+  closeMenu();
+  if(!s) return;
+  jetons.set(s.url, '');
+  toast('Retour en lecture seule.');
+  charger();
+});
+
+/* ---------- état ----------
+   range : tranche de notes choisie dans l'histogramme, ou null.
+   On y garde le découpage exact (lo / step / n) qui a servi à dessiner
+   les barres, pour que le filtre range exactement les mêmes jeux.
+   Déclaré avant demarrer() : le rendu du cache s'exécute tout de suite,
+   avant même que le reste du script ait fini de s'exécuter. */
+const S = { bucket:'all', q:'', sort:'note', open:null, range:null };
+
+/* Les jeux dans l'ordre où la fiche ouverte les feuillette — figé à
+   l'ouverture, relu par render() qui y retrouve la fiche après un
+   rafraîchissement. Sa place ici, loin de la fiche à laquelle il sert, est
+   dictée par la même règle que S juste au-dessus : demarrer() appelle
+   render(), et un let lu avant sa ligne de déclaration lève une
+   ReferenceError. */
+let SHEET_LIST = [];
+
+/* ---------- identité et cache des tuiles du mur ----------
+   Ici plutôt qu'auprès de renderWall(), pour la raison déjà donnée deux
+   fois au-dessus : demarrer() rend le mur avant que le script ait fini de
+   s'exécuter, et le premier rendu appelle cleTuile() pour chaque jeu.
+   Toute nouvelle liaison lue pendant ce premier rendu doit se déclarer
+   dans ce bloc, pas à côté du code qui s'en sert.
+
+   Les tuiles déjà construites, retrouvées par clé d'un rendu à l'autre. */
+const TUILES = new Map();
+// séparateur invisible entre les morceaux d'une clé : ni un nom d'onglet
+// ni un nom de jeu ne peut le contenir, donc aucune collision possible
+const SEP = '\u0001';
+/* La clé d'une tuile : le couple (onglet, ligne), la même identité que
+   partout ailleurs — c'est elle qui sert à réécrire la bonne cellule. */
+const cleTuile = x => x.bucket + SEP + x.row;
+/* Tout ce que la tuile donne à voir. Si rien n'a bougé là-dedans, le nœud
+   existant fait l'affaire tel quel. L'adresse de la jaquette en fait partie
+   plutôt que le seul nom : elle change quand l'image arrive, quand elle est
+   remplacée, ou quand le manifeste apprend qu'elle n'existe pas — trois cas
+   où la tuile doit être refaite, et un seul terme pour les couvrir. */
+const sigTuile = x => [x.name, x.rating, x.hours, x.bucket, x.release,
+                       coverURL(x.name), sigPromo(x)].join(SEP);
+
+/* Suggestions IGDB (voir « Découverte par similarité » plus bas). Déclarées
+   ici pour la même raison que tout ce bloc : render() appelle désormais
+   renderDecouverte(), et render() s'exécute depuis demarrer(), quelques
+   lignes plus bas, avant que le script ait fini de se dérouler. */
+const DECOUVERTE_GRAINES = 8;
+let DECOUVERTE = null;          // null = jamais demandé, [] = rien à proposer
+let decouverteEnVol = false;
+/* Les titres déjà proposés dans cette session. Ils partent en exclusion
+   avec la demande suivante : c'est ce qui fait que « Rafraîchir » montre
+   autre chose, même quand le tirage retombe sur les mêmes jeux de départ. */
+const DECOUVERTE_VUS = new Set();
+
+(function demarrer(){
+  document.documentElement.style.setProperty('--cov-ratio', CONFIG.coverRatio);
+  /* Part avant tout le reste, et sans qu'on l'attende : le rendu se fait
+     avec le manifeste de la dernière visite, celui-ci le corrige derrière
+     s'il a changé. Attendre sa réponse retarderait l'affichage du cache,
+     qui est justement ce qu'on veut instantané. */
+  chargeManifeste();
+  majEntete();
+  majEtat('offline', 'connexion...');
+  const s = source();
+  if(!s || !s.url){ showGate(null); return; }
+
+  // le cache s'affiche tout de suite, quitte à ne pas être à jour : la vraie
+  // requête part en même temps, en silence, et remplace dès qu'elle répond
+  const cache = cacheStore.get(s.url);
+  if(cache && cache.sheets && cache.sheets.length){
+    applyData(cache, false);
+    showApp();
+    render();
+    charger({silencieux:true});
+  } else {
+    squelette();
+    charger();
+  }
+})();
+
+
+function current(){
+  let g = GAMES.slice();
+  if(S.bucket!=='all') g = g.filter(x=>x.bucket===S.bucket);
+  return g;
+}
+function binOf(note, R){
+  return Math.max(0, Math.min(R.n-1, Math.floor((note - R.lo) / R.step)));
+}
+function dansTranche(x){
+  const R = S.range;
+  if(!R) return true;
+  if(x.rating===null) return false;
+  return binOf(x.rating, R) === R.i;
+}
+function chronoKey(g){
+  // un jeu en cours n'a pas de date de fin : il se range après tout le reste,
+  // sinon sa date de sortie l'éparpillerait au milieu des années terminées.
+  // La wishlist vient encore après : elle n'a même pas de date de début.
+  if(estWishlist(g)) return 9.1e9;
+  if(estEnCours(g)) return 9e9;
+  return (g.year ?? yearOf(g.release) ?? 0)*100 + (g.month ?? 0);
+}
+function filtered(){
+  let g = current();
+  // « Tout » mélangerait des jeux finis avec des jeux en cours ou convoités,
+  // sans note ni temps de jeu : ils restent visibles dans leur propre onglet,
+  // mais pas ici
+  if(S.bucket==='all') g = g.filter(x=>!estStatut(x));
+  if(S.range) g = g.filter(dansTranche);
+  if(S.q){
+    const q = norm(S.q);
+    g = g.filter(x=>norm(x.name).includes(q));
+  }
+  const by = {
+    note:      (a,b)=>(b.rating??-1)-(a.rating??-1),
+    note_asc:  (a,b)=>(a.rating??99)-(b.rating??99),
+    chrono:    (a,b)=>chronoKey(a)-chronoKey(b) || (b.rating??0)-(a.rating??0),
+    release:   (a,b)=>String(b.release||'').localeCompare(String(a.release||'')),
+    /* Solde : la plus forte remise en tête. Les jeux sans promotion valent
+       tous 0 et se départagent par date de sortie, pour que le bas de la
+       liste reste le calendrier qu'on y attend. */
+    solde:     (a,b)=>remiseDe(b) - remiseDe(a)
+                   || String(a.release||'9999').localeCompare(String(b.release||'9999')),
+    /* Croissant : la prochaine sortie en tête. Un jeu sans date annoncée n'a
+       pas sa place dans un calendrier — le 9999 le renvoie à la fin, au lieu
+       de le laisser squatter le haut avec une chaîne vide. */
+    release_asc: (a,b)=>String(a.release||'9999').localeCompare(String(b.release||'9999')),
+    time:      (a,b)=>(b.hours??-1)-(a.hours??-1),
+    az:        (a,b)=>a.name.localeCompare(b.name,'fr'),
+  }[S.sort];
+  return g.sort(by);
+}
+
+/* ---------- rendu : onglets ----------
+   « Tout », puis un menu déroulant qui regroupe les périodes, puis « En cours »
+   et « Wishlist » en boutons séparés : ce sont des statuts, pas des périodes,
+   et on veut y aller d'un seul clic. Regrouper les années évite aussi que la
+   barre s'allonge sans fin à chaque nouvelle année. */
+function choisirOnglet(k){
+  closePer();
+  S.bucket = k;
+  S.range = null;   // l'histogramme est recalculé : la tranche choisie ne vaut plus
+  render();
+}
+function closePer(){
+  const m = document.getElementById('perMenu');
+  if(!m || m.hidden) return;
+  m.hidden = true;
+  const b = document.getElementById('perBtn');
+  if(b) b.setAttribute('aria-expanded', 'false');
+}
+function togglePer(periodes){
+  const m = document.getElementById('perMenu');
+  if(!m) return;
+  const ouvert = m.hidden;
+  if(ouvert){
+    closeMenu(); closeJnl();                     // un seul menu ouvert à la fois
+    m.innerHTML = periodes.map(b=>
+      `<button class="menu-item${b===S.bucket?' on':''}" role="menuitem" data-b="${esc(b)}">
+         ${esc(b)}${b===S.bucket?'<span class="tick">✓</span>':''}</button>`).join('');
+    m.querySelectorAll('.menu-item').forEach(x=> x.onclick = ()=> choisirOnglet(x.dataset.b));
+  }
+  m.hidden = !ouvert;
+  document.getElementById('perBtn').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+}
+function renderTabs(){
+  const t = document.getElementById('tabs');
+  const periodes = BUCKETS.filter(b => !estStatutNom(b));
+  const statuts  = BUCKETS.filter(estStatutNom);   // garde l'ordre de la feuille
+  const surPeriode = periodes.indexOf(S.bucket) >= 0;
+  /* Pas de compteur sur les onglets : le chiffre alourdissait une barre
+     qu'on parcourt du regard. Il est allé dans le bandeau juste en dessous,
+     où « Jeux terminés » le donnait déjà pour les années. */
+  const bouton = (k, l) =>
+    `<button class="tab" role="tab" data-b="${esc(k)}" aria-selected="${S.bucket===k}">${esc(l)}</button>`;
+
+  t.innerHTML = bouton('all', 'Tout')
+    + (periodes.length ? `<span class="tab-wrap">
+        <button class="tab tab-menu" id="perBtn" role="tab" aria-haspopup="true"
+                aria-expanded="false" aria-selected="${surPeriode}">
+          <span>${esc(surPeriode ? S.bucket : 'Années')}</span>
+          <svg class="tab-chev" width="10" height="10" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+        <div class="menu per-menu" id="perMenu" hidden role="menu"></div>
+      </span>` : '')
+    + statuts.map(b => bouton(b, b)).join('');
+
+  t.querySelectorAll('.tab[data-b]').forEach(b=> b.onclick = ()=> choisirOnglet(b.dataset.b));
+  const pb = document.getElementById('perBtn');
+  if(pb) pb.addEventListener('click', e=>{ e.stopPropagation(); togglePer(periodes); });
+}
+
+/* ---------- rendu : le tri ---------- */
+function familleTri(){
+  if(estWishlistNom(S.bucket)) return 'wishlist';
+  return estStatutNom(S.bucket) ? 'statut' : 'periode';
+}
+function renderSort(){
+  const famille = familleTri();
+  const permis = TRIS_PAR_FAMILLE[famille];
+  const dispo = permis ? TRIS.filter(([k]) => permis.indexOf(k) >= 0) : TRIS;
+  // on reprend le tri retenu pour cette famille d'onglets
+  let tri = TRI_MEMO[famille];
+  if(!dispo.some(([k]) => k === tri)) tri = 'az';   // garde-fou
+  S.sort = TRI_MEMO[famille] = tri;
+  document.getElementById('sort').innerHTML = dispo.map(([k,l]) =>
+    `<option value="${esc(k)}"${k === tri ? ' selected' : ''}>${esc(l)}</option>`).join('');
+}
+
+/* ---------- rendu : stats ---------- */
+
+/* « En cours » et « Wishlist » n'ont ni jeu terminé, ni note, ni temps de
+   jeu : les quatre grandes cases n'y montreraient que des tirets. Une seule
+   ligne de chiffres à la place — et c'est elle qui porte désormais le nombre
+   de jeux, que les onglets n'affichent plus. */
+function renderStatsStatut(){
+  const jeux = current();
+  const wish = estWishlistNom(S.bucket);
+  // « jeu » fait « jeux », pas « jeus » : les noms en -eu prennent un x.
+  // « en wishlist » et « en cours » ne s'accordent pas, ce sont des états.
+  const pluriel = jeux.length > 1 ? 'x' : '';
+  const lignes = [[String(jeux.length),
+    `jeu${pluriel} ${wish ? 'en wishlist' : 'en cours'}`]];
+
+  if(wish){
+    // les soldes ne sont connus qu'une fois les tarifs Steam arrivés : la
+    // ligne se complète d'elle-même au rendu suivant
+    const soldes = jeux.filter(x => remiseDe(x) > 0).length;
+    if(soldes) lignes.push([String(soldes), `en solde`]);
+    const fort = jeux.reduce((a,x)=> a + (x.base || 0), 0);
+    if(fort) lignes.push([EUR.format(fort), 'au prix fort']);
+    /* Ce que la liste coûterait aujourd'hui : le tarif du jour quand on le
+       connaît, le prix du classeur sinon. Affiché seulement s'il diffère du
+       prix fort, sinon la ligne répéterait deux fois la même somme. */
+    const jour = jeux.reduce((a,x)=>{
+      const tarif = TARIFS[x.name];
+      return a + ((tarif && tarif.actuel != null) ? tarif.actuel : (x.base || 0));
+    }, 0);
+    if(jour && Math.abs(jour - fort) >= 0.005) lignes.push([EUR.format(jour), "aujourd'hui"]);
+  }else{
+    const paye = jeux.reduce((a,x)=> a + (x.paid || 0), 0);
+    if(paye) lignes.push([EUR.format(paye), 'déjà payés']);
+  }
+
+  document.getElementById('statsWrap').hidden = false;
+  const boite = document.getElementById('stats');
+  boite.className = 'stats ligne';
+  boite.innerHTML = lignes.map(([b,u]) =>
+    `<span><b>${esc(b)}</b>${esc(u)}</span>`).join('');
+}
+
+function renderStats(){
+  if(estStatutNom(S.bucket)) return renderStatsStatut();
+  document.getElementById('statsWrap').hidden = false;
+  document.getElementById('stats').className = 'stats';
+  // un jeu de la wishlist n'est pas acheté : il ne pèse nulle part, pas même
+  // dans les prix — sinon « Payé » compterait de l'argent jamais sorti
+  const tout = current().filter(x=>!estWishlist(x));
+  // un jeu en cours ne compte pas comme terminé, mais il est bien acheté :
+  // il sort de la moyenne et du temps de jeu, il reste dans les prix
+  const g = tout.filter(x=>!estEnCours(x));
+  const nEnCours = tout.length - g.length;
+  const rated = g.filter(x=>x.rating!==null);
+  const avg = rated.length ? rated.reduce((s,x)=>s+x.rating,0)/rated.length : null;
+  const base = tout.reduce((s,x)=>s+(x.base||0),0);
+  const paid = tout.reduce((s,x)=>s+(x.paid||0),0);
+  const hrs  = g.reduce((s,x)=>s+(x.hours||0),0);
+  const cards = [
+    ['Jeux terminés', g.length, nEnCours ? `+ ${nEnCours} en cours` : ''],
+    ['Note moyenne', avg!==null?fr(avg,2):'—', ''],
+    ['Temps de jeu', hrs?hoursFmt(hrs):'—', hrs?`≈ ${Math.round(hrs/24)} jours`:''],
+    ['Payé', paid?EUR.format(paid):'—', base?`sur ${EUR.format(base)} de prix fort`:''],
+  ];
+  document.getElementById('stats').innerHTML = cards.map(([u,b,i])=>
+    `<div class="stat"><u>${u}</u><b>${b}</b><i>${i||''}</i></div>`).join('');
+}
+
+/* ---------- rendu : répartition des notes ---------- */
+function renderDist(){
+  const sec  = document.getElementById('dist');
+  const rated = current().filter(x=>x.rating!==null);
+  if(rated.length < 3){ sec.hidden = true; S.range = null; return; }
+  sec.hidden = false;
+
+  const notes = rated.map(x=>x.rating).sort((a,b)=>a-b);
+  let lo = Math.floor(notes[0]), hi = Math.ceil(notes[notes.length-1]);
+  if(hi - lo < 3){ hi = Math.min(10, lo + 3); lo = Math.max(0, hi - 3); }
+  const span = hi - lo;
+  // pas de 0,5 (ou 0,2 sur une plage courte) : un multiple exact du dixième,
+  // sinon les barres alternent haut/bas juste à cause du découpage
+  const STEP = span <= 4 ? 0.2 : 0.5;
+  const n = Math.round(span / STEP);
+  // le découpage a bougé (autre onglet, jeu ajouté...) : la tranche choisie ne veut plus rien dire
+  if(S.range && (S.range.lo !== lo || S.range.step !== STEP || S.range.n !== n)) S.range = null;
+  const bins = new Array(n).fill(0);
+  notes.forEach(r=>{
+    const i = Math.floor((r - lo) / STEP);
+    bins[Math.max(0, Math.min(n-1, i))]++;
+  });
+  const max = Math.max(...bins);
+  const avg = notes.reduce((s,x)=>s+x,0) / notes.length;
+  const mid = notes.length % 2
+    ? notes[(notes.length-1)/2]
+    : (notes[notes.length/2 - 1] + notes[notes.length/2]) / 2;
+  const pos = v => ((v - lo) / span) * 100;
+
+  document.getElementById('distHint').textContent =
+    `moyenne ${fr(avg,2)} · médiane ${fr(mid,2)}`;
+
+  const barsHTML = bins.map((c,i)=>{
+    const a = lo + i*STEP, b = a + STEP;
+    const h = c ? Math.max(3, c/max*100) : 0;
+    return `<button class="bar" type="button"
+      data-i="${i}" data-c="${c}" data-a="${fr(a,2)}" data-b="${fr(b,2)}"
+      aria-label="${c} jeu${c>1?'x':''} entre ${fr(a,2)} et ${fr(b,2)}${c?" — n'afficher que ceux-là":''}">
+      <i style="height:${h}%;background:${noteColor(a + STEP/2)}"></i></button>`;
+  }).join('');
+  const avgP = pos(avg);
+  document.getElementById('hist').innerHTML = barsHTML +
+    `<div class="avg${avgP > 70 ? ' flip' : ''}" style="left:${avgP.toFixed(2)}%"><span>moy. ${fr(avg,2)}</span></div>`;
+
+  const stepTick = span <= 8 ? 1 : 2;
+  const ticks = [];
+  for(let t = lo; t <= hi; t += stepTick) ticks.push(t);
+  if(ticks[ticks.length-1] !== hi) ticks.push(hi);
+  document.getElementById('haxis').innerHTML = ticks.map(t=>
+    `<span style="left:${pos(t).toFixed(2)}%">${t}</span>`).join('');
+
+  const tip = document.getElementById('tip');
+  document.getElementById('hist').querySelectorAll('.bar').forEach(bar=>{
+    const show = ()=>{
+      const c = +bar.dataset.c;
+      tip.innerHTML = `<b>${c}</b> jeu${c>1?'x':''} · ${bar.dataset.a} → ${bar.dataset.b}`;
+      const box = tip.parentElement.getBoundingClientRect();
+      const fill = bar.querySelector('i').getBoundingClientRect();
+      const x = fill.left - box.left + fill.width/2;
+      tip.style.left   = Math.round(Math.min(Math.max(x, 80), Math.max(80, box.width - 80))) + 'px';
+      tip.style.bottom = Math.round(box.bottom - fill.top + 8) + 'px';   // juste au-dessus de la barre
+      tip.classList.add('show');
+    };
+    const hide = ()=> tip.classList.remove('show');
+    bar.addEventListener('pointerenter', show);
+    bar.addEventListener('pointerleave', hide);
+    bar.addEventListener('click', ()=>{
+      if(!+bar.dataset.c) return;               // tranche vide : rien à filtrer
+      const i = +bar.dataset.i;
+      // reclic sur la même tranche : on enlève le filtre
+      S.range = (S.range && S.range.i === i)
+        ? null
+        : { lo, step:STEP, n, i, a: lo + i*STEP, b: lo + (i+1)*STEP };
+      majDist(); renderWall();
+    });
+  });
+  majDist();
+}
+/* Reflète S.range sur l'histogramme sans le redessiner. */
+function majDist(){
+  const hist = document.getElementById('hist');
+  hist.classList.toggle('picked', !!S.range);
+  hist.querySelectorAll('.bar').forEach(b=>{
+    const on = !!S.range && +b.dataset.i === S.range.i;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  const c = document.getElementById('distClear');
+  c.hidden = !S.range;
+  if(S.range) c.innerHTML = `notes ${fr(S.range.a,2)} → ${fr(S.range.b,2)}<span>×</span>`;
+}
+function viderTranche(){
+  if(!S.range) return;
+  S.range = null; majDist(); renderWall();
+}
+document.getElementById('distClear').addEventListener('click', viderTranche);
+
+/* ---------- rendu : mur ---------- */
+function groupLabel(g){
+  if(estStatut(g)) return statutDe(g);
+  if(g.year && g.month) return `${MONTHS[g.month-1]} ${g.year}`;
+  if(g.year) return `${g.year} · mois non noté`;
+  return g.bucket;
+}
+/* L'intérieur d'une tuile, sans son <button> : celui-ci est réutilisé d'un
+   rendu à l'autre, seul son contenu est réécrit quand le jeu a changé. */
+function tileInner(x, i){
+  const statut = statutDe(x);
+  /* Sous le titre : le temps de jeu pour un jeu terminé, le compte à rebours
+     pour un jeu convoité. Les deux ne se rencontrent jamais — un jeu de la
+     wishlist n'a pas d'heures au compteur — donc une seule ligne suffit. */
+  const attente = estWishlist(x) ? compteARebours(x.release) : null;
+  const meta = attente
+    ? `<span class="tmeta${attente.avant ? ' avant' : ''}">${esc(attente.txt)}</span>`
+    : x.hours ? `<span class="tmeta">${hoursFmt(x.hours)}</span>` : '';
+  /* La promotion du jour, dans le coin opposé à la pastille de statut. Le
+     prix exact tient dans l'infobulle : sur une vignette de 158 px, le
+     pourcentage est ce qui se lit d'un coup d'œil, pas « 23,99 € ». */
+  const t = estWishlist(x) ? TARIFS[x.name] : null;
+  const promo = t && t.remise > 0
+    ? `<span class="tpromo" title="${esc(money(t.actuel))} au lieu de ${esc(money(t.plein))}">−${t.remise}&#8239;%</span>`
+    : '';
+  return `${promo}${statut
+      ? `<span class="tnote ${estWishlist(x) ? 'wish' : 'encours'}">${esc(statut)}</span>`
+      : `<span class="tnote" style="color:${noteColor(x.rating)}">${x.rating!==null?fr(x.rating,1):'—'}</span>`}
+    ${coverTag(x, 'big', i < PRIORITAIRES)}
+    <span class="tcap">
+      <span class="tn">${esc(x.name)}</span>
+      ${meta}
+    </span>`;
+}
+/* pixel transparent : réaffecter src coupe net un téléchargement en cours */
+const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+/* Coupe les jaquettes encore en vol et renvoie combien. Une image déjà
+   arrivée n'est pas touchée : elle ne coûte plus rien et resservira telle
+   quelle. data-off dit au gestionnaire d'erreur d'ignorer le pixel — sans
+   lui il prendrait l'annulation pour un échec et poserait des initiales. */
+function annuleCovers(root){
+  let coupees = 0;
+  root.querySelectorAll('img.cov[src]').forEach(im=>{
+    if(im.complete) return;
+    im.dataset.off = '1';
+    im.src = PIXEL;
+    coupees++;
+  });
+  return coupees;
+}
+
+/* La tuile de ce jeu : celle qui existe déjà, ou une neuve. */
+function tuilePour(cle, x, i){
+  const sig = sigTuile(x);
+  let el = TUILES.get(cle);
+  if(!el){
+    el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'tile';
+    TUILES.set(cle, el);
+  }
+  // refaire l'intérieur seulement si le jeu a changé, ou si sa jaquette a
+  // été coupée en route pendant qu'il était hors écran
+  if(el.dataset.sig !== sig || el.dataset.coupee){
+    /* Le rang sert à la priorité de chargement de la jaquette. Il n'est pas
+       dans la signature exprès : une tuile qui change simplement de place
+       n'a pas à être refaite, et son image est de toute façon déjà là. */
+    el.innerHTML = tileInner(x, i);
+    delete el.dataset.coupee;
+    el.dataset.sig = sig;
+    /* Le liseré de note du bas de la jaquette. Posé sur la tuile et hérité
+       par la case, plutôt que sur l'image : hydrateCovers() remplace
+       celle-ci par une case d'initiales quand le fichier manque, et ne
+       recopie pas ses styles — la variable, elle, s'hérite. */
+    if(x.rating === null || x.rating === undefined) el.style.removeProperty('--note');
+    else el.style.setProperty('--note', noteColor(x.rating));
+    hydrateCovers(el);
+  }
+  el.dataset.i = i;   // le rang dans filtered(), que la fiche relit au clic
+  return el;
+}
+
+/* Le mur est réordonné, pas reconstruit. Réécrire innerHTML coûtait deux
+   fois : le navigateur rebâtissait tout, et surtout chaque jaquette
+   repartait de zéro alors qu'elle était déjà là et déjà décodée. Trier,
+   taper dans la recherche ou recevoir un rafraîchissement de fond ne fait
+   donc plus clignoter le mur. appendChild() déplace un nœud déjà dans le
+   document, il ne le recrée pas : c'est ce qui rend l'opération gratuite. */
+function renderWall(){
+  const out = document.getElementById('out');
+  const g = filtered();
+
+  const vues = new Set();
+  const frag = document.createDocumentFragment();
+  let mur = null, groupe = null;
+  const nouveauMur = ()=>{
+    mur = document.createElement('div');
+    mur.className = 'wall';
+    frag.appendChild(mur);
+  };
+  if(g.length && S.sort !== 'chrono') nouveauMur();
+
+  g.forEach((x, i)=>{
+    // en tri chronologique le mur est coupé par des intertitres de mois
+    if(S.sort === 'chrono'){
+      const nom = groupLabel(x);
+      if(nom !== groupe){
+        const titre = document.createElement('div');
+        titre.className = 'grouphead';
+        titre.textContent = nom;
+        frag.appendChild(titre);
+        groupe = nom;
+        nouveauMur();
+      }
+    }
+    const cle = cleTuile(x);
+    vues.add(cle);
+    mur.appendChild(tuilePour(cle, x, i));
+  });
+
+  /* Les jaquettes des tuiles qui quittent l'écran libèrent leur connexion,
+     comme avant — le mur qui arrive en a besoin. La tuile est marquée pour
+     qu'un retour à l'écran la reconstruise plutôt que d'afficher le pixel
+     transparent qu'on vient de lui mettre. */
+  TUILES.forEach((el, cle)=>{
+    if(vues.has(cle) || el.dataset.coupee) return;
+    if(annuleCovers(el)) el.dataset.coupee = '1';
+  });
+
+  if(!g.length){ out.innerHTML = emptyHTML(); return; }
+  out.replaceChildren(frag);
+}
+/* Les tuiles des jeux qui ont quitté le classeur : sans ce ménage la Map
+   enflerait à chaque relecture. Appelée quand GAMES est reconstruit. */
+function oublieTuiles(){
+  const vivantes = new Set(GAMES.map(cleTuile));
+  TUILES.forEach((_, cle)=>{ if(!vivantes.has(cle)) TUILES.delete(cle); });
+}
+/* Un seul gestionnaire pour tout le mur, posé une fois : réattacher un
+   onclick par tuile à chaque rendu annulerait le bénéfice de les garder.
+   Le bouton de téléchargement d'une jaquette arrête la propagation de son
+   côté, il ne remonte donc jamais jusqu'ici. */
+document.getElementById('out').addEventListener('click', e=>{
+  const t = e.target.closest('.tile');
+  if(t && t.dataset.i !== undefined) ouvreFiche(+t.dataset.i, t);
+});
+function emptyHTML(){
+  if(S.q || S.range){
+    return `<div class="empty"><h3>Aucun jeu trouvé...</h3>`
+  }
+  return `<div class="empty">
+    <h3>Cet onglet est vide</h3>
+  </div>`;
+}
+
+/* =======================================================================
+   Découverte par similarité — wishlist seulement
+
+   IGDB tient un champ similar_games sur chaque fiche. On lui donne
+   quelques-uns des jeux qu'on a le mieux notés, il répond ce qu'il juge
+   proche, et on retire ce qui est déjà au classeur.
+
+   La section ne vit que dans l'onglet Wishlist, jamais sur le mur
+   principal : le mur raconte ce qu'on a joué, et y glisser des jeux qu'on
+   ne possède pas brouillerait la seule chose qu'il sait bien faire. La
+   wishlist, elle, est exactement l'endroit où l'on se demande à quoi jouer
+   ensuite.
+
+   Chaque suggestion garde le jeu qui l'a amenée. « Parce que tu as mis 9,5
+   à Hollow Knight » est le cœur de la fonction : sans cette phrase, ce
+   n'est qu'une liste de jeux de plus.
+   ======================================================================= */
+/* Les jeux qui servent de point de départ : tirés au sort parmi ceux notés
+   8 ou plus. Au hasard et non les meilleurs, pour que la section change
+   d'une visite à l'autre au lieu de ressasser les trois mêmes préférés. */
+function grainesDecouverte(){
+  const bons = GAMES.filter(x => !estStatut(x) && x.rating !== null && x.rating >= 8);
+  const melange = bons.slice();
+  for(let i = melange.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = melange[i]; melange[i] = melange[j]; melange[j] = t;
+  }
+  return melange.slice(0, DECOUVERTE_GRAINES)
+    .map(x => ({nom:x.name, sortie:x.release || '', note:x.rating}));
+}
+
+/* Un tour de demande. Ce qu'on possède ET ce qu'on a déjà proposé partent
+   ensemble comme exclusions : c'est le serveur qui écarte, pour qu'il puisse
+   puiser plus loin au lieu de renvoyer douze jeux dont dix seraient jetés
+   ici. C'est aussi ce qui fait que « Rafraîchir » montre autre chose même
+   quand le tirage retombe sur les mêmes jeux de départ. */
+async function demandeDecouverte(graines){
+  const data = await api('/api/decouverte', {
+    jeux: graines,
+    connus: GAMES.map(x => x.name).concat(Array.from(DECOUVERTE_VUS)),
+  });
+  return (data && data.etat === 'ok' && data.suggestions) ? data.suggestions : [];
+}
+
+async function chargeDecouverte(relance){
+  if(decouverteEnVol) return;
+  if(DECOUVERTE && !relance) return;      // déjà fait, sauf demande explicite
+  const graines = grainesDecouverte();
+  if(!graines.length){ DECOUVERTE = []; renderDecouverte(); return; }
+  decouverteEnVol = true;
+  DECOUVERTE = null;
+  renderDecouverte();                     // affiche l'attente
+  try{
+    let trouve = await demandeDecouverte(graines);
+    /* Rien de neuf : on a fait le tour de ce qu'IGDB rapproche de ces
+       jeux-là. On oublie ce qui a déjà été montré et on repart du début,
+       plutôt que de laisser la section vide après un clic explicite. */
+    if(!trouve.length && DECOUVERTE_VUS.size){
+      DECOUVERTE_VUS.clear();
+      trouve = await demandeDecouverte(graines);
+    }
+    trouve.forEach(s => DECOUVERTE_VUS.add(s.titre));
+    DECOUVERTE = trouve;
+  }catch(e){
+    DECOUVERTE = [];
+  }finally{
+    decouverteEnVol = false;
+  }
+  renderDecouverte();
+}
+
+function carteDecouverte(s, i){
+  const visuel = s.apercu
+    ? `<img class="deco-img" src="${esc(s.apercu)}" alt="" loading="lazy" decoding="async">`
+    : `<span class="deco-img deco-nue">${esc(initials(s.titre))}</span>`;
+  const note = (s.note === null || s.note === undefined) ? '' : fr(s.note, 1);
+  return `<article class="deco-carte">
+    <a class="deco-lien" href="${esc(s.lien || '#')}" target="_blank" rel="noopener"
+       aria-label="Voir ${esc(s.titre)} sur IGDB">${visuel}</a>
+    <div class="deco-corps">
+      <b class="deco-nom">${esc(s.titre)}</b>
+      <i class="deco-date">${esc(s.date || 'date inconnue')}</i>
+      <span class="deco-parce">Parce que tu as mis
+        <b>${esc(note)}</b> à ${esc(s.parce_que)}</span>
+      <button class="deco-plus" type="button" data-i="${i}">+ Wishlist</button>
+    </div>
+  </article>`;
+}
+
+/* Y a-t-il seulement de quoi suggérer ? Sans un jeu noté 8 ou plus, la
+   section n'a rien sur quoi s'appuyer et ne s'affiche pas du tout. */
+function aDesGraines(){
+  return GAMES.some(x => !estStatut(x) && x.rating !== null && x.rating >= 8);
+}
+
+function renderDecouverte(){
+  const hote = document.getElementById('deco');
+  if(!hote) return;
+  if(!estWishlistNom(S.bucket) || !aDesGraines()){
+    hote.hidden = true; hote.innerHTML = '';
+    return;
+  }
+  /* L'en-tête et son bouton restent en place dans tous les cas : c'est ce
+     qui permet de relancer même quand la dernière tentative n'a rien donné,
+     et ça évite que la section saute d'une hauteur à l'autre. */
+  const corps = decouverteEnVol
+    ? `<p class="deco-note"></p>`
+    : !DECOUVERTE ? ''
+    : DECOUVERTE.length
+      ? `<div class="deco-grille">${DECOUVERTE.map(carteDecouverte).join('')}</div>`
+      : `<p class="deco-note">Rien de plus à proposer pour l'instant — retente un tirage.</p>`;
+
+  hote.hidden = false;
+  hote.innerHTML = `<div class="deco-tete">
+      <h2 class="deco-titre">Découvertes</h2>
+      <button class="deco-neuf" type="button" id="decoNeuf"${decouverteEnVol ? ' disabled' : ''}
+        >${decouverteEnVol ? 'Recherche...' : 'Rafraîchir'}</button>
+    </div>${corps}`;
+
+  const neuf = document.getElementById('decoNeuf');
+  if(neuf) neuf.onclick = ()=> chargeDecouverte(true);
+  hote.querySelectorAll('.deco-plus').forEach(b=>{
+    b.onclick = ()=> ajouteWishlist(+b.dataset.i, b);
+  });
+}
+
+/* Ajout en un clic : la même écriture que le formulaire, avec le nom, la
+   date de sortie et rien d'autre — un jeu convoité n'a ni note, ni temps de
+   jeu, ni prix payé. La jaquette suit dans la foulée, puisqu'IGDB vient de
+   nous dire laquelle c'est. */
+async function ajouteWishlist(i, btn){
+  const s = DECOUVERTE && DECOUVERTE[i];
+  if(!s) return;
+  if(!CAN_WRITE){ toast('Passe en mode éditeur pour ajouter un jeu.', true); return; }
+  const cible = ongletWishlist();
+  const modele = COLS[cible] ? cible
+    : (COLS[derniereAnnee()] ? derniereAnnee() : BUCKETS[0]);
+  const cols = COLS[cible] || COLS[modele];
+  if(!cols){ toast("Aucun onglet ne sert de modèle pour écrire.", true); return; }
+
+  btn.disabled = true;
+  const texte = btn.textContent;
+  btn.textContent = 'Ajout...';
+
+  /* Le prix de base, par le même chemin que le formulaire : la suggestion
+     porte déjà son identifiant IGDB, qui donne le lien Steam, qui donne le
+     tarif. Demandé au clic et pas dans la liste des suggestions — les faire
+     toutes aurait coûté deux appels par jeu pour un prix qu'on n'utilise
+     qu'une fois sur douze.
+
+     Un échec ne bloque rien : « pas sur Steam » est une réponse, pas une
+     panne, et la case reste vide plutôt que de recevoir un chiffre inventé. */
+  let base = null;
+  try{
+    const p = await api('/api/jeu/prix', {id: s.id});
+    if(p && p.etat === 'ok' && p.prix !== null && p.prix !== undefined) base = p.prix;
+  }catch(e){}
+
+  try{
+    const data = await envoyer('enregistrer', {
+      sheet: cible, modele: modele || null, cols: cols,
+      colsFrom: null, from: null, noteCol: null, review: '',
+      values: {
+        name: s.titre, rating: null, month: null, hours: null,
+        base: base, paid: null, release: s.iso || null,
+      },
+    });
+    cacheStore.set(source().url, data);
+    applyData(data, true);
+    // il est au classeur : il n'a plus rien à faire dans les suggestions
+    DECOUVERTE = DECOUVERTE.filter((_, k) => k !== i);
+    render();
+    toast(`« ${s.titre} » ajouté à la wishlist`);
+    if(s.image) poseJaquetteChoisie(s.titre, s.image);
+  }catch(e){
+    toast('Ajout impossible — ' + (e.message || 'erreur inconnue'), true);
+    btn.disabled = false; btn.textContent = texte;
+  }
+}
+
+/* ---------- la fiche, par-dessus le mur ----------
+   Le classement est calculé sur l'onglet affiché, comme les stats et
+   l'histogramme : « 3e sur 42 en 2026 ». Les jeux en cours, ceux de la
+   wishlist et ceux sans note n'en font pas partie, et en dessous de trois
+   jeux notés la position ne veut rien dire — on ne l'affiche pas. */
+function rangJeu(g){
+  if(!g || estStatut(g) || g.rating === null || g.rating === undefined) return null;
+  const lot = current().filter(x => !estStatut(x) && x.rating !== null);
+  if(lot.length < 3) return null;
+  // ex aequo : deux 8,5 partagent le même rang, aucun ne passe devant l'autre
+  const rang = lot.filter(x => x.rating > g.rating).length + 1;
+  /* Le podium ne compte pas les rangs, il compte les notes : si trois jeux
+     sont à 10, ils sont tous dorés — et celui qui vient juste après reste
+     « argenté », même si son rang affiché saute à la 4e place. */
+  const notes = Array.from(new Set(lot.map(x => x.rating))).sort((a,b)=>b-a);
+  const palier = notes.indexOf(g.rating) + 1;
+  return { rang, total: lot.length, palier, ou: S.bucket === 'all' ? 'au total' : 'en ' + S.bucket };
+}
+/* Le podium, comme sur un vrai podium : deux jeux à égalité sont tous les
+   deux premiers, et le suivant est troisième — il n'y a pas d'argent cette
+   année-là. */
+const MEDAILLES = ['or','argent','bronze'];
+function medailleDe(r){ return (r && r.palier && r.palier <= 3) ? MEDAILLES[r.palier - 1] : ''; }
+function rangHTML(r, med){
+  if(!r) return '';
+  return `<div class="sheet-rank${med ? ' medaille ' + med : ''}">`
+       + `${r.rang}<sup>${r.rang === 1 ? 'er' : 'e'}</sup> sur ${r.total} ${esc(r.ou)}</div>`;
+}
+
+/* ---------- la fiche ----------
+   La coquille est montée une fois et gardée : naviguer d'un jeu au suivant
+   ne réécrit que le corps et la jaquette. Tout reconstruire relançait
+   l'image à chaque flèche — élément recréé, requête, décodage — et la case
+   clignotait même quand elle était déjà en cache. */
+
+/* Copier dans le presse-papier. navigator.clipboard n'existe qu'en contexte
+   sécurisé : depuis un autre poste du réseau, la page arrive en http et
+   l'API est tout simplement absente. D'où le repli sur la vieille méthode —
+   un champ hors écran, une sélection, execCommand — qui, elle, marche
+   partout où ce hub est consulté. */
+async function copier(texte){
+  try{
+    if(window.isSecureContext && navigator.clipboard){
+      await navigator.clipboard.writeText(texte);
+      return true;
+    }
+  }catch(e){}
+  try{
+    const zone = document.createElement('textarea');
+    zone.value = texte;
+    zone.setAttribute('readonly', '');
+    zone.style.cssText = 'position:fixed;top:-1000px;left:0;opacity:0';
+    document.body.appendChild(zone);
+    zone.select();
+    const ok = document.execCommand('copy');
+    zone.remove();
+    return ok;
+  }catch(e){ return false; }
+}
+
+const ICONE_COPIE = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="9" y="9" width="12" height="12" rx="2"/>
+  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+</svg>`;
+
+/* Le corps de la fiche : tout ce qui change d'un jeu à l'autre, hors
+   jaquette et hors barre d'outils. */
+function corpsFiche(g){
+  const statut = statutDe(g), wish = estWishlist(g);
+  // en cours ou convoité : dans les deux cas le jeu n'a pas de fin à raconter
+  const enCours = !!statut;
+  const plus  = g.review.filter(s=>s.startsWith('+')).map(s=>`<span class="pt plus">${esc(s.slice(1).trim())}</span>`);
+  const minus = g.review.filter(s=>s.startsWith('-')).map(s=>`<span class="pt minus">${esc(s.slice(1).trim())}</span>`);
+  const other = g.review.filter(s=>!/^[+-]/.test(s)).map(s=>`<span class="pt">${esc(s)}</span>`);
+  /* la date de sortie s'affiche désormais à côté du titre (voir sheet-title
+     plus bas) plutôt qu'ici : ça libère une case et laisse Terminé / Temps /
+     Prix de base / Payé tenir sur une seule ligne. */
+  /* Jeu convoité et soldé aujourd'hui : la case de prix montre l'ancien
+     barré, celui du jour, et la remise. Le prix barré est celui du
+     classeur, pas celui de Steam — c'est le montant qu'on avait noté, donc
+     celui auquel on compare. À défaut, le prix fort que Steam annonce. */
+  const solde = wish && TARIFS[g.name] && TARIFS[g.name].remise > 0 ? TARIFS[g.name] : null;
+  const avant = (g.base === null || g.base === undefined) ? (solde && solde.plein) : g.base;
+  const prix = solde
+    ? `<s class="fait-avant">${esc(money(avant))}</s>${esc(money(solde.actuel))}`
+      + `<span class="fait-solde">−${solde.remise}&#8239;%</span>`
+    : '';
+  const facts = [
+    // ni date de fin ni temps de jeu tant que le jeu n'est pas terminé
+    enCours ? null : ['Terminé', g.month?`${MONTHS[g.month-1]} ${g.year||''}`:(g.year||g.bucket)],
+    enCours ? null : ['Temps', hoursFmt(g.hours)],
+    // le troisième terme, quand il existe, est du HTML déjà échappé
+    [solde ? 'Prix' : 'Prix de base', money(g.base), prix],
+    // rien n'a été payé pour un jeu de la wishlist : la case dirait « — »
+    wish ? null : ['Payé', money(g.paid)]
+  ].filter(Boolean);
+  const search = encodeURIComponent(g.name);
+  const rang = rangJeu(g), med = medailleDe(rang);
+  return `${statut
+      ? `<span class="sheet-note ${wish ? 'wish' : 'encours'}">${esc(statut)}</span>`
+      : `<span class="sheet-note" style="color:${noteColor(g.rating)}">${g.rating!==null?fr(g.rating,1):'—'}</span>`}
+    <h3 class="sheet-title${med ? ' medaille ' + med : ''}">${esc(g.name)}<button
+        class="titre-copie" type="button" title="Copier le nom du jeu"
+        aria-label="Copier le nom du jeu">${ICONE_COPIE}</button>${
+      g.release ? `<span class="sheet-release">${dateFmt(g.release)}</span>` : ''}</h3>
+    ${rangHTML(rang, med)}
+    ${enCours ? '' : (plus.length+minus.length+other.length)
+      ? `<div class="pros">${plus.join('')}${minus.join('')}${other.join('')}</div>`
+      : `<div class="pros"><span class="pt" style="opacity:.6">Pas d'avis écrit pour ce jeu.</span></div>`}
+    <div class="facts">${facts.map(([u,b,brut])=>
+      `<div class="fact"><u>${u}</u><b>${brut || esc(b)}</b></div>`).join('')}</div>
+    <div class="links">
+      <a href="https://www.google.com/search?q=${search}+jeu" target="_blank" rel="noopener">Chercher sur le web</a>
+      <a href="https://howlongtobeat.com/?q=${search}" target="_blank" rel="noopener">HowLongToBeat</a>
+    </div>`;
+}
+
+/* La coquille, montée une seule fois par ouverture. Les gestionnaires posés
+   ici relisent S.open au moment du clic au lieu de capturer un rang : c'est
+   ce qui permet de ne plus jamais les reposer. */
+function monteFiche(host){
+  host.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-tools">
+      <span class="grp">
+        <button class="sbtn wide sheet-edit" hidden>Modifier</button>
+        <button class="sbtn sheet-share" title="Mettre ce jeu en image" aria-label="Mettre ce jeu en image">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <circle cx="8.6" cy="8.6" r="1.4"/><path d="M21 15.5l-4.5-4.5L5 21.5"/>
+          </svg>
+        </button>
+      </span>
+      <span class="grp">
+        <button class="sbtn nav-prev" aria-label="Jeu précédent">‹</button>
+        <button class="sbtn nav-next" aria-label="Jeu suivant">›</button>
+        <button class="sbtn sheet-x" aria-label="Fermer">×</button>
+      </span>
+    </div>
+    <div class="sheet-in">
+      <div class="sheet-cover"></div>
+      <div class="sheet-body"></div>
+    </div>
+  </div>`;
+  const boite = host.querySelector('.sheet');
+  const jeu = ()=> SHEET_LIST[S.open];
+  boite.querySelector('.sheet-x').onclick = fermeFiche;
+  boite.querySelector('.sheet-edit').onclick = ()=>{ const g = jeu(); if(g) openForm(g); };
+  boite.querySelector('.sheet-share').onclick = ()=>{ const g = jeu(); if(g) partagerJeu(g); };
+  boite.querySelector('.nav-prev').onclick = ()=>{ if(S.open > 0){ S.open--; paintSheet(-1); } };
+  boite.querySelector('.nav-next').onclick = ()=>{
+    if(S.open < SHEET_LIST.length - 1){ S.open++; paintSheet(1); }
+  };
+  boite.addEventListener('keydown', e=> piegeFocus(boite, e));
+  /* Le bouton « copier » vit dans le titre, donc dans le corps réécrit à
+     chaque jeu : on écoute la boîte plutôt que le bouton, une fois pour
+     toutes. */
+  boite.addEventListener('click', e=>{
+    if(!e.target.closest('.titre-copie')) return;
+    const g = jeu();
+    if(!g) return;
+    copier(g.name).then(ok =>
+      toast(ok ? `« ${g.name} » copié` : 'Copie impossible', !ok));
+  });
+}
+
+/* ---------- la jaquette de la fiche ----------
+   Un seul <img>, gardé d'un jeu au suivant : seul son src change. Le repli
+   en initiales est refait ici plutôt que confié à hydrateCovers(), qui
+   remplace l'élément — c'est précisément ce qu'on cherche à éviter. */
+function coverInitiales(hote, g){
+  const d = document.createElement('div');
+  d.className = 'cov xl ph';
+  d.style.setProperty('--c', noteColor(g.rating));
+  d.textContent = initials(g.name);
+  d.appendChild(boutonJaquette(g.name, g.release));
+  hote.replaceChildren(d);
+}
+function coverFiche(g){
+  const hote = document.querySelector('#sheet .sheet-cover');
+  if(!hote) return;
+  const url = coverURL(g.name);
+  if(!url){ coverInitiales(hote, g); return; }
+
+  let img = hote.querySelector('img.cov');
+  if(!img){
+    img = document.createElement('img');
+    img.className = 'cov xl';
+    img.alt = '';
+    img.decoding = 'async';
+    // seule image de l'écran quand la fiche s'ouvre, et celle qu'on attend
+    img.setAttribute('fetchpriority', 'high');
+    /* Écoutes posées une fois, et sans {once} : le même élément servira à
+       toutes les jaquettes suivantes. Elles vérifient que la réponse porte
+       bien sur l'image demandée — une arrivée en retard, sur un jeu qu'on a
+       déjà quitté, ne doit rien changer à l'écran. */
+    img.addEventListener('load', ()=>{
+      if(img.dataset.url === img.getAttribute('src')) img.classList.remove('chargement');
+    });
+    img.addEventListener('error', ()=>{
+      if(img.dataset.url !== img.getAttribute('src')) return;
+      const jeu = SHEET_LIST[S.open];
+      if(jeu) coverInitiales(hote, jeu);
+    });
+    hote.replaceChildren(img);
+  }
+  if(img.getAttribute('src') === url) return;   // déjà la bonne
+
+  img.dataset.url = url;
+  /* Déjà en cache : la bascule tient dans la même image, inutile de faire
+     clignoter la case. Un Image() jetable le dit tout de suite — complete
+     passe à true sans attendre quand le navigateur l'a déjà. */
+  const sonde = new Image();
+  sonde.src = url;
+  img.classList.toggle('chargement', !sonde.complete);
+  img.src = url;
+}
+function openSheet(i){
+  SHEET_LIST = filtered();
+  if(!SHEET_LIST[i]) return;
+  S.open = i;
+  paintSheet();
+}
+/* Rejoue l'animation de glissement sur la zone de contenu. La classe doit
+   être retirée puis reposée après un recalcul forcé : sans ce détour, le
+   navigateur ne voit aucun changement et l'animation ne repart pas quand on
+   enchaîne les flèches dans le même sens.
+
+   Une simple animation CSS, et pas une View Transition : celle-ci
+   photographierait la fiche pour la faire glisser en dehors de sa boîte
+   arrondie, alors qu'on veut justement que le contenu défile à l'intérieur
+   du cadre, qui lui ne bouge pas. */
+function animeFiche(sens){
+  if(!sens) return;
+  const zone = document.querySelector('#sheet .sheet-in');
+  if(!zone) return;
+  zone.classList.remove('va-gauche', 'va-droite');
+  void zone.offsetWidth;
+  zone.classList.add(sens > 0 ? 'va-droite' : 'va-gauche');
+}
+
+/* `sens` : +1 vers le jeu suivant, -1 vers le précédent, rien sinon. Les
+   repeintures qui ne changent pas de jeu — rafraîchissement de fond, prix
+   Steam qui arrivent — n'en passent pas, et n'animent donc rien. */
+function paintSheet(sens){
+  const host = document.getElementById('sheet');
+  const i = S.open, g = SHEET_LIST[i];
+  if(!g){ closeSheet(); return; }
+  const neuve = !host.querySelector('.sheet');
+  if(neuve) monteFiche(host);
+
+  const boite = host.querySelector('.sheet');
+  boite.setAttribute('aria-label', g.name);
+  boite.querySelector('.sheet-edit').hidden = !CAN_WRITE;
+  boite.querySelector('.nav-prev').disabled = i <= 0;
+  boite.querySelector('.nav-next').disabled = i >= SHEET_LIST.length - 1;
+  coverFiche(g);
+  boite.querySelector('.sheet-body').innerHTML = corpsFiche(g);
+
+  /* On ne remonte en haut qu'en changeant de jeu. Quand render() repeint la
+     fiche après un rafraîchissement, la lecture en cours ne doit pas
+     repartir du titre. */
+  const cle = cleTuile(g);
+  if(boite.dataset.jeu !== cle){
+    boite.scrollTop = 0;
+    boite.dataset.jeu = cle;
+    animeFiche(sens);
+  }
+
+  host.hidden = false;
+  verrouFond();
+  // le focus n'entre dans la fiche qu'à son ouverture : le reposer à chaque
+  // flèche ferait sauter le lecteur d'écran au bouton de fermeture
+  if(neuve) boite.querySelector('.sheet-x').focus();
+}
+/* ---------- transition tuile → fiche ----------
+   La jaquette de la tuile et celle de la fiche portent tour à tour le même
+   view-transition-name : le navigateur reconnaît alors le même élément de
+   part et d'autre du changement et fait glisser la vignette jusqu'à sa
+   grande taille, au lieu d'ouvrir un panneau par-dessus.
+
+   Le nom doit désigner UN SEUL élément à la fois dans toute la page. La
+   tuile reste dans le document derrière la fiche : si les deux le portaient
+   en même temps, le navigateur abandonnerait l'animation sans rien dire.
+   D'où le passage de relais à l'intérieur du callback, et le nettoyage sur
+   `finished` — une transition interrompue ne doit pas laisser le nom
+   accroché à une tuile, sinon la suivante ne démarre plus.
+
+   startViewTransition n'existe pas partout (Firefox, Safari ancien) : dans
+   ce cas la mutation s'exécute telle quelle. Pas d'animation, pas d'erreur,
+   exactement le comportement d'avant. */
+/* ---------- piège à focus, retour et repère ----------
+   Une fiche ouverte occupe tout l'écran : le reste de la page est
+   inatteignable à la souris, Tab n'a donc rien à y faire non plus. Il tourne
+   en boucle à l'intérieur tant qu'elle est là.
+
+   À la fermeture, trois choses reviennent à leur place : le défilement, le
+   focus, et le regard. Le focus revenait jusqu'ici sur <body>, si bien que
+   le Tab suivant repartait du haut du document et y ramenait la page —
+   punitif sur un mur de deux cents jeux. */
+const FOCUSABLES = 'a[href],button:not([disabled]),input:not([disabled]),' +
+  'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+let FICHE_RETOUR = null;   // la tuile d'où l'on vient
+let FICHE_SCROLL = 0;      // le défilement au moment de l'ouverture
+let HALO = null;           // tuile à souligner une fois la fiche refermée
+
+/* Tab et Maj+Tab rebouclent aux extrémités. offsetParent écarte ce qui est
+   masqué — le bouton « Modifier » en lecture seule, par exemple — sans quoi
+   la boucle s'arrêterait sur un élément invisible. */
+function piegeFocus(boite, e){
+  if(e.key !== 'Tab') return;
+  const cibles = Array.from(boite.querySelectorAll(FOCUSABLES))
+    .filter(el => el.offsetParent !== null);
+  if(!cibles.length) return;
+  const premier = cibles[0], dernier = cibles[cibles.length - 1];
+  const ici = document.activeElement;
+  if(e.shiftKey && (ici === premier || !boite.contains(ici))){
+    e.preventDefault(); dernier.focus();
+  }else if(!e.shiftKey && ici === dernier){
+    e.preventDefault(); premier.focus();
+  }
+}
+
+/* Le halo doré, joué après coup. Vidé dès le premier appel : la fermeture
+   animée le déclenche à la fin de la transition, la fermeture sèche tout de
+   suite, et il ne doit jouer qu'une fois. */
+function joueHalo(){
+  const tuile = HALO;
+  HALO = null;
+  if(!tuile || !tuile.isConnected) return;
+  tuile.classList.remove('revenu');
+  void tuile.offsetWidth;          // sinon l'animation ne repart pas
+  tuile.classList.add('revenu');
+  setTimeout(()=>{ tuile.classList.remove('revenu'); }, 700);
+}
+
+/* Remet le défilement puis le focus. preventScroll est indispensable : sans
+   lui, focus() ramène la tuile dans le champ de vision et déplace le mur
+   sous les yeux, ce qu'on cherche précisément à éviter. */
+function rendreFocus(){
+  const tuile = FICHE_RETOUR;
+  FICHE_RETOUR = null;
+  if(Math.abs(window.scrollY - FICHE_SCROLL) > 1) window.scrollTo(0, FICHE_SCROLL);
+  if(!tuile || !tuile.isConnected) return;
+  try{ tuile.focus({preventScroll: true}); }catch(err){ tuile.focus(); }
+  HALO = tuile;
+}
+
+const VT_JAQUETTE = 'jaquette-active';
+function nomVT(el, actif){
+  if(el) el.style.viewTransitionName = actif ? VT_JAQUETTE : '';
+}
+function jaquetteFiche(){
+  return document.querySelector('#sheet .sheet-cover .cov');
+}
+function jaquetteTuile(g){
+  const tuile = g && TUILES.get(cleTuile(g));
+  return (tuile && tuile.isConnected) ? tuile.querySelector('.cov') : null;
+}
+
+function ouvreFiche(i, tuile){
+  FICHE_RETOUR = tuile || null;
+  FICHE_SCROLL = window.scrollY;
+  const src = tuile && tuile.querySelector('.cov');
+  if(!document.startViewTransition || !src){ openSheet(i); return; }
+  nomVT(src, true);
+  const vt = document.startViewTransition(()=>{
+    nomVT(src, false);           // la tuile rend le nom...
+    openSheet(i);
+    nomVT(jaquetteFiche(), true);  // ...la fiche le reprend
+  });
+  vt.finished.catch(()=>{}).then(()=> nomVT(src, false));
+}
+
+function fermeFiche(){
+  const host = document.getElementById('sheet');
+  if(host.hidden) return;
+  const g = SHEET_LIST[S.open];
+  const src = jaquetteFiche();
+  if(!document.startViewTransition || !src || !g){ closeSheet(); joueHalo(); return; }
+  nomVT(src, true);
+  const vt = document.startViewTransition(()=>{
+    nomVT(src, false);
+    closeSheet();
+    nomVT(jaquetteTuile(g), true);   // la vignette reprend sa place
+  });
+  vt.finished.catch(()=>{}).then(()=>{
+    nomVT(jaquetteTuile(g), false);
+    joueHalo();          // sous la photo de la transition, il serait invisible
+  });
+}
+
+function closeSheet(){
+  const host = document.getElementById('sheet');
+  if(host.hidden) return;
+  host.hidden = true; host.innerHTML = '';
+  verrouFond();          // le défilement doit être rendu avant d'être repositionné
+  S.open = null;
+  rendreFocus();
+}
+document.getElementById('sheet').addEventListener('click', e=>{
+  if(e.target.id === 'sheet') fermeFiche();
+});
+document.addEventListener('keydown', e=>{
+  // la mise à jour depuis IGDB occupe l'écran seule : rien ne s'ouvre
+  // par-dessus, donc rien d'autre ne prend Échap tant qu'elle est là
+  if(!document.getElementById('igdb').hidden){
+    if(e.key === 'Escape') fermerIgdb();
+    return;
+  }
+  // le bilan en image est au-dessus de tout, y compris le choix de jaquette
+  if(!document.getElementById('bilan').hidden){
+    if(e.key === 'Escape') fermerBilan();
+    return;
+  }
+  if(!document.getElementById('jaq').hidden){
+    if(e.key === 'Escape') closeJaq();
+    return;
+  }
+  if(!document.getElementById('form').hidden){
+    if(e.key === 'Escape') closeForm();
+    return;
+  }
+  if(document.getElementById('sheet').hidden){
+    // rien d'ouvert : Échap enlève la tranche de notes choisie
+    const per = document.getElementById('perMenu');
+    if(e.key === 'Escape' && S.range
+       && document.getElementById('menu').hidden
+       && document.getElementById('jnlMenu').hidden
+       && (!per || per.hidden)) viderTranche();
+    return;
+  }
+  if(e.key === 'Escape'){ fermeFiche(); }
+  else if(e.key === 'ArrowLeft' && S.open > 0){ S.open--; paintSheet(-1); }
+  else if(e.key === 'ArrowRight' && S.open < SHEET_LIST.length-1){ S.open++; paintSheet(1); }
+});
+
+/* =======================================================================
+   Ajouter / modifier / supprimer — tout part vers le Google Sheet.
+   La page n'invente rien : elle renvoie au script les colonnes qu'elle a
+   elle-même repérées à la lecture, donc elle réécrit exactement là où
+   elle avait lu.
+   ======================================================================= */
+let EDIT = null;
+
+function toast(txt, mauvais){
+  const t = $('toast');
+  t.textContent = txt;
+  t.className = 'toast show' + (mauvais ? ' bad' : '');
+  t.hidden = false;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>{ t.classList.remove('show'); }, 3000);
+}
+function isoDate(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d||'') ? d : ''; }
+function timeText(h){
+  if(h===null||h===undefined) return '';
+  const H = Math.floor(h), M = Math.round((h-H)*60);
+  return M ? `${H}h${String(M).padStart(2,'0')}` : `${H}h`;
+}
+function numText(n){ return (n===null||n===undefined||n==='') ? '' : String(n).replace('.',','); }
+
+function formHTML(g){
+  // « En cours » et « Wishlist » ont leur case à cocher : ils ne doivent pas
+  // traîner aussi dans la liste des années
+  const opts = BUCKETS.filter(b=>!estStatutNom(b)).map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  const mois = MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+  const avis = g ? g.review.join('\n') : '';
+  return `<div class="sheet form-sheet" role="dialog" aria-modal="true">
+    <div class="sheet-tools">
+      <span class="grp"><b class="fhead">${g ? 'Modifier un jeu' : 'Ajouter un jeu'}</b></span>
+      <span class="grp"><button class="sbtn form-x" aria-label="Fermer">×</button></span>
+    </div>
+    <div class="form-in">
+      <div class="fgrid">
+        <div class="fld full acw">
+          <label for="f_name"><u>Nom du jeu</u></label>
+          <input id="f_name" type="text" value="${esc(g?g.name:'')}" autocomplete="off"
+                 spellcheck="false" role="combobox" aria-controls="f_ac"
+                 aria-autocomplete="list" aria-expanded="false">
+          <div class="ac" id="f_ac" role="listbox" aria-label="Jeux trouvés sur IGDB" hidden></div>
+        </div>
+        <button type="button" class="fpick" id="f_pick" hidden>
+          <img id="f_pickimg" alt="" decoding="async">
+          <span class="fpick-txt">
+            <b id="f_pickt"></b>
+            <i id="f_pickd"></i>
+            <small>Clique pour changer la jaquette</small>
+          </span>
+        </button>
+        <label class="fld fcheck">
+          <input id="f_encours" type="checkbox">
+          <span>Jeu en cours</span></label>
+        <label class="fld fcheck wish">
+          <input id="f_wish" type="checkbox">
+          <span>Wishlist</span></label>
+        <label class="fld" id="f_bucketwrap"><u>Année</u>
+          <select id="f_bucket">${opts}<option value="__new">＋ Ajouter...</option></select></label>
+        <label class="fld" id="f_newwrap" hidden><u>Nom du nouvel onglet</u>
+          <input id="f_new" type="text" autocomplete="off"></label>
+        <label class="fld" id="f_monthwrap"><u>Mois</u>
+          <select id="f_month"><option value="">—</option>${mois}</select></label>
+        <label class="fld" id="f_ratingwrap"><u>Note sur 10</u>
+          <input id="f_rating" type="text" inputmode="decimal" value="${esc(numText(g?g.rating:null))}"></label>
+        <label class="fld" id="f_timewrap"><u>Temps de jeu (h)</u>
+          <input id="f_time" type="text" value="${esc(timeText(g?g.hours:null))}"></label>
+        <label class="fld"><u>Prix de base (€)</u>
+          <input id="f_base" type="text" inputmode="decimal" value="${esc(numText(g?g.base:null))}"></label>
+        <label class="fld" id="f_paidwrap"><u>Prix payé (€)</u>
+          <input id="f_paid" type="text" inputmode="decimal" value="${esc(numText(g?g.paid:null))}"></label>
+        <label class="fld full"><u>Date de sortie</u>
+          <input id="f_release" type="date" value="${esc(isoDate(g?g.release:''))}"
+                 data-orig="${esc(g&&g.release?g.release:'')}"></label>
+        <label class="fld full" id="f_reviewwrap"><u>Avis (Commencer par + ou -)</u>
+          <span class="ta-wrap"><span class="ta-hl" id="f_review_hl" aria-hidden="true"></span
+            ><textarea id="f_review" rows="5">${esc(avis)}</textarea></span></label>
+      </div>
+      <div class="ferr" id="f_err" hidden></div>
+      <div class="frow">
+        ${g ? '<button class="ghost danger" id="f_del">Supprimer ce jeu</button>' : ''}
+        <span class="spacer"></span>
+        <button class="ghost" id="f_cancel">Annuler</button>
+        <button class="cta auto" id="f_ok">${g ? 'Enregistrer' : 'Ajouter'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* Les deux cases s'excluent : un jeu qu'on a commencé n'est plus une envie.
+   Cocher l'une décoche l'autre, plutôt que d'interdire — on ne se bat pas
+   avec un formulaire qui refuse un clic sans rien dire. */
+function statutCoche(){ return $('f_encours').checked || $('f_wish').checked; }
+function cibleOnglet(){
+  if($('f_wish').checked) return ongletWishlist();
+  if($('f_encours').checked) return ongletEnCours();
+  const b = $('f_bucket').value;
+  return b === '__new' ? clean($('f_new').value) : b;
+}
+function syncOnglet(){
+  $('f_newwrap').hidden = statutCoche() || $('f_bucket').value !== '__new';
+}
+/* Un jeu en cours n'a rien à dire de sa fin : on retire de l'écran l'année,
+   le mois, la note, le temps de jeu et l'avis. Décocher les fait revenir,
+   c'est le geste qui termine un jeu.
+   Un jeu de la wishlist cache la même chose, plus le prix payé : il n'est
+   pas acheté, la case n'aurait aucun sens. Le prix de base reste, c'est
+   justement ce qu'on veut noter. */
+function syncStatut(){
+  const sansFin = statutCoche();
+  ['f_bucketwrap','f_monthwrap','f_ratingwrap','f_timewrap','f_reviewwrap']
+    .forEach(id => { $(id).hidden = sansFin; });
+  $('f_paidwrap').hidden = $('f_wish').checked;
+  syncOnglet();
+}
+function formErr(txt){
+  const b = $('f_err');
+  b.hidden = !txt;
+  if(txt) b.textContent = txt;
+}
+/* Rejoue le texte de l'avis dans le calque colore : une ligne qui commence
+   par + passe en vert, par - en rouge, le reste garde la couleur normale.
+   Le \n final garde la bonne hauteur quand le texte finit par un retour. */
+function majAvis(){
+  const ta = $('f_review'), hl = $('f_review_hl');
+  if(!ta || !hl) return;
+  hl.innerHTML = ta.value.split('\n').map(ligne=>{
+    const t = ligne.trimStart();
+    const cls = t.startsWith('+') ? 'plus' : (t.startsWith('-') ? 'minus' : '');
+    return cls ? `<span class="${cls}">${esc(ligne)}</span>` : esc(ligne);
+  }).join('\n') + '\n';
+  hl.scrollTop = ta.scrollTop;
+}
+function openForm(g){
+  EDIT = g || null;
+  const host = $('form');
+  host.innerHTML = formHTML(g);
+  host.hidden = false;
+  verrouFond();
+  const bu = $('f_bucket');
+  const enCours = !!(g && estEnCours(g));
+  const wish    = !!(g && estWishlist(g));
+  $('f_encours').checked = enCours;
+  $('f_wish').checked = wish;
+  // en ajout — et pour un jeu en cours ou convoité qu'on vient de terminer —
+  // on propose toujours l'année la plus récente, pas l'onglet affiché
+  const defaut = (g && !enCours && !wish) ? g.bucket : derniereAnnee();
+  if(BUCKETS.indexOf(defaut) >= 0) bu.value = defaut;
+  /* Mois terminé : pré-rempli au mois courant, et modifiable comme avant.
+     Seulement quand ça a un sens, c'est-à-dire pour un jeu qu'on termine
+     maintenant — un ajout, ou un jeu en cours / convoité qu'on bascule en
+     terminé. Modifier un ancien jeu sans mois n'y touche pas : proposer
+     « août » pour une partie finie il y a trois ans écrirait une date
+     fausse, et personne ne relit un champ déjà rempli.
+
+     Le garde-fou sur l'année n'est pas décoratif : l'onglet proposé est le
+     plus récent du journal, qui n'est pas forcément l'année en cours. Sur
+     un journal resté à 2025, le mois d'aujourd'hui ne veut rien dire. */
+  const maintenant = new Date();
+  const termineMaintenant = !g || enCours || wish;
+  const anneeCourante = bu.value === String(maintenant.getFullYear());
+  $('f_month').value =
+    (g && g.month) ? String(g.month)
+    : (termineMaintenant && anneeCourante ? String(maintenant.getMonth() + 1) : '');
+  syncStatut();
+  $('f_encours').onchange = ()=>{
+    if($('f_encours').checked) $('f_wish').checked = false;
+    syncStatut();
+  };
+  $('f_wish').onchange = ()=>{
+    if($('f_wish').checked) $('f_encours').checked = false;
+    syncStatut();
+  };
+  bu.onchange = syncOnglet;
+  host.querySelector('.form-x').onclick = closeForm;
+  $('f_cancel').onclick = closeForm;
+  $('f_ok').onclick = submitForm;
+  const del = $('f_del');
+  if(del) del.onclick = ()=>{
+    if(del.classList.contains('armed')) return supprimerJeu(del);
+    del.classList.add('armed');
+    del.textContent = 'Confirmer la suppression';
+    setTimeout(()=>{ if(del.isConnected){ del.classList.remove('armed'); del.textContent = 'Supprimer ce jeu'; } }, 5000);
+  };
+  const ta = $('f_review');
+  ta.addEventListener('input', majAvis);
+  ta.addEventListener('scroll', ()=>{ $('f_review_hl').scrollTop = ta.scrollTop; });
+  majAvis();
+  brancherAuto();          // complétion du nom depuis IGDB (voir plus bas)
+  $('f_name').focus();
+}
+function closeForm(){
+  const host = $('form');
+  if(host.hidden) return;
+  // ce qui est encore en vol ne concerne plus personne : la liste, le prix
+  // et la jaquette retenue partent avec le formulaire
+  oublieAuto();
+  host.hidden = true; host.innerHTML = '';
+  EDIT = null;
+  verrouFond();
+}
+$('form').addEventListener('click', e=>{ if(e.target.id === 'form') closeForm(); });
+
+function lireForm(){
+  // en cours ou wishlist : note, mois et temps de jeu partent vides, quoi
+  // qu'il reste dans les champs cachés — la ligne du classeur doit dire la
+  // même chose que l'écran. Le prix payé subit le même sort en wishlist.
+  const sansFin = statutCoche();
+  const wish = $('f_wish').checked;
+  const v = {
+    name:     clean($('f_name').value),
+    rating:   sansFin ? null : toNum($('f_rating').value),
+    month:    sansFin ? null : toNum($('f_month').value),
+    hours:    sansFin ? null : toHours($('f_time').value),
+    base:     toNum($('f_base').value),
+    paid:     wish ? null : toNum($('f_paid').value),
+  };
+  const rel = $('f_release');
+  // si la date d'origine n'était pas lisible par le champ, on n'y touche pas
+  if(rel.value || isoDate(rel.dataset.orig) || !rel.dataset.orig) v.release = rel.value || null;
+  return v;   // ni support ni année : l'onglet suffit, et le Sheet garde ce qu'il a
+}
+function chargeUtile(){
+  const cible = cibleOnglet();
+  if(!cible) throw new Error("Donne un nom au nouvel onglet.");
+  // l'onglet n'existe pas encore (« En cours » la première fois, ou un
+  // nouvel onglet) : on copie les en-têtes de l'année la plus récente
+  const recent = derniereAnnee();
+  const modele = COLS[cible] ? cible
+    : (EDIT && COLS[EDIT.bucket] ? EDIT.bucket : (COLS[recent] ? recent : BUCKETS[0]));
+  const cols = COLS[cible] || COLS[modele];
+  if(!cols) throw new Error("Aucun onglet ne sert de modèle : impossible de savoir où écrire.");
+  const v = lireForm();
+  if(!v.name) throw new Error("Il faut au moins un nom de jeu.");
+  return {
+    sheet: cible,
+    modele: modele || null,
+    cols: cols,
+    colsFrom: EDIT ? (COLS[EDIT.bucket] || cols) : null,
+    from: EDIT ? {sheet: EDIT.bucket, row: EDIT.row, expect: EDIT.name} : null,
+    noteCol: EDIT ? EDIT.noteCol : null,
+    review: statutCoche() ? '' : clean($('f_review').value),
+    values: v,
+  };
+}
+async function submitForm(){
+  const btn = $('f_ok'), texte = btn.textContent;
+  formErr('');
+  let charge;
+  try{ charge = chargeUtile(); }
+  catch(e){ formErr(e.message); return; }
+  /* La jaquette retenue dans le formulaire, relevée avant l'envoi : closeForm()
+     l'oublie, et le nom peut avoir été retouché depuis le choix — auquel cas
+     elle ne vaut plus, on repart sur une recherche normale. */
+  const retenue = (JEU_PICK && JEU_PICK.image
+                   && norm(JEU_PICK.nom) === norm(charge.values.name)) ? JEU_PICK : null;
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  try{
+    const data = await envoyer('enregistrer', charge);
+    const ajout = !charge.from;
+    cacheStore.set(source().url, data);
+    applyData(data, true);
+    // le jeu vient d'atterrir dans un autre onglet (En cours, une autre
+    // année...) : on s'y place, sinon il disparaît sous les yeux
+    if(S.bucket !== 'all' && S.bucket !== charge.sheet && BUCKETS.indexOf(charge.sheet) >= 0){
+      S.bucket = charge.sheet; S.range = null;
+    }
+    closeForm(); render();
+    toast(ajout ? `« ${charge.values.name} » ajouté` : `« ${charge.values.name} » mis à jour`);
+    /* Une jaquette désignée dans le formulaire l'emporte, même en
+       modification : c'est un geste explicite, pas une récupération
+       automatique. Sinon, et seulement à l'ajout, on cherche — modifier un
+       jeu ne doit pas écraser une jaquette déposée à la main. */
+    if(retenue) poseJaquetteChoisie(charge.values.name, retenue.image);
+    else if(ajout) jaquetteAuto(charge.values.name, charge.values.release);
+  }catch(e){
+    formErr(e.message);
+    btn.disabled = false; btn.textContent = texte;
+  }
+}
+async function supprimerJeu(btn){
+  if(!EDIT) return;
+  const nom = EDIT.name;
+  const charge = {
+    sheet: EDIT.bucket, row: EDIT.row, expect: EDIT.name,
+    cols: COLS[EDIT.bucket] || {},
+  };
+  formErr('');
+  btn.disabled = true; btn.textContent = 'Suppression...';
+  try{
+    const data = await envoyer('supprimer', charge);
+    cacheStore.set(source().url, data);
+    applyData(data, true); closeForm(); render();
+    toast(`« ${nom} » retiré du journal`);
+  }catch(e){
+    formErr(e.message);
+    btn.disabled = false; btn.classList.remove('armed'); btn.textContent = 'Supprimer ce jeu';
+  }
+}
+document.getElementById('addBtn').addEventListener('click', ()=> openForm(null));
+
+/* =======================================================================
+   Jaquette automatique — uniquement à l'ajout d'un jeu.
+   C'est Flask qui va la chercher (jaquettes.py) : ni le navigateur ni
+   Apps Script ne savent écrire dans static/Cover/. Rien n'atterrit sur le
+   disque sans un clic : même quand une seule jaquette est trouvée, elle
+   est montrée d'abord. Si la route n'existe pas — vieux serveur, page
+   ouverte sans Flask — tout se tait et le jeu garde ses initiales.
+   ======================================================================= */
+async function api(chemin, corps){
+  const r = await fetch(chemin, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(corps),
+  });
+  if(!r.ok) throw new Error('http ' + r.status);
+  return r.json();
+}
+/* la jaquette est arrivée : on la remet en jeu sous un nouveau numéro */
+function poseJaquette(nom){
+  const f = slug(nom);
+  /* le manifeste est tenu à jour sur place : redemander la liste entière
+     pour une seule image serait un aller-retour de plus pour rien. La date
+     posée ici n'est pas exactement celle du fichier, mais elle ne sert qu'à
+     casser le cache — le prochain manifeste rétablira la vraie. */
+  if(f){
+    if(!JAQUETTES) JAQUETTES = {};
+    JAQUETTES[f] = Date.now();
+    retientManifeste();
+  }
+  renderWall();
+  // la fiche ouverte montre la même jaquette en grand : elle aussi
+  if(!$('sheet').hidden && S.open !== null) paintSheet();
+}
+async function jaquetteAuto(nom, sortie, force){
+  let data;
+  try{ data = await api('/api/jaquette', {nom: nom, sortie: sortie || '', force: !!force}); }
+  catch(e){ return; }
+  if(data.etat === 'telechargee'){ poseJaquette(nom); toast('Jaquette récupérée'); }
+  else if(data.etat === 'deja-la'){ poseJaquette(nom); }
+  else if(data.etat === 'choix'){ openJaq(nom, data.propositions || []); }
+  else if(data.etat === 'introuvable'){ toast(`Aucune jaquette trouvée pour « ${nom} »`); }
+  // le motif exact plutôt qu'un « ça n'a pas marché » : HTTP 403, certificat
+  // SSL, délai dépassé... c'est la seule chose qui permette d'y remédier
+  else if(data.etat === 'injoignable'){ toast('IGDB injoignable : ' + (data.raison || 'pas de réponse'), true); }
+}
+
+/* On montre toujours ce qui a été trouvé, même une seule jaquette : c'est
+   le clic qui télécharge. Les aperçus viennent directement d'IGDB, donc
+   refuser ne laisse rien derrière — il n'y a rien à supprimer. Quand
+   plusieurs fiches portent le même nom, la plus probable (celle dont
+   l'année colle à la date de sortie) est en tête, en doré. */
+let JAQ_NOM = null, JAQ_SUITE = null;
+function jaqHTML(nom, propositions, retenir){
+  return `<div class="sheet jaq-sheet" role="dialog" aria-modal="true">
+    <div class="sheet-tools">
+      <span class="grp"><b class="fhead">Jaquette de « ${esc(nom)} »</b></span>
+      <span class="grp"><button class="sbtn jaq-x" aria-label="Fermer">×</button></span>
+    </div>
+    <div class="jaq-in">
+      <div class="jaq-grid">
+        ${propositions.map((p,i)=>`
+          <button class="jaq-item${p.suggere ? ' suggeree' : ''}" data-i="${i}" title="${esc(p.lien||'')}">
+            <img src="${esc(p.apercu)}" alt="" loading="lazy" decoding="async">
+            <b>${esc(p.titre)}</b>
+            <span>${esc(p.date || 'date inconnue')}${p.nature ? ' · ' + esc(p.nature) : ''}</span>
+          </button>`).join('')}
+      </div>
+      <div class="frow"><span class="spacer"></span>
+        <button class="ghost jaq-non">${retenir ? 'Annuler' : "N'en télécharger aucune"}</button></div>
+    </div>
+  </div>`;
+}
+/* `suite` transforme la fenêtre en simple sélecteur : au lieu de télécharger,
+   le clic rappelle cette fonction avec la fiche choisie. C'est ce que fait le
+   formulaire, où le fichier ne peut pas encore être nommé — le nom du jeu
+   n'est arrêté qu'à l'enregistrement. */
+function openJaq(nom, propositions, suite){
+  if(!propositions.length) return;
+  JAQ_NOM = nom;
+  JAQ_SUITE = suite || null;
+  const host = $('jaq');
+  host.innerHTML = jaqHTML(nom, propositions, !!suite);
+  host.hidden = false;
+  verrouFond();
+  host.querySelector('.jaq-x').onclick = closeJaq;
+  host.querySelector('.jaq-non').onclick = closeJaq;
+  host.querySelectorAll('.jaq-item').forEach(b=>{
+    b.onclick = ()=> choisirJaq(b, propositions[+b.dataset.i]);
+  });
+}
+function closeJaq(){
+  const host = $('jaq');
+  if(host.hidden) return;
+  host.hidden = true; host.innerHTML = '';
+  JAQ_NOM = null; JAQ_SUITE = null;
+  verrouFond();
+}
+async function choisirJaq(btn, choix){
+  const nom = JAQ_NOM;
+  // mode sélecteur : on rend la main au formulaire, rien ne part sur le disque
+  if(JAQ_SUITE){
+    const suite = JAQ_SUITE;
+    closeJaq();
+    suite(choix);
+    return;
+  }
+  const host = $('jaq');
+  host.querySelectorAll('.jaq-item').forEach(b=>{ b.disabled = true; });
+  btn.classList.add('pris');
+  let data;
+  try{ data = await api('/api/jaquette/choisir', {nom: nom, image: choix.image}); }
+  catch(e){ data = null; }
+  if(data && data.etat === 'telechargee'){
+    closeJaq(); poseJaquette(nom); toast('Jaquette enregistrée');
+  }else{
+    closeJaq();
+    toast('Téléchargement impossible' + (data && data.raison ? ' — ' + data.raison : ''), true);
+  }
+}
+$('jaq').addEventListener('click', e=>{ if(e.target.id === 'jaq') closeJaq(); });
+
+/* La jaquette désignée dans le formulaire : elle part sur le disque
+   maintenant que le jeu existe et que son nom est arrêté. */
+async function poseJaquetteChoisie(nom, image){
+  let data;
+  try{ data = await api('/api/jaquette/choisir', {nom: nom, image: image}); }
+  catch(e){ return; }
+  if(data.etat === 'telechargee'){ poseJaquette(nom); toast('Jaquette enregistrée'); }
+  else toast('Téléchargement impossible' + (data.raison ? ' — ' + data.raison : ''), true);
+}
+
+/* =======================================================================
+   Complétion du nom depuis IGDB
+
+   Le champ « Nom du jeu » interroge Flask pendant la frappe : IGDB renvoie
+   les fiches qui collent, avec leur date de sortie et leur jaquette. Un clic
+   remplit la date, va chercher le prix de base et retient la jaquette — qui
+   ne part sur le disque qu'à l'enregistrement, pas avant, parce que son nom
+   de fichier dépend d'un champ qu'on peut encore retoucher.
+
+   Le prix ne vient pas d'IGDB, qui n'en publie aucun : IGDB donne le lien
+   vers la fiche Steam, et c'est Steam qui répond son prix fort en euros. Un
+   jeu absent de Steam — exclusivité Nintendo, PlayStation, jeu physique —
+   laisse donc la case vide. C'est voulu : rien n'est deviné.
+
+   Deux règles pour ne jamais écraser une saisie : un champ rempli à la main
+   ne bouge plus (data-auto le distingue d'un champ rempli par une fiche), et
+   toute réponse arrivée après un changement de fiche est jetée — la frappe
+   est plus rapide que le réseau, l'inverse serait une loterie.
+   ======================================================================= */
+const AC = { minuteur:0, jeton:0, jetonPrix:0, jeux:[], i:-1 };
+let JEU_PICK = null;   // la fiche IGDB retenue : {nom, titre, image, apercu...}
+
+function oublieAuto(){
+  clearTimeout(AC.minuteur);
+  AC.jeton++; AC.jetonPrix++;      // ce qui répondra après nous ne sert plus
+  AC.jeux = []; AC.i = -1;
+  JEU_PICK = null;
+}
+
+/* ---------- la liste déroulante ---------- */
+function acFerme(){
+  const b = $('f_ac'), champ = $('f_name');
+  AC.jeux = []; AC.i = -1;
+  if(b){ b.hidden = true; b.innerHTML = ''; }
+  if(champ) champ.setAttribute('aria-expanded', 'false');
+}
+function acHTML(jeux){
+  return jeux.map((j,i)=>`
+    <button type="button" class="ac-item" role="option" aria-selected="false" data-i="${i}">
+      ${j.apercu
+        ? `<img src="${esc(j.apercu)}" alt="" loading="lazy" decoding="async">`
+        : '<span class="ac-vide"></span>'}
+      <span class="ac-txt">
+        <b>${esc(j.titre)}</b>
+        <i>${esc(j.date || 'date inconnue')}${j.nature ? ' · ' + esc(j.nature) : ''}</i>
+      </span>
+    </button>`).join('');
+}
+function acOuvre(jeux){
+  const b = $('f_ac');
+  if(!b) return;
+  if(!jeux.length){ acFerme(); return; }
+  AC.jeux = jeux; AC.i = -1;
+  b.innerHTML = acHTML(jeux);
+  b.hidden = false;
+  $('f_name').setAttribute('aria-expanded', 'true');
+  b.querySelectorAll('.ac-item').forEach(el=>{
+    /* mousedown et pas click : sinon le champ perd le focus en premier, la
+       liste se referme, et le clic atterrit dans le vide */
+    el.addEventListener('mousedown', e=>{ e.preventDefault(); acChoisir(+el.dataset.i); });
+  });
+}
+function acBouge(pas){
+  const b = $('f_ac');
+  if(!b || b.hidden || !AC.jeux.length) return;
+  const n = AC.jeux.length;
+  AC.i = AC.i < 0 ? (pas > 0 ? 0 : n - 1) : (AC.i + pas + n) % n;
+  b.querySelectorAll('.ac-item').forEach((el,k)=>{
+    const on = k === AC.i;
+    el.classList.toggle('on', on);
+    el.setAttribute('aria-selected', on ? 'true' : 'false');
+    if(on) el.scrollIntoView({block:'nearest'});
+  });
+}
+async function acCherche(texte){
+  const jeton = ++AC.jeton;
+  let data;
+  // pas de Flask (page ouverte sans serveur, vieille version) : le champ
+  // reste un champ, personne n'est prévenu de rien
+  try{ data = await api('/api/jeu/suggestions', {nom: texte}); }
+  catch(e){ return; }
+  if(jeton !== AC.jeton || !$('f_ac')) return;   // une frappe est passée devant
+  if(data.etat === 'ok') acOuvre(data.jeux || []);
+  else acFerme();
+}
+function acFrappe(){
+  const champ = $('f_name');
+  const texte = clean(champ.value);
+  // le nom ne correspond plus à la fiche choisie : sa jaquette non plus
+  if(JEU_PICK && norm(texte) !== norm(JEU_PICK.nom)) posePick(null);
+  clearTimeout(AC.minuteur);
+  AC.jeton++;
+  // deux lettres minimum, et un temps de répit : une recherche par caractère
+  // ferait huit allers-retours pour « Hollow K »
+  if(texte.length < 2){ acFerme(); return; }
+  AC.minuteur = setTimeout(()=> acCherche(texte), 250);
+}
+function acTouche(e){
+  const b = $('f_ac');
+  const ouvert = b && !b.hidden && AC.jeux.length;
+  if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    if(!ouvert) return;
+    e.preventDefault(); acBouge(e.key === 'ArrowDown' ? 1 : -1);
+  }else if(e.key === 'Enter'){
+    if(!ouvert || AC.i < 0) return;
+    e.preventDefault(); acChoisir(AC.i);
+  }else if(e.key === 'Escape'){
+    if(!ouvert) return;
+    // la liste se referme, le formulaire reste ouvert : stopPropagation
+    // empêche le gestionnaire global de prendre Échap pour lui
+    e.preventDefault(); e.stopPropagation(); acFerme();
+  }
+}
+
+/* ---------- la fiche retenue et son aperçu ---------- */
+function posePick(fiche){
+  JEU_PICK = fiche;
+  const b = $('f_pick');
+  if(!b) return;
+  if(!fiche || !fiche.image){ b.hidden = true; return; }
+  $('f_pickimg').src = fiche.apercu;
+  $('f_pickt').textContent = fiche.titre;
+  $('f_pickd').textContent = (fiche.date || 'date inconnue')
+    + (fiche.nature ? ' · ' + fiche.nature : '');
+  b.hidden = false;
+}
+/* Un champ rempli par une fiche peut être remplacé par la fiche suivante.
+   Un champ rempli à la main, jamais : c'est ce que dit data-auto. */
+function acRemplit(champ, valeur){
+  if(!champ || !valeur) return;
+  if(champ.value && champ.dataset.auto !== '1') return;
+  champ.value = valeur;
+  champ.dataset.auto = '1';
+}
+async function acChoisir(i){
+  const j = AC.jeux[i];
+  if(!j) return;
+  acFerme();
+  const champ = $('f_name');
+  champ.value = j.titre;
+  posePick(Object.assign({}, j, {nom: j.titre}));
+  acRemplit($('f_release'), j.iso);
+  champ.focus();
+  acPrix(j);
+}
+/* `force` : le prix est réécrit même s'il a été saisi à la main. Réservé au
+   choix explicite d'une jaquette — voir alignePick(). Renvoie true si la case
+   a effectivement changé de valeur, pour que l'appelant sache quoi annoncer. */
+async function acPrix(j, force){
+  const cible = $('f_base');
+  if(!cible || !j.id) return false;
+  // un prix saisi ne s'écrase pas
+  if(!force && cible.value && cible.dataset.auto !== '1') return false;
+  const jeton = ++AC.jetonPrix;
+  cible.classList.add('cherche');
+  let data;
+  try{ data = await api('/api/jeu/prix', {id: j.id}); }
+  catch(e){ data = null; }
+  // une autre fiche a été choisie depuis, ou le formulaire s'est fermé
+  if(jeton !== AC.jetonPrix || $('f_base') !== cible) return false;
+  cible.classList.remove('cherche');
+  if(data && data.etat === 'ok' && data.prix !== null && data.prix !== undefined){
+    const txt = numText(data.prix);
+    const change = cible.value !== txt;
+    cible.value = txt;
+    cible.dataset.auto = '1';
+
+    /* Le prix payé, proposé au moment où l'achat a lieu : à l'ajout d'un
+       jeu, ou quand on sort de la wishlist un jeu qu'on vient d'acheter.
+       Jamais sur un vieux jeu qu'on retouche — ce que Steam demande
+       aujourd'hui n'a rien à voir avec ce qu'on a déboursé il y a trois
+       ans, et une somme fausse est pire qu'une case vide.
+
+       C'est « actuel » et non « prix » : promotion comprise, c'est ce
+       qu'on paie réellement. Et posé par acRemplit(), donc jamais en
+       force, même quand on vient de choisir une jaquette explicitement —
+       un montant saisi à la main ne se devine pas. */
+    if((!EDIT || estWishlist(EDIT)) && data.actuel !== null && data.actuel !== undefined){
+      acRemplit($('f_paid'), numText(data.actuel));
+    }
+    return change;
+  }
+  // « inconnu » n'est pas une erreur : le jeu n'est pas sur Steam, la case
+  // reste vide et se remplit à la main. Pas de toast pour si peu.
+  return false;
+}
+
+/* Aligner la date et le prix sur la fiche dont on vient de choisir la
+   jaquette. Deux écarts avec la liste déroulante du nom, assumés :
+
+     - on écrase même une valeur saisie à la main. Cliquer une jaquette
+       précise est un geste délibéré, et surtout, en modification, les champs
+       viennent du classeur : aucun ne porte data-auto, donc la règle
+       habituelle ne laisserait jamais rien changer.
+     - une valeur absente chez IGDB ne vide rien. Un jeu hors Steam n'a pas
+       de prix à donner : ce n'est pas une raison pour effacer le tien.
+
+   Le toast est là parce qu'on vient d'écraser une saisie : il faut le voir. */
+async function alignePick(p){
+  const champ = $('f_release');
+  const change = [];
+  if(champ && p.iso && champ.value !== p.iso){
+    champ.value = p.iso;
+    champ.dataset.auto = '1';
+    change.push('date');
+  }
+  if(await acPrix(p, true)) change.push('prix');
+  if(!change.length) return;
+  toast(change.length === 2
+    ? 'Date et prix alignés sur la fiche choisie'
+    : (change[0] === 'date' ? 'Date de sortie alignée sur la fiche choisie'
+                            : 'Prix aligné sur la fiche choisie'));
+}
+
+/* ---------- changer la jaquette retenue ---------- */
+async function changerPick(){
+  const nom = clean($('f_name').value);
+  if(!nom) return;
+  const b = $('f_pick');
+  b.classList.add('busy');
+  let data;
+  // force : le fichier existe peut-être déjà, on veut quand même la liste
+  try{ data = await api('/api/jaquette', {nom: nom, sortie: $('f_release').value || '', force: true}); }
+  catch(e){ data = null; }
+  b.classList.remove('busy');
+  if(!data) return;
+  if(data.etat === 'choix'){
+    openJaq(nom, data.propositions || [], p=>{
+      /* la fiche choisie remplace l'ancienne en entier, id et date compris :
+         « Resident Evil 4 » de 2005 et celui de 2023 ne partagent que le
+         titre, et c'est justement la jaquette qui les distingue */
+      posePick({nom: nom, titre: p.titre, date: p.date, nature: p.nature,
+                image: p.image, apercu: p.apercu, iso: p.iso,
+                id: p.id, lien: p.lien});
+      alignePick(p);
+    });
+  }
+  else if(data.etat === 'introuvable'){ toast(`Aucune jaquette trouvée pour « ${nom} »`); }
+  else if(data.etat === 'injoignable'){ toast('IGDB injoignable : ' + (data.raison || 'pas de réponse'), true); }
+}
+
+function brancherAuto(){
+  const champ = $('f_name');
+  if(!champ) return;
+  champ.addEventListener('input', acFrappe);
+  champ.addEventListener('keydown', acTouche);
+  champ.addEventListener('blur', ()=> setTimeout(acFerme, 0));
+  const pick = $('f_pick');
+  if(pick) pick.onclick = changerPick;
+  // une valeur retapée à la main n'est plus « remplie automatiquement » :
+  // la fiche suivante ne doit pas passer par-dessus
+  ['f_release','f_base'].forEach(id=>{
+    const ch = $(id);
+    if(ch) ch.addEventListener('input', ()=>{ ch.dataset.auto = ''; });
+  });
+}
+
+/* =======================================================================
+   Bilan en image
+   L'onglet affiché est redessiné sur un canvas de 1080 px de large, prêt
+   à partager. Rien ne sort du navigateur : l'image est composée ici, à
+   partir des jeux déjà chargés et des jaquettes déjà servies par Flask
+   (même origine, donc le canvas n'est pas « teinté » et toBlob marche).
+   ======================================================================= */
+const BIL = {
+  L: 1080, M: 72,
+  texte:'#F2EDE4', doux:'#A79CB4', or:'#E5C46B', bleu:'#8FB8E8',
+  trait:'rgba(242,237,228,.13)',
+  display:'"Bricolage Grotesque",system-ui,sans-serif',
+  corps:'"Karla",system-ui,sans-serif',
+  mono:'"Azeret Mono",ui-monospace,monospace',
+};
+BIL.W = BIL.L - BIL.M*2;
+
+/* Le reste du site écrit "300 h 15" (hoursFmt) : lisible dans une phrase.
+   Le bilan, plus dense, resserre en "300h15" — pas d'espace autour du h. */
+function bilHeures(h){
+  if(h===null||h===undefined) return '—';
+  const H = Math.floor(h), Min = Math.round((h-H)*60);
+  return Min ? `${H}h${String(Min).padStart(2,'0')}` : `${H}h`;
+}
+
+/* --- petits outils de dessin --- */
+function bilEcrire(c, t, x, y, o){
+  c.save();
+  c.font = o.f;
+  if('letterSpacing' in c) c.letterSpacing = o.ls || '0px';
+  c.fillStyle = o.c || BIL.texte;
+  c.textAlign = o.a || 'left';
+  c.textBaseline = o.b || 'alphabetic';
+  c.fillText(t, x, y);
+  c.restore();
+}
+/* toujours mesurer via save/restore : sinon un letterSpacing posé pour un
+   texte reste actif et fausse toutes les mesures suivantes */
+function bilLargeur(c, t, f, ls){
+  c.save();
+  c.font = f;
+  if('letterSpacing' in c) c.letterSpacing = ls || '0px';
+  const w = c.measureText(t).width;
+  c.restore();
+  return w;
+}
+function bilArrondi(c, x, y, w, h, r){
+  r = Math.max(0, Math.min(r, w/2, h/2));
+  c.beginPath();
+  c.moveTo(x+r, y);
+  c.arcTo(x+w, y,   x+w, y+h, r);
+  c.arcTo(x+w, y+h, x,   y+h, r);
+  c.arcTo(x,   y+h, x,   y,   r);
+  c.arcTo(x,   y,   x+w, y,   r);
+  c.closePath();
+}
+function bilTrait(c, x, y, w){
+  c.fillStyle = BIL.trait;
+  c.fillRect(x, y, w, 1);
+}
+function bilFilet(c, y){ bilTrait(c, BIL.M, y, BIL.W); }
+/* La proportion des jaquettes est réglée une seule fois, dans CONFIG :
+   « 3 / 4 » vaut 0,75, donc une jaquette large de 348 px fait 464 px de haut. */
+/* noteColor() rend « rgb(r,g,b) » quand il y a une note, et le gris « #6E6480»
+   quand il n'y en a pas : les deux formes doivent se lire, sinon un jeu sans
+   note repeint sa case d'initiales avec une couleur invalide. */
+function bilRVB(couleur){
+  const t = String(couleur).trim();
+  if(t[0] === '#' && t.length >= 7) return hex2rgb(t);
+  const m = t.match(/\d+/g);
+  return (m && m.length >= 3) ? m.slice(0,3).map(Number) : [110,100,128];
+}
+/* Le métal d'une médaille, c'est la bande claire qui traverse : un aplat
+   doré ne se lit que comme du jaune. Mêmes arrêts que le CSS de la fiche. */
+const BIL_METAL = {
+  or:     [[0,'#A9761E'],[.20,'#E7C46B'],[.38,'#FFF6D0'],[.52,'#E9C871'],[.72,'#B8862A'],[1,'#F6E2A4']],
+  argent: [[0,'#6E7683'],[.20,'#C8CFD9'],[.38,'#FFFFFF'],[.52,'#CBD2DB'],[.72,'#8A929F'],[1,'#E8EDF3']],
+  bronze: [[0,'#7A421F'],[.20,'#C87F4E'],[.38,'#F5C79B'],[.52,'#C9814F'],[.72,'#8E5228'],[1,'#E3A778']],
+};
+function bilMedaille(c, nom, x, y, w, h){
+  const arrets = BIL_METAL[nom];
+  if(!arrets) return null;
+  const d = c.createLinearGradient(x, y, x + Math.max(40, w), y + h);
+  arrets.forEach(([p, col])=> d.addColorStop(p, col));
+  return d;
+}
+function bilRatio(){
+  const m = String(CONFIG.coverRatio || '').match(/([\d.]+)\s*\/\s*([\d.]+)/);
+  const r = m ? (+m[1]) / (+m[2]) : 0;
+  return r > 0 ? r : 3/4;
+}
+/* Découpe un titre sur au plus maxLignes, en abrégeant la dernière. */
+function bilCouper(c, t, largeur, maxLignes, f, ls){
+  c.save();
+  c.font = f;
+  if('letterSpacing' in c) c.letterSpacing = ls || '0px';
+  const mots = String(t).split(/\s+/).filter(Boolean);
+  const lignes = [];
+  let cur = '', i = 0;
+  for(; i < mots.length; i++){
+    const essai = cur ? cur + ' ' + mots[i] : mots[i];
+    if(!cur || c.measureText(essai).width <= largeur){ cur = essai; continue; }
+    lignes.push(cur); cur = mots[i];
+    if(lignes.length >= maxLignes){ cur = ''; break; }
+  }
+  if(cur) lignes.push(cur);
+  if(lignes.length){
+    const trop = i < mots.length;
+    let d = lignes[lignes.length-1];
+    if(trop || c.measureText(d).width > largeur){
+      while(d.length > 1 && c.measureText(d + '…').width > largeur) d = d.slice(0, -1);
+      lignes[lignes.length-1] = d.replace(/\s+$/, '') + '…';
+    }
+  }
+  c.restore();
+  return lignes.length ? lignes : [''];
+}
+
+/* Comme bilCouper, mais sans limite : toutes les lignes sont rendues.
+   C'est ce qu'il faut pour un avis, dont on ne veut couper aucun mot. */
+function bilLignes(c, t, largeur, f, ls){
+  c.save();
+  c.font = f;
+  if('letterSpacing' in c) c.letterSpacing = ls || '0px';
+  const mots = String(t).split(/\s+/).filter(Boolean);
+  const out = [];
+  let cur = '';
+  mots.forEach(m=>{
+    const essai = cur ? cur + ' ' + m : m;
+    if(!cur || c.measureText(essai).width <= largeur){ cur = essai; return; }
+    out.push(cur); cur = m;
+  });
+  if(cur) out.push(cur);
+  c.restore();
+  return out.length ? out : [''];
+}
+
+/* --- ressources --- */
+/* Canvas ne sait dessiner qu'avec les polices déjà chargées : sans ça, la
+   première image sort en Arial. On les demande explicitement. */
+async function bilPolices(){
+  if(!document.fonts || !document.fonts.load) return;
+  const l = [
+    `800 128px ${BIL.display}`, `700 30px ${BIL.display}`, `500 17px ${BIL.display}`,
+    `400 27px ${BIL.corps}`, `400 22px ${BIL.corps}`, `400 18px ${BIL.corps}`,
+    `500 44px ${BIL.mono}`, `700 26px ${BIL.mono}`, `500 16px ${BIL.mono}`,
+  ];
+  try{ await Promise.all(l.map(f => document.fonts.load(f, 'AÉ0123456789'))); }catch(e){}
+  try{ await document.fonts.ready; }catch(e){}
+}
+/* coverURL() porte déjà le paramètre ?v= de cache-buster une fois qu'une
+   jaquette a été récupérée automatiquement : le bilan en profite tel quel. */
+function bilCover(nom){
+  return new Promise(res=>{
+    const url = coverURL(nom);
+    if(!url) return res(null);
+    const im = new Image();
+    let fini = false;
+    const stop = v => { if(!fini){ fini = true; res(v); } };
+    im.onload  = ()=> stop(im);
+    im.onerror = ()=> stop(null);
+    // une jaquette qui ne répond pas ne doit pas bloquer l'image entière
+    setTimeout(()=> stop(null), 8000);
+    im.src = url;
+  });
+}
+/* Jaquette recadrée, ou les initiales du jeu comme sur le mur. */
+function bilJaquette(c, g, im, x, y, w, h){
+  const r = 10;
+  c.save();
+  bilArrondi(c, x, y, w, h, r);
+  c.clip();
+  if(im && im.naturalWidth){
+    const s = Math.max(w/im.naturalWidth, h/im.naturalHeight);
+    const dw = im.naturalWidth*s, dh = im.naturalHeight*s;
+    c.drawImage(im, x + (w-dw)/2, y + (h-dh)/2, dw, dh);
+  } else {
+    const [R,G,B] = bilRVB(noteColor(g.rating));
+    const m = (a,b) => Math.round(a*.16 + b*.84);   // même mélange que .cov.ph
+    c.fillStyle = `rgb(${m(R,38)},${m(G,31)},${m(B,51)})`;
+    c.fillRect(x, y, w, h);
+    bilEcrire(c, initials(g.name), x + w/2, y + h/2, {
+      f:`800 ${Math.round(w*.34)}px ${BIL.display}`, c:noteColor(g.rating),
+      a:'center', b:'middle', ls:'-.04em' });
+  }
+  c.restore();
+  c.save();
+  c.strokeStyle = 'rgba(242,237,228,.14)';
+  c.lineWidth = 1;
+  bilArrondi(c, x+.5, y+.5, w-1, h-1, r);
+  c.stroke();
+  c.restore();
+}
+function bilFond(o, H){
+  const L = BIL.L;
+  const d = o.createLinearGradient(0, 0, 0, H);
+  d.addColorStop(0, '#241D31');
+  d.addColorStop(.5, '#17131F');
+  d.addColorStop(1, '#100D17');
+  o.fillStyle = d;
+  o.fillRect(0, 0, L, H);
+  const h = o.createRadialGradient(L*.84, -40, 0, L*.84, -40, 660);
+  h.addColorStop(0, 'rgba(229,196,107,.16)');
+  h.addColorStop(1, 'rgba(229,196,107,0)');
+  o.fillStyle = h;
+  o.fillRect(0, 0, L, 700);
+  o.fillStyle = BIL.or;
+  o.fillRect(0, 0, L, 7);
+}
+
+/* --- composition --- */
+/* On dessine sur un brouillon transparent en suivant un curseur vertical,
+   puis on recopie le tout sur un canvas exactement à la bonne hauteur.
+   C'est ce qui permet d'enchaîner les sections sans calculer la hauteur
+   finale à l'avance : une année sans jaquettes sort simplement plus courte. */
+async function bilanCanvas(){
+  await bilPolices();
+  const { L, M, W } = BIL;
+
+  // la wishlist est hors sujet dans un bilan : ces jeux-là ne sont ni faits,
+  // ni achetés — ils ne comptent donc dans aucun des chiffres ci-dessous
+  const tout    = current().filter(x => !estWishlist(x));
+  const jeux    = tout.filter(x => !estEnCours(x));
+  const enCours = tout.length - jeux.length;
+  const notes   = jeux.filter(x => x.rating !== null);
+  const avg  = notes.length ? notes.reduce((s,x)=>s+x.rating, 0)/notes.length : null;
+  const base = tout.reduce((s,x)=>s+(x.base||0), 0);
+  const paid = tout.reduce((s,x)=>s+(x.paid||0), 0);
+  const hrs  = jeux.reduce((s,x)=>s+(x.hours||0), 0);
+
+  // le top 10 complet : les 5 premiers en grand avec jaquette, les 5 suivants
+  // en simple liste titre + note juste en dessous
+  const classement = notes.slice().sort((a,b)=>b.rating-a.rating);
+  const top = classement.slice(0, 5);
+  const suivants = classement.slice(5, 10);
+  const jaquettes = await Promise.all(top.map(x => bilCover(x.name)));
+
+  const brouillon = document.createElement('canvas');
+  brouillon.width = L; brouillon.height = 2600;
+  const c = brouillon.getContext('2d');
+  let y = 104;
+
+  /* --- en-tête --- */
+  const src = source();
+  const entete = src && src.nom ? `Journal de ${src.nom}` : 'Journal de jeu';
+  bilEcrire(c, entete, M, y, {f:`800 19px ${BIL.display}`, c:BIL.or, ls:'-.02em'});
+  y += 30;
+
+  const titre = S.bucket === 'all' ? 'Tout' : String(S.bucket);
+  let ts = 130;
+  while(ts > 52 && bilLargeur(c, titre, `800 ${ts}px ${BIL.display}`, '-.035em') > W) ts -= 4;
+  y += Math.round(ts * .78);
+  bilEcrire(c, titre, M, y, {f:`800 ${ts}px ${BIL.display}`, ls:'-.035em'});
+  /* les jambages du chiffre descendent sous la ligne de base : sans cette
+     marge, le sous-titre vient se coller au titre */
+  y += 54;
+
+  const bandeau = ["Résumé gaming"];
+  bilEcrire(c, bandeau.join('   ·   '), M, y, {f:`400 27px ${BIL.corps}`, c:BIL.doux});
+  y += 42;
+  bilFilet(c, y); y += 46;
+
+  /* --- les mieux notés --- */
+  if(top.length){
+    bilEcrire(c, 'LES MIEUX NOTÉS', M, y, {f:`500 16px ${BIL.mono}`, c:BIL.doux, ls:'.22em'});
+    y += 32;
+    const n = top.length, ecart = 18;
+    const cw = Math.min(200, Math.floor((W - ecart*(n-1)) / n));
+    const ch = Math.round(cw * 4/3);
+    /* alignées à gauche, sur la même colonne que les titres, les filets et
+       les chiffres : une année à deux jeux laisse du vide à droite plutôt
+       qu'un bloc centré qui ne s'accroche à rien */
+    const x0 = M;
+    top.forEach((g,i)=>{
+      const x = x0 + i*(cw+ecart);
+      bilJaquette(c, g, jaquettes[i], x, y, cw, ch);
+      /* le rang est l'information que porte cette section : il est sur la
+         jaquette, pas relégué dans la légende */
+      const p = 30;
+      c.fillStyle = 'rgba(10,8,14,.86)';
+      bilArrondi(c, x+9, y+9, p, p, 9); c.fill();
+      c.strokeStyle = 'rgba(229,196,107,.5)'; c.lineWidth = 1;
+      bilArrondi(c, x+9.5, y+9.5, p-1, p-1, 9); c.stroke();
+      bilEcrire(c, String(i+1), x+9+p/2, y+9+p/2+1,
+        {f:`700 16px ${BIL.mono}`, c:BIL.or, a:'center', b:'middle'});
+    });
+    const yb = y + ch + 30;
+    top.forEach((g,i)=>{
+      const x = x0 + i*(cw+ecart);
+      bilEcrire(c, fr(g.rating,1), x, yb, {f:`700 26px ${BIL.mono}`, c:noteColor(g.rating), ls:'-.03em'});
+      bilCouper(c, g.name, cw, 2, `500 17px ${BIL.display}`)
+        .forEach((l,k)=> bilEcrire(c, l, x, yb + 28 + k*22, {f:`500 17px ${BIL.display}`}));
+    });
+    y = yb + 28 + 2*22 + 12;
+
+    /* rangs 6 à 10 : plus de jaquette, juste le nom et la note, une ligne
+       chacun — le podium a déjà montré la couverture, pas la peine de
+       répéter cinq fois le même traitement pour des jeux moins en avant */
+    if(suivants.length){
+      y += 14;
+      suivants.forEach((g,i)=>{
+        const rang = i + 6;
+        bilEcrire(c, String(rang), M, y, {f:`500 15px ${BIL.mono}`, c:BIL.doux});
+        const note = fr(g.rating,1);
+        const noteW = bilLargeur(c, note, `700 17px ${BIL.mono}`, '-.02em');
+        const titreX = M + 36;
+        const dispo = W - 36 - noteW - 16;
+        const ligne = bilCouper(c, g.name, dispo, 1, `500 16px ${BIL.display}`)[0];
+        bilEcrire(c, ligne, titreX, y, {f:`500 16px ${BIL.display}`});
+        bilEcrire(c, note, M+W, y, {f:`700 17px ${BIL.mono}`, c:noteColor(g.rating), a:'right', ls:'-.02em'});
+        y += 31;
+      });
+      y += 15;
+    }
+    bilFilet(c, y); y += 46;
+  }
+
+  /* --- les chiffres, les mêmes qu'en haut de la page --- */
+  const cellules = [
+    ['Jeux terminés', String(jeux.length), enCours ? `+ ${enCours} en cours` : ''],
+    ['Note moyenne', avg !== null ? fr(avg,2) : '—',
+      notes.length ? `sur ${notes.length} noté${notes.length>1?'s':''}` : ''],
+    ['Temps de jeu', hrs ? bilHeures(hrs) : '—', hrs ? `≈ ${Math.round(hrs/24)} jours` : ''],
+    ['Payé', paid ? EUR.format(paid) : '—', base ? `sur ${EUR.format(base)} de prix fort` : ''],
+  ];
+  const cl = W/4;
+  cellules.forEach(([u,b,i2],k)=>{
+    const x = M + k*cl;
+    bilEcrire(c, u.toUpperCase(), x, y, {f:`500 14px ${BIL.mono}`, c:BIL.doux, ls:'.18em'});
+    let f = 42;
+    while(f > 22 && bilLargeur(c, b, `500 ${f}px ${BIL.mono}`, '-.03em') > cl - 18) f -= 2;
+    bilEcrire(c, b, x, y + 52, {f:`500 ${f}px ${BIL.mono}`, ls:'-.03em'});
+    if(i2) bilEcrire(c, i2, x, y + 80, {f:`400 17px ${BIL.corps}`, c:BIL.doux});
+  });
+  y += 104;
+  bilFilet(c, y); y += 46;
+
+  /* --- répartition des notes, le même histogramme que sur la page ---
+     Mêmes règles de découpage que renderDist() : un pas de 0,2 sur une
+     plage courte, 0,5 sinon, toujours un multiple exact du dixième pour
+     que les barres ne sautent pas juste à cause de l'arrondi. */
+  if(notes.length >= 3){
+    const valeurs = notes.map(x=>x.rating).sort((a,b)=>a-b);
+    let lo = Math.floor(valeurs[0]), hi = Math.ceil(valeurs[valeurs.length-1]);
+    if(hi - lo < 3){ hi = Math.min(10, lo + 3); lo = Math.max(0, hi - 3); }
+    const span = hi - lo;
+    const STEP = span <= 4 ? 0.2 : 0.5;
+    const nBins = Math.round(span / STEP);
+    const bins = new Array(nBins).fill(0);
+    valeurs.forEach(r=>{
+      const i = Math.floor((r - lo) / STEP);
+      bins[Math.max(0, Math.min(nBins-1, i))]++;
+    });
+    const maxBin = Math.max(...bins) || 1;
+    const mid = valeurs.length % 2
+      ? valeurs[(valeurs.length-1)/2]
+      : (valeurs[valeurs.length/2 - 1] + valeurs[valeurs.length/2]) / 2;
+    const pos = v => ((v - lo) / span) * W;
+
+    bilEcrire(c, 'RÉPARTITION DES NOTES', M, y, {f:`500 16px ${BIL.mono}`, c:BIL.doux, ls:'.22em'});
+    bilEcrire(c, `moyenne ${fr(avg,2)} · médiane ${fr(mid,2)}`, M+W, y,
+      {f:`400 16px ${BIL.corps}`, c:BIL.doux, a:'right'});
+    y += 34;
+
+    const HB = 168, sol = y + HB;
+    const gap = nBins > 26 ? 3 : (nBins > 14 ? 5 : 8);
+    const bw = Math.max(4, (W - gap*(nBins-1)) / nBins);
+    bins.forEach((cnt,i)=>{
+      if(!cnt) return;
+      const a = lo + i*STEP;
+      const bh = Math.max(5, (cnt/maxBin)*HB);
+      const bx = M + i*(bw+gap);
+      c.fillStyle = noteColor(a + STEP/2);
+      bilArrondi(c, bx, sol-bh, bw, bh, Math.min(4, bw/2));
+      c.fill();
+    });
+    if(avg !== null){
+      const xa = M + pos(avg);
+      c.save();
+      c.strokeStyle = 'rgba(229,196,107,.55)';
+      c.lineWidth = 1;
+      c.setLineDash([5,5]);
+      c.beginPath(); c.moveTo(Math.round(xa)+.5, y-4); c.lineTo(Math.round(xa)+.5, sol); c.stroke();
+      c.restore();
+      const flip = xa > W - 90;
+      bilEcrire(c, `moy. ${fr(avg,2)}`, xa + (flip ? -8 : 8), y+10,
+        {f:`500 15px ${BIL.mono}`, c:BIL.or, a: flip ? 'right' : 'left'});
+    }
+
+    y = sol + 1;
+    c.fillStyle = 'rgba(242,237,228,.22)';
+    c.fillRect(M, y, W, 1);
+    y += 24;
+    const stepTick = span <= 8 ? 1 : 2;
+    const ticks = [];
+    for(let t = lo; t <= hi; t += stepTick) ticks.push(t);
+    if(ticks[ticks.length-1] !== hi) ticks.push(hi);
+    ticks.forEach(t=>{
+      const x = M + pos(t);
+      const a = (x < M + 14) ? 'left' : (x > M + W - 14 ? 'right' : 'center');
+      bilEcrire(c, String(t), x, y, {f:`400 14px ${BIL.mono}`, c:BIL.doux, a});
+    });
+    y += 40;
+    bilFilet(c, y); y += 46;
+  }
+
+  /* --- ce qui ressort de l'année --- */
+  const faits = [];
+  const long = jeux.filter(x=>x.hours).sort((a,b)=>b.hours-a.hours)[0];
+  if(long) faits.push(['Le plus long', `${long.name} - ${bilHeures(long.hours)}`]);
+  // le jeu le plus vieux joué cette période : celui qui vient le plus du
+  // backlog, à l'opposé des sorties de l'année qui composent le reste
+  const ancien = jeux.filter(x=>x.release).sort((a,b)=>a.release.localeCompare(b.release))[0];
+  if(ancien) faits.push(['Le plus ancien', `${ancien.name} - sorti en ${yearOf(ancien.release)}`]);
+  const bas = notes.slice().sort((a,b)=>a.rating-b.rating)[0];
+  if(bas && notes.length > 3) faits.push(['La note la plus basse', `${bas.name} - ${fr(bas.rating,1)}`]);
+
+  if(faits.length){
+    const cg = 300;
+    faits.forEach(([u,v])=>{
+      bilEcrire(c, u.toUpperCase(), M, y, {f:`500 14px ${BIL.mono}`, c:BIL.doux, ls:'.18em'});
+      bilEcrire(c, bilCouper(c, v, W - cg, 1, `400 22px ${BIL.corps}`)[0],
+        M + cg, y, {f:`400 22px ${BIL.corps}`});
+      y += 42;
+    });
+    y += 6;
+    bilFilet(c, y); y += 46;
+  }
+
+  /* --- pied --- */
+  bilEcrire(c, 'ABYSS · JEUX VIDÉOS', M, y, {f:`500 15px ${BIL.mono}`, c:BIL.or, ls:'.22em'});
+  bilEcrire(c, new Date().toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}),
+    M+W, y, {f:`400 18px ${BIL.corps}`, c:BIL.doux, a:'right'});
+  y += 56;
+
+  const H = Math.min(Math.round(y), brouillon.height);
+  const sortie = document.createElement('canvas');
+  sortie.width = L; sortie.height = H;
+  const o = sortie.getContext('2d');
+  bilFond(o, H);
+  o.drawImage(brouillon, 0, 0);
+  return sortie;
+}
+
+/* =======================================================================
+   La carte d'un seul jeu — même moteur, une seule fiche.
+   C'est l'image qu'on envoie à quelqu'un pour dire « joue à ça » sans lui
+   faire ouvrir le journal : jaquette, note, place au classement, et ce
+   qu'on en a pensé.
+   ======================================================================= */
+async function ficheCanvas(g){
+  await bilPolices();
+  const { L, M, W } = BIL;
+  const im = await bilCover(g.name);
+  const statut = statutDe(g), wish = estWishlist(g);
+  const enCours = !!statut;   // en cours ou convoité : pas de note à afficher
+
+  const brouillon = document.createElement('canvas');
+  brouillon.width = L; brouillon.height = 2600;
+  const c = brouillon.getContext('2d');
+  let y = 104;
+
+  /* --- en-tête ---
+     La période (mois/année) figure déjà dans les faits plus bas, sous
+     « Terminé » : pas besoin de la répéter ici. */
+  const src = source();
+  bilEcrire(c, src && src.nom ? `Journal de ${src.nom}` : 'Journal de jeu', M, y,
+    {f:`800 19px ${BIL.display}`, c:BIL.or, ls:'-.02em'});
+  y += 30;
+
+  /* --- jaquette à gauche, identité à droite --- */
+  const cw = 348, ch = Math.round(cw / bilRatio());
+  bilJaquette(c, g, im, M, y, cw, ch);
+
+  const rx = M + cw + 44, rw = W - cw - 44;
+  let ry = y;
+
+  if(enCours){
+    const t = statut.toUpperCase();
+    const teinte = wish ? BIL.bleu : BIL.or;
+    const tw = bilLargeur(c, t, `500 17px ${BIL.mono}`, '.2em') + 42;
+    c.save();
+    c.strokeStyle = wish ? 'rgba(143,184,232,.5)' : 'rgba(229,196,107,.5)'; c.lineWidth = 1;
+    bilArrondi(c, rx+.5, ry+.5, tw, 42, 21); c.stroke();
+    c.restore();
+    bilEcrire(c, t, rx+21, ry+27, {f:`500 17px ${BIL.mono}`, c:teinte, ls:'.2em'});
+    ry += 72;
+  } else {
+    bilEcrire(c, g.rating !== null ? fr(g.rating,1) : '—', rx, ry+62,
+      {f:`700 80px ${BIL.mono}`, c:noteColor(g.rating), ls:'-.05em'});
+    ry += 88;
+  }
+
+  /* le titre rétrécit jusqu'à tenir sur trois lignes : « Nier Automata »
+     et « The Legend of Zelda: Tears of the Kingdom » doivent tous les deux
+     tenir dans la même colonne */
+  const r = rangJeu(g), med = medailleDe(r);
+  const fTitre = t => `800 ${t}px ${BIL.display}`;
+  let ts = 44, lignes = [];
+  while(true){
+    lignes = bilLignes(c, g.name, rw, fTitre(ts), '-.03em');
+    if(lignes.length <= 3 || ts <= 24) break;
+    ts -= 3;
+  }
+  lignes.slice(0, 3).forEach(l=>{
+    ry += Math.round(ts * 1.04);
+    /* le dégradé est refait pour chaque ligne, sur sa largeur à elle :
+       sinon un titre court n'en montrerait que le premier centimètre */
+    const w = bilLargeur(c, l, fTitre(ts), '-.03em');
+    bilEcrire(c, l, rx, ry, {f:fTitre(ts), ls:'-.03em',
+      c: med ? bilMedaille(c, med, rx, ry - ts*.78, w, ts*.86) : BIL.texte});
+  });
+
+  if(r){
+    ry += 30;
+    const t = `${r.rang}${r.rang === 1 ? 'er' : 'e'} sur ${r.total} ${r.ou}`;
+    const w = bilLargeur(c, t, `500 15px ${BIL.mono}`, '.1em');
+    bilEcrire(c, t, rx, ry, {f:`500 15px ${BIL.mono}`, ls:'.1em',
+      c: med ? bilMedaille(c, med, rx, ry - 13, w, 15) : BIL.doux});
+  }
+
+  const faits = [
+    ['Sortie', dateFmt(g.release)],
+    enCours ? null : ['Terminé', g.month ? `${MONTHS[g.month-1]} ${g.year || ''}`.trim()
+                                         : String(g.year || g.bucket || '—')],
+    (!enCours && g.hours) ? ['Temps de jeu', bilHeures(g.hours)] : null,
+    g.base ? ['Prix du jeu', EUR.format(g.base)] : null,
+  ].filter(Boolean);
+
+  if(faits.length){
+    ry += 34;
+    bilTrait(c, rx, ry, rw);
+    ry += 12;
+    faits.forEach(([u,v])=>{
+      ry += 22;
+      bilEcrire(c, u.toUpperCase(), rx, ry, {f:`500 13px ${BIL.mono}`, c:BIL.doux, ls:'.16em'});
+      bilEcrire(c, bilCouper(c, v, rw - 190, 1, `400 20px ${BIL.corps}`)[0], rx+rw, ry,
+        {f:`400 20px ${BIL.corps}`, a:'right'});
+      ry += 14;
+    });
+  }
+
+  /* la colonne la plus haute décide où reprend la page : une fiche sans
+     prix est plus courte que sa jaquette, une fiche complète la dépasse */
+  y = Math.max(y + ch, ry) + 48;
+
+  /* --- ce que j'en ai pensé --- */
+  const points = enCours ? [] : (g.review || []).filter(Boolean);
+  if(points.length){
+    bilFilet(c, y); y += 46;
+    bilEcrire(c, 'AVIS', M, y, {f:`500 16px ${BIL.mono}`, c:BIL.doux, ls:'.22em'});
+    y += 42;
+    const limite = brouillon.height - 240;
+    for(const p of points){
+      if(y > limite) break;                      // avis fleuve : on s'arrête avant le bas
+      const t = String(p).trim();
+      const plus = t.startsWith('+'), moins = t.startsWith('-');
+      const signe = plus ? '+' : (moins ? '–' : '·');
+      // le point entier prend la couleur, pas seulement son signe
+      const coul  = plus ? '#9BE3BE' : (moins ? '#F0A29C' : null);
+      const texte = (plus || moins) ? t.slice(1).trim() : t;
+      if(!texte) continue;
+      const ls = bilLignes(c, texte, W - 40, `400 23px ${BIL.corps}`);
+      bilEcrire(c, signe, M+3, y, {f:`700 23px ${BIL.mono}`, c: coul || BIL.doux});
+      ls.forEach((l,k)=> bilEcrire(c, l, M+40, y + k*33,
+        {f:`400 23px ${BIL.corps}`, c: coul || BIL.texte}));
+      y += ls.length*33 + 14;
+    }
+    y += 4;
+  }
+  bilFilet(c, y); y += 46;
+
+  /* --- pied --- */
+  bilEcrire(c, 'ABYSS · JEUX VIDÉOS', M, y, {f:`500 15px ${BIL.mono}`, c:BIL.or, ls:'.22em'});
+  bilEcrire(c, new Date().toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}),
+    M+W, y, {f:`400 18px ${BIL.corps}`, c:BIL.doux, a:'right'});
+  y += 56;
+
+  const H = Math.min(Math.round(y), brouillon.height);
+  const sortie = document.createElement('canvas');
+  sortie.width = L; sortie.height = H;
+  const o = sortie.getContext('2d');
+  bilFond(o, H);
+  o.drawImage(brouillon, 0, 0);
+  return sortie;
+}
+
+/* --- la fenêtre --- */
+/* Une seule fenêtre pour les deux images : le bilan d'un onglet et la carte
+   d'un jeu. Elle ne sait rien de ce qu'elle montre, on lui passe le titre,
+   le nom du fichier et la fonction qui compose le canvas. */
+let BILAN_BLOB = null, BILAN_URL = null, BILAN_JETON = 0;
+
+function libererBilan(){
+  if(BILAN_URL){ URL.revokeObjectURL(BILAN_URL); BILAN_URL = null; }
+  BILAN_BLOB = null;
+}
+function ouvrirBilan(){
+  if(!current().length){ toast("Cet onglet est vide : rien à mettre en image.", true); return; }
+  const nom = S.bucket === 'all' ? 'complet' : S.bucket;
+  ouvrirImage({
+    titre: `Bilan ${nom}`,
+    fichier: 'bilan-' + (slug(nom) || 'journal') + '.png',
+    partage: 'Bilan ' + nom,
+    composer: bilanCanvas,
+  });
+}
+function partagerJeu(g){
+  if(!g) return;
+  ouvrirImage({
+    titre: `« ${g.name} » en image`,
+    fichier: 'jeu-' + (slug(g.name) || 'fiche') + '.png',
+    partage: g.name,
+    composer: ()=> ficheCanvas(g),
+  });
+}
+function ouvrirImage(opt){
+  closeMenu();
+  const host = $('bilan');
+  host.innerHTML = `<div class="sheet bilan-sheet" role="dialog" aria-modal="true" aria-label="${esc(opt.titre)}">
+    <div class="sheet-tools">
+      <span class="grp"><b class="fhead">${esc(opt.titre)}</b></span>
+      <span class="grp"><button class="sbtn bilan-x" aria-label="Fermer">×</button></span>
+    </div>
+    <div class="bilan-in">
+      <div class="bilan-apercu" id="bilanApercu"><span class="bilan-attente">Composition de l'image...</span></div>
+      <div class="bilan-actions">
+        <button class="ghost" id="bilanFermer">Fermer</button>
+        <button class="ghost" id="bilanPartager" hidden>Partager</button>
+        <button class="cta auto" id="bilanTelecharger" disabled>Télécharger</button>
+      </div>
+    </div>
+  </div>`;
+  host.hidden = false;
+  verrouFond();
+  host.querySelector('.bilan-x').onclick = fermerBilan;
+  $('bilanFermer').onclick = fermerBilan;
+  host.querySelector('.bilan-x').focus();
+  composerImage(opt);
+}
+async function composerImage(opt){
+  /* le jeton dit si la fenêtre a été fermée pendant la composition :
+     dans ce cas on jette le résultat au lieu d'écrire dans le vide */
+  const jeton = ++BILAN_JETON;
+  let toile;
+  try{
+    toile = await opt.composer();
+  }catch(e){
+    if(jeton !== BILAN_JETON) return;
+    const a = $('bilanApercu');
+    if(a) a.innerHTML = '<span class="bilan-attente">L\'image n\'a pas pu être composée.</span>';
+    return;
+  }
+  if(jeton !== BILAN_JETON) return;
+  const apercu = $('bilanApercu');
+  if(!apercu) return;
+  apercu.innerHTML = '';
+  apercu.appendChild(toile);
+
+  const fichier = opt.fichier;
+  toile.toBlob(b=>{
+    if(jeton !== BILAN_JETON || !b) return;
+    libererBilan();
+    BILAN_BLOB = b;
+    const dl = $('bilanTelecharger');
+    if(dl){
+      dl.disabled = false;
+      dl.onclick = ()=>{
+        // l'adresse n'est libérée qu'à la fermeture, ou au clic suivant :
+        // la révoquer aussitôt annulerait le téléchargement en cours
+        if(BILAN_URL) URL.revokeObjectURL(BILAN_URL);
+        BILAN_URL = URL.createObjectURL(BILAN_BLOB);
+        const a = document.createElement('a');
+        a.href = BILAN_URL;
+        a.download = fichier;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      };
+    }
+    /* partage direct quand le navigateur sait le faire — surtout utile
+       depuis le téléphone, où « télécharger » finit dans un dossier perdu */
+    try{
+      const f = new File([b], fichier, {type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[f]})){
+        const p = $('bilanPartager');
+        if(p){
+          p.hidden = false;
+          p.onclick = ()=> navigator.share({files:[f], title: opt.partage}).catch(()=>{});
+        }
+      }
+    }catch(e){}
+  }, 'image/png');
+}
+function fermerBilan(){
+  const host = $('bilan');
+  if(host.hidden) return;
+  BILAN_JETON++;
+  host.hidden = true;
+  host.innerHTML = '';
+  libererBilan();
+  verrouFond();
+}
+$('bilan').addEventListener('click', e=>{ if(e.target.id === 'bilan') fermerBilan(); });
+$('bilanBtn').addEventListener('click', ouvrirBilan);
+
+/* =======================================================================
+   Mise à jour depuis IGDB — tout le journal d'un coup
+
+   Le classeur vieillit : une date de sortie saisie de mémoire, un prix noté
+   avant une baisse, une jaquette jamais récupérée. Ce module repasse sur
+   chaque ligne, demande à Flask ce qu'IGDB en dit (/api/jeu/maj), et montre
+   la liste des écarts.
+
+   Trois précautions, parce qu'écrire trois cents lignes d'un coup ne se
+   rattrape pas :
+
+     - rien n'est écrit avant la relecture. L'analyse est un rapport ;
+       l'écriture est un second geste, sur les lignes cochées seulement.
+     - un jeu dont le titre ne correspond pas exactement à une fiche IGDB
+       arrive décoché : « Doom » trouve six jeux, on ne les départage pas
+       à l'aveugle.
+     - les jaquettes se choisissent une par une, comme ailleurs dans la
+       page. Aucune image ne part sur le disque sans un clic.
+
+   L'écriture repasse par l'action « enregistrer » d'Apps Script, celle du
+   formulaire : la ligne est réécrite en entier, avec les valeurs relues
+   ici. C'est le chemin déjà éprouvé — modifier un jeu à la main fait
+   exactement la même chose — plutôt qu'une action neuve qui écrirait deux
+   cellules mais qu'il faudrait déboguer sur trois cents lignes.
+   ======================================================================= */
+const IGD = {
+  jeton: 0,        // incrémenté à l'annulation : les boucles en vol s'arrêtent
+  stop: false,     // « Interrompre » : on s'arrête mais on garde le résultat
+  etape: '',
+  liste: [],       // les jeux à interroger
+  lignes: [],      // un rapport par jeu, une fois l'analyse finie
+  file: [],        // les jaquettes à proposer, une par nom de fichier
+  fi: 0,
+  t0: 0,
+  dernier: null,   // dernière réponse d'écriture : le classeur relu
+  compte: {dates:0, prix:0, jaquettes:0, echecs:0},
+  echecs: [],
+  opts: {dates:true, prix:true, jaquettes:true},
+};
+
+const SURETE = {
+  sure:     'sûr',
+  probable: 'plusieurs fiches',
+  douteuse: 'à vérifier',
+};
+
+function igdbCorps(){ return $('igdbIn'); }
+function igdbEntete(txt){ const b = $('igdbTitre'); if(b) b.textContent = txt; }
+
+function ouvrirIgdb(){
+  closeMenu();
+  if(!CAN_WRITE){ toast("Passe en mode éditeur pour mettre le journal à jour.", true); return; }
+  if(!GAMES.length){ toast("Le journal est vide : rien à mettre à jour.", true); return; }
+  IGD.jeton++;
+  IGD.stop = false;
+  // le script a pu être redéployé depuis la dernière fois : on lui laisse
+  // sa chance à chaque ouverture plutôt qu'une seule fois par onglet
+  IGDB_LOT_OK = true;
+  IGD.lignes = []; IGD.file = []; IGD.fi = 0; IGD.dernier = null;
+  IGD.compte = {dates:0, prix:0, jaquettes:0, echecs:0};
+  IGD.echecs = [];
+  const host = $('igdb');
+  host.innerHTML = `<div class="sheet igdb-sheet" role="dialog" aria-modal="true" aria-label="Mise à jour depuis IGDB">
+    <div class="sheet-tools">
+      <span class="grp"><b class="fhead" id="igdbTitre">Mise à jour depuis IGDB</b></span>
+      <span class="grp"><button class="sbtn igdb-x" aria-label="Fermer">×</button></span>
+    </div>
+    <div class="igdb-in" id="igdbIn"></div>
+  </div>`;
+  host.hidden = false;
+  verrouFond();
+  host.querySelector('.igdb-x').onclick = fermerIgdb;
+  igdbReglages();
+}
+function fermerIgdb(){
+  const host = $('igdb');
+  if(host.hidden) return;
+  IGD.jeton++;                  // ce qui répondra après nous ne sert plus
+  host.hidden = true; host.innerHTML = '';
+  verrouFond();
+  /* des écritures ont pu passer avant l'interruption : le classeur relu
+     qu'elles ont renvoyé est plus à jour que ce que le mur affiche */
+  if(IGD.dernier){
+    const s = source();
+    if(s) cacheStore.set(s.url, IGD.dernier);
+    applyData(IGD.dernier, true);
+    IGD.dernier = null;
+    render();
+  }
+}
+
+/* ---------- étape 1 : ce qu'on veut mettre à jour ---------- */
+/* Toutes les portées possibles : le journal entier, puis chaque onglet qui
+   contient quelque chose. La liste est la même où qu'on ouvre la fenêtre —
+   avant, seul l'onglet affiché était proposé, si bien que mettre à jour
+   « 2024 » obligeait à aller s'y placer d'abord, alors que c'est
+   précisément une opération qu'on lance de loin, depuis n'importe où.
+
+   L'onglet courant reste préselectionné : la commodité d'avant est gardée,
+   elle n'est simplement plus la seule option. */
+function igdbPortees(){
+  const portees = [{nom: 'Tout le journal', bucket: 'all', jeux: GAMES.slice()}];
+  BUCKETS.forEach(b=>{
+    const jeux = GAMES.filter(x => x.bucket === b);
+    if(jeux.length) portees.push({nom: `Onglet « ${b} »`, bucket: b, jeux: jeux});
+  });
+  return portees;
+}
+function igdbReglages(){
+  IGD.etape = 'reglages';
+  igdbEntete('Mise à jour depuis IGDB');
+  const portees = igdbPortees();
+  igdbCorps().innerHTML = `
+    <div class="fgrid">
+      <label class="fld full"><u>Onglets</u>
+        <select id="igdb_portee">${portees.map((p,i)=>
+          `<option value="${i}"${p.bucket === S.bucket ? ' selected' : ''}>${esc(p.nom)} — ${p.jeux.length} jeu${p.jeux.length > 1 ? 'x' : ''}</option>`
+        ).join('')}</select></label>
+      <label class="fld fcheck">
+        <input id="igdb_dates" type="checkbox"${IGD.opts.dates ? ' checked' : ''}>
+        <span>Dates de sortie</span></label>
+      <label class="fld fcheck">
+        <input id="igdb_prix" type="checkbox"${IGD.opts.prix ? ' checked' : ''}>
+        <span>Prix de base</span></label>
+      <label class="fld fcheck">
+        <input id="igdb_jaq" type="checkbox"${IGD.opts.jaquettes ? ' checked' : ''}>
+        <span>Jaquettes manquantes</span></label>
+    </div>
+    <div class="frow"><span class="spacer"></span>
+      <button class="ghost" id="igdb_annuler">Annuler</button>
+      <button class="cta auto" id="igdb_go">Analyser</button></div>`;
+  $('igdb_annuler').onclick = fermerIgdb;
+  $('igdb_go').onclick = ()=>{
+    IGD.opts = {
+      dates: $('igdb_dates').checked,
+      prix: $('igdb_prix').checked,
+      jaquettes: $('igdb_jaq').checked,
+    };
+    if(!IGD.opts.dates && !IGD.opts.prix && !IGD.opts.jaquettes){
+      toast("Coche au moins une chose à mettre à jour.", true);
+      return;
+    }
+    const p = portees[+$('igdb_portee').value] || portees[0];
+    IGD.liste = p.jeux.slice();
+    igdbAnalyse();
+  };
+}
+
+/* ---------- la jauge, commune à l'analyse et à l'écriture ---------- */
+function igdbJauge(){
+  return `<div class="igdb-jauge"><i id="igdb_barre" style="width:0%"></i></div>
+    <p class="igdb-encours">
+      <b id="igdb_compteur">0 / 0</b>
+      <span id="igdb_quoi"></span>
+      <em id="igdb_reste"></em>
+    </p>`;
+}
+/* Le temps restant, à partir de ce qui est déjà passé. Sous deux jeux la
+   moyenne ne veut rien dire, et sous cinq secondes l'annoncer est plus
+   agité qu'utile. */
+function igdbReste(fait, total){
+  if(!IGD.t0 || fait < 2) return '';
+  const s = Math.round((Date.now() - IGD.t0) / fait * (total - fait) / 1000);
+  if(s < 5) return '';
+  return s < 90 ? `environ ${s} s` : `environ ${Math.round(s / 60)} min`;
+}
+function igdbAvance(fait, total, quoi){
+  const barre = $('igdb_barre'), compteur = $('igdb_compteur');
+  if(!barre || !compteur) return;
+  barre.style.width = (total ? Math.round(fait / total * 100) : 100) + '%';
+  compteur.textContent = `${fait} / ${total}`;
+  $('igdb_quoi').textContent = quoi || '';
+  $('igdb_reste').textContent = igdbReste(fait, total);
+}
+
+/* ---------- étape 2 : l'analyse ---------- */
+async function igdbAnalyse(){
+  const jeton = ++IGD.jeton;
+  IGD.etape = 'analyse';
+  IGD.stop = false;
+  IGD.lignes = [];
+  IGD.t0 = Date.now();
+  igdbEntete('Analyse en cours');
+  igdbCorps().innerHTML = `
+    ${igdbJauge()}
+    <div class="frow"><span class="spacer"></span>
+      <button class="ghost" id="igdb_stop">Interrompre</button></div>`;
+  $('igdb_stop').onclick = ()=>{ IGD.stop = true; };
+
+  const total = IGD.liste.length;
+  for(let i = 0; i < total; i++){
+    if(jeton !== IGD.jeton) return;      // la fenêtre a été fermée
+    if(IGD.stop) break;                  // interrompu : on garde ce qu'on a
+    const g = IGD.liste[i];
+    igdbAvance(i, total, g.name);
+    let data;
+    try{
+      data = await api('/api/jeu/maj', {
+        nom: g.name,
+        sortie: g.release || '',
+        prix: IGD.opts.prix,
+        // Flask attend un mot, pas un booléen : « aucune » lui évite de
+        // rassembler des propositions dont personne ne veut
+        jaquettes: IGD.opts.jaquettes ? 'manquantes' : 'aucune',
+      });
+    }catch(e){
+      data = {etat:'injoignable', raison:'serveur injoignable'};
+    }
+    if(jeton !== IGD.jeton) return;
+    IGD.lignes.push(igdbRapport(g, data));
+  }
+  if(jeton !== IGD.jeton) return;
+  igdbAvance(IGD.lignes.length, total, '');
+  igdbRevue();
+}
+
+/* Ce qu'on retient d'un jeu : les écarts, et rien d'autre. Une valeur
+   identique n'est pas un changement — la liste ne montrerait que du bruit. */
+function igdbRapport(g, data){
+  const l = {
+    g: g,
+    etat: data.etat || 'injoignable',
+    raison: data.raison || '',
+    fiche: data.fiche || null,
+    surete: data.surete || '',
+    jaquette: data.jaquette || '',
+    propositions: data.propositions || [],
+    date: null, prix: null, coche: false,
+  };
+  if(l.etat !== 'ok' || !l.fiche) return l;
+
+  if(IGD.opts.dates && l.fiche.iso && l.fiche.iso !== (g.release || '')){
+    l.date = {avant: g.release || '', apres: l.fiche.iso};
+  }
+  if(IGD.opts.prix && data.prix !== null && data.prix !== undefined){
+    const av = g.base;
+    // le centime d'écart : deux flottants qui valent le même prix ne sont
+    // pas forcément égaux au bit près
+    if(av === null || av === undefined || Math.abs(av - data.prix) >= 0.005){
+      l.prix = {avant: av, apres: data.prix};
+    }
+  }
+  l.coche = !!(l.date || l.prix) && l.surete !== 'douteuse';
+  return l;
+}
+
+/* Les jaquettes à proposer, dédoublonnées par nom de fichier : le même jeu
+   rejoué dans deux onglets n'a qu'une seule image sur le disque. */
+function igdbFileJaquettes(){
+  if(!IGD.opts.jaquettes) return [];
+  const file = [], vus = {};
+  IGD.lignes.forEach(l=>{
+    if(l.etat !== 'ok' || !l.propositions.length) return;
+    // déjà illustré : le bouton de la tuile sert à en changer, un par un
+    if(l.jaquette !== 'absente') return;
+    const cle = slug(l.g.name);
+    if(!cle || vus[cle]) return;
+    vus[cle] = true;
+    file.push({nom: l.g.name, propositions: l.propositions});
+  });
+  return file;
+}
+
+/* ---------- étape 3 : la relecture ---------- */
+function igdbDelta(titre, avant, apres){
+  return `<span class="igdb-delta"><u>${titre}</u>
+    <span class="igdb-av">${esc(avant)}</span>
+    <span class="igdb-fl">→</span>
+    <b class="igdb-ap">${esc(apres)}</b></span>`;
+}
+function igdbLigneHTML(l, i){
+  const f = l.fiche;
+  const meme = norm(f.titre) === norm(l.g.name);
+  return `<label class="igdb-ligne">
+    <input type="checkbox" data-i="${i}"${l.coche ? ' checked' : ''}>
+    <span class="igdb-corps">
+      <b class="igdb-nom">${esc(l.g.name)} <em>${esc(l.g.bucket)}</em></b>
+      <span class="igdb-match">${meme ? '' : esc(f.titre) + ' · '}${esc(f.date || 'date inconnue')} <i
+        class="igdb-tag ${l.surete}">${esc(SURETE[l.surete] || '')}</i></span>
+      ${l.date ? igdbDelta('Date', l.date.avant ? dateFmt(l.date.avant) : 'aucune', dateFmt(l.date.apres)) : ''}
+      ${l.prix ? igdbDelta('Prix', money(l.prix.avant), money(l.prix.apres)) : ''}
+    </span>
+  </label>`;
+}
+function igdbRevue(){
+  IGD.etape = 'revue';
+  IGD.file = igdbFileJaquettes();
+  const avec  = IGD.lignes.filter(l => l.date || l.prix);
+  const rates = IGD.lignes.filter(l => l.etat !== 'ok');
+  igdbEntete('Ce qui va changer');
+
+  const nJaq = IGD.file.length;
+  igdbCorps().innerHTML = `
+    <p class="igdb-info">
+      <b>${IGD.lignes.length}</b> jeu${IGD.lignes.length > 1 ? 'x' : ''} analysé${IGD.lignes.length > 1 ? 's' : ''} :
+      <b>${avec.length}</b> à corriger${nJaq ? `, <b>${nJaq}</b> jaquette${nJaq > 1 ? 's' : ''} à proposer` : ''}.
+      ${avec.length ? 'Seules les cellules « Date de sortie » et « Prix de base » sont touchées.' : ''}
+    </p>
+    ${avec.length
+      ? `<div class="igdb-liste">${avec.map(igdbLigneHTML).join('')}</div>`
+      : `<p class="igdb-note">Aucune date ni aucun prix à corriger${nJaq ? ' — il reste les jaquettes.' : ' : le journal est déjà à jour.'}</p>`}
+    ${rates.length ? `<details class="igdb-repli">
+      <summary>${rates.length} jeu${rates.length > 1 ? 'x' : ''} sans réponse d'IGDB</summary>
+      <ul>${rates.map(l=>`<li>${esc(l.g.name)} <i>— ${esc(l.etat === 'introuvable' ? 'aucune fiche trouvée' : (l.raison || 'IGDB injoignable'))}</i></li>`).join('')}</ul>
+    </details>` : ''}
+    <div class="frow">
+      ${avec.length ? '<button class="ghost" id="igdb_tous">Tout cocher</button><button class="ghost" id="igdb_aucun">Tout décocher</button>' : ''}
+      <span class="spacer"></span>
+      <button class="ghost" id="igdb_annuler">Annuler</button>
+      <button class="cta auto" id="igdb_ok"></button>
+    </div>`;
+
+  /* data-i pointe dans `avec`, pas dans IGD.lignes : c'est la liste affichée
+     qui est indexée, et elle ne contient que les jeux à corriger */
+  igdbCorps().querySelectorAll('.igdb-ligne input').forEach(c=>{
+    c.onchange = ()=>{ avec[+c.dataset.i].coche = c.checked; igdbBouton(); };
+  });
+  const cocher = v => igdbCorps().querySelectorAll('.igdb-ligne input').forEach(c=>{
+    c.checked = v; avec[+c.dataset.i].coche = v;
+  });
+  if($('igdb_tous'))  $('igdb_tous').onclick  = ()=>{ cocher(true);  igdbBouton(); };
+  if($('igdb_aucun')) $('igdb_aucun').onclick = ()=>{ cocher(false); igdbBouton(); };
+  $('igdb_annuler').onclick = fermerIgdb;
+  $('igdb_ok').onclick = ()=>{
+    if(IGD.lignes.some(l => l.coche && (l.date || l.prix))) igdbEcriture();
+    else if(IGD.file.length) igdbJaquette();
+    else fermerIgdb();
+  };
+  igdbBouton();
+}
+/* Le bouton principal dit ce qu'il va faire, et il change à chaque case
+   décochée : « Écrire 12 lignes », puis « Passer aux jaquettes », puis
+   « Fermer » quand il ne reste plus rien. */
+function igdbBouton(){
+  const b = $('igdb_ok');
+  if(!b) return;
+  const n = IGD.lignes.filter(l => l.coche && (l.date || l.prix)).length;
+  if(n) b.textContent = `Écrire ${n} ligne${n > 1 ? 's' : ''}`;
+  else if(IGD.file.length) b.textContent = `Voir les ${IGD.file.length} jaquette${IGD.file.length > 1 ? 's' : ''}`;
+  else b.textContent = 'Fermer';
+}
+
+/* ---------- étape 4 : l'écriture ---------- */
+/* Ce qui part pour un jeu : les deux cellules concernées, pas une de plus.
+   Apps Script laisse une colonne tranquille quand sa valeur est absente de
+   `values` (poser_ : « champ non envoyé »), et ne vide une cellule que sur
+   un null explicite. La note, le mois, le temps de jeu, le prix payé et
+   l'avis ne sont donc pas réécrits — pas même à l'identique, ce qui évite
+   au passage tout aller-retour de format sur des colonnes qu'on n'a aucune
+   raison de toucher. */
+function igdbCharge(l){
+  const g = l.g;
+  const cols = COLS[g.bucket];
+  if(!cols) throw new Error(`onglet « ${g.bucket} » inconnu`);
+  const values = {};
+  if(l.date) values.release = l.date.apres;
+  if(l.prix) values.base = l.prix.apres;
+  return {
+    sheet: g.bucket,
+    modele: g.bucket,
+    cols: cols,
+    colsFrom: cols,
+    from: {sheet: g.bucket, row: g.row, expect: g.name},
+    values: values,
+    // ni review ni noteCol : l'avis n'est pas concerné, et un `review`
+    // absent est justement ce qui dit au script de ne pas y toucher
+  };
+}
+
+/* Deux façons d'écrire, selon ce que le classeur sait faire :
+
+     - par paquets, via l'action « lot » : une seule relecture du classeur
+       pour vingt lignes, au lieu d'une par ligne. C'est la relecture qui
+       coûte, pas l'écriture.
+     - une ligne à la fois, via « enregistrer », si le script n'a pas
+       encore été redéployé avec l'action « lot ».
+
+   La bascule est automatique et silencieuse : un vieux script répond
+   « action inconnue », on note qu'il ne sait pas et on continue sans lui.
+   Enregistrer un .gs ne suffit pas à le déployer — il faut créer une
+   nouvelle version — donc ce cas arrivera, et il ne doit rien casser. */
+const IGDB_LOT = 20;
+let IGDB_LOT_OK = true;
+
+/* Écrit un paquet et renvoie les motifs d'échec, un par jeu. Les compteurs
+   sont tenus ici : c'est le seul endroit qui sache exactement laquelle des
+   lignes est passée et laquelle a résisté. */
+async function igdbEnvoyerPaquet(paquet){
+  const echecs = [], utiles = [];
+  paquet.forEach(l=>{
+    try{ utiles.push({ligne: l, charge: igdbCharge(l)}); }
+    catch(e){ echecs.push(`${l.g.name} — ${e.message || 'erreur inconnue'}`); }
+  });
+  if(!utiles.length) return echecs;
+  const compter = u => {
+    if(u.ligne.date) IGD.compte.dates++;
+    if(u.ligne.prix) IGD.compte.prix++;
+  };
+
+  if(IGDB_LOT_OK){
+    try{
+      IGD.dernier = await envoyer('lot', {modifs: utiles.map(u => u.charge)});
+      const refuses = ((IGD.dernier.fait || {}).echecs) || [];
+      const rates = {};
+      refuses.forEach(e=>{
+        rates[e.i] = true;
+        echecs.push(`${e.jeu || '?'} — ${e.error}`);
+      });
+      utiles.forEach((u,k)=>{ if(!rates[k]) compter(u); });
+      return echecs;
+    }catch(e){
+      const motif = e.message || 'erreur inconnue';
+      if(!/action inconnue/i.test(motif)){
+        // panne franche : le paquet entier n'est pas passé, on le dit
+        return echecs.concat(utiles.map(u => `${u.ligne.g.name} — ${motif}`));
+      }
+      IGDB_LOT_OK = false;      // script pas encore redéployé : on se rabat
+    }
+  }
+  for(const u of utiles){
+    if(IGD.stop) break;
+    try{ IGD.dernier = await envoyer('enregistrer', u.charge); compter(u); }
+    catch(e){ echecs.push(`${u.ligne.g.name} — ${e.message || 'erreur inconnue'}`); }
+  }
+  return echecs;
+}
+
+async function igdbEcriture(){
+  const jeton = ++IGD.jeton;
+  IGD.etape = 'ecriture';
+  IGD.stop = false;
+  IGD.t0 = Date.now();
+  IGD.compte.dates = 0; IGD.compte.prix = 0; IGD.compte.echecs = 0;
+  IGD.echecs = [];
+  const aFaire = IGD.lignes.filter(l => l.coche && (l.date || l.prix));
+  igdbEntete('Écriture dans le classeur');
+  igdbCorps().innerHTML = `
+    <p class="igdb-info">Seules la date de sortie et le prix de base est touchées.</p>
+    ${igdbJauge()}
+    <div class="frow"><span class="spacer"></span>
+      <button class="ghost" id="igdb_stop">Interrompre</button></div>`;
+  $('igdb_stop').onclick = ()=>{ IGD.stop = true; };
+
+  let i = 0;
+  while(i < aFaire.length){
+    if(jeton !== IGD.jeton) return;
+    if(IGD.stop) break;
+    // la taille est relue à chaque tour : la bascule vers une-par-une peut
+    // se produire au premier paquet, et la suite doit en tenir compte
+    const paquet = aFaire.slice(i, i + (IGDB_LOT_OK ? IGDB_LOT : 1));
+    igdbAvance(i, aFaire.length, paquet[0].g.name
+      + (paquet.length > 1 ? ` (+${paquet.length - 1})` : ''));
+    const rates = await igdbEnvoyerPaquet(paquet);
+    if(jeton !== IGD.jeton) return;
+    IGD.echecs = IGD.echecs.concat(rates);
+    IGD.compte.echecs += rates.length;
+    i += paquet.length;
+  }
+  if(jeton !== IGD.jeton) return;
+  igdbAvance(aFaire.length, aFaire.length, '');
+
+  /* le classeur relu par la dernière écriture remplace ce qu'on affiche :
+     une seule fois, à la fin, plutôt qu'un rendu complet par ligne */
+  if(IGD.dernier){
+    const s = source();
+    if(s) cacheStore.set(s.url, IGD.dernier);
+    applyData(IGD.dernier, true);
+    IGD.dernier = null;
+    render();
+  }
+  if(IGD.file.length) igdbJaquette();
+  else igdbFini();
+}
+
+/* ---------- étape 5 : les jaquettes, une par une ---------- */
+function igdbJaquette(){
+  IGD.etape = 'jaquettes';
+  if(IGD.fi >= IGD.file.length){ igdbFini(); return; }
+  const e = IGD.file[IGD.fi];
+  igdbEntete(`Jaquette ${IGD.fi + 1} / ${IGD.file.length}`);
+  igdbCorps().innerHTML = `
+    <p class="igdb-info">Jaquette de <b>« ${esc(e.nom)} »</b>.</p>
+    <div class="jaq-grid">
+      ${e.propositions.map((p,i)=>`
+        <button class="jaq-item${p.suggere ? ' suggeree' : ''}" data-i="${i}" title="${esc(p.lien || '')}">
+          <img src="${esc(p.apercu)}" alt="" loading="lazy" decoding="async">
+          <b>${esc(p.titre)}</b>
+          <span>${esc(p.date || 'date inconnue')}${p.nature ? ' · ' + esc(p.nature) : ''}</span>
+        </button>`).join('')}
+    </div>
+    <div class="frow">
+      <button class="ghost" id="igdb_stop">Arrêter là</button>
+      <span class="spacer"></span>
+      <button class="ghost" id="igdb_passer">Passer ce jeu</button>
+    </div>`;
+  $('igdb_stop').onclick = igdbFini;
+  $('igdb_passer').onclick = ()=>{ IGD.fi++; igdbJaquette(); };
+  igdbCorps().querySelectorAll('.jaq-item').forEach(b=>{
+    b.onclick = ()=> igdbPoser(b, e.nom, e.propositions[+b.dataset.i]);
+  });
+}
+async function igdbPoser(btn, nom, choix){
+  const jeton = ++IGD.jeton;
+  igdbCorps().querySelectorAll('.jaq-item').forEach(b=>{ b.disabled = true; });
+  btn.classList.add('pris');
+  let data;
+  try{ data = await api('/api/jaquette/choisir', {nom: nom, image: choix.image}); }
+  catch(e){ data = null; }
+  if(jeton !== IGD.jeton) return;       // la fenêtre a été fermée entre-temps
+  if(data && data.etat === 'telechargee'){
+    IGD.compte.jaquettes++;
+    poseJaquette(nom);
+  }else{
+    toast('Téléchargement impossible' + (data && data.raison ? ' — ' + data.raison : ''), true);
+  }
+  IGD.fi++;
+  igdbJaquette();
+}
+
+/* ---------- étape 6 : le compte rendu ---------- */
+function igdbFini(){
+  IGD.etape = 'fini';
+  IGD.jeton++;
+  igdbEntete('Mise à jour terminée');
+  const c = IGD.compte;
+  const plu = n => n > 1 ? 's' : '';
+  igdbCorps().innerHTML = `
+    <div class="igdb-bilan">
+      <span class="igdb-chiffre"><b>${c.dates}</b> <u>date${plu(c.dates)} corrigée${plu(c.dates)}</u></span>
+      <span class="igdb-chiffre"><b>${c.prix}</b> <u>prix mis à jour</u></span>
+      <span class="igdb-chiffre"><b>${c.jaquettes}</b> <u>jaquette${plu(c.jaquettes)} récupérée${plu(c.jaquettes)}</u></span>
+    </div>
+    ${(!c.dates && !c.prix && !c.jaquettes)
+      ? '<p class="igdb-note">Rien à changer : le journal était déjà à jour.</p>' : ''}
+    ${c.echecs ? `<div class="ferr">${c.echecs} ligne${c.echecs > 1 ? 's n\'ont' : " n'a"} pas pu être écrite${c.echecs > 1 ? 's' : ''} :<br>${IGD.echecs.map(esc).join('<br>')}</div>` : ''}
+    <div class="frow"><span class="spacer"></span>
+      <button class="cta auto" id="igdb_fin">Fermer</button></div>`;
+  $('igdb_fin').onclick = fermerIgdb;
+}
+
+$('igdb').addEventListener('click', e=>{ if(e.target.id === 'igdb') fermerIgdb(); });
+$('igdbBtn').addEventListener('click', ouvrirIgdb);
+
+/* ---------- rendu global ---------- */
+function render(){
+  /* La fiche ouverte survit au rendu. render() commençait par closeSheet(),
+     si bien qu'un rafraîchissement de fond qui aboutissait pendant qu'on
+     lisait une fiche la refermait sous les yeux. On retient plutôt quel jeu
+     est affiché, et on va le rechercher dans les données neuves.
+
+     Son identité, c'est le couple (onglet, ligne) — celui-là même qui sert
+     déjà à réécrire la bonne cellule du classeur — plus le nom. Le nom
+     n'est pas du luxe : quand une ligne est supprimée, les suivantes
+     remontent d'un cran, et (onglet, ligne) désignerait alors le voisin. */
+  const iAvant = S.open;
+  const vu = iAvant !== null ? SHEET_LIST[iAvant] : null;
+  const avant = vu ? JSON.stringify(vu) : '';
+  const nAvant = SHEET_LIST.length;
+
+  majEntete();
+  document.getElementById('addBtn').hidden = !CAN_WRITE;
+  renderTabs(); renderSort(); renderStats(); renderDist(); renderWall();
+  // prix Steam et suggestions : uniquement quand la wishlist est à l'écran
+  if(estWishlistNom(S.bucket)){ majTarifs(); chargeDecouverte(); }
+  renderDecouverte();
+  document.getElementById('brand-sub').textContent =
+    S.bucket==='all' ? "- Tous" : `- ${S.bucket}`;
+
+  if(iAvant === null) return;          // aucune fiche n'était ouverte
+  if(!vu){ closeSheet(); return; }     // index sans jeu en face : on ferme
+  /* filtered() est relu ici et pas plus haut : renderSort() peut changer le
+     tri et renderDist() annuler la tranche de notes, donc l'ordre de la
+     liste — et le rang de la fiche dedans. */
+  const liste = filtered();
+  const i = liste.findIndex(x =>
+    x.bucket === vu.bucket && x.row === vu.row && x.name === vu.name);
+  // plus là : ligne supprimée, ou sortie du filtre affiché
+  if(i < 0){ closeSheet(); return; }
+  SHEET_LIST = liste;
+  S.open = i;
+  /* Repeindre seulement si quelque chose a bougé pour ce jeu, pour sa place
+     ou pour le total affiché à côté. Repeindre pour rien remettrait la
+     fiche tout en haut et volerait le focus à chaque passage du
+     rafraîchissement de fond, alors qu'il ne rapporte presque toujours
+     exactement les mêmes données. */
+  if(JSON.stringify(liste[i]) !== avant || i !== iAvant || liste.length !== nAvant){
+    paintSheet();
+  }
+}
+
+/* ---------- contrôles ---------- */
+document.getElementById('q').addEventListener('input',e=>{ S.q=e.target.value; renderWall(); });
+document.getElementById('sort').addEventListener('change',e=>{
+  S.sort = e.target.value;
+  TRI_MEMO[familleTri()] = S.sort;   // retenu pour les onglets de cette famille
+  renderWall();
+});
+window.addEventListener('resize', ()=>{ document.getElementById('tip').classList.remove('show'); });
+</script>
+</body>
+</html>

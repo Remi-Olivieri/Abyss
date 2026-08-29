@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classeur Yu-Gi-Oh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Inter+Tight:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style_collection.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <a class="retour" href="/Abyss.html" aria-label="Retour à Abyss">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <div class="titre">
+      <button class="jnl" id="jnl" aria-haspopup="true" aria-expanded="false">
+        <h1 id="brand-title">Classeur</h1>
+        <svg class="jnl-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+      <div class="menu jnl-menu" id="jnlMenu" hidden role="menu"></div>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+    <div class="cog-wrap">
+      <button class="gear" id="shine" aria-label="Reflets de rareté" aria-pressed="true">&#10022;</button>
+      <button class="gear" id="gear" data-etat="offline" aria-haspopup="true" aria-expanded="false" aria-label="Réglages">
+        <span class="led"></span>&#9881;
+      </button>
+      <div class="menu" id="menu" hidden role="menu">
+        <div class="menu-info" id="srcInfo">chargement...</div>
+        <button class="menu-item" id="reload" role="menuitem">Rafraîchir</button>
+        <button class="menu-item" id="unlock" role="menuitem">Passer en mode éditeur...</button>
+        <button class="menu-item quit" id="relock" role="menuitem" hidden>Repasser en lecture seule</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="stage" id="stage">
+    <button class="nav" id="prev" aria-label="Page précédente">&lsaquo;</button>
+    <div class="col">
+      <div class="topbar" id="topbar">
+        <div class="search" id="searchBox">
+          <input id="q" type="text" placeholder="Chercher une carte..." autocomplete="off" spellcheck="false">
+          <div class="results" id="res" hidden></div>
+        </div>
+        <span class="meter" id="meter">
+          <span class="val"><b id="mOwn">0</b> / <span id="mTot">0</span></span>
+          <span class="bar"><i id="mBar" style="width:0"></i></span>
+          <span class="val" id="mPct">0 %</span>
+        </span>
+      </div>
+      <div class="binder" id="binder"></div>
+    </div>
+    <button class="nav" id="next" aria-label="Page suivante">&rsaquo;</button>
+  </div>
+  <footer id="foot">
+    <div class="classeurs" id="classeurs"></div>
+    <span class="jump">Page
+      <input id="goPage" type="number" min="1" inputmode="numeric" aria-label="Numéro de page">
+      <span id="ofPages"></span></span>
+  </footer>
+  <div class="offline" id="offline" hidden>
+    <b>Classeur non connecté</b>
+    <p id="offlineMsg"></p>
+    <div class="orow">
+      <button class="act" id="retry">Réessayer</button>
+      <button class="act ghost" id="offCfg">Réglages</button>
+    </div>
+  </div>
+</main>
+
+<div id="scrim"></div>
+<div id="zoom" aria-hidden="true"></div>
+<button class="zoomnav zoomnav-l" id="zPrev" aria-label="Carte précédente" hidden>&lsaquo;</button>
+<button class="zoomnav zoomnav-r" id="zNext" aria-label="Carte suivante" hidden>&rsaquo;</button>
+
+<div class="panel" id="panel" role="dialog" aria-live="polite">
+  <button class="close" id="pClose" aria-label="Fermer">&times;</button>
+  <div class="panel-in">
+    <div class="who"><h3 id="pName"></h3><div class="st" id="pStat"></div></div>
+    <div class="coord" id="pCoord"></div>
+    <div class="edit">
+      <select id="pRar" aria-label="Rareté"></select>
+      <select id="pQual" aria-label="État"></select>
+      <button class="act" id="pSave"></button>
+      <button class="act ghost" id="pDel" hidden>Retirer du classeur</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheetbox" id="sheetbox"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   LA SEULE PARTIE À MODIFIER
+   Un classeur = une adresse de script Apps Script (finit par /exec).
+   Ajoute-en autant que tu veux : un sélecteur apparaît dès qu'il
+   y en a deux, et chacun peut être celui d'un ami.
+
+   LE JETON NE S'ÉCRIT PAS ICI. La lecture est ouverte à tout le
+   monde ; le jeton se saisit dans la page (menu ⚙ → mode éditeur),
+   ne sert qu'à écrire, et ne quitte jamais ce navigateur.
+   ========================================================= */
+const SOURCES = [
+  { nom: 'Jokrem', url: 'https://script.google.com/macros/s/AKfycbwNdYPX4VzqAn097XWfvfjXuU-u4wyeyjmgTs-NDiWVBJbr4mpCnr6qCP49iiBuFjCYuQ/exec' },
+];
+
+/* chemins locaux, aucun secret : servis par Abyss depuis /static.
+   Cards/ est le fonds d'illustrations partagé avec Abyss:DUEL (le quiz) */
+const CHEMINS = {
+  img: '/static/Cards/',
+  noms: '/static/cards_fr.json'
+};
+const PER_PAGE = 18, PER_FACE = 9, PAGES_PAR_CLASSEUR = 30;
+const RARETES = [
+  ['C','Commune'], ['R','Rare'], ['SR','Super'], ['UR','Ultra'], ['SE','Secrète'],
+  ['CR','Collector'], ['ULTI','Ultimate'], ['G','Gold'], ['GSE','Gold Secrète'],
+  ['PG','Premium Gold'], ['SPE','Spécial'], ['PLAT','Platinium'], ['STAR','Starlight']
+];
+const CODES = RARETES.map(r => r[0]);
+const ETATS = [[3,'Bon'], [2,'Moyen'], [1,'Mauvais']];
+/* rareté normalisée d'une carte ('' si elle n'est pas dans le classeur) */
+const codeRar = card => !card || !card[1] ? ''
+  : (CODES.indexOf(card[1]) >= 0 ? card[1] : 'C');
+/* les communes et les rares n'ont aucun vernis sur l'illustration */
+const brille = c => !!c && c !== 'C';
+const FOIL = '<i class="foil"><span></span></i>';
+
+/* toutes les illustrations sont dans un seul dossier, nommées par passcode */
+const EXTS = ['jpg','png','webp','jpeg'];
+let BASE_IMG = CHEMINS.img;
+let URL_NOMS = CHEMINS.noms;
+let EXT_OK = null;
+
+let DATA = { types: [] };
+let MODE = 'offline';
+let FR = null;        // id -> nom français
+let PAR_NOM = null;   // nom normalisé -> id
+let IMGOK = {};       // id -> chemin qui a fonctionné ('' = pas d'image trouvée)
+const S = { t:0, c:0, spread:0, sel:null, hit:null, pose:null, zoom:false, zt:0, zc:0 };
+
+const el = id => document.getElementById(id);
+const T = () => DATA.types[S.t] || { label:'', color:'#A086B7', sheet:'', classeurs:[] };
+const C = () => T().classeurs[S.c] || { n:1, cards:[] };
+const sheets = () => Math.max(PAGES_PAR_CLASSEUR, Math.ceil(C().cards.length / PER_PAGE));
+const narrow = () => matchMedia('(max-width:900px)').matches;
+const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+/* La couleur vient du Sheet, et un Sheet n'est plus forcément le tien : elle
+   part dans un style="", où esc() ne protège que des guillemets. On n'accepte
+   donc qu'une vraie couleur, jamais un morceau de CSS. */
+const COULEUR = /^(#[0-9a-f]{3,8}|rgba?\([0-9\s.,%/]+\)|[a-z]{3,20})$/i;
+const couleurSure = c => (typeof c === 'string' && COULEUR.test(c.trim())) ? c.trim() : '#A086B7';
+
+/* emplacement : page + face + numéro de 1 à 9 */
+function pos(i){
+  const k = i % PER_PAGE;
+  return { page: Math.floor(i / PER_PAGE) + 1,
+           face: k < PER_FACE ? 'recto' : 'verso',
+           slot: k % PER_FACE + 1 };
+}
+const short = (cl, i) => {
+  const o = pos(i);
+  return 'C' + cl + '\u00b7P' + o.page + '\u00b7' + o.face[0].toUpperCase() + o.slot;
+};
+
+/* ---------------- réglages ---------------- */
+/* Les chemins d'avant Abyss (Images/Fusion/123.jpg...) sont mémorisés dans le
+   navigateur et ne valent plus rien : on les jette une bonne fois.
+   abyss-2 : /static/Cartes/ a fusionné dans /static/Cards/ (fonds partagé
+   avec le quiz) — un ancien chemin mémorisé doit lui aussi être jeté.
+   abyss-3 : l'ancienne config gardait l'adresse ET le jeton du Sheet dans
+   classeur-cfg. Le jeton ne doit plus traîner là : on ne conserve que le
+   dossier d'images, et le cache change de clé (une par source). */
+const VERSION_CHEMINS = 'abyss-4';
+try {
+  if (localStorage.getItem('classeur-chemins') !== VERSION_CHEMINS){
+    ['classeur-img', 'classeur-ext', 'classeur-data', 'classeur-cfg']
+      .forEach(k => localStorage.removeItem(k));
+    localStorage.setItem('classeur-chemins', VERSION_CHEMINS);
+  }
+} catch(e){}
+
+/* ---------------- sources et jetons ---------------- */
+let SRC = 0;              // index dans SOURCES
+let CAN_WRITE = false;    // le script a confirmé que ce jeton peut écrire
+const source = () => SOURCES[SRC] || null;
+
+/* Le classeur ouvert la dernière fois : on retient l'adresse, pas le rang,
+   pour que réordonner SOURCES ne rouvre pas le classeur de quelqu'un d'autre. */
+const CLE_CLASSEUR = 'classeur-source';
+function memoriseClasseur(){
+  try { localStorage.setItem(CLE_CLASSEUR, source() ? source().url : ''); } catch(e){}
+}
+try {
+  const vu = localStorage.getItem(CLE_CLASSEUR);
+  const i = vu ? SOURCES.findIndex(s => s.url === vu) : -1;
+  if (i >= 0) SRC = i;
+} catch(e){}
+
+/* un jeton par adresse : le classeur d'un ami a le sien, que tu n'as pas */
+const CLE_JETONS = 'classeur-jetons';
+function jetons(){
+  try { return JSON.parse(localStorage.getItem(CLE_JETONS)) || {}; } catch(e){ return {}; }
+}
+function jetonDe(url){ const j = jetons()[url]; return typeof j === 'string' ? j : ''; }
+function poserJeton(url, jeton){
+  const j = jetons();
+  if (jeton) j[url] = jeton; else delete j[url];
+  try { localStorage.setItem(CLE_JETONS, JSON.stringify(j)); } catch(e){}
+}
+
+/* dernière réponse connue du script : sert uniquement à afficher quelque chose
+   pendant que la vraie requête est en vol. Effacé de l'écran si elle échoue. */
+/* une clé par source : deux classeurs différents ne partagent pas leur cache */
+const cleCache = url => 'classeur-data:' + url;
+function lireCache(url){
+  try { return JSON.parse(localStorage.getItem(cleCache(url))); }
+  catch(e){ return null; }
+}
+function ecrireCache(url, d){
+  try { localStorage.setItem(cleCache(url), JSON.stringify(d)); } catch(e){}
+}
+/* L'état ne s'écrit plus en clair dans l'en-tête : il tient dans la pastille
+   de l'engrenage — verte en ligne, ambrée pendant une actualisation, rouge
+   quand celle-ci a échoué, éteinte hors ligne — et en toutes lettres dans le
+   menu qu'il ouvre. */
+let DERNIERE_SYNC = 0;   // horodatage, pas une heure toute faite
+let ETAT_TXT = '';       // ce que la pastille dit en ce moment
+
+/* « il y a 2 min » plutôt que « 21 h 14 » : en ouvrant le menu, ce qu'on
+   cherche à savoir c'est si les données sont fraîches, pas quelle heure il
+   était quand elles sont arrivées. Au-delà d'une journée le relatif cesse
+   d'être lisible — « il y a 37 h » ne dit rien à personne — on repasse donc
+   à une date. */
+function ilYa(t){
+  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if (s < 45) return "à l'instant";
+  const min = Math.round(s / 60);
+  if (min < 60) return 'il y a ' + min + ' min';
+  const h = Math.round(min / 60);
+  if (h < 24) return 'il y a ' + h + ' h';
+  return 'le ' + new Date(t).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+}
+function setSync(mode, txt){
+  MODE = mode;
+  if (mode === 'live') DERNIERE_SYNC = Date.now();
+  ETAT_TXT = txt;
+  const g = el('gear');
+  g.dataset.etat = mode;
+  g.setAttribute('aria-label', 'Réglages — ' + txt);
+  ecritEtat();
+}
+/* Réécrit la ligne du menu sans toucher à l'état. Appelée à chaque
+   ouverture : sans ça le texte resterait figé sur ce qu'il valait au moment
+   de la synchro, c'est-à-dire toujours « à l'instant ». */
+function ecritEtat(){
+  el('srcInfo').innerHTML = (MODE === 'live' && DERNIERE_SYNC
+    ? 'synchronisé ' + ilYa(DERNIERE_SYNC) + '<br>' : '') + esc(ETAT_TXT);
+}
+
+/* ---------------- noms français + artworks ---------------- */
+function norm(s){
+  return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+}
+/* norm() sert aussi de clé à l'index des artworks : on n'y touche pas.
+   Pour la recherche on va plus loin. œ et æ ne se décomposent pas en NFD,
+   il faut les déplier à la main pour que « coeur » trouve « Cœur ». */
+const deplier = s => String(s == null ? '' : s).replace(/[œŒ]/g, 'oe').replace(/[æÆ]/g, 'ae');
+const motsCle = s => norm(deplier(s)).split(' ').filter(Boolean);
+/* « Maître d'Oz » -> « maitredoz » : apostrophes, tirets, accents et espaces
+   cessent d'être un piège. Mémorisé, la liste étant reparcourue à chaque frappe. */
+const CLES = Object.create(null);
+function cle(s){
+  s = String(s == null ? '' : s);
+  let k = CLES[s];
+  if (k === undefined) k = CLES[s] = motsCle(s).join('');
+  return k;
+}
+function indexerFR(src){
+  const map = {};
+  if (Array.isArray(src)){
+    src.forEach(o => {
+      if (!o) return;
+      const id = o.id || o.card_id || o.passcode;
+      const nm = o.name || o.nom || o.name_fr || o.fr;
+      if (id != null && nm) map[id] = nm;
+    });
+  } else if (src && typeof src === 'object'){
+    const inner = src.data || src.cards || src.cartes;
+    if (inner) return indexerFR(inner);
+    for (const k in src){
+      const v = src[k];
+      if (typeof v === 'string') map[k] = v;
+      else if (v && typeof v === 'object' && (v.name || v.nom)) map[k] = v.name || v.nom;
+    }
+  }
+  FR = map;
+  if (!PAR_NOM) PAR_NOM = {};
+  for (const id in map){
+    const k = norm(map[id]);
+    if (k && !(k in PAR_NOM)) PAR_NOM[k] = id;
+  }
+  return Object.keys(map).length;
+}
+async function chargerFR(){
+  BASE_IMG = CHEMINS.img;
+  URL_NOMS = CHEMINS.noms;
+  try { IMGOK = JSON.parse(localStorage.getItem('classeur-img') || '{}'); } catch(e){ IMGOK = {}; }
+  try { EXT_OK = localStorage.getItem('classeur-ext') || null; } catch(e){}
+
+  PAR_NOM = {};
+  try {
+    const r = await fetch(URL_NOMS);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    indexerFR(await r.json());
+  } catch(e){}
+  redrawAll();
+}
+let sauveT;
+function sauverImg(){
+  clearTimeout(sauveT);
+  sauveT = setTimeout(() => {
+    try { localStorage.setItem('classeur-img', JSON.stringify(IMGOK)); } catch(e){}
+  }, 800);
+}
+function idDe(card){
+  if (!PAR_NOM || !card) return null;
+  return PAR_NOM[norm(card[0])] || null;
+}
+/* un seul dossier, un fichier par passcode : seule l'extension reste à deviner.
+   Celle qui a déjà fonctionné une fois est essayée en premier. */
+function candidats(id){
+  const exts = EXT_OK ? [EXT_OK].concat(EXTS.filter(e => e !== EXT_OK)) : EXTS.slice();
+  return exts.map(e => BASE_IMG + id + '.' + e);
+}
+/* Vrai quand on sait deja que la carte a une illustration. Sert a poser la
+   classe `art` des le rendu : sans elle le nom de la carte reste visible
+   jusqu'a l'evenement load, et clignote a chaque page tournee. */
+const aArtwork = id => !!id && !!IMGOK[id];
+function imgHTML(id, cls){
+  /* pendant un feuilletage maintenu on n'emet aucune image : les pages
+     traversees ne feraient qu'empiler des requetes qu'il faudra vider
+     avant de voir la page d'arrivee. Le rendu complet suit a l'arret. */
+  if (!id || RAPIDE) return '';
+  const memo = IMGOK[id];
+  if (memo === '') return '';
+  const src = memo || candidats(id)[0];
+  return '<img class="' + cls + '" alt="" decoding="async" data-id="' + esc(id) + '"'
+       + ' data-k="' + (memo ? -1 : 0) + '" src="' + esc(src) + '">';
+}
+/* les événements load/error ne remontent pas : on écoute en phase de capture */
+document.addEventListener('error', e => {
+  const im = e.target;
+  if (!im || im.tagName !== 'IMG' || !im.dataset || !im.dataset.id) return;
+  const list = candidats(im.dataset.id);
+  let k = +im.dataset.k;
+  k = k < 0 ? 0 : k + 1;
+  if (k >= list.length){
+    IMGOK[im.dataset.id] = ''; sauverImg();
+    const p = im.parentNode;
+    im.remove();
+    if (p) p.classList.remove('art');
+    return;
+  }
+  im.dataset.k = k;
+  im.src = list[k];
+}, true);
+document.addEventListener('load', e => {
+  const im = e.target;
+  if (!im || im.tagName !== 'IMG' || !im.dataset || !im.dataset.id) return;
+  const rel = im.getAttribute('src');
+  if (IMGOK[im.dataset.id] !== rel){ IMGOK[im.dataset.id] = rel; sauverImg(); }
+  if (!EXT_OK){
+    const m = /\.([a-z0-9]+)$/i.exec(rel);
+    if (m){ EXT_OK = m[1].toLowerCase(); try { localStorage.setItem('classeur-ext', EXT_OK); } catch(e){} }
+  }
+  if (im.parentNode) im.parentNode.classList.add('art');
+}, true);
+
+/* ---------------- chargement ---------------- */
+function poserDonnees(j){
+  DATA = j;
+  /* la réponse ne vient plus forcément de ton Sheet : une feuille mal formée
+     ne doit pas casser la page, juste être ignorée */
+  DATA.types = (Array.isArray(DATA.types) ? DATA.types : []).filter(t => t && typeof t === 'object');
+  DATA.types.forEach(t => {
+    t.classeurs = (Array.isArray(t.classeurs) ? t.classeurs : [])
+      .filter(c => c && Array.isArray(c.cards));
+  });
+  S.t = Math.max(0, Math.min(S.t, DATA.types.length - 1));
+  S.c = Math.max(0, Math.min(S.c, T().classeurs.length - 1));
+  S.spread = Math.min(S.spread, sheets());
+  el('offline').hidden = true;
+  el('stage').hidden = false;
+  el('foot').hidden = false;
+  el('meter').hidden = false;
+  el('searchBox').hidden = false;
+  redrawAll();
+}
+
+async function load(frais){
+  const s = source();
+  if (!s || !s.url){ sansSource(); return; }
+
+  // affichage immédiat de la dernière réponse connue, le temps de la requête
+  const cache = lireCache(s.url);
+  if (cache && cache.types && cache.types.length){
+    poserDonnees(cache);
+    setSync('stale', 'actualisation...');
+  } else {
+    DATA = { types: [] };
+    setSync('offline', 'connexion...');
+  }
+
+  /* le jeton n'est envoyé que si tu en as un : sans lui le script doit
+     répondre les mêmes données, avec write:false */
+  const jeton = jetonDe(s.url);
+  const p = new URLSearchParams({ t: String(Date.now()) });
+  if (jeton) p.set('token', jeton);
+  if (frais) p.set('fresh', '1');
+
+  const stop = new AbortController();
+  const minuteur = setTimeout(() => stop.abort(), 20000);
+  try {
+    const r = await fetch(s.url + (s.url.indexOf('?') >= 0 ? '&' : '?') + p.toString(),
+                          { signal: stop.signal });
+    clearTimeout(minuteur);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    if (j.error) throw new Error(j.error === 'token' ? 'jeton refusé' : j.error);
+    if (!j.types || !j.types.length) throw new Error('le script n’a renvoyé aucune feuille');
+    /* seul le script décide qui peut écrire : un jeton mémorisé ne suffit pas */
+    CAN_WRITE = j.write === true;
+    ecrireCache(s.url, j);
+    poserDonnees(j);
+    setSync('live', CAN_WRITE ? 'modifiable' : 'lecture seule');
+    majCadenas();
+    if (jeton && !CAN_WRITE) toast('Jeton enregistré, mais le script ne l’accepte pas en écriture.', true);
+    if (S.sel !== null && ZOOM){ majPanel(S.sel); majGrandeCarte(); }
+  } catch(err){
+    clearTimeout(minuteur);
+    CAN_WRITE = false;
+    majCadenas();
+    echec(err.name === 'AbortError' ? 'le script n’a pas répondu à temps' : err.message);
+  }
+}
+
+/* aucune adresse dans SOURCES : ce n'est pas une panne, c'est à remplir */
+function sansSource(){
+  DATA = { types: [] };
+  CAN_WRITE = false;
+  majCadenas();
+  setSync('offline', 'aucun classeur');
+  el('offline').querySelector('b').textContent = 'Aucun classeur configuré';
+  el('retry').hidden = true;
+  el('offCfg').hidden = true;
+  el('offline').hidden = false;
+  el('stage').hidden = true;
+  el('foot').hidden = true;
+  el('meter').hidden = true;
+  el('searchBox').hidden = true;
+  el('tabs').innerHTML = '';
+  el('binder').innerHTML = '';
+  fermerNet();
+}
+
+function echec(msg){
+  /* du cache est déjà à l'écran : une coupure passagère ne doit pas le
+     faire disparaître sous les yeux, on se contente de le signaler */
+  if (DATA.types.length){
+    setSync('erreur', 'actualisation impossible');
+    toast(msg, true);
+    return;
+  }
+  DATA = { types: [] };
+  setSync('offline', 'non connecté');
+  el('offline').querySelector('b').textContent = 'Classeur non connecté';
+  el('offlineMsg').textContent = msg;
+  el('retry').hidden = false;
+  el('offCfg').hidden = false;
+  el('offline').hidden = false;
+  el('stage').hidden = true;
+  el('foot').hidden = true;
+  el('meter').hidden = true;
+  el('searchBox').hidden = true;
+  el('tabs').innerHTML = '';
+  el('binder').innerHTML = '';
+  fermerNet();
+}
+
+/* ---------------- écriture ---------------- */
+async function push(card, rarity, quality){
+  const s = source();
+  if (!s){ return false; }
+  if (!CAN_WRITE){
+    toast('Lecture seule : ouvre ⚙ et passe en mode éditeur pour modifier.', true);
+    return false;
+  }
+  if (MODE !== 'live'){
+    toast('Pas de connexion au Sheet : modification impossible.', true);
+    return false;
+  }
+  const body = { token:jetonDe(s.url), sheet:T().sheet, row:card[3], col:card[4],
+                 name:card[0], rarity:rarity || '', quality:quality || '' };
+  try {
+    const r = await fetch(s.url, {
+      method:'POST',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    });
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    card[1] = rarity; card[2] = quality;
+    ecrireCache(s.url, DATA);
+    toast(rarity ? '« ' + card[0] + ' » enregistrée dans le Sheet.'
+                 : '« ' + card[0] + ' » retirée du Sheet.');
+    return true;
+  } catch(err){
+    toast('Échec de l’écriture : ' + err.message, true);
+    return false;
+  }
+}
+
+let toastT;
+function toast(msg, bad){
+  const t = el('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (bad ? ' bad' : '');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { t.className = 'toast' + (bad ? ' bad' : ''); }, 4200);
+}
+
+/* ---------------- en-tête ---------------- */
+/* Le titre est le bouton : « Classeur de Jokrem » déroule la liste des
+   classeurs déclarés dans SOURCES, et un clic ouvre celui qu'on désigne. */
+function majEntete(){
+  const s = source();
+  el('brand-title').textContent = s && s.nom ? 'Classeur de ' + s.nom : 'Classeur';
+}
+function renderSourcesMenu(){
+  const m = el('jnlMenu');
+  const items = SOURCES.map((s, i) =>
+    '<button class="menu-item' + (i === SRC ? ' on' : '') + '" role="menuitem" data-s="' + i + '">'
+    + esc(s.nom || ('Classeur ' + (i + 1)))
+    + (i === SRC ? '<span class="tick">\u2713</span>' : '') + '</button>').join('');
+  m.innerHTML = items;
+}
+function renderTabs(){
+  el('tabs').innerHTML = DATA.types.map((t, i) => {
+    const tot = t.classeurs.reduce((a, c) => a + c.cards.length, 0);
+    return '<button class="tab" role="tab" aria-selected="' + (i === S.t) + '" data-t="' + i + '">'
+      + '<span class="dot" style="background:' + couleurSure(t.color) + '"></span>' + esc(t.label)
+      + '<span class="n">' + tot + '</span></button>';
+  }).join('');
+}
+function renderMeter(){
+  let tot = 0, own = 0;
+  T().classeurs.forEach(c => c.cards.forEach(x => { tot++; if (x[1]) own++; }));
+  const pct = tot ? own / tot * 100 : 0;
+  el('mOwn').textContent = own;
+  el('mTot').textContent = tot;
+  el('mBar').style.width = pct + '%';
+  el('mPct').textContent = pct.toFixed(1).replace('.', ',') + ' %';
+  document.documentElement.style.setProperty('--accent', couleurSure(T().color));
+}
+function renderClasseurs(){
+  const cs = T().classeurs;
+  el('classeurs').innerHTML = cs.length < 2 ? '' :
+    cs.map((c, i) => '<button data-c="' + i + '" aria-pressed="' + (i === S.c) + '">Classeur '
+      + c.n + '</button>').join('');
+}
+
+/* ---------------- dimensionnement : le classeur remplit l'écran ---------------- */
+function fit(){
+  const st = el('stage');
+  if (!st || st.hidden) return;
+  const gap = 8, pad = 13, head = 28, marge = 6;
+  let ch;
+  if (narrow()){
+    const cw = (st.clientWidth - 2 * gap - 2 * pad - marge) / 3;
+    ch = cw * 86 / 59;
+  } else {
+    const bar = el('topbar') ? el('topbar').offsetHeight : 0;
+    const dispoW = st.clientWidth - 2 * (38 + 10) - 20 - marge;   // flèches + reliure
+    const dispoH = st.clientHeight - bar - marge;
+    const parLargeur = ((dispoW / 2 - 2 * pad - 2 * gap) / 3) * 86 / 59;
+    const parHauteur = (dispoH - 2 * pad - head - 2 * gap) / 3;
+    ch = Math.min(parLargeur, parHauteur);
+  }
+  ch = Math.max(72, Math.floor(ch));
+  const r = document.documentElement.style;
+  r.setProperty('--ch', ch + 'px');
+  r.setProperty('--cw', Math.floor(ch * 59 / 86) + 'px');
+}
+
+/* ---------------- pages ---------------- */
+function slotHTML(i, col){
+  const card = C().cards[i];
+  if (!card) return '<span class="slot void" aria-hidden="true"></span>';
+  if (!col) col = couleurSure(T().color);
+  const owned = !!card[1];
+  const idc = owned ? idDe(card) : null;
+  const cls = ['slot', owned ? 'owned' : 'miss'];
+  /* illustration deja connue : on masque le nom tout de suite plutot que
+     d'attendre le load, sinon il apparait le temps que l'image arrive */
+  if (aArtwork(idc)) cls.push('art');
+  const rc = codeRar(card);
+  if (rc){ cls.push('r-' + rc); if (brille(rc)) cls.push('brille'); }
+  if (S.zoom && S.sel === i && S.t === S.zt && S.c === S.zc) cls.push('sortie');
+  if (S.hit && S.hit.c === S.c && S.hit.i === i) cls.push('hit');
+  if (S.pose && S.pose.c === S.c && S.pose.i === i) cls.push('pose');
+  /* décalage du reflet : les neuf pochettes d'une face ne clignotent pas ensemble */
+  return '<button class="' + cls.join(' ') + '" style="--c:' + couleurSure(col)
+    + ';--d:' + ((i * 7) % 9 * 0.62).toFixed(2) + 's" data-i="' + i + '"' + '">'
+    + (owned ? imgHTML(idc, 'art') : '')
+    + (owned ? FOIL : '')
+    + (owned ? '<span class="rar">' + esc(card[1]) + '</span>' : '')
+    + '<span class="nm">' + esc(card[0]) + '</span></button>';
+}
+/* remplace une seule pochette : évite de reconstruire (et recharger) toute la double-page */
+function majSlot(i){
+  const s = slotEl(i);
+  if (s) s.outerHTML = slotHTML(i);
+}
+function majFace(){
+  const pages = el('binder').querySelectorAll('.page');
+  for (let k = 0; k < pages.length; k++){
+    const c = pages[k].querySelector('.cnt');
+    if (c) c.textContent = pages[k].querySelectorAll('.slot.owned').length + '/9';
+  }
+}
+
+function faceHTML(sheet, face){
+  const side = face === 'recto' ? 'r' : 'l';
+  if (sheet < 1 || sheet > sheets()) return '<div class="page ' + side + ' cover"></div>';
+  const cards = C().cards, col = couleurSure(T().color);
+  const start = (sheet - 1) * PER_PAGE + (face === 'recto' ? 0 : PER_FACE);
+  let slots = '', pleines = 0;
+  for (let j = 0; j < PER_FACE; j++){
+    const i = start + j;
+    if (cards[i] && cards[i][1]) pleines++;
+    slots += slotHTML(i, col);
+  }
+  return '<div class="page ' + side + '">'
+    + '<div class="face"><span class="pg">Page ' + sheet + '</span>'
+    + '<span class="cnt">' + pleines + '/9</span></div>'
+    + '<div class="grid">' + slots + '</div></div>';
+}
+const SPINE = '<div class="spine">' + '<i class="ring"></i>'.repeat(4) + '</div>';
+
+/* pixel transparent : reaffecter src coupe net un telechargement en cours */
+const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+function draw(leftSheet, rightSheet){
+  const b = el('binder');
+  /* on abandonne cette double-page : on annule ses telechargements, sinon
+     ils restent dans la file du navigateur et retardent la page d'arrivee.
+     data-id est retire d'abord pour que les ecouteurs load/error ci-dessus
+     ignorent le pixel et n'aillent pas l'ecrire dans IMGOK. */
+  const vieilles = b.querySelectorAll('img[data-id]');
+  for (let k = 0; k < vieilles.length; k++){
+    vieilles[k].removeAttribute('data-id');
+    vieilles[k].src = PIXEL;
+  }
+  b.innerHTML = faceHTML(leftSheet, 'verso') + SPINE + faceHTML(rightSheet, 'recto');
+}
+function render(){
+  if (!DATA.types.length) return;
+  fit();
+  draw(S.spread, S.spread + 1);
+  // en bout de classeur la fleche reste active s'il y a un classeur voisin
+  el('prev').disabled = S.spread <= 0 && classeurVoisin(-1) < 0;
+  el('next').disabled = S.spread >= sheets() && classeurVoisin(1) < 0;
+  el('goPage').max = sheets();
+  if (document.activeElement !== el('goPage')){
+    el('goPage').value = Math.min(S.spread + 1, sheets());
+  }
+  el('ofPages').textContent = '/ ' + sheets();
+}
+function redrawAll(){
+  if (!DATA.types.length) return;
+  renderTabs(); renderMeter(); renderClasseurs(); render();
+}
+const slotEl = i => el('binder').querySelector('.slot[data-i="' + i + '"]');
+
+/* ---------------- tourner les pages ---------------- */
+let flip = null, lastTurn = 0;
+let swap = null;   // changement de classeur en cours
+
+/* feuilletage maintenu (fleche enfoncee) : tant que les pages defilent on
+   dessine les pochettes sans artwork, et on redessine pour de bon 160 ms
+   apres la derniere page tournee. */
+let RAPIDE = false, rapideT = null;
+function feuilletage(){
+  RAPIDE = true;
+  clearTimeout(rapideT);
+  rapideT = setTimeout(() => {
+    RAPIDE = false;
+    /* une feuille tourne encore : la redessiner maintenant remettrait la
+       double-page a sa position d'arrivee sous la feuille en mouvement
+       (page dedoublee le temps de l'animation). Son onfinish s'en charge. */
+    if (!flip && !swap) render();
+  }, 160);
+}
+
+function landFlip(){
+  landSwap();
+  if (!flip) return;
+  S.spread = flip.target;
+  flip.anim.onfinish = null;
+  flip.anim.cancel();
+  flip.el.remove();
+  flip = null;
+}
+
+/* index du classeur voisin dans l'onglet courant, ou -1 s'il n'y en a pas */
+function classeurVoisin(dir){
+  const c = S.c + dir;
+  return (c >= 0 && c < T().classeurs.length) ? c : -1;
+}
+
+/* changement de classeur commence : on l'acheve tout de suite */
+function landSwap(){
+  if (!swap) return;
+  const s = swap;
+  swap = null;
+  s.anim.onfinish = null;
+  s.anim.cancel();
+  s.appliquer();
+}
+
+/* Bascule sur le classeur `c`. On change de reliure, pas de page : une feuille
+   qui pivote n'aurait aucun sens. Le classeur en cours sort dans le sens de
+   lecture (`dir`), le nouveau entre par l'autre bord ; .stage a overflow:hidden,
+   la sortie est donc rognee net. `debut` dit si on arrive a la premiere
+   double-page du classeur ou a la derniere. */
+function changeClasseur(c, dir, debut){
+  if (c < 0 || c === S.c) return false;
+
+  const appliquer = () => {
+    S.c = c;
+    S.spread = debut ? 0 : sheets();   // sheets() lit deja le nouveau classeur
+    S.hit = null; S.pose = null;
+    renderClasseurs(); render();
+  };
+
+  if (reduce() || narrow()){ appliquer(); return true; }
+
+  const dx = dir > 0 ? -46 : 46;
+  const sortie = el('binder').animate([
+    { transform:'translateX(0) scale(1)',            opacity:1 },
+    { transform:'translateX(' + dx + 'px) scale(.93)', opacity:0 }
+  ], { duration:170, easing:'cubic-bezier(.4,0,1,1)', fill:'forwards' });
+
+  swap = { anim: sortie, appliquer: appliquer };
+  sortie.onfinish = () => {
+    swap = null;
+    appliquer();                       // le binder est encore masque (fill:forwards)
+    const b = el('binder');
+    b.animate([
+      { transform:'translateX(' + (-dx) + 'px) scale(.93)', opacity:0 },
+      { transform:'translateX(0) scale(1)',                 opacity:1 }
+    ], { duration:240, easing:'cubic-bezier(0,0,.3,1)' });
+    sortie.cancel();                   // l'entree pilote deja opacity/transform
+  };
+  return true;
+}
+
+function turn(dir){
+  landFlip();
+  const from = S.spread, to = from + dir;
+  if (to < 0 || to > sheets()){
+    // bout du classeur : on enchaine sur le voisin s'il existe
+    if (!changeClasseur(classeurVoisin(dir), dir, dir > 0)) render();
+    return;
+  }
+  const sheet = dir > 0 ? from + 1 : from;
+
+  const now = performance.now();
+  const enchaine = now - lastTurn < 340;   // enchaînement rapide = flip court
+  lastTurn = now;
+  if (enchaine) feuilletage();             // page traversée : pas d'artwork
+
+  if (reduce() || narrow() || sheet < 1 || sheet > sheets()){
+    S.spread = to; render(); return;
+  }
+
+  const dur = enchaine ? 200 : 460;
+
+  // ce qui se trouve sous la feuille en train de tourner
+  if (dir > 0) draw(from, from + 2); else draw(from - 1, from + 1);
+
+  const f = document.createElement('div');
+  f.className = 'flipper';
+  f.innerHTML = faceHTML(sheet, 'recto')
+    + faceHTML(sheet, 'verso').replace('class="page l"', 'class="page l back"');
+  el('binder').appendChild(f);
+
+  const a0 = dir > 0 ? 0 : -180, a1 = dir > 0 ? -180 : 0;
+  const anim = f.animate(
+    [{ transform: 'rotateY(' + a0 + 'deg)' }, { transform: 'rotateY(' + a1 + 'deg)' }],
+    { duration: dur, easing: 'cubic-bezier(.35,.02,.28,1)', fill: 'forwards' });
+
+  flip = { el: f, anim: anim, target: to };
+  anim.onfinish = () => { landFlip(); render(); };
+}
+
+function goToSpread(n){
+  landFlip();
+  const target = Math.max(0, Math.min(sheets(), n));
+  if (Math.abs(target - S.spread) === 1) turn(target > S.spread ? 1 : -1);
+  else { S.spread = target; render(); }
+}
+
+/* ---------------- aller à une carte ---------------- */
+function goToCard(ti, ci, i){
+  landFlip();
+  fermerNet();
+  S.t = ti; S.c = ci; S.hit = { c: ci, i: i };
+  clearTimeout(hitT);
+  hitT = setTimeout(() => { S.hit = null; }, 3600);
+  const o = pos(i);
+  S.spread = o.face === 'recto' ? o.page - 1 : o.page;
+  redrawAll();
+  ouvrir(i, slotEl(i));
+}
+
+/* ---------------- panneau + carte au premier plan ---------------- */
+el('pRar').innerHTML = RARETES.map(r => '<option value="' + r[0] + '">' + r[1] + '</option>').join('');
+el('pQual').innerHTML = ETATS.map(e => '<option value="' + e[0] + '">' + e[1] + '</option>').join('');
+
+let ZOOM = null;   // { box, rect, i, t, c }
+let hitT;
+
+function majPanel(i){
+  const card = C().cards[i];
+  if (!card) return;
+  const o = pos(i), owned = !!card[1];
+  el('pName').textContent = card[0];
+  el('pStat').innerHTML = esc(T().label) + ' · '
+    + (owned ? '<b class="oui">Possédée</b>' : '<b class="non">Non possédée</b>');
+  el('pCoord').innerHTML = [['Classeur', C().n], ['Page', o.page],
+      ['Face', o.face === 'recto' ? 'R' : 'V'], ['Emplacement', o.slot]]
+    .map(kv => '<div class="cbox"><div class="k">' + kv[0] + '</div><div class="v">'
+      + kv[1] + '</div></div>').join('');
+  el('pRar').value = card[1] && CODES.indexOf(card[1]) >= 0 ? card[1] : 'C';
+  el('pQual').value = card[2] || 3;
+  el('pSave').textContent = owned ? 'Enregistrer' : 'Ajouter au classeur';
+  el('pSave').hidden = !CAN_WRITE;
+  el('pDel').hidden = !owned || !CAN_WRITE;
+}
+
+function rectCible(){
+  const marge = narrow() ? 12 : 22;
+  const ph = el('panel').offsetHeight || 120;
+  const dispoW = innerWidth - marge * 2;
+  const dispoH = innerHeight - ph - marge * 2;
+  const h = Math.max(120, Math.min(dispoH, dispoW * 86 / 59));
+  const w = h * 59 / 86;
+  return { w:w, h:h, x:(innerWidth - w) / 2, y:marge + (dispoH - h) / 2 };
+}
+
+function grandeCarteHTML(card){
+  const owned = !!card[1];
+  const rc = codeRar(card);
+  const cls = ['bigcard'];
+  if (!owned) cls.push('absente');
+  if (rc){ cls.push('r-' + rc); if (brille(rc)) cls.push('brille'); }
+  return '<div class="' + cls.join(' ') + '" style="--c:' + couleurSure(T().color) + ';--d:.35s">'
+    + imgHTML(idDe(card), 'bigart')
+    + '<div class="bigfb"><span>' + esc(card[0]) + '</span></div>'
+    + (owned ? FOIL : '')
+    + (owned ? '<span class="bigrar">' + esc(card[1]) + '</span>'
+             : '<span class="bigmiss">Non possédée</span>')
+    + '</div>';
+}
+function majGrandeCarte(){
+  if (!ZOOM) return;
+  const card = C().cards[ZOOM.i];
+  if (!card) return;
+  const big = ZOOM.box.querySelector('.bigcard');
+  if (!big){ ZOOM.box.innerHTML = grandeCarteHTML(card); return; }
+  const owned = !!card[1];
+  big.classList.toggle('absente', !owned);
+  /* l'illustration correspond peut-être encore à la carte précédente : on la
+     remplace si l'id ne correspond plus (navigation entre cartes) */
+  const newId = idDe(card);
+  const newIdStr = newId == null ? '' : String(newId);
+  const oldArt = big.querySelector('.bigart');
+  const oldIdStr = oldArt ? oldArt.dataset.id : '';
+  if (oldIdStr !== newIdStr){
+    if (oldArt) oldArt.remove();
+    big.classList.remove('art');
+    const html = imgHTML(newId, 'bigart');
+    if (html) big.insertAdjacentHTML('afterbegin', html);
+  }
+  /* la rareté vient peut-être de changer dans le panneau : on refait le vernis */
+  CODES.forEach(c => big.classList.remove('r-' + c));
+  big.classList.remove('brille');
+  const rc = codeRar(card);
+  if (rc){ big.classList.add('r-' + rc); if (brille(rc)) big.classList.add('brille'); }
+  const f = big.querySelector('.foil');
+  if (owned && !f) big.insertAdjacentHTML('beforeend', FOIL);
+  else if (!owned && f) f.remove();
+  const vieux = big.querySelector('.bigrar') || big.querySelector('.bigmiss');
+  if (vieux) vieux.remove();
+  big.insertAdjacentHTML('beforeend', owned
+    ? '<span class="bigrar">' + esc(card[1]) + '</span>'
+    : '<span class="bigmiss">Non possédée</span>');
+}
+
+function poserRect(box, r){
+  box.style.left = r.x + 'px';
+  box.style.top = r.y + 'px';
+  box.style.width = r.w + 'px';
+  box.style.height = r.h + 'px';
+}
+
+/* la carte sort de la pochette, avance vers nous et grandit */
+function animEntree(box, s, r){
+  let dx = 0, dy = 50, sc = .82, depuisPochette = false;
+  if (s){
+    if (s.width > 4){
+      sc = s.width / r.w;
+      dx = (s.left + s.width / 2) - (r.x + r.w / 2);
+      dy = (s.top + s.height / 2) - (r.y + r.h / 2);
+      depuisPochette = true;
+    }
+  }
+  const mid = sc + (1 - sc) * .8;
+  return box.animate([
+    { offset:0, opacity: depuisPochette ? .45 : 0,
+      transform:'translate3d(' + dx + 'px,' + dy + 'px,0) rotateY(-26deg) rotateX(7deg) scale(' + sc + ')' },
+    { offset:.62, opacity:1,
+      transform:'translate3d(' + (dx * .2) + 'px,' + (dy * .2) + 'px,110px) rotateY(-8deg) rotateX(2deg) scale(' + mid + ')' },
+    { offset:1, opacity:1, transform:'translate3d(0,0,0) rotateY(0deg) rotateX(0deg) scale(1)' }
+  ], { duration: reduce() ? 1 : 540, easing:'cubic-bezier(.24,.68,.26,1)', fill:'both' });
+}
+
+/* la carte repart vers sa pochette et s'y glisse */
+function animSortie(box, s, r, owned){
+  let dx = 0, dy = 60, sc = .8, versPochette = false;
+  if (s){
+    if (s.width > 4){
+      sc = s.width / r.w;
+      dx = (s.left + s.width / 2) - (r.x + r.w / 2);
+      dy = (s.top + s.height / 2) - (r.y + r.h / 2);
+      versPochette = true;
+    }
+  }
+  const mid = sc + (1 - sc) * .72;
+  return box.animate([
+    { offset:0, opacity:1, transform:'translate3d(0,0,0) rotateY(0deg) rotateX(0deg) scale(1)' },
+    { offset:.42, opacity:1,
+      transform:'translate3d(' + (dx * .24) + 'px,' + (dy * .24) + 'px,70px) rotateY(-10deg) rotateX(3deg) scale(' + mid + ')' },
+    { offset:1, opacity: versPochette && owned ? .92 : 0,
+      transform:'translate3d(' + dx + 'px,' + dy + 'px,0) rotateY(-20deg) rotateX(6deg) scale(' + (sc * .97) + ')' }
+  ], { duration: reduce() ? 1 : 470, easing:'cubic-bezier(.42,.02,.28,1)', fill:'both' });
+}
+
+function ouvrir(i, src){
+  const card = C().cards[i];
+  if (!card) return;
+  if (flip){ landFlip(); render(); }
+  if (ZOOM) fermerNet();
+  const cible = slotEl(i) || src || null;
+  const depart = cible ? cible.getBoundingClientRect() : null;
+  S.sel = i; S.zoom = true; S.zt = S.t; S.zc = S.c;
+  majPanel(i);
+  el('panel').classList.add('open');
+  el('scrim').classList.add('on');
+  el('zPrev').hidden = false; el('zNext').hidden = false;
+  majNavZoom();
+
+  const r = rectCible();
+  const box = document.createElement('div');
+  box.className = 'zoomwrap';
+  poserRect(box, r);
+  box.innerHTML = grandeCarteHTML(card);
+  el('zoom').appendChild(box);
+  ZOOM = { box:box, rect:r, i:i, t:S.t, c:S.c };
+
+  if (cible) cible.classList.add('sortie');   // la pochette se vide, sans tout redessiner
+  const a = animEntree(box, depart, r);
+  a.onfinish = () => { try { a.cancel(); } catch(e){} };
+}
+
+/* fermeture animée ; insertion = true après un ajout (la carte se range) */
+function fermer(insertion){
+  el('panel').classList.remove('open');
+  el('scrim').classList.remove('on');
+  el('zPrev').hidden = true; el('zNext').hidden = true;
+  if (!ZOOM){ S.sel = null; S.zoom = false; return; }
+
+  const z = ZOOM;
+  const dstEl = (S.t === z.t && S.c === z.c) ? slotEl(z.i) : null;
+  const dst = dstEl ? dstEl.getBoundingClientRect() : null;
+  const card = (DATA.types[z.t] && DATA.types[z.t].classeurs[z.c])
+    ? DATA.types[z.t].classeurs[z.c].cards[z.i] : null;
+  const owned = !!(card && card[1]);
+  ZOOM = null;
+
+  let fait = false;
+  const fini = () => {
+    if (fait) return;
+    fait = true;
+    z.box.remove();
+    S.zoom = false; S.sel = null;
+    if (insertion && owned){
+      S.pose = { c:z.c, i:z.i };
+      setTimeout(() => { S.pose = null; }, 700);
+    }
+    majSlot(z.i); majFace();
+  };
+  const a = animSortie(z.box, dst, z.rect, owned);
+  a.onfinish = fini;
+  if (reduce()) setTimeout(fini, 20);
+}
+/* fermeture sans animation (changement d'onglet, perte de connexion, etc.) */
+function fermerNet(){
+  if (ZOOM){ ZOOM.box.remove(); ZOOM = null; }
+  el('panel').classList.remove('open');
+  el('scrim').classList.remove('on');
+  el('zPrev').hidden = true; el('zNext').hidden = true;
+  S.sel = null; S.zoom = false;
+  const out = el('binder').querySelectorAll('.slot.sortie');
+  for (let k = 0; k < out.length; k++) out[k].classList.remove('sortie');
+}
+
+/* ---------------- naviguer entre les cartes, carte agrandie ouverte ---------------- */
+/* cherche la carte suivante/précédente, en sautant au classeur voisin si on
+   arrive au bout de celui en cours ; renvoie null s'il n'y a rien de plus */
+function carteAdjacente(dir){
+  const classeurs = T().classeurs;
+  let ci = S.zc, i = S.sel + dir;
+  while (true){
+    const cartes = (classeurs[ci] || { cards: [] }).cards;
+    if (i >= 0 && i < cartes.length) return { ci: ci, i: i };
+    ci += dir;
+    if (ci < 0 || ci >= classeurs.length) return null;
+    i = dir > 0 ? 0 : classeurs[ci].cards.length - 1;
+  }
+}
+function majNavZoom(){
+  el('zPrev').disabled = !carteAdjacente(-1);
+  el('zNext').disabled = !carteAdjacente(1);
+}
+function navCarte(dir){
+  if (!ZOOM) return;
+  const cible = carteAdjacente(dir);
+  if (!cible) return;
+  landFlip();
+  const changeClasseur = cible.ci !== S.c;
+  S.c = cible.ci; S.zc = cible.ci; S.sel = cible.i;
+  const o = pos(cible.i);
+  S.spread = o.face === 'recto' ? o.page - 1 : o.page;
+  if (changeClasseur) renderClasseurs();
+  render();
+  ZOOM.i = cible.i; ZOOM.c = cible.ci; ZOOM.t = S.t;
+  majPanel(cible.i);
+  majGrandeCarte();
+  majNavZoom();
+}
+el('zPrev').onclick = () => navCarte(-1);
+el('zNext').onclick = () => navCarte(1);
+
+el('pSave').onclick = async () => {
+  if (S.sel === null) return;
+  const card = C().cards[S.sel];
+  if (!card) return;
+  const avait = !!card[1];
+  el('pSave').disabled = true;
+  const ok = await push(card, el('pRar').value, Number(el('pQual').value));
+  el('pSave').disabled = false;
+  renderMeter();
+  if (ok && !avait){ fermer(true); return; }   // ajout : la carte se glisse dans la pochette
+  majPanel(S.sel); majGrandeCarte(); majSlot(S.sel); majFace();
+};
+el('pDel').onclick = async () => {
+  if (S.sel === null) return;
+  const card = C().cards[S.sel];
+  if (!card) return;
+  el('pDel').disabled = true;
+  await push(card, null, null);
+  el('pDel').disabled = false;
+  renderMeter();
+  majPanel(S.sel); majGrandeCarte(); majSlot(S.sel); majFace();  // la carte reste en main
+};
+el('pClose').onclick = () => fermer();
+el('scrim').onclick = () => fermer();
+
+/* ---------------- recherche ---------------- */
+let cursor = -1, hits = [];
+el('q').addEventListener('input', e => {
+  cursor = -1;
+  /* les mots peuvent être donnés dans le désordre, il faut juste qu'ils y soient tous */
+  const mots = motsCle(e.target.value);
+  if (!mots.length || mots.join('').length < 2){ el('res').hidden = true; return; }
+  hits = [];
+  DATA.types.forEach((t, ti) => t.classeurs.forEach((c, ci) => c.cards.forEach((x, i) => {
+    if (hits.length >= 40) return;
+    const k = cle(x[0]);
+    if (mots.every(m => k.indexOf(m) >= 0)){
+      hits.push({ ti:ti, ci:ci, i:i, nm:x[0], own:!!x[1], cl:c.n });
+    }
+  })));
+  el('res').hidden = false;
+  el('res').innerHTML = hits.length
+    ? hits.map((h, k) => '<button data-k="' + k + '"><span class="nm ' + (h.own ? '' : 'miss') + '">'
+        + esc(h.nm) + '</span><span class="co">' + esc(DATA.types[h.ti].label)
+        + '</span><span class="co">' + (h.own ? '✓' : '-') + '</span></button>').join('')
+    : '<div class="empty-res">Aucune carte trouvée...</div>';
+});
+el('res').addEventListener('click', e => {
+  const b = e.target.closest('button[data-k]'); if (!b) return;
+  const h = hits[+b.dataset.k];
+  el('res').hidden = true; el('q').value = h.nm;
+  goToCard(h.ti, h.ci, h.i);
+});
+el('q').addEventListener('keydown', e => {
+  if (el('res').hidden || !hits.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault();
+    cursor = (cursor + (e.key === 'ArrowDown' ? 1 : hits.length - 1)) % hits.length;
+    const kids = el('res').children;
+    for (let k = 0; k < kids.length; k++){
+      if (kids[k].classList) kids[k].classList.toggle('on', k === cursor);
+    }
+    if (kids[cursor]) kids[cursor].scrollIntoView({ block:'nearest' });
+  }
+  if (e.key === 'Enter' && cursor >= 0){
+    const h = hits[cursor];
+    el('res').hidden = true; el('q').value = h.nm;
+    goToCard(h.ti, h.ci, h.i);
+  }
+  if (e.key === 'Escape') el('res').hidden = true;
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search')) el('res').hidden = true;
+});
+
+/* ---------------- événements ---------------- */
+el('tabs').onclick = e => {
+  const b = e.target.closest('[data-t]'); if (!b) return;
+  landFlip(); fermerNet();
+  S.t = +b.dataset.t; S.c = 0; S.spread = 0; S.hit = null; S.pose = null;
+  redrawAll();
+};
+el('classeurs').onclick = e => {
+  const b = e.target.closest('[data-c]'); if (!b) return;
+  landFlip(); fermerNet();
+  const c = +b.dataset.c;
+  // le classeur deja ouvert : on revient juste a sa premiere page
+  if (c === S.c){ S.spread = 0; S.hit = null; S.pose = null; render(); return; }
+  changeClasseur(c, c > S.c ? 1 : -1, true);   // toujours a la premiere page
+};
+el('binder').addEventListener('click', e => {
+  const s = e.target.closest('.slot[data-i]');
+  if (s) ouvrir(+s.dataset.i, s);
+});
+el('prev').onclick = () => turn(-1);
+el('next').onclick = () => turn(1);
+el('goPage').addEventListener('change', () => {
+  const p = parseInt(el('goPage').value, 10);
+  if (!isNaN(p)) goToSpread(Math.max(1, Math.min(sheets(), p)) - 1);
+});
+el('goPage').addEventListener('keydown', e => { if (e.key === 'Enter') el('goPage').blur(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){
+    if (el('modal').classList.contains('open')){ fermerModale(); return; }
+    if (!el('menu').hidden || !el('jnlMenu').hidden){ closeMenu(); closeJnl(); return; }
+    if (ZOOM){ fermer(); return; }
+  }
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT') return;
+  if (ZOOM){                               // carte ouverte : les flèches changent de carte
+    if (e.key === 'ArrowLeft'){ e.preventDefault(); navCarte(-1); }
+    if (e.key === 'ArrowRight'){ e.preventDefault(); navCarte(1); }
+    return;
+  }
+  if (e.key === 'ArrowLeft') turn(-1);
+  if (e.key === 'ArrowRight') turn(1);
+});
+
+let resizeT;
+addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => {
+    fit();
+    if (DATA.types.length) render();
+    if (ZOOM){ ZOOM.rect = rectCible(); poserRect(ZOOM.box, ZOOM.rect); }
+  }, 120);
+});
+
+/* ---------------- menus de l'en-tête ---------------- */
+/* Deux menus, jamais ouverts en même temps : celui du titre change de
+   classeur, celui de l'engrenage dit l'état et donne les réglages. */
+function closeMenu(){
+  el('menu').hidden = true;
+  el('gear').setAttribute('aria-expanded', 'false');
+}
+function toggleMenu(){
+  const m = el('menu'), ouvert = m.hidden;
+  // un seul menu ouvert à la fois, et l'âge de la synchro relu au passage
+  if (ouvert){ closeJnl(); ecritEtat(); }
+  m.hidden = !ouvert;
+  el('gear').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+}
+function closeJnl(){
+  el('jnlMenu').hidden = true;
+  el('jnl').setAttribute('aria-expanded', 'false');
+}
+function toggleJnl(){
+  const m = el('jnlMenu'), ouvert = m.hidden;
+  if (ouvert){ closeMenu(); renderSourcesMenu(); }
+  m.hidden = !ouvert;
+  el('jnl').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+}
+el('gear').onclick = e => { e.stopPropagation(); toggleMenu(); };
+el('jnl').onclick  = e => { e.stopPropagation(); toggleJnl(); };
+document.addEventListener('click', e => {
+  if (!el('menu').hidden && !e.target.closest('.cog-wrap')) closeMenu();
+  if (!el('jnlMenu').hidden && !e.target.closest('.titre')) closeJnl();
+});
+
+/* ---------------- changer de classeur ---------------- */
+el('jnlMenu').onclick = e => {
+  const b = e.target.closest('[data-s]'); if (!b) return;
+  choisirClasseur(+b.dataset.s);
+};
+function choisirClasseur(i){
+  closeJnl();
+  if (i === SRC || !SOURCES[i]) return;
+  landFlip(); fermerNet();
+  SRC = i; memoriseClasseur();
+  S.t = 0; S.c = 0; S.spread = 0; S.hit = null; S.pose = null; S.sel = null;
+  CAN_WRITE = false;
+  DATA = { types: [] };
+  DERNIERE_SYNC = 0;   // autre classeur : sa synchro n'a rien à voir avec l'ancienne
+  majEntete(); majCadenas();
+  load();
+}
+
+/* ---------------- lecture seule / mode éditeur ---------------- */
+function majCadenas(){
+  el('unlock').hidden = CAN_WRITE;
+  el('relock').hidden = !CAN_WRITE;
+  /* les boutons d'écriture dépendent du verrou, pas de la carte ouverte :
+     sans ça « Enregistrer » restait visible tant qu'aucune carte n'avait
+     été sélectionnée, donc dès l'arrivée sur la page */
+  el('pSave').hidden = !CAN_WRITE;
+  el('pDel').hidden = true;
+  if (S.sel !== null) majPanel(S.sel);   // rétablit pDel selon la carte
+}
+
+/* ---------------- modales : jeton, images ---------------- */
+function ouvrirModale(html){
+  el('sheetbox').innerHTML = html;
+  el('modal').classList.add('open');
+}
+function fermerModale(){
+  el('modal').classList.remove('open');
+  el('sheetbox').innerHTML = '';
+}
+el('modal').addEventListener('click', e => {
+  if (e.target === el('modal')) fermerModale();
+});
+
+function openJeton(){
+  const s = source();
+  if (!s) return;
+  closeMenu();
+  ouvrirModale(
+    '<h2>Passer en mode éditeur</h2>'
+    + '<div class="fld"><label>Jeton</label>'
+    + '<input id="cfgTok" type="password" autocomplete="off" spellcheck="false"></div>'
+    + '<p class="diag" id="jErr" hidden></p>'
+    + '<div class="row"><button class="act ghost" id="cfgCancel">Annuler</button>'
+    + '<button class="act" id="cfgSave">Déverrouiller</button></div>');
+  el('cfgTok').value = jetonDe(s.url);
+  el('cfgCancel').onclick = fermerModale;
+  el('cfgSave').onclick = validerJeton;
+  el('cfgTok').addEventListener('keydown', e => { if (e.key === 'Enter') validerJeton(); });
+  setTimeout(() => { if (el('cfgTok')) el('cfgTok').focus(); }, 30);
+}
+async function validerJeton(){
+  const s = source();
+  const jeton = el('cfgTok').value.trim();
+  if (!jeton){
+    el('jErr').hidden = false;
+    el('jErr').textContent = 'Saisis le jeton, ou annule pour rester en lecture seule.';
+    return;
+  }
+  const b = el('cfgSave');
+  b.disabled = true; b.textContent = 'Vérification...';
+  poserJeton(s.url, jeton);
+  await load(true);
+  /* seul le script décide : CAN_WRITE ne passe à true que s'il l'a confirmé,
+     jamais parce qu'on a saisi quelque chose */
+  if (CAN_WRITE){
+    fermerModale();
+    toast('Passage en mode éditeur.');
+  } else if (el('jErr')){
+    b.disabled = false; b.textContent = 'Déverrouiller';
+    el('jErr').hidden = false;
+    el('jErr').textContent = 'Jeton incorrect';
+  }
+}
+
+el('reload').onclick = () => { closeMenu(); load(true); };
+el('unlock').onclick = openJeton;
+el('relock').onclick = () => {
+  const s = source();
+  closeMenu();
+  if (!s) return;
+  poserJeton(s.url, '');
+  CAN_WRITE = false;
+  majCadenas();
+  toast('Retour en lecture seule.');
+  load(true);
+};
+el('retry').onclick = () => load(true);
+el('offCfg').onclick = e => { e.stopPropagation(); closeJnl(); if (el('menu').hidden) toggleMenu(); };
+
+/* ---------------- bascule des reflets ---------------- */
+let REFLETS = true;
+try { REFLETS = localStorage.getItem('classeur-reflets') !== '0'; } catch(e){}
+function majReflets(){
+  document.body.classList.toggle('sansreflets', !REFLETS);
+  const b = el('shine');
+  b.classList.toggle('off', !REFLETS);
+  b.setAttribute('aria-pressed', REFLETS ? 'true' : 'false');
+}
+el('shine').onclick = () => {
+  REFLETS = !REFLETS;
+  try { localStorage.setItem('classeur-reflets', REFLETS ? '1' : '0'); } catch(e){}
+  majReflets();
+};
+majReflets();
+
+/* ---------------- go ---------------- */
+fit();
+majEntete();
+majCadenas();
+chargerFR();
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abyss:DUEL - Lobby</title>
+    <link rel="stylesheet" href="static/style_yugiquiz.css">
+</head>
+<body>
+
+    <header>
+        <a class="back" href="http://localhost:8000/" title="Retour à Abyss" aria-label="Retour à Abyss">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <h1>
+            <span class="title-main">Abyss:DUEL</span>
+        </h1>
+        <p id="pseudo" class="user-name-lobby"></p>
+    </header>
+
+    <div class="lobby-container" id="lobby-main">
+
+        <div class="lobby-panel room-panel" id="room-panel">
+            <div class="panel-header">
+                <div class="millennium-eye"></div>
+                <span id="room-panel-title">Salle</span>
+            </div>
+            <div class="room-panel-inner">
+                <div class="room-players-section">
+                    <div class="panel-body" id="room-players-list">
+                        <div class="empty-state">
+                            <div class="millennium-eye"></div>
+                            <p>En attente de duellistes...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="room-sidebar">
+                    <div class="room-title-display" id="room-sidebar-name">—</div>
+                    <div class="room-code-label" id="room-player-count">0 joueur(s)</div>
+                    <div class="room-code-label" id="room-params">—</div>
+                    <div class="launch-timer" id="launch-timer">
+                        <div class="launch-timer-label">Démarrage dans</div>
+                        <div class="launch-timer-count" id="launch-count">5</div>
+                    </div>
+                    <button class="ready-btn not-ready" id="ready-btn" onclick="toggleReady()">
+                        Prêt !
+                    </button>
+                    <button class="leave-btn" onclick="leaveRoom()">Quitter la salle</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lobby-panel" id="rooms-panel">
+            <div class="panel-header">
+                <div class="millennium-eye"></div>
+                <span>Salles disponibles</span>
+            </div>
+            <div class="panel-body" id="rooms-list">
+                <div class="empty-state">
+                    <div class="millennium-eye"></div>
+                    <p>Aucune salle disponible</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="lobby-panel" id="create-panel">
+            <div class="panel-header">
+                <div class="millennium-eye"></div>
+                <span>Créer une salle</span>
+            </div>
+            <div class="panel-body" style="padding: .85rem 1.1rem; display: flex; flex-direction: column; gap: .75rem;">
+                <div>
+                    <label class="input-label" style="display:block; margin-bottom:.5rem;">Nom de la salle</label>
+                    <input type="text" maxlength="24" id="room-name-input" class="create-input" placeholder="Nom de la salle..." autocomplete="off">
+                </div>
+                <div>
+                    <label class="input-label" style="display:block; margin-bottom:.5rem;">Mot de passe <span style="opacity:.5; font-size:.85em;">(optionnel)</span></label>
+                    <input type="password" maxlength="24" id="room-password-input" class="create-input" placeholder="Mot de passe..." autocomplete="off">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: .75rem;">
+                    <div>
+                        <label class="input-label" style="display:block; margin-bottom:.5rem;">Temps</label>
+                                <select id="room-time-input" class="create-input">
+                                    <option value="5">5s</option>
+                                    <option value="10">10s</option>
+                                    <option value="15" selected>15s</option>
+                                    <option value="20">20s</option>
+                                    <option value="25">25s</option>
+                                </select>
+                    </div>
+                    <div>
+                        <label class="input-label" style="display:block; margin-bottom:.5rem;">Score max</label>
+                                <select id="room-score-input" class="create-input">
+                                    <option value="10">10 pts</option>
+                                    <option value="20">20 pts</option>
+                                    <option value="30" selected>30 pts</option>
+                                    <option value="40">40 pts</option>
+                                    <option value="50">50 pts</option>
+                                </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="input-label" style="display:block; margin-bottom:.5rem;">Difficulté</label>
+                            <select id="room-difficulty-input" class="create-input">
+                                <option value="1">Facile</option>
+                                <option value="2" selected>Normal</option>
+                                <option value="3">Difficile</option>
+                                <option value="4">Toutes les cartes</option>
+                            </select>
+                </div>
+            </div>
+            <div class="panel-footer">
+                <button class="create-btn" onclick="createRoom()">
+                    ✦ Créer la salle
+                </button>
+            </div>
+        </div>
+
+        <div id="password-overlay">
+            <div class="leave-dialog">
+                <div class="leave-dialog-title">Salle privée</div>
+                <p class="leave-dialog-sub">Entrez le mot de passe</p>
+                <input type="password" maxlength="24" id="password-input" class="create-input" placeholder="Mot de passe..." autocomplete="off" style="margin-bottom: .75rem;">
+                <div class="leave-dialog-btns">
+                    <button class="leave-confirm-btn" onclick="submitPassword()">Rejoindre</button>
+                    <button class="leave-cancel-btn" onclick="closePasswordDialog()">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let myPseudo = '';
+        let currentRoom = null;
+        let isReady = false;
+        let launchInterval = null;
+        let pendingRoomId = null;
+
+        const DIFFICULTY_LABELS = { '1': 'Facile', '2': 'Normal', '3': 'Difficile', '4': 'Toutes les cartes' };
+
+        socket.on('connect', () => {
+            fetch('/check_session')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.pseudo) { window.location.href = '/connexion'; return; }
+                    myPseudo = data.pseudo;
+                    document.getElementById('pseudo').textContent = myPseudo;
+
+                    fetch('/my_room')
+                        .then(r => r.json())
+                        .then(roomData => {
+                            if (roomData.room_id) {
+                                if (roomData.status === 'in_game') {
+                                    window.location.href = `/jeu/${roomData.room_id}`;
+                                } else {
+                                    socket.emit('lobbyJoin');
+                                    socket.once('roomsList', () => {
+                                        socket.emit('joinRoom', { roomId: roomData.room_id });
+                                    });
+                                }
+                            } else {
+                                socket.emit('lobbyJoin');
+                            }
+                        });
+                })
+                .catch(() => window.location.href = '/connexion');
+
+            fetch('/card_pools_info')
+                .then(r => r.json())
+                .then(pools => {
+                    const labels = { '1': 'Facile', '2': 'Normal', '3': 'Difficile', '4': 'Toutes les cartes' };
+                    const select = document.getElementById('room-difficulty-input');
+                    select.querySelectorAll('option').forEach(opt => {
+                        opt.textContent = `${labels[opt.value]} (${pools[opt.value] ?? '?'} cartes)`;
+                    });
+                });
+        });
+
+        function createRoom() {
+            const name = document.getElementById('room-name-input').value.trim();
+            if (!name) {
+                const inp = document.getElementById('room-name-input');
+                inp.classList.add('shake');
+                setTimeout(() => inp.classList.remove('shake'), 500);
+                return;
+            }
+            const password = document.getElementById('room-password-input').value.trim();
+            const time = parseInt(document.getElementById('room-time-input').value);
+            const scoreToWin = parseInt(document.getElementById('room-score-input').value);
+            const difficulty = document.getElementById('room-difficulty-input').value;
+            socket.emit('createRoom', { name, password, time, scoreToWin, difficulty });
+            document.getElementById('room-name-input').value = '';
+            document.getElementById('room-password-input').value = '';
+        }
+
+        function joinRoom(roomId, isPrivate) {
+            if (isPrivate) {
+                pendingRoomId = roomId;
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-overlay').classList.add('active');
+                document.body.classList.add('overlay-ouvert');
+                setTimeout(() => document.getElementById('password-input').focus(), 50);
+            } else {
+                socket.emit('joinRoom', { roomId });
+            }
+        }
+
+        function submitPassword() {
+            const pwd = document.getElementById('password-input').value.trim();
+            if (!pwd) {
+                document.getElementById('password-input').classList.add('shake');
+                setTimeout(() => document.getElementById('password-input').classList.remove('shake'), 500);
+                return;
+            }
+            socket.emit('joinRoom', { roomId: pendingRoomId, password: pwd });
+        }
+
+        function closePasswordDialog() {
+            document.getElementById('password-overlay').classList.remove('active');
+            document.body.classList.remove('overlay-ouvert');
+            pendingRoomId = null;
+        }
+
+        function leaveRoom() {
+            if (!currentRoom) return;
+            socket.emit('leaveRoom', { roomId: currentRoom });
+        }
+
+        function toggleReady() {
+            isReady = !isReady;
+            socket.emit('setReady', { roomId: currentRoom, ready: isReady });
+            const btn = document.getElementById('ready-btn');
+            if (isReady) {
+                btn.textContent = 'Annuler';
+                btn.className = 'ready-btn is-ready';
+            } else {
+                btn.textContent = 'Prêt !';
+                btn.className = 'ready-btn not-ready';
+            }
+        }
+
+        function showRoomPanel(room) {
+            currentRoom = room.id;
+            document.getElementById('room-panel').classList.add('active');
+            document.getElementById('room-panel-title').textContent = room.name;
+            document.getElementById('room-sidebar-name').textContent = room.name;
+            document.getElementById('room-params').textContent =  `${room.time}s · ${room.score_to_win} pts · ${DIFFICULTY_LABELS[room.difficulty]}`;
+            document.getElementById('create-panel').style.display = 'none';
+            document.getElementById('rooms-panel').style.display = 'none';
+            updateRoomPlayers(room.players);
+        }
+
+        function updateRoomPlayers(players) {
+            const list = document.getElementById('room-players-list');
+            document.getElementById('room-player-count').textContent = `${players.length} joueur(s)`;
+
+            if (!players.length) {
+                list.innerHTML = `<div class="empty-state"><div class="millennium-eye"></div><p>En attente de duellistes...</p></div>`;
+                return;
+            }
+
+            list.innerHTML = players.map(p => `
+                <div class="player-ready-item">
+                    <span class="player-ready-name">${p.pseudo}</span>
+                    <span class="ready-badge ${p.ready ? 'ready' : 'not-ready'}">${p.ready ? 'Prêt' : 'En attente'}</span>
+                </div>
+            `).join('');
+        }
+
+        function hideRoomPanel() {
+            currentRoom = null;
+            isReady = false;
+            document.getElementById('room-panel').classList.remove('active');
+            document.getElementById('ready-btn').textContent = 'Prêt !';
+            document.getElementById('ready-btn').className = 'ready-btn not-ready';
+            document.getElementById('create-panel').style.display = '';
+            document.getElementById('rooms-panel').style.display = '';
+            stopLaunchTimer();
+        }
+
+        function startLaunchTimer(seconds) {
+            const timerEl = document.getElementById('launch-timer');
+            const countEl = document.getElementById('launch-count');
+            timerEl.classList.add('active');
+            countEl.textContent = seconds;
+
+            /* deux launchCountdown rapproches (un joueur qui bascule pret /
+               pas pret) empilaient deux intervals, le premier devenant
+               inarretable puisque sa reference etait ecrasee */
+            if (launchInterval !== null) clearInterval(launchInterval);
+
+            launchInterval = setInterval(() => {
+                seconds--;
+                countEl.textContent = seconds;
+                if (seconds <= 0) { stopLaunchTimer(); }
+            }, 1000);
+        }
+
+        function stopLaunchTimer() {
+            clearInterval(launchInterval);
+            launchInterval = null;
+            document.getElementById('launch-timer').classList.remove('active');
+        }
+
+        function renderRooms(rooms) {
+            const list = document.getElementById('rooms-list');
+
+            if (!rooms.length) {
+                list.innerHTML = `<div class="empty-state"><div class="millennium-eye"></div><p>Aucune salle disponible</p></div>`;
+                return;
+            }
+
+            list.innerHTML = rooms.map(r => `
+                <div class="room-item" onclick="joinRoom('${r.id}', ${r.private})">
+                    <div class="room-info">
+                        <span class="room-name">${r.private ? '🔒 ' : ''}${r.name}</span>
+                        <span class="room-meta">${r.players} joueur(s) <br> ${r.time}s · ${r.score_to_win} pts · ${DIFFICULTY_LABELS[r.difficulty] || 'Normal'}</span>
+                    </div>
+                    <span class="room-status ${r.status === 'in_game' ? 'in-game' : 'waiting'}">${r.status === 'in_game' ? 'En jeu' : 'En attente'}</span>
+                    <button class="join-btn" onclick="event.stopPropagation(); joinRoom('${r.id}', ${r.private})">Rejoindre</button>
+                </div>
+            `).join('');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        socket.on('roomsList', data => renderRooms(data.rooms));
+
+        socket.on('roomJoined', data => {
+            closePasswordDialog();
+            showRoomPanel(data.room);
+            showToast(`Salle « ${data.room.name} » rejointe !`);
+        });
+
+        socket.on('roomLeft', () => {
+            hideRoomPanel();
+            showToast('Vous avez quitté la salle.');
+        });
+
+        socket.on('roomUpdated', data => {
+            if (currentRoom === data.room.id) {
+                updateRoomPlayers(data.room.players);
+                const myEntry = data.room.players.find(p => p.pseudo === myPseudo);
+                if (myEntry) {
+                    isReady = myEntry.ready;
+                    const btn = document.getElementById('ready-btn');
+                    if (isReady) { btn.textContent = 'Annuler'; btn.className = 'ready-btn is-ready'; }
+                    else { btn.textContent = 'Prêt !'; btn.className = 'ready-btn not-ready'; }
+                }
+            }
+        });
+
+        socket.on('launchCountdown', data => {
+            if (currentRoom === data.roomId) {
+                startLaunchTimer(data.seconds);
+            }
+        });
+
+        socket.on('countdownCancelled', data => {
+            if (currentRoom === data.roomId) {
+                stopLaunchTimer();
+                showToast('Un joueur n\'est plus prêt…');
+            }
+        });
+
+        socket.on('gameStart', data => {
+            window.location.href = `/jeu/${data.roomId}`;
+        });
+
+        socket.on('error', data => {
+            showToast(data.message);
+            if (data.message === 'Mot de passe incorrect') {
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-input').classList.add('shake');
+                setTimeout(() => document.getElementById('password-input').classList.remove('shake'), 500);
+                document.getElementById('password-input').focus();
+            }
+        });
+
+        socket.on('kicked', () => {
+            window.location.href = '/lobby';
+        });
+
+        /* fermeture explicite : en transport polling, une page quittee sans
+           disconnect() laisse une requete en attente cote navigateur et un
+           thread occupe cote serveur jusqu'au ping timeout */
+        window.addEventListener('pagehide', () => {
+            if (launchInterval !== null) clearInterval(launchInterval);
+            socket.disconnect();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inp = document.getElementById('room-name-input');
+            if (inp) inp.addEventListener('keypress', e => { if (e.key === 'Enter') createRoom(); });
+
+            document.getElementById('password-input').addEventListener('keydown', e => {
+                if (e.key === 'Enter') submitPassword();
+                if (e.key === 'Escape') closePasswordDialog();
+            });
+            document.getElementById('password-overlay').addEventListener('click', e => {
+                if (e.target === document.getElementById('password-overlay')) closePasswordDialog();
+            });
+        });
+    </script>
+</body>
+</html>

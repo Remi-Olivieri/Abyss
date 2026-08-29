@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abyss:DUEL</title>
+    <link rel="stylesheet" href="/static/style_yugiquiz.css">
+</head>
+<body>
+    
+    <header>
+        <div class="header-content">
+            <h1>
+                <span class="title-main" id="title-leave" title="Retour au lobby">Abyss:DUEL</span>
+            </h1>
+            </h1>
+        </div>
+        <div class="header-info">
+            <div id="game-info" class="game-info">
+                <span id="info-score-to-win"></span>
+                <span id="info-difficulty"></span>
+            </div>
+            <p id="pseudo" class="user-badge"></p>
+        </div>
+    </header>
+    
+    <div id="players-list">
+        <div class="players-header">
+            <div class="millennium-eye"></div>
+            <span>Duellistes</span>
+        </div>
+        <ul id="players"></ul>
+    </div>
+
+    <div class="container" id="main-content">
+        
+        <div id="timer" class="timer-container" display="none">
+            <div class="timer-label">Temps Restant</div>
+            <div class="timer-bar">
+                <div class="timer"></div>
+            </div>
+        </div>
+        
+        <div id="card-container" display="none">
+            <div class="card-frame">
+                <div id="card-rotator">
+                    <img id="card" class="card mask-image zoom-effect" src="" alt="Card" draggable="false">
+                    <div class="card__glare mask-image zoom-effect"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-section" display="none">
+            <div class="input-wrapper" style="position: relative;">
+                <input type="text" maxlength="80" id="user_answer" class="user-input" placeholder="Entrez le nom de la carte..." autocomplete="off">
+                <ul id="suggestions"></ul>
+                <div class="input-glow"></div>
+            </div>
+            <p id="image_name" class="response"></p>
+        </div>
+    </div>
+
+    <div id="loading-message">
+        <div class="loading-content">
+            <div class="millennium-loader">
+                <div class="loader-ring"></div>
+            </div>
+            <div class="loading-text">
+                <p>Préparation du Duel...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="leave-overlay">
+        <div class="leave-dialog">
+            <div class="leave-dialog-title">Quitter la partie ?</div>
+            <p class="leave-dialog-sub">Vous retournerez au lobby. Votre score sera perdu.</p>
+            <div class="leave-dialog-btns">
+                <button class="leave-confirm-btn" onclick="confirmLeave()">Quitter</button>
+                <button class="leave-cancel-btn" onclick="closeLeaveDialog()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameover-overlay">
+        <div class="leave-dialog">
+            <div class="leave-dialog-title">Fin de partie !</div>
+            <p class="leave-dialog-sub" id="gameover-msg"></p>
+            <div class="leave-dialog-btns">
+                <button class="leave-confirm-btn" onclick="window.location.href='/lobby'">Retour au lobby</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script>
+        var ROOM_ID = "{{ room_id }}";
+
+        var nextImage;
+        var pseudo;
+        var player_scores = {};
+        const socket = io();
+
+        let answerLocked = false;
+        let answerShown = false;
+        let timeleft = 0;
+        let currentCorrectName = '';
+        let nextCorrectName = '';
+
+        let timerCompte = null;   // reference du decompte en cours
+        let precharge = null;     // garde l'image suivante en vie le temps du fetch
+        let GAME_TIME = 15;
+        let SCORE_TO_WIN = 30;
+        var gameReady = false;
+
+        const DIFFICULTY_LABELS = { '1': 'Facile', '2': 'Normal', '3': 'Difficile', '4': 'Toutes les cartes' };
+
+        function getCard(bool) {
+            fetch('/get_card/' + ROOM_ID)
+            .then(response => response.json())
+            .then(data => {
+                nextImage = data.next_image_name;
+                nextCorrectName = data.next_correct_name;
+                /* la carte suivante est deja connue : on la telecharge maintenant
+                   pour que next() n'attende pas le reseau au changement de carte */
+                if (nextImage) {
+                    precharge = new Image();
+                    precharge.src = "/static/CardsCropped/" + encodeURIComponent(nextImage);
+                }
+                GAME_TIME = data.time || 15;
+                SCORE_TO_WIN = data.score_to_win || 30;
+                if (bool) {
+                    document.getElementById('card').src = "/static/Cards/" + encodeURIComponent(data.image_name);
+                    currentCorrectName = data.correct_name;
+                }
+            });
+        }
+
+        function showAnswer() {
+            if (answerShown) return;
+            answerShown = true;
+
+            stopCompte();
+            unlockAnswer();
+
+            const cardEl = document.getElementById('card');
+            const currentFilename = cardEl.src.split('/').pop();
+            cardEl.style.width = 'auto';
+            cardEl.style.height = '70vh';
+            cardEl.src = "/static/Cards/" + cardEl.src.split('/').pop();
+
+            document.getElementById('card').classList.remove('zoomed');
+            document.querySelector('.card__glare').classList.remove('zoomed');
+
+            document.getElementById('suggestions').innerHTML = '';
+            const userAnswer = document.getElementById('user_answer').value;
+
+            document.getElementById('image_name').textContent = currentCorrectName;
+            document.getElementById('image_name').style.display = "block";
+            document.getElementById('timer').style.display = "none";
+            document.getElementById('user_answer').style.display = "none";
+            document.getElementById('user_answer').value = "";
+
+            socket.emit('userAnswer', { answer: userAnswer, correct: currentCorrectName, roomId: ROOM_ID });
+        }
+
+        function next() {
+            answerShown = false;
+            unlockAnswer();
+
+            document.querySelectorAll('#players li.answer-locked, #players li.answer-correct, #players li.answer-wrong')
+                .forEach(li => li.classList.remove('answer-locked', 'answer-correct', 'answer-wrong'));
+            document.querySelectorAll('#players .player-response').forEach(el => el.remove());
+            document.getElementById('image_name').style.display = "none";
+
+            currentCorrectName = nextCorrectName;
+
+            const cardEl = document.getElementById('card');
+            cardEl.style.width = '40vh';
+            cardEl.style.height = '40vh';
+            cardEl.src = "/static/CardsCropped/" + encodeURIComponent(nextImage);
+
+            getCard(false);
+            autoSubmit();
+            document.getElementById('user_answer').focus();
+        }
+
+        function autoSubmit() {
+            autoSubmitWithTime(GAME_TIME);
+        }
+
+        function stopCompte() {
+            if (timerCompte !== null) { clearInterval(timerCompte); timerCompte = null; }
+        }
+
+        function autoSubmitWithTime(remaining) {
+            document.getElementById('timer').style.display = "flex";
+            document.getElementById('user_answer').style.display = "block";
+
+            document.getElementById('card').classList.add('zoomed');
+            document.querySelector('.card__glare').classList.add('zoomed');
+
+            const timerBar = document.querySelector('.timer');
+            timerBar.style.animation = 'none';
+            timerBar.offsetHeight;
+            timerBar.style.animation = `timerShrink ${remaining}s linear forwards`;
+
+            /* si le serveur envoie nouvelle_image avant la fin du decompte,
+               next() rappelle autoSubmit() : sans ce stop on empilait un 2e
+               interval qui decrementait le meme timeleft, d'ou un chrono a
+               double vitesse et un showAnswer() tire deux fois */
+            stopCompte();
+            timeleft = Math.round(remaining);
+            timerCompte = setInterval(function(){
+                if(timeleft <= 1){
+                    stopCompte();
+                    showAnswer();
+                    getCard(false);
+                }
+                timeleft -= 1;
+            }, 1000);
+        }
+
+        function startFirstCard() {
+            fetch('/check_session')
+            .then(r => r.json())
+            .then(data => {
+                pseudo = data.pseudo;
+                if (!pseudo) { window.location.href = '/connexion'; return; }
+                document.getElementById('pseudo').textContent = pseudo;
+
+                socket.emit('checkScores', { roomId: ROOM_ID });
+                
+                document.getElementById('image_name').style.display = 'none';
+                document.getElementById('main-content').style.display = 'flex';
+                document.getElementById('loading-message').style.display = 'none';
+
+                Promise.all([
+                    fetch('/get_card/' + ROOM_ID).then(r => r.json()),
+                    fetch('/r_time/' + ROOM_ID).then(r => r.json())
+                ]).then(([cardData, timeData]) => {
+                    nextImage = cardData.next_image_name;
+                    nextCorrectName = cardData.next_correct_name;
+                    currentCorrectName = cardData.correct_name;
+                    GAME_TIME = cardData.time;
+                    SCORE_TO_WIN = cardData.score_to_win;
+
+                    const cardEl = document.getElementById('card');
+                    cardEl.style.width = '40vh';
+                    cardEl.style.height = '40vh';
+                    cardEl.src = "/static/CardsCropped/" + encodeURIComponent(cardData.image_name);
+
+                    const remaining = Math.max(0, timeData.rtime);
+                    autoSubmitWithTime(remaining);
+                    document.getElementById('user_answer').focus();
+                });
+            })
+            .catch(() => window.location.href = '/connexion');
+        }
+
+        function lockAnswer() {
+            answerLocked = true;
+            answerInput.classList.add('locked');
+            answerInput.disabled = true;
+            suggestionsList.innerHTML = '';
+            socket.emit('playerLocked', { roomId: ROOM_ID, pseudo: pseudo });
+        }
+
+        function unlockAnswer() {
+            answerLocked = false;
+            answerInput.classList.remove('locked');
+            answerInput.disabled = false;
+            const li = document.getElementById(`player-${pseudo}`);
+            if (li) li.classList.remove('answer-locked');
+        }
+
+        const card = document.getElementById('card-rotator');
+        const cardContainer = document.getElementById('card-container');
+
+        /* Les variables du glare etaient posees sur documentElement : comme
+           elles heritent, Chrome recalculait le style de TOUTE la page a chaque
+           mouvement de souris, puis repeignait un degrade en mix-blend-mode sur
+           une image de 70vh. On les pose sur le conteneur (l'heritage suffit
+           pour .card__glare) et on ne met a jour qu'une fois par frame. */
+        cardContainer.style.setProperty('--pointer-x', '50%');
+        cardContainer.style.setProperty('--pointer-y', '50%');
+        cardContainer.style.setProperty('--card-opacity', '0');
+
+        let rafPointeur = null;
+        let dernierEvt = null;
+
+        function majPointeur() {
+            rafPointeur = null;
+            const e = dernierEvt;
+            if (!e) return;
+
+            const rect = cardContainer.getBoundingClientRect();
+            const rect2 = card.getBoundingClientRect();
+            const containerX = rect.left + rect.width / 2;
+            const containerY = rect.top + rect.height / 2;
+
+            const gmouseX = e.clientX - rect2.left;
+            const gmouseY = e.clientY - rect2.top;
+
+            const hauteurFenetre = window.innerHeight;
+            const xAxis = (-(e.clientX/hauteurFenetre - containerX/hauteurFenetre) / 5)*500;
+            const yAxis = ((e.clientY/hauteurFenetre - containerY/hauteurFenetre) / 8)*500;
+
+            cardContainer.style.setProperty('--pointer-x', gmouseX + 'px');
+            cardContainer.style.setProperty('--pointer-y', gmouseY + 'px');
+            card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        }
+
+        cardContainer.addEventListener('mousemove', (e) => {
+            dernierEvt = e;
+            if (rafPointeur === null) rafPointeur = requestAnimationFrame(majPointeur);
+        });
+
+        cardContainer.addEventListener('mouseenter', () => {
+            card.style.transition = "none";
+            cardContainer.style.setProperty('--card-opacity', '1');
+        });
+
+        cardContainer.addEventListener('mouseleave', () => {
+            if (rafPointeur !== null) { cancelAnimationFrame(rafPointeur); rafPointeur = null; }
+            dernierEvt = null;
+            card.style.transition = "all 0.5s cubic-bezier(.53,-0.02,.65,2.06)";
+            card.style.transform = 'rotateY(0deg) rotateX(0deg)';
+            cardContainer.style.setProperty('--card-opacity', '0');
+        });
+
+        socket.on('nouvelle_image', data => {
+            next();
+        });
+
+        socket.on('updateScores', data => {
+            player_scores = data.scores;
+            socket.emit('checkPlayers', { roomId: ROOM_ID });
+        });
+
+        socket.on('updatePlayersList', data => {
+            const playersList = document.getElementById('players');
+            const scores = data.scores || {};
+
+            data.players.forEach(player => {
+                let li = document.getElementById(`player-${player}`);
+                if (!li) {
+                    li = document.createElement('li');
+                    li.id = `player-${player}`;
+
+                    const playerInfo = document.createElement('div');
+                    playerInfo.className = 'player-info';
+
+                    const playerName = document.createElement('span');
+                    playerName.className = 'player-name';
+                    playerName.textContent = player;
+
+                    const playerScore = document.createElement('span');
+                    playerScore.className = 'player-score';
+
+                    playerInfo.appendChild(playerName);
+                    playerInfo.appendChild(playerScore);
+                    li.appendChild(playerInfo);
+                    playersList.appendChild(li);
+                }
+
+                li.querySelector('.player-score').textContent = scores[player] ?? player_scores[player] ?? 0;
+            });
+
+            playersList.querySelectorAll('li').forEach(li => {
+                const id = li.id.replace('player-', '');
+                if (!data.players.includes(id)) li.remove();
+            });
+        });
+
+        socket.on('showAnswer', data => {
+            const playerLi = document.getElementById(`player-${data.pseudo}`);
+            if (!playerLi) return;
+
+            playerLi.classList.remove('answer-locked');
+            playerLi.classList.add(data.correct ? 'answer-correct' : 'answer-wrong');
+
+            const old = playerLi.querySelector('.player-response');
+            if (old) old.remove();
+
+            const responseEl = document.createElement('span');
+            responseEl.classList.add('player-response', 'visible');
+            responseEl.classList.add(data.correct ? 'correct' : 'wrong');
+            responseEl.textContent = data.answer ? `${data.answer} ${data.correct ? '✓' : '✗'}` : (data.correct ? '✓' : '✗');
+            playerLi.appendChild(responseEl);
+        });
+
+        socket.on('kicked', () => {
+            window.location.href = '/lobby';
+        });
+
+        socket.on('gameOver', data => {
+            const msg = data.winner === pseudo
+                ? `Vous avez gagné avec ${data.scores[data.winner]} points !`
+                : `${data.winner} a gagné avec ${data.scores[data.winner]} points !`;
+            document.getElementById('gameover-msg').textContent = msg;
+            ouvreOverlay('gameover-overlay');
+        });
+
+        socket.on('connect', () => {
+            socket.emit('joinGameRoom', { roomId: ROOM_ID });
+
+            setTimeout(() => {
+                if (!gameReady) {
+                    window.location.href = '/lobby';
+                }
+            }, 2000);
+        });
+
+        socket.on('gameParams', data => {
+            GAME_TIME = data.time;
+            SCORE_TO_WIN = data.score_to_win;
+            document.getElementById('info-score-to-win').textContent = `🏆 ${SCORE_TO_WIN} pts`;
+            document.getElementById('info-difficulty').textContent = DIFFICULTY_LABELS[data.difficulty];
+            
+            if (!gameReady) {
+                gameReady = true;
+                startFirstCard();
+            }
+        });
+
+        socket.on('roomNotFound', () => {
+            window.location.href = '/lobby';
+        });
+
+        socket.on('playerLocked', data => {
+            const li = document.getElementById(`player-${data.pseudo}`);
+            if (li) li.classList.add('answer-locked');
+        });
+
+        socket.on('forceTimeout', () => {
+            timeleft = 0;
+            showAnswer();
+        });
+
+        /* joinGameRoom est deja emis dans socket.on('connect') : le doublon
+           declenchait un updatePlayersList diffuse a toute la salle pour rien */
+
+        const suggestionsList = document.getElementById('suggestions');
+        const answerInput = document.getElementById('user_answer');
+        let debounceTimer;
+        let activeIndex = -1;
+
+        answerInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            activeIndex = -1;
+            debounceTimer = setTimeout(async () => {
+                const q = answerInput.value.trim();
+                suggestionsList.innerHTML = '';
+                if (q.length < 2) return;
+
+                const res = await fetch(`/autocomplete?q=${encodeURIComponent(q)}`);
+                const suggestions = await res.json();
+
+                suggestions.forEach((name) => {
+                    const li = document.createElement('li');
+                    li.textContent = name;
+                    li.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        answerInput.value = name;
+                        suggestionsList.innerHTML = '';
+                        answerInput.focus();
+                    });
+                    suggestionsList.appendChild(li);
+                });
+            }, 180);
+        });
+
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && activeIndex < 0 && !answerLocked) {
+                e.preventDefault();
+                suggestionsList.innerHTML = '';
+                activeIndex = -1; 
+                if (answerInput.value.trim()) {
+                    lockAnswer();
+                }
+                return;
+            }
+
+            const items = suggestionsList.querySelectorAll('li');
+            if (!items.length) return;
+
+            if (e.key === 'Escape') {
+                suggestionsList.innerHTML = '';
+                activeIndex = -1;
+                return;
+            }
+
+            items.forEach((li, i) => li.classList.toggle('active', i === activeIndex));
+            if (activeIndex >= 0) items[activeIndex].scrollIntoView({ block: 'nearest' });
+        });
+
+        /* body.overlay-ouvert gele les animations du decor : sinon le
+           backdrop-filter du dialogue refloute tout l'ecran a chaque frame */
+        function ouvreOverlay(id) {
+            document.getElementById(id).classList.add('active');
+            document.body.classList.add('overlay-ouvert');
+        }
+
+        function fermeOverlay(id) {
+            document.getElementById(id).classList.remove('active');
+            if (!document.querySelector('#leave-overlay.active, #gameover-overlay.active')) {
+                document.body.classList.remove('overlay-ouvert');
+            }
+        }
+
+        document.getElementById('title-leave').addEventListener('click', () => {
+            ouvreOverlay('leave-overlay');
+        });
+
+        function closeLeaveDialog() {
+            fermeOverlay('leave-overlay');
+        }
+
+        function confirmLeave() {
+            socket.emit('leaveRoom', { roomId: ROOM_ID });
+            socket.once('roomLeft', () => {
+                window.location.href = '/lobby';
+            });
+            setTimeout(() => { window.location.href = '/lobby'; }, 1000);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLeaveDialog();
+        });
+
+        document.getElementById('leave-overlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('leave-overlay')) closeLeaveDialog();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!answerInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+                suggestionsList.innerHTML = '';
+                activeIndex = -1;
+            }
+        });
+
+        /* Sans ca, quitter la page laissait la connexion Socket.IO se faire
+           ramasser par le timeout : en transport polling la requete restait en
+           l'air cote navigateur ET un thread restait pris cote serveur. */
+        window.addEventListener('pagehide', () => {
+            stopCompte();
+            if (rafPointeur !== null) cancelAnimationFrame(rafPointeur);
+            socket.disconnect();
+        });
+    </script>
+</body>
+</html>

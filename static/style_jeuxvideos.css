@@ -1,0 +1,1107 @@
+:root{
+  --bg:#17131F;
+  --bg2:#1E1829;
+  --bg3:#261F33;
+  --line:rgba(242,237,228,.10);
+  --line-strong:rgba(242,237,228,.20);
+  --text:#F2EDE4;
+  --muted:#A79CB4;
+  --gold:#E5C46B;
+  /* la wishlist : une teinte froide, pour ne pas se confondre avec l'or
+     de « En cours » — les deux pastilles se croisent dans le même mur */
+  --wish:#8FB8E8;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Karla",system-ui,sans-serif;
+  --mono:"Azeret Mono",ui-monospace,monospace;
+  --maxw:1120px;
+  --cov-ratio:3/4;
+  /* hauteur de l'en-tête collant : .top-in fait 62px, plus son liseré du
+     bas. C'est là-dessous que se pose la barre d'outils. */
+  --h-top:63px;
+}
+*{box-sizing:border-box}
+/* l'attribut hidden l'emporte sur les display: flex/grid déclarés plus bas */
+[hidden]{display:none!important}
+html,body{margin:0;padding:0}
+/* La place de la barre de défilement est réservée une fois pour toutes.
+   Ouvrir une fiche bloque le défilement du fond (voir verrouFond) : la
+   barre disparaissait, la zone utile s'élargissait d'une quinzaine de
+   pixels, et toute la page sautait vers la droite. En gardant la gouttière,
+   masquer le défilement ne change plus rien à la largeur.
+   Sur <html> exprès : le réglage de l'élément racine vaut pour la fenêtre
+   elle-même, y compris quand l'overflow de <body> lui est propagé. */
+html{scrollbar-gutter:stable}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+a{color:var(--gold)}
+/* Sélection et curseur de saisie à la couleur de la page. Le bleu du
+   système était la seule chose qui n'appartenait pas au thème.
+   Seul le fond est repeint, jamais la couleur du texte : la zone « Avis »
+   écrit en transparent au-dessus d'un calque coloré (voir #f_review), et
+   forcer une couleur de sélection ferait réapparaître son texte par-dessus
+   ses propres couleurs. */
+::selection{background:rgba(229,196,107,.32)}
+input,textarea{caret-color:var(--gold)}
+
+/* ---------- en-tête ---------- */
+.top{
+  position:sticky;top:0;z-index:40;
+  background:rgba(23,19,31,.86);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.top-in{display:flex;align-items:center;gap:22px;height:62px}
+.back{
+  width:34px;height:34px;border-radius:9px;border:1px solid var(--line);color:var(--muted);
+  display:grid;place-items:center;flex:0 0 auto;text-decoration:none;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.back:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
+.brand{display:flex;align-items:baseline;gap:10px;flex:0 0 auto;position:relative}
+.brand b{
+  font-family:var(--display);font-weight:800;font-size:19px;
+  letter-spacing:-.02em;transition:color .15s;
+}
+/* le titre est le bouton qui change de classeur */
+.jnl{display:flex;align-items:baseline;gap:7px;padding:0;color:inherit}
+.jnl:hover b,.jnl[aria-expanded="true"] b{color:var(--gold)}
+.jnl-chev{align-self:center;color:var(--muted);transition:transform .18s,color .15s}
+.jnl:hover .jnl-chev{color:var(--gold)}
+.jnl[aria-expanded="true"] .jnl-chev{transform:rotate(180deg);color:var(--gold)}
+.jnl-menu{left:0;right:auto;top:calc(100% + 8px);min-width:200px}
+.brand span{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase}
+/* pas d'overflow ici : il rognerait le menu déroulant des années. Le
+   défilement horizontal ne sert plus, la barre ne grandit plus avec les
+   années puisqu'elles sont regroupées dans ce menu. */
+.tabs{display:flex;align-items:center;gap:2px;margin-left:auto;flex-wrap:wrap}
+.cog-wrap{position:relative;flex:0 0 auto}
+.cog{
+  position:relative;
+  width:34px;height:34px;border-radius:9px;border:1px solid var(--line);color:var(--muted);
+  display:grid;place-items:center;transition:color .15s,border-color .15s,background .15s;
+}
+.cog:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
+.cog[aria-expanded="true"]{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+/* pastille d'état : verte en ligne, ambrée pendant une actualisation, rouge
+   quand elle a échoué, éteinte hors ligne */
+.cog .led{
+  position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;
+  background:var(--muted);border:2px solid var(--bg);
+}
+.cog[data-etat="live"] .led{background:#35C98D;box-shadow:0 0 8px rgba(53,201,141,.55)}
+.cog[data-etat="stale"] .led{background:var(--gold);animation:pulse 1.1s ease-in-out infinite}
+/* Fixe, et pas clignotante : le clignotement dit « je cherche », or il n'y a
+   plus rien en vol. Le cramoisi est celui des toasts et de l'écran d'erreur. */
+.cog[data-etat="erreur"] .led{background:#D9436E;box-shadow:0 0 8px rgba(217,67,110,.55)}
+@keyframes pulse{50%{opacity:.25}}
+.menu{
+  position:absolute;right:0;top:calc(100% + 9px);z-index:50;min-width:224px;padding:6px;
+  background:var(--bg2);border:1px solid var(--line-strong);border-radius:12px;
+  box-shadow:0 18px 46px rgba(0,0,0,.6);animation:rise .16s cubic-bezier(.2,.7,.3,1);
+}
+.menu-info{
+  padding:9px 10px 11px;margin-bottom:6px;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:10.5px;line-height:1.6;color:var(--muted);
+}
+.menu-item{
+  display:block;width:100%;text-align:left;padding:9px 10px;border-radius:8px;
+  font-size:13.5px;color:var(--text);transition:background .15s;
+}
+.menu-item:hover{background:var(--bg3)}
+.menu-item.quit{color:var(--muted)}
+.menu-item.quit:hover{color:var(--text)}
+.menu-item.on{color:var(--gold)}
+.menu-item .tick{float:right;font-size:12px;opacity:.85}
+.menu-note{
+  padding:9px 10px 3px;margin-top:6px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--muted);
+}
+.menu-note code{color:var(--text);font-size:10px}
+.tab{
+  font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.04em;
+  padding:7px 13px;border-radius:99px;color:var(--muted);white-space:nowrap;
+  border:1px solid transparent;transition:color .15s,background .15s,border-color .15s;
+}
+.tab:hover{color:var(--text);background:var(--bg3)}
+.tab[aria-selected="true"]{color:var(--bg);background:var(--gold);border-color:var(--gold);font-weight:700}
+
+/* l'onglet qui déroule la liste des années */
+.tab-wrap{position:relative;flex:0 0 auto}
+.tab-menu{display:flex;align-items:center;gap:6px}
+.tab-chev{flex:0 0 auto;transition:transform .18s}
+.tab-menu[aria-expanded="true"] .tab-chev{transform:rotate(180deg)}
+/* aligné sous le bouton, et pas collé à droite comme le menu de l'engrenage */
+.per-menu{left:0;right:auto;min-width:160px;max-height:min(420px,60vh);overflow:auto}
+
+/* ---------- bandeau de stats ---------- */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border-bottom:1px solid var(--line);
+}
+.stat{
+  padding:20px 12px 18px;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;justify-content:center;text-align:center;
+}
+.stat:last-child{border-right:none}
+.stat u{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);text-decoration:none;margin-bottom:6px;
+}
+.stat b{
+  display:block;font-family:var(--mono);font-weight:500;font-size:24px;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1;
+}
+/* Bandeau des onglets de statut : une ligne de chiffres au lieu des quatre
+   grandes cases, qui n'auraient ici que des tirets à montrer. C'est elle qui
+   dit combien de jeux contiennent « En cours » et « Wishlist », depuis que
+   les onglets ne portent plus de compteur.
+   display:flex l'emporte sur la grille déclarée plus haut, y compris sur les
+   colonnes que les media queries y imposent. */
+.stats.ligne{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 26px;padding:15px 0 14px;
+}
+.stats.ligne span{font-size:13px;color:var(--muted)}
+.stats.ligne b{
+  font-family:var(--mono);font-weight:500;font-size:19px;letter-spacing:-.02em;
+  color:var(--text);font-variant-numeric:tabular-nums;margin-right:7px;
+}
+.stat i{
+  display:block;font-style:normal;font-size:12px;color:var(--muted);
+  font-family:var(--body);min-height:1.35em;
+}
+
+/* ---------- répartition des notes ---------- */
+.dist{padding:26px 0 22px;border-bottom:1px solid var(--line)}
+.dist-head{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.dist-head h2{
+  font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted);margin:0;
+}
+.dist-hint{font-size:12px;color:var(--muted);opacity:.8;font-variant-numeric:tabular-nums}
+.dist-clear{
+  margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  padding:4px 11px;border-radius:99px;color:var(--gold);white-space:nowrap;
+  border:1px solid rgba(229,196,107,.45);transition:background .15s,border-color .15s;
+}
+.dist-clear:hover{background:rgba(229,196,107,.12);border-color:var(--gold)}
+.dist-clear span{opacity:.6;margin-left:6px}
+.hist-box{position:relative}
+.hist{position:relative;height:118px;display:flex;align-items:flex-end;gap:3px}
+.bar{
+  flex:1;height:100%;display:flex;align-items:flex-end;
+  border-radius:4px;padding:0;min-width:0;cursor:pointer;
+}
+.bar[data-c="0"]{cursor:default}
+.bar:hover{background:rgba(242,237,228,.05)}
+.bar:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.bar i{
+  display:block;width:100%;border-radius:3px 3px 0 0;min-height:2px;
+  transition:filter .15s,opacity .15s;
+}
+.bar:hover i{filter:brightness(1.3)}
+/* une tranche choisie : les autres s'effacent sans disparaître */
+.hist.picked .bar:not(.on) i{opacity:.3;filter:saturate(.45)}
+.hist.picked .bar:not(.on):hover i{opacity:.65}
+.bar.on{background:rgba(242,237,228,.08)}
+.bar.on i{filter:brightness(1.2)}
+.avg{position:absolute;top:-4px;bottom:0;width:1px;background:var(--gold);opacity:.55;pointer-events:none}
+.avg span{
+  position:absolute;top:-6px;left:6px;font-family:var(--mono);font-size:10px;
+  color:var(--gold);white-space:nowrap;letter-spacing:.04em;
+}
+.avg.flip span{left:auto;right:6px}
+.haxis{position:relative;height:24px;border-top:1px solid var(--line-strong)}
+.haxis span{
+  position:absolute;top:6px;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10px;color:var(--muted);
+}
+.tip{
+  position:absolute;z-index:20;pointer-events:none;transform:translateX(-50%);max-width:60vw;
+  background:var(--bg3);border:1px solid var(--line-strong);border-radius:7px;
+  padding:5px 9px;font-size:12.5px;white-space:nowrap;opacity:0;transition:opacity .12s;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+.tip.show{opacity:1}
+.tip b{font-family:var(--mono);font-weight:700}
+
+/* ---------- barre d'outils ---------- */
+/* La barre d'outils se pose sous l'en-tête et y reste : changer la recherche
+   ou le tri ne demande plus de remonter tout un mur de trois cents jeux.
+   Même fond translucide que l'en-tête, les tuiles défilent dessous en étant
+   floutées, exactement comme sous lui. Au repos le fond ne se voit pas — il
+   n'y a que la page derrière — donc rien ne change en haut de la liste.
+   z-index 15 : au-dessus des tuiles, mais sous l'infobulle de l'histogramme
+   (20) et sous l'en-tête (40), qui doivent tous deux passer devant. */
+.tools{
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px 0;
+  position:sticky;top:var(--h-top);z-index:15;
+  background:rgba(23,19,31,.86);
+  backdrop-filter:blur(14px);
+}
+.search{
+  flex:1 1 220px;min-width:180px;display:flex;align-items:center;gap:8px;
+  background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:0 12px;height:38px;
+}
+.search input{background:none;border:none;outline:none;width:100%;height:100%}
+.search input::placeholder{color:var(--muted)}
+.search svg{flex:0 0 auto;opacity:.5}
+.sel{
+  background:var(--bg2);border:1px solid var(--line);border-radius:9px;height:38px;
+  padding:0 30px 0 12px;outline:none;appearance:none;font-size:13.5px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+}
+
+/* ---------- jaquettes ---------- */
+.cov{display:block;background:var(--bg3);border-radius:5px;object-fit:cover;aspect-ratio:var(--cov-ratio)}
+/* le temps que la jaquette arrive : un reflet lent traverse la case, pour
+   qu'un mur qui se remplit ne ressemble pas a un mur casse */
+.cov.chargement{
+  background:linear-gradient(100deg,
+    var(--bg3) 28%, rgba(242,237,228,.075) 46%, var(--bg3) 64%);
+  background-size:280% 100%;
+  animation:sheen 1.3s linear infinite;
+}
+@keyframes sheen{from{background-position:170% 0}to{background-position:-70% 0}}
+.cov.ph{
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-family:var(--display);font-weight:800;letter-spacing:-.04em;line-height:1;
+  color:var(--c,#8A7F98);background:color-mix(in srgb, var(--c,#8A7F98) 16%, var(--bg3));
+}
+.cov.big{width:100%;border-radius:0;font-size:30px}
+/* Liseré de note au bas de la jaquette : trois pixels de la couleur exacte
+   de la note, la même que celle de la pastille. --note est posée sur la
+   tuile par tuilePour() et héritée jusqu'ici, pour qu'elle survive à
+   l'échange de l'image contre une case d'initiales quand le fichier manque.
+
+   Une bordure, et surtout pas un box-shadow intérieur : sur un élément
+   remplacé, l'ombre intérieure est peinte sous le contenu, donc la jaquette
+   la recouvrait entièrement. La bordure, elle, passe devant.
+
+   Avec box-sizing:border-box et aspect-ratio, elle est prise sur la hauteur
+   de la case au lieu de s'y ajouter : la tuile ne change pas de taille. Le
+   repli transparent la garde pour les jeux non notés — invisible, mais les
+   jaquettes gardent toutes exactement le même cadrage. */
+.cov.big{border-bottom:3px solid var(--note,transparent)}
+/* bouton « aller chercher la jaquette », dans le coin d'une case d'initiales */
+.cov.ph{position:relative}
+.cov-get{
+  position:absolute;bottom:7px;right:7px;width:26px;height:26px;border-radius:8px;
+  display:grid;place-items:center;cursor:pointer;color:var(--muted);
+  background:rgba(10,8,14,.82);border:1px solid var(--line);
+  opacity:0;transition:opacity .15s,color .15s,border-color .15s;
+}
+.tile:hover .cov-get,.cov-get:focus-visible,.cov.xl .cov-get{opacity:1}
+.cov-get:hover{color:var(--gold);border-color:rgba(229,196,107,.5)}
+.cov-get:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.cov-get.busy{opacity:1;color:var(--gold);cursor:progress;animation:pulse 1.1s ease-in-out infinite}
+/* au doigt il n'y a pas de survol : le bouton reste visible */
+@media (hover:none){ .cov-get{opacity:1} }
+.cov.xl{width:100%;border-radius:10px;font-size:40px}
+
+/* ---------- mur ---------- */
+.grouphead{
+  display:flex;align-items:center;gap:12px;margin:28px 0 12px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+}
+.grouphead:first-child{margin-top:4px}
+.grouphead::after{content:"";flex:1;height:1px;background:var(--line)}
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px}
+#out{padding-bottom:70px}
+/* Pas de content-visibility:auto ici, et c'est délibéré. Il demandait une
+   hauteur estimée (contain-intrinsic-size), or une tuile n'en a pas de
+   fixe : les colonnes s'étirent en minmax(158px,1fr), donc à 1120 px la
+   jaquette fait ~224 px et la tuile ~281, voire ~302 avec une ligne de
+   métadonnées. L'estimation de 272 px sous-évaluait la page ; en la
+   parcourant on rendait les tuiles pour de vrai, le document s'allongeait,
+   et le pouce de la barre reculait sous la souris jusqu'à sembler bloqué.
+   Le rendu paresseux des images et la réutilisation des tuiles suffisent
+   largement à tenir un mur de trois cents jeux. */
+.tile{
+  position:relative;text-align:left;border:1px solid var(--line);border-radius:12px;
+  background:var(--bg2);overflow:hidden;padding:0;
+  display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+  transition:border-color .18s,transform .18s,box-shadow .18s;
+}
+.tile:hover{
+  border-color:rgba(229,196,107,.5);
+  transform:translateY(-5px);
+  box-shadow:0 16px 34px rgba(0,0,0,.5);
+}
+.tile:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* Halo bref sur la tuile qu'on vient de quitter. En refermant une fiche au
+   milieu de deux cents jeux, l'œil doit retrouver sa place sans chercher :
+   0,6 s de liseré doré qui s'éteint tout seul.
+   Une animation et pas une transition : la classe est posée et retirée par
+   le script, et une animation se rejoue à l'identique à chaque fermeture. */
+@keyframes tuile-revenue{
+  from{box-shadow:0 0 0 3px rgba(229,196,107,.8), 0 14px 32px rgba(0,0,0,.5)}
+  to{box-shadow:0 0 0 3px rgba(229,196,107,0), 0 14px 32px rgba(0,0,0,0)}
+}
+.tile.revenu{animation:tuile-revenue .6s ease-out}
+/* la jaquette avance un peu dans son cadre — seule l'image bouge, la case
+   d'initiales garde son bouton de telechargement bien en place */
+.tile img.cov.big{transition:transform .35s cubic-bezier(.2,.7,.3,1)}
+/* Zoom ancré en bas, et pas au centre : sinon l'image grandit aussi vers le
+   bas, déborde derrière la légende et emmène le liseré de note avec elle.
+   Ancré ici, le bord bas ne bouge pas d'un pixel, le liseré reste posé. */
+.tile:hover img.cov.big{transform:scale(1.05);transform-origin:bottom}
+.tile:hover .tn{color:var(--gold)}
+.tile .tn{transition:color .18s}
+/* pas de backdrop-filter ici : il y a une pastille par jeu, et ouvrir une
+   fiche (elle-meme floutee) obligeait le navigateur a resoudre des centaines
+   de calques de flou empiles -> l'ouverture ramait. Fond un peu plus opaque
+   a la place, l'effet est le meme a l'oeil. */
+.tile .tnote{
+  position:absolute;top:8px;left:8px;z-index:2;
+  font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:-.03em;
+  padding:3px 8px;border-radius:99px;background:rgba(10,8,14,.88);
+  border:1px solid rgba(255,255,255,.12);
+}
+/* jeu en cours ou convoité : pas de note à afficher, la pastille dit où il
+   en est. Même forme pour les deux, seule la teinte les sépare. */
+.tile .tnote.encours,.tile .tnote.wish{
+  font-family:var(--mono);font-weight:500;font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;padding:4px 9px;
+  color:var(--gold);border-color:rgba(229,196,107,.4);
+}
+.tile .tnote.wish{color:var(--wish);border-color:rgba(143,184,232,.4)}
+/* Promotion en cours sur un jeu convoité. Dans le coin droit : la pastille
+   de statut occupe déjà le gauche. En vert plein plutôt qu'en contour comme
+   ses voisines, avec une ombre de sa propre couleur — c'est la seule bonne
+   nouvelle qu'une tuile puisse annoncer, et elle doit se repérer de loin
+   dans un mur de wishlist.
+   z-index 3, au-dessus de .tnote : les deux ne se croisent pas aujourd'hui,
+   mais un nom long qui pousserait la pastille de statut passerait dessous. */
+.tile .tpromo{
+  position:absolute;top:8px;right:8px;z-index:3;
+  font-family:var(--mono);font-weight:800;font-size:12.5px;letter-spacing:.02em;
+  padding:5px 9px;border-radius:99px;
+  color:#0B1A13;background:#3ED79A;border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 3px 12px rgba(53,201,141,.45);
+}
+.tile .cov.big{flex:0 0 auto}
+.tile .tcap{padding:10px 12px 12px;display:block}
+.tile .tn{
+  font-family:var(--display);font-weight:500;font-size:14px;line-height:1.25;
+  min-height:2.5em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+.tile .tmeta{display:block;font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:5px}
+/* Compte à rebours d'un jeu convoité : doré tant qu'il n'est pas sorti, gris
+   comme le reste une fois qu'il l'est. C'est la seule différence, et elle
+   suffit à faire ressortir ce qui arrive dans un mur de jeux qui attendent. */
+.tile .tmeta.avant{color:var(--gold)}
+
+/* ---------- squelette du premier chargement ----------
+   Toute la page en gris pendant la toute première requête, quand aucun
+   cache local ne peut la remplir tout de suite : onglets, bandeau de
+   stats, histogramme et douze tuiles. Chaque fantôme reprend la forme et
+   la place de ce qu'il remplace, pour que les vraies données se posent
+   dessus sans faire sauter la page.
+
+   Le reflet est celui de .cov.chargement, déjà employé par les jaquettes
+   qui arrivent : une seule idée visuelle pour toute l'attente. */
+.fantome-l,.fantome-bar,.fantome-tab{
+  display:block;border-radius:5px;
+  background:linear-gradient(100deg,
+    var(--bg3) 28%, rgba(242,237,228,.075) 46%, var(--bg3) 64%);
+  background-size:280% 100%;
+  animation:sheen 1.3s linear infinite;
+}
+/* Décale les reflets d'un fantôme à l'autre : à l'unisson, la page
+   clignote au lieu de respirer. Déclaré après le raccourci `animation`
+   ci-dessus, qui remettrait le délai à zéro. */
+.fantome-l,.fantome-bar,.fantome-tab,.tile.fantome .cov.chargement{
+  animation-delay:var(--d,0s);
+}
+
+/* une tuile : les deux lignes du titre, sous la jaquette */
+.tile.fantome{pointer-events:none}
+.fantome-l{height:12px}
+/* la seconde plus courte : un titre s'arrête rarement pile au bord */
+.fantome-l.court{width:58%;margin-top:8px}
+
+/* une case de stat : intitulé, chiffre, précision — centrés comme les vrais */
+.stats .stat .fantome-l{margin-left:auto;margin-right:auto}
+.fantome-l.f-u{width:64px;height:8px}
+.fantome-l.f-b{width:56px;height:21px;margin-top:9px}
+.fantome-l.f-i{width:80px;height:9px;margin-top:10px}
+
+/* une barre de l'histogramme : la hauteur est posée à la volée */
+.fantome-bar{flex:1;min-width:0;border-radius:3px 3px 0 0}
+
+/* une pastille d'onglet : la largeur est posée à la volée */
+.fantome-tab{height:30px;border-radius:99px;flex:0 0 auto}
+
+/* ---------- découverte par similarité (wishlist seulement) ---------- */
+.deco{padding-bottom:70px}
+.deco-tete{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.deco-titre{
+  font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted);margin:0;
+}
+/* Même pastille que « effacer la tranche » de l'histogramme : les deux font
+   la même chose, revenir sur un choix sans quitter la page. */
+.deco-neuf{
+  margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  padding:4px 11px;border-radius:99px;color:var(--gold);white-space:nowrap;
+  border:1px solid rgba(229,196,107,.45);transition:background .15s,border-color .15s;
+}
+.deco-neuf:hover{background:rgba(229,196,107,.12);border-color:var(--gold)}
+.deco-neuf[disabled]{opacity:.5;cursor:progress}
+.deco-note{font-size:12.5px;color:var(--muted);opacity:.8;margin:0 0 16px}
+.deco-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+/* Une fiche couchée, et pas une tuile de plus : ces jeux ne sont pas au
+   classeur, ils ne doivent pas se confondre avec le mur juste au-dessus. */
+.deco-carte{
+  display:flex;gap:12px;align-items:stretch;min-width:0;
+  border:1px solid var(--line);border-radius:12px;background:var(--bg2);
+  overflow:hidden;transition:border-color .18s;
+}
+.deco-carte:hover{border-color:var(--line-strong)}
+.deco-lien{flex:0 0 74px;display:block;line-height:0}
+.deco-img{
+  display:block;width:74px;height:100%;object-fit:cover;
+  background:var(--bg3);border-radius:0;
+}
+.deco-nue{
+  display:flex;align-items:center;justify-content:center;min-height:104px;
+  font-family:var(--display);font-weight:800;font-size:20px;color:var(--muted);
+}
+.deco-corps{
+  flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;
+  gap:3px;padding:10px 12px 11px;
+}
+.deco-nom{
+  font-family:var(--display);font-weight:600;font-size:14px;line-height:1.25;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+.deco-date{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--muted)}
+/* la raison de la suggestion : c'est elle qu'on lit, pas le titre seul */
+.deco-parce{font-size:11.5px;line-height:1.4;color:var(--muted);margin-top:2px}
+.deco-parce b{color:var(--gold);font-weight:700;font-family:var(--mono);font-size:11px}
+.deco-plus{
+  margin-top:auto;padding:5px 11px;border-radius:99px;white-space:nowrap;
+  border:1px solid rgba(143,184,232,.45);color:var(--wish);
+  font-family:var(--mono);font-size:11px;letter-spacing:.03em;
+  transition:background .15s,border-color .15s;
+}
+.deco-plus:hover{background:rgba(143,184,232,.12);border-color:var(--wish)}
+.deco-plus[disabled]{opacity:.5;cursor:progress}
+
+/* ---------- fiche par-dessus ---------- */
+.sheet-back{
+  position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  padding:22px;background:rgba(9,7,13,.90);
+  animation:fade .16s ease;
+}
+.sheet{
+  position:relative;width:100%;max-width:760px;max-height:88vh;
+  /* l'axe vertical défile, l'horizontal est simplement coupé : le léger
+     décalage latéral de l'animation ferait sinon apparaître une barre de
+     défilement horizontale le temps d'un clignement */
+  overflow-y:auto;overflow-x:hidden;
+  background:var(--bg2);border:1px solid var(--line-strong);border-radius:16px;
+  box-shadow:0 30px 90px rgba(0,0,0,.65);animation:rise .22s cubic-bezier(.2,.7,.3,1);
+}
+.sheet-tools{
+  position:sticky;top:0;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:6px;
+  padding:12px 12px 6px;background:linear-gradient(var(--bg2) 72%,rgba(30,24,41,0));
+}
+.sheet-tools .grp{display:flex;gap:6px;align-items:center}
+.sbtn.wide{width:auto;padding:0 12px;font-family:var(--body);font-size:13px}
+.sbtn{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--line);color:var(--muted);
+  display:grid;place-items:center;font-family:var(--mono);font-size:15px;line-height:1;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.sbtn:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
+.sbtn.sheet-share:hover{color:var(--gold);border-color:rgba(229,196,107,.45)}
+.sbtn[disabled]{opacity:.28;cursor:default}
+.sheet-in{display:flex;gap:26px;align-items:flex-start;padding:2px 28px 30px}
+/* Passer d'un jeu au suivant : le contenu entre par le côté d'où il vient,
+   la flèche droite le fait venir de la droite. Court et discret — on
+   enchaîne parfois dix jeux d'affilée, une animation appuyée deviendrait
+   vite pénible. transform et opacity seulement, donc rien à recalculer :
+   c'est la carte GPU qui travaille. */
+@keyframes fiche-g{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes fiche-d{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.sheet-in.va-gauche{animation:fiche-g .22s cubic-bezier(.2,.7,.3,1)}
+.sheet-in.va-droite{animation:fiche-d .22s cubic-bezier(.2,.7,.3,1)}
+.sheet-cover{flex:0 0 216px}
+/* La jaquette de la fiche n'est plus recréée d'un jeu à l'autre, seul son
+   src change : un fondu court couvre alors la substitution. Quand l'image
+   est déjà en cache, la classe chargement n'est même pas posée — pas de
+   transition, pas de clignotement, l'image suivante est simplement là. */
+.sheet-cover .cov.xl{transition:opacity .22s ease}
+.sheet-cover .cov.xl.chargement{opacity:.45}
+.sheet-body{flex:1;min-width:0}
+.sheet-note{
+  display:block;font-family:var(--mono);font-weight:700;font-size:30px;
+  letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums;
+}
+.sheet-note.encours,.sheet-note.wish{
+  display:inline-block;font-size:10px;font-weight:500;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--gold);
+  padding:5px 12px;border-radius:99px;border:1px solid rgba(229,196,107,.45);
+}
+.sheet-note.wish{color:var(--wish);border-color:rgba(143,184,232,.45)}
+.sheet-title{
+  font-family:var(--display);font-weight:700;font-size:25px;letter-spacing:-.025em;
+  margin:8px 0 14px;line-height:1.15;
+}
+/* la date de sortie, juste après le nom du jeu : un style bien plus discret
+   que le titre pour ne pas rivaliser avec lui, tout en libérant une case
+   dans .facts plus bas (voir sheetHTML côté JS). */
+.sheet-release{
+  display:inline-block;vertical-align:middle;
+  font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.01em;
+  color:var(--muted);-webkit-text-fill-color:var(--muted);
+  margin-left:10px;
+}
+/* Copier le nom du jeu, pour aller le chercher ailleurs. L'icône n'apparaît
+   qu'au survol du titre : une ligne qu'on lit d'abord n'a pas à porter un
+   bouton en permanence. Elle reste atteignable au clavier, et visible au
+   doigt, où il n'y a pas de survol.
+   La couleur est posée explicitement, comme sur .sheet-release : sur un jeu
+   médaillé, le titre passe en color:transparent pour être peint par son
+   dégradé, et l'icône — dessinée en currentColor — disparaîtrait avec lui. */
+.sheet-title .titre-copie{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:24px;height:24px;border-radius:7px;
+  vertical-align:middle;margin-left:9px;
+  color:var(--muted);-webkit-text-fill-color:var(--muted);
+  border:1px solid transparent;opacity:0;
+  transition:opacity .15s,color .15s,border-color .15s,background .15s;
+}
+.sheet-title:hover .titre-copie,.titre-copie:focus-visible{opacity:1}
+.titre-copie:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+.titre-copie:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (hover:none){ .sheet-title .titre-copie{opacity:1} }
+/* la place du jeu dans l'onglet affiche : « 3e sur 42 en 2026 » */
+.sheet-rank{
+  font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin:-7px 0 16px;
+}
+.sheet-rank sup{font-size:.7em;letter-spacing:0;vertical-align:super;line-height:0}
+
+/* ---------- podium ----------
+   Le nom du jeu et sa place prennent la couleur de la medaille. Un aplat
+   dore ne se lit que comme du jaune : c'est la bande claire qui traverse
+   le degrade qui fait le metal. Le texte est peint par le fond lui-meme
+   (background-clip:text), il n'y a donc aucun rectangle colore derriere.
+   Doit rester APRES .sheet-title et .sheet-rank : meme specificite. */
+.medaille{
+  background-clip:text;-webkit-background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+  background-repeat:no-repeat;
+}
+.medaille.or{
+  background-image:linear-gradient(100deg,
+    #A9761E 0%,#E7C46B 20%,#FFF6D0 38%,#E9C871 52%,#B8862A 72%,#F6E2A4 100%);
+}
+.medaille.argent{
+  background-image:linear-gradient(100deg,
+    #6E7683 0%,#C8CFD9 20%,#FFFFFF 38%,#CBD2DB 52%,#8A929F 72%,#E8EDF3 100%);
+}
+.medaille.bronze{
+  background-image:linear-gradient(100deg,
+    #7A421F 0%,#C87F4E 20%,#F5C79B 38%,#C9814F 52%,#8E5228 72%,#E3A778 100%);
+}
+.pros{display:flex;flex-wrap:wrap;gap:6px 8px;margin:0}
+.pt{font-size:13.5px;padding:4px 10px;border-radius:6px;background:var(--bg3);border:1px solid var(--line)}
+.pt.plus{color:#9BE3BE}
+.pt.minus{color:#F0A29C}
+.facts{display:flex;flex-wrap:wrap;gap:20px 26px;margin-top:20px}
+.fact u{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;margin-bottom:3px}
+.fact b{font-family:var(--mono);font-weight:500;font-size:14px;font-variant-numeric:tabular-nums}
+/* Prix soldé : l'ancien barré, le prix du jour, puis la remise dans la même
+   pastille verte que sur la tuile — en plus petit, parce qu'ici elle n'a
+   plus à se repérer de loin, elle accompagne un chiffre qu'on lit déjà. */
+.fact .fait-avant{opacity:.45;margin-right:9px;font-weight:400}
+.fact .fait-solde{
+  margin-left:10px;padding:2px 7px;border-radius:99px;
+  font-family:var(--mono);font-weight:800;font-size:11px;
+  color:#0B1A13;background:#3ED79A;
+}
+.links{margin-top:22px;display:flex;gap:16px;font-size:12.5px;flex-wrap:wrap}
+/* ---------- transition tuile → fiche (View Transitions) ----------
+   Le nom « jaquette-active » est posé en JS sur une seule jaquette à la
+   fois — voir nomVT(). Ici on ne règle que l'allure.
+
+   Pas de fondu croisé entre l'ancienne et la nouvelle : c'est la même
+   image, la faire disparaître pendant que l'autre apparaît n'en ferait
+   qu'un fantôme dédoublé. Seule la boîte se déplace et grandit, ce qui
+   donne l'impression que la vignette s'ouvre. */
+/* On ne capture QUE la jaquette. Par défaut le navigateur photographie
+   toute la page — deux fois, à la résolution de l'écran — et doit pour cela
+   rasteriser les deux bandeaux collants avec leur backdrop-filter, plus le
+   mur entier. L'animation saccadait pour ça, pas pour la jaquette.
+
+   Priver la racine de son nom retire cette photo : seul l'élément nommé
+   est capturé, et le reste de la page bascule d'un coup. C'est exactement
+   l'effet recherché — ce qu'on veut voir bouger, c'est la vignette qui
+   s'ouvre, pas le fond qui se fond. */
+:root{view-transition-name:none}
+
+::view-transition-group(jaquette-active){
+  animation-duration:.28s;
+  animation-timing-function:cubic-bezier(.2,.7,.3,1);
+}
+::view-transition-old(jaquette-active),
+::view-transition-new(jaquette-active){
+  animation:none;mix-blend-mode:normal;
+  height:100%;object-fit:cover;
+}
+/* la règle globale plus bas ne vise que des éléments : les pseudo-éléments
+   de transition ont besoin de la leur */
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*){animation:none!important}
+}
+
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ---------- ajouter / modifier ---------- */
+.add{
+  height:38px;padding:0 15px;border-radius:9px;white-space:nowrap;
+  border:1px solid rgba(229,196,107,.45);color:var(--gold);
+  font-family:var(--mono);font-size:12px;letter-spacing:.03em;
+  transition:background .15s,border-color .15s;
+}
+.add:hover{background:rgba(229,196,107,.12);border-color:var(--gold)}
+#form{z-index:70}
+.form-sheet{max-width:680px}
+.fhead{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-.02em;padding-left:16px}
+.form-in{padding:6px 28px 28px}
+.fgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px 16px}
+.fld{display:block;min-width:0}
+.fld.full{grid-column:1/-1}
+.fld u{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;margin-bottom:6px;
+}
+.fld input,.fld select,.fld textarea{
+  width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:9px;
+  padding:0 12px;height:40px;outline:none;font-size:14px;font-family:var(--body);
+  transition:border-color .15s;
+}
+.fld textarea{height:auto;padding:10px 12px;line-height:1.5;resize:vertical;font-size:13.5px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--gold)}
+
+/* ---------- complétion du nom ----------
+   La liste flotte au-dessus du reste du formulaire : sans position:absolute
+   elle pousserait tous les champs vers le bas à chaque frappe. Le conteneur
+   .acw porte le repère, sinon la liste se calerait sur la fenêtre. */
+.acw{position:relative}
+.acw > label{display:block}
+.ac{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:5;
+  max-height:292px;overflow-y:auto;overscroll-behavior:contain;padding:5px;
+  background:var(--bg2);border:1px solid var(--line-strong);border-radius:11px;
+  box-shadow:0 22px 48px rgba(0,0,0,.6);
+}
+.ac-item{
+  display:flex;gap:11px;align-items:center;width:100%;text-align:left;
+  padding:6px;border-radius:8px;transition:background .12s;
+}
+.ac-item:hover,.ac-item.on{background:var(--bg3)}
+.ac-item img,.ac-vide{
+  display:block;flex:0 0 auto;width:36px;height:48px;border-radius:5px;
+  object-fit:cover;background:var(--bg3);border:1px solid var(--line);
+}
+.ac-txt{flex:1;min-width:0;display:block}
+.ac-item b{
+  display:block;font-family:var(--display);font-weight:500;font-size:14px;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.ac-item i{
+  display:block;font-style:normal;margin-top:3px;color:var(--muted);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+/* le prix est en route vers Steam : la case le dit sans bloquer la saisie */
+.fld input.cherche{border-color:rgba(229,196,107,.4);animation:respire 1.1s ease-in-out infinite}
+@keyframes respire{50%{opacity:.5}}
+
+/* ---------- la jaquette retenue ----------
+   Elle n'est pas encore sur le disque : c'est un aperçu servi par IGDB, et
+   le bloc entier est un bouton pour en changer avant d'enregistrer. */
+.fpick{
+  grid-column:1/-1;display:flex;gap:13px;align-items:center;text-align:left;
+  padding:10px 12px;border-radius:11px;
+  background:var(--bg3);border:1px solid var(--line);
+  transition:border-color .15s;
+}
+.fpick:hover{border-color:var(--gold)}
+.fpick:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.fpick.busy{opacity:.5;cursor:progress}
+.fpick img{
+  display:block;flex:0 0 auto;width:44px;height:59px;border-radius:6px;
+  object-fit:cover;background:var(--bg2);border:1px solid var(--line);
+}
+.fpick-txt{flex:1;min-width:0;display:block}
+.fpick b{
+  display:block;font-family:var(--display);font-weight:500;font-size:14px;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.fpick i{
+  display:block;font-style:normal;margin-top:2px;color:var(--muted);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+}
+.fpick small{display:block;margin-top:5px;color:var(--muted);font-size:12px;transition:color .15s}
+.fpick:hover small{color:var(--gold)}
+
+/* ---------- « jeu en cours » / « wishlist » ----------
+   Une case à cocher, pas un champ : elle annule la règle .fld input
+   au-dessus (largeur pleine, hauteur 40px, fond) qui la déformerait. */
+.fld.fcheck{
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  height:40px;padding:0 13px;border-radius:9px;
+  background:var(--bg3);border:1px solid var(--line);
+  transition:border-color .15s;
+}
+.fld.fcheck input[type="checkbox"]{
+  width:15px;height:15px;flex:0 0 auto;padding:0;border:none;border-radius:0;
+  background:none;accent-color:var(--gold);
+}
+.fld.fcheck span{font-size:14px;color:var(--muted);transition:color .15s}
+.fld.fcheck:hover{border-color:var(--line-strong)}
+.fld.fcheck:has(input:checked){border-color:rgba(229,196,107,.45)}
+.fld.fcheck:has(input:checked) span{color:var(--gold)}
+/* la case wishlist reprend la teinte froide de sa pastille, pour qu'un coup
+   d'oeil suffise à savoir laquelle des deux est cochée */
+.fld.fcheck.wish input[type="checkbox"]{accent-color:var(--wish)}
+.fld.fcheck.wish:has(input:checked){border-color:rgba(143,184,232,.45)}
+.fld.fcheck.wish:has(input:checked) span{color:var(--wish)}
+
+/* ---------- avis : coloration en direct des lignes + / - ----------
+   Un textarea ne sait pas colorer son texte par morceaux. On glisse dessous
+   un calque qui rejoue le meme texte en couleur, et on rend le texte du
+   textarea transparent (seul le curseur reste visible). Les deux doivent
+   partager exactement la meme boite : police, taille, interligne, padding
+   et bordure, sinon les lignes se decalent. */
+.ta-wrap{display:block;position:relative}
+.ta-hl{
+  position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  padding:10px 12px;border:1px solid transparent;border-radius:9px;
+  background:var(--bg3);color:var(--text);
+  font-family:var(--body);font-size:13.5px;line-height:1.5;
+  white-space:pre-wrap;overflow-wrap:break-word;
+}
+.ta-hl .plus{color:#9BE3BE}
+.ta-hl .minus{color:#F0A29C}
+/* le curseur doit rester visible alors que le texte, lui, est transparent ;
+   la sélection dorée vient maintenant de la règle générale, tout en haut */
+#f_review{position:relative;z-index:1;background:transparent;color:transparent;caret-color:var(--gold)}
+.fld input:disabled{opacity:.45}
+.fld input::placeholder,.fld textarea::placeholder{color:var(--muted);opacity:.6}
+.fld select{appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 18px,calc(100% - 12px) 18px;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:32px;
+}
+.frow{display:flex;gap:10px;align-items:center;margin-top:22px;flex-wrap:wrap}
+.frow .spacer{flex:1}
+.ghost{
+  height:40px;padding:0 16px;border-radius:9px;border:1px solid var(--line);
+  color:var(--muted);font-size:14px;transition:color .15s,border-color .15s,background .15s;
+}
+.ghost:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
+.ghost.danger{color:#E38F89;border-color:rgba(227,143,137,.3)}
+.ghost.danger:hover{color:#fff;background:#B4295C;border-color:#B4295C}
+.ghost.armed{color:#fff;background:#B4295C;border-color:#B4295C}
+.cta.auto{width:auto;padding:0 22px;height:40px}
+.ferr{
+  margin-top:16px;padding:11px 13px;border-radius:9px;font-size:13px;line-height:1.5;
+  background:rgba(180,41,92,.12);border:1px solid rgba(180,41,92,.4);color:#F5B9C6;
+}
+.toast{
+  position:fixed;left:50%;bottom:26px;z-index:90;transform:translate(-50%,14px);
+  background:var(--bg3);border:1px solid var(--line-strong);border-radius:99px;
+  padding:9px 18px;font-size:13.5px;box-shadow:0 12px 34px rgba(0,0,0,.55);
+  opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.bad{border-color:rgba(180,41,92,.55);color:#F5B9C6}
+
+/* ---------- choix de la jaquette ---------- */
+#jaq{z-index:75}
+.jaq-sheet{max-width:600px}
+.jaq-in{padding:6px 28px 26px}
+.jaq-info{font-size:13px;color:var(--muted);margin:0 0 16px}
+.jaq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:14px}
+/* flex-start explicite : la grille étire les cases à la hauteur de la plus
+   haute, et un <button> recentre son contenu verticalement tout seul. Un
+   titre sur une seule ligne faisait donc descendre la jaquette de quelques
+   pixels par rapport à ses voisines. */
+.jaq-item{
+  display:flex;flex-direction:column;justify-content:flex-start;
+  text-align:left;padding:0;overflow:hidden;
+  border:1px solid var(--line);border-radius:12px;background:var(--bg3);
+  transition:border-color .15s,transform .15s,opacity .15s;
+}
+.jaq-item:hover{border-color:var(--gold);transform:translateY(-3px)}
+.jaq-item:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.jaq-item img{
+  display:block;width:100%;aspect-ratio:var(--cov-ratio);
+  object-fit:cover;background:var(--bg2);
+}
+.jaq-item b{display:block;font-size:13px;line-height:1.25;padding:9px 10px 0}
+.jaq-item span{
+  display:block;padding:4px 10px 10px;color:var(--muted);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+}
+.jaq-item[disabled]{opacity:.35;cursor:progress;transform:none}
+/* la fiche dont l'année colle à la date de sortie : proposée en tête.
+   Surtout pas « top » comme nom : .top est l'en-tête collante de la page,
+   la case héritait de son position:sticky et restait au premier plan. */
+.jaq-item.suggeree{border-color:rgba(229,196,107,.5)}
+.jaq-item.pris{opacity:1;border-color:var(--gold)}
+
+/* ---------- bilan en image ---------- */
+#bilan{z-index:78}
+.bilan-sheet{max-width:560px}
+.bilan-in{padding:2px 24px 24px;display:flex;flex-direction:column;gap:18px;align-items:center}
+.bilan-apercu{
+  width:100%;max-width:392px;min-height:200px;border-radius:13px;
+  border:1px solid var(--line-strong);background:var(--bg3);
+  display:grid;place-items:center;overflow:hidden;
+  box-shadow:0 18px 46px rgba(0,0,0,.55);
+}
+/* le canvas fait 1080 px de large : il doit se réduire à la fenêtre, et
+   garder ses proportions quelle que soit la hauteur du bilan */
+.bilan-apercu canvas{display:block;width:100%;height:auto;border-radius:12px}
+.bilan-attente{
+  padding:56px 20px;text-align:center;font-family:var(--mono);font-size:12px;
+  letter-spacing:.06em;color:var(--muted);
+}
+.bilan-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;width:100%}
+.bilan-actions .cta.auto[disabled]{cursor:progress}
+
+/* ---------- mise à jour depuis IGDB ----------
+   Au-dessus du choix de jaquette (75) : la grille des jaquettes est
+   affichée *dans* cette fenêtre, elle n'a pas à passer devant. En dessous
+   du bilan en image (78), qui reste la fenêtre la plus haute. */
+#igdb{z-index:76}
+.igdb-sheet{max-width:720px}
+.igdb-in{padding:6px 28px 26px}
+/* Les trois cases à cocher sur une seule ligne. À deux colonnes, celle des
+   jaquettes se retrouvait seule en dessous avec un trou à sa droite.
+   auto-fit plutôt que repeat(3,1fr) : « Jaquettes manquantes » est le plus
+   long des trois libellés, et sous 190px il déborderait de sa pastille —
+   là, la grille repasse d'elle-même à deux colonnes avant d'en arriver là. */
+.igdb-in .fgrid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.igdb-info{font-size:13.5px;line-height:1.6;color:var(--muted);margin:0 0 18px}
+.igdb-info b{color:var(--text);font-weight:700}
+.igdb-note{font-size:12.5px;line-height:1.6;color:var(--muted);opacity:.8;margin:16px 0 0}
+
+/* la jauge d'avancement, commune à l'analyse et à l'écriture */
+.igdb-jauge{
+  height:6px;border-radius:99px;overflow:hidden;
+  background:var(--bg3);border:1px solid var(--line);
+}
+.igdb-jauge i{display:block;height:100%;background:var(--gold);transition:width .25s ease}
+.igdb-encours{
+  display:flex;gap:12px;align-items:baseline;margin:12px 0 0;
+  font-family:var(--mono);font-size:11.5px;color:var(--muted);
+}
+.igdb-encours b{flex:0 0 auto;color:var(--text);font-variant-numeric:tabular-nums}
+/* le nom du jeu en cours peut être long : il se coupe plutôt que de pousser
+   le temps restant hors de la fenêtre */
+.igdb-encours span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.igdb-encours em{flex:0 0 auto;font-style:normal;opacity:.7}
+
+/* la liste des changements proposés */
+.igdb-liste{
+  display:flex;flex-direction:column;gap:8px;
+  max-height:min(46vh,420px);overflow:auto;
+  margin:0 -6px;padding:2px 6px;
+}
+.igdb-ligne{
+  display:flex;gap:12px;align-items:flex-start;padding:11px 13px;
+  border:1px solid var(--line);border-radius:11px;background:var(--bg3);
+  cursor:pointer;transition:border-color .15s;
+}
+.igdb-ligne:hover{border-color:var(--line-strong)}
+.igdb-ligne:has(input:checked){border-color:rgba(229,196,107,.42)}
+.igdb-ligne input[type="checkbox"]{
+  flex:0 0 auto;width:16px;height:16px;margin:3px 0 0;
+  accent-color:var(--gold);cursor:pointer;
+}
+.igdb-corps{flex:1;min-width:0;display:block}
+.igdb-nom{display:block;font-size:14px;line-height:1.3;font-weight:700}
+.igdb-nom em{
+  font-style:normal;font-weight:400;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-left:8px;
+}
+.igdb-match{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+/* à quel point IGDB est sûr d'avoir reconnu le jeu : c'est ce qui décide
+   si la ligne arrive cochée ou non */
+.igdb-tag{
+  font-style:normal;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;padding:2px 7px;border-radius:99px;margin-left:7px;
+  border:1px solid var(--line-strong);white-space:nowrap;
+}
+.igdb-tag.sure{color:#9BE3BE;border-color:rgba(155,227,190,.35)}
+.igdb-tag.probable{color:var(--gold);border-color:rgba(229,196,107,.35)}
+.igdb-tag.douteuse{color:#F0A29C;border-color:rgba(240,162,156,.35)}
+.igdb-delta{
+  display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-top:6px;
+  font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums;
+}
+.igdb-delta u{
+  flex:0 0 40px;text-decoration:none;font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);
+}
+.igdb-av{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(167,156,180,.55)}
+.igdb-fl{color:var(--muted);opacity:.55}
+.igdb-ap{color:var(--gold);font-weight:500}
+
+/* les jeux qu'IGDB n'a pas reconnus : repliés, ils n'ont rien à proposer */
+.igdb-repli{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.igdb-repli summary{
+  cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);
+}
+.igdb-repli summary:hover{color:var(--text)}
+.igdb-repli ul{margin:12px 0 0;padding-left:18px;color:var(--text);font-size:13px;line-height:1.7}
+.igdb-repli i{font-style:normal;color:var(--muted)}
+
+/* le compte rendu final */
+.igdb-bilan{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 18px}
+.igdb-chiffre{
+  flex:1 1 128px;display:block;padding:14px 16px;border-radius:12px;
+  background:var(--bg3);border:1px solid var(--line);
+}
+.igdb-chiffre b{
+  display:block;font-family:var(--mono);font-weight:700;font-size:26px;
+  letter-spacing:-.04em;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums;
+}
+.igdb-chiffre u{
+  display:block;margin-top:7px;text-decoration:none;font-family:var(--mono);
+  font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);
+}
+
+/* ---------- états ---------- */
+.empty{
+  border:1px dashed var(--line-strong);border-radius:14px;padding:34px 30px;margin:24px 0 70px;
+  background:var(--bg2);
+}
+.empty h3{font-family:var(--display);font-weight:700;font-size:21px;margin:0 0 8px;letter-spacing:-.02em}
+.empty p{color:var(--muted);margin:0 0 18px;max-width:56ch}
+.empty ol{margin:0;padding-left:18px;color:var(--muted);max-width:64ch}
+.empty li{margin-bottom:7px}
+.empty code{
+  font-family:var(--mono);font-size:12.5px;background:var(--bg3);border:1px solid var(--line);
+  border-radius:5px;padding:1px 6px;color:var(--text);
+}
+
+/* ---------- écran de connexion ---------- */
+.gate{max-width:520px;margin:56px auto 90px}
+.gate h2{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-.03em;margin:0 0 10px}
+.gate>p{color:var(--muted);margin:0 0 26px}
+.field{display:block;margin-bottom:14px}
+.field u{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;margin-bottom:6px;
+}
+.field input{
+  width:100%;height:42px;padding:0 13px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:9px;outline:none;font-size:14px;
+  transition:border-color .15s;
+}
+.field input:focus{border-color:var(--gold)}
+.field input::placeholder{color:var(--muted);opacity:.65}
+.check{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;margin:16px 0 22px}
+.check input{accent-color:var(--gold);width:15px;height:15px}
+.cta{
+  width:100%;height:44px;background:var(--gold);color:#1A1206;border-radius:9px;
+  font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:-.01em;
+  transition:filter .15s;
+}
+.cta:hover{filter:brightness(1.08)}
+.cta[disabled]{opacity:.5;cursor:progress}
+.gate-err{
+  margin-top:16px;padding:12px 14px;border-radius:9px;font-size:13px;line-height:1.5;
+  background:rgba(180,41,92,.12);border:1px solid rgba(180,41,92,.4);color:#F5B9C6;
+}
+.gate-err code{font-family:var(--mono);font-size:12px}
+.howto{margin-top:30px;border-top:1px solid var(--line);padding-top:18px}
+.howto summary{
+  cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);
+}
+.howto summary:hover{color:var(--text)}
+.howto ol{margin:16px 0 0;padding-left:18px;color:var(--muted);font-size:13.5px;line-height:1.65}
+.howto li{margin-bottom:9px}
+.howto code{
+  font-family:var(--mono);font-size:12px;background:var(--bg3);border:1px solid var(--line);
+  border-radius:5px;padding:1px 6px;color:var(--text);
+}
+
+@media (max-width:860px){
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .stat:nth-child(3){border-right:none}
+  .stat:nth-child(n+4){border-top:1px solid var(--line)}
+  .sheet-cover{flex-basis:180px}
+}
+@media (max-width:640px){
+  .top-in{height:auto;flex-direction:column;align-items:stretch;gap:0;padding:12px 0 0;position:relative}
+  /* L'en-tête passe en colonne : il devient haut, et sa hauteur dépend des
+     onglets, donc --h-top ne vaut plus rien. Deux bandeaux fixes mangeraient
+     l'écran de toute façon — la barre d'outils redevient ordinaire. */
+  .tools{position:static;background:none;backdrop-filter:none}
+  .brand{padding-bottom:10px}
+  .tabs{margin:0;padding-bottom:10px;padding-right:44px}
+  .cog-wrap{position:absolute;top:8px;right:0}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stat{padding:14px 8px 12px}
+  .stat:nth-child(2n){border-right:none}
+  .stat:nth-child(n+3){border-top:1px solid var(--line)}
+  .stat b{font-size:20px}
+  .wall{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:11px}
+  .hist{height:96px;gap:2px}
+  .sheet-back{padding:0;align-items:flex-end}
+  .sheet{max-width:none;max-height:93vh;border-radius:16px 16px 0 0}
+  .sheet-in{flex-direction:column;padding:0 18px 26px;gap:18px}
+  .sheet-cover{flex:none;width:152px;align-self:center}
+  .sheet-title{font-size:22px}
+  .fgrid{grid-template-columns:1fr}
+  .form-in{padding:2px 18px 24px}
+  .ac{max-height:236px}
+  .jaq-in{padding:2px 18px 22px}
+  .jaq-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:11px}
+  .frow .spacer{flex:0 0 100%}
+  .frow .cta.auto,.frow .ghost{flex:1}
+  .bilan-in{padding:2px 18px 22px}
+  .bilan-apercu{max-width:none}
+  .bilan-actions{justify-content:stretch}
+  .bilan-actions .cta.auto,.bilan-actions .ghost{flex:1}
+  .igdb-in{padding:2px 18px 22px}
+  /* sur mobile tout s'empile, comme le reste des formulaires : la règle
+     .fgrid de ce bloc ne suffit pas, .igdb-in .fgrid est plus spécifique */
+  .igdb-in .fgrid{grid-template-columns:1fr}
+  .igdb-liste{max-height:50vh}
+  /* l'étiquette passe sur sa propre ligne : « 12 déc. 2016 → 14 févr. 2017 »
+     ne tient pas à côté d'elle sur un écran étroit */
+  .igdb-delta u{flex:0 0 100%}
+  .igdb-chiffre{flex-basis:100%;display:flex;align-items:baseline;gap:12px}
+  .igdb-chiffre b{font-size:22px}
+  .igdb-chiffre u{margin-top:0}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}

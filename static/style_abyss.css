@@ -1,0 +1,197 @@
+:root{
+  --abysse:#03060B;
+  --carte:#0D1725;
+  --carte-2:#070E18;
+  --creux:#040910;
+  --os:#DCE8F0;
+  --brume:#72899D;
+
+  /* bioluminescence */
+  --luciole:#E8A34A;
+  --algue:#3FD9A4;
+  --meduse:#E0559B;
+  --plancton:#5B9BF5;
+
+  --r:14px;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(900px 430px at 50% -14%, rgba(96,168,208,.16), transparent 72%),
+    linear-gradient(180deg,#0B1524 0%,#060C15 38%,var(--abysse) 100%);
+  background-attachment:fixed;
+  color:var(--os);
+  font-family:"Archivo","Segoe UI",system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.55;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  /* le hub n'est qu'une grille de liens : rien a copier, et une selection
+     accidentelle en glissant sur une carte n'apporte que du bruit */
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+/* neige marine */
+#neige{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+}
+
+.enveloppe{
+  position:relative;
+  z-index:1;
+  max-width:1080px;
+  margin:0 auto;
+  padding:72px 26px 90px;
+}
+
+/* ---------- En-tête ---------- */
+.entete{
+  padding-bottom:34px;
+  margin-bottom:38px;
+  border-bottom:1px solid transparent;
+  border-image:linear-gradient(90deg,rgba(120,200,220,.34),rgba(120,200,220,.02)) 1;
+}
+.titre{
+  font-family:"Eczar",Georgia,serif;
+  font-weight:600;
+  font-size:clamp(50px,11vw,104px);
+  line-height:.94;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+  margin:0;
+  background:linear-gradient(180deg,#EEF7FC 0%,#89B4CE 52%,#2E4E66 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.sous-titre{
+  margin:14px 0 0;
+  max-width:46ch;
+  color:var(--brume);
+}
+
+/* ---------- Grille ---------- */
+.grille{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(264px,1fr));
+  gap:20px;
+  perspective:1400px;
+}
+
+/* ---------- Carte ---------- */
+.carte{
+  --accent:var(--plancton);
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border-radius:var(--r);
+  background:linear-gradient(170deg,var(--carte),var(--carte-2));
+  border:1px solid rgba(150,195,220,.1);
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+  text-decoration:none;
+  color:inherit;
+  transform-style:preserve-3d;
+  transition:transform .4s cubic-bezier(.2,.8,.3,1), box-shadow .4s ease, border-color .35s ease;
+}
+.carte::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(105deg,transparent 34%,rgba(190,230,245,.1) 47%,transparent 62%);
+  transform:translateX(-130%);
+  transition:transform .8s cubic-bezier(.2,.7,.3,1);
+}
+.carte:hover,.carte:focus-visible{
+  transform:translateY(-8px) rotateX(5deg) rotateY(-4deg);
+  border-color:color-mix(in srgb,var(--accent) 48%,transparent);
+  box-shadow:
+    0 26px 48px rgba(0,0,0,.6),
+    0 0 34px -6px color-mix(in srgb,var(--accent) 42%,transparent);
+}
+.carte:hover::after,.carte:focus-visible::after{transform:translateX(130%)}
+.carte:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+
+.bandeau{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:15px 16px 14px;
+  background:linear-gradient(180deg,rgba(160,205,230,.07),rgba(160,205,230,.015));
+  border-bottom:1px solid rgba(0,0,0,.5);
+}
+.nom{
+  font-family:"Eczar",Georgia,serif;
+  font-size:18px;
+  font-weight:600;
+  line-height:1.15;
+  letter-spacing:-.01em;
+  margin:0;
+  flex:1;
+}
+.fleche{
+  flex:none;
+  color:var(--accent);
+  font-size:15px;
+  opacity:.6;
+  transition:transform .3s ease,opacity .3s ease;
+}
+.carte:hover .fleche{transform:translate(3px,-3px);opacity:1}
+
+.illu{
+  position:relative;
+  aspect-ratio:5/2.4;
+  display:grid;
+  place-items:center;
+  color:var(--accent);
+  background:
+    radial-gradient(120% 115% at 50% 128%, color-mix(in srgb,var(--accent) 26%,transparent), transparent 68%),
+    var(--creux);
+  border-bottom:1px solid rgba(0,0,0,.5);
+}
+.illu svg{
+  width:56px;
+  height:56px;
+  opacity:.95;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 50%,transparent));
+  transition:filter .4s ease;
+}
+.carte:hover .illu svg{
+  filter:drop-shadow(0 0 20px color-mix(in srgb,var(--accent) 75%,transparent));
+}
+
+.corps{padding:15px 16px 17px}
+.texte{
+  margin:0;
+  font-size:13.5px;
+  color:#A9BCCC;
+}
+
+/* ---------- Pied de page ---------- */
+.pied-page{
+  margin-top:52px;
+  padding-top:18px;
+  border-top:1px solid rgba(150,195,220,.08);
+  font-size:12.5px;
+  color:#586A7C;
+}
+.pied-page code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--brume);
+}
+
+@media (max-width:620px){
+  .enveloppe{padding:48px 18px 64px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms !important}
+  .carte:hover,.carte:focus-visible{transform:none}
+  .carte::after{display:none}
+}
