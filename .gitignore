@@ -1,5 +1,7 @@
 static/Cards/
 static/CardsCropped/
 static/Cover/
+donnees/
 __pycache__/
+*.pyc
 .igdb-jeton.json

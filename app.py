@@ -4,19 +4,21 @@ from pathlib import Path
 import argparse
 import atexit
 import os
-import re
 import socket
 import subprocess
 import sys
-import threading
-import webbrowser
 
-from flask import Flask, abort, send_from_directory
+from flask import Flask, abort, jsonify, redirect, request, send_from_directory
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+import comptes
+import journal
 from jaquettes import blueprint_jaquettes
 
 BASE = Path(__file__).parent.resolve() # le dossier du projet
 STATIQUE = (BASE / "static").resolve() # images, css, json
 TEMPLATES = (BASE / "templates").resolve() # les pages html
+DONNEES = (BASE / "donnees").resolve() # la base sqlite : jamais servie
 ACCUEIL = "Abyss.html"
 YUGIQUIZ = BASE / "yugiquiz" / "yugiquiz.py"
 PORT_YUGIQUIZ = 5000
@@ -24,6 +26,8 @@ PORT_YUGIQUIZ = 5000
 # On ne sert QUE static/ et templates/. Servir BASE revenait a publier le
 # dossier du projet : http://<ip>:8000/app.py renvoyait ce fichier, et
 # /yugiquiz/yugiquiz.py celui du quiz. Avec --reseau, a tout le wifi.
+# donnees/ n'est volontairement pas dans cette liste : la base contient les
+# empreintes de mots de passe.
 DOSSIERS = (STATIQUE, TEMPLATES)
 
 # images/artworks : jamais modifiees une fois ajoutees, autant laisser le
@@ -37,6 +41,24 @@ EXTENSIONS_CACHABLES = {".jpg", ".jpeg", ".png", ".webp", ".gif",
 DUREE_CACHE = 86400
 
 app = Flask(__name__, static_folder=None) # on gere les fichiers nous-memes
+
+# Derriere Caddy ou Nginx, request.remote_addr vaut 127.0.0.1 pour tout le
+# monde : la limitation de debit compterait les essais de tous les visiteurs
+# dans le meme seau, et request.is_secure serait toujours faux, donc le
+# cookie ne serait jamais marque Secure. ProxyFix relit X-Forwarded-*.
+# A n'activer QUE derriere un proxy de confiance : sans lui, n'importe qui
+# peut se declarer a l'adresse qu'il veut.
+if os.environ.get("ABYSS_PROXY", "").strip() in ("1", "oui", "true"):
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024 # aucune de nos routes n'envoie plus
+
+# La base est creee a l'import, pas dans le bloc __main__ : sous gunicorn,
+# ce bloc ne s'execute jamais.
+comptes.init()
+
+app.register_blueprint(comptes.blueprint_comptes)
+app.register_blueprint(journal.blueprint_journal)
 app.register_blueprint(blueprint_jaquettes(STATIQUE / "Cover"))
 
 # --------------------------------------------------------------------------
@@ -83,7 +105,20 @@ def envoie(chemin):
 
     abort(404)
 
+# --------------------------------------------------------------------------
+#   Pages
+# --------------------------------------------------------------------------
+# Une seule adresse pour le hub : /abyss. La racine y mene, et /Abyss.html
+# aussi, pour que les liens et marque-pages d'avant continuent de marcher.
 @app.route("/")
+def racine():
+    return redirect("/abyss", code=301)
+
+@app.route("/Abyss.html")
+def ancien_abyss():
+    return redirect("/abyss", code=301)
+
+@app.route("/abyss")
 def accueil():
     return envoie(ACCUEIL)
 
@@ -94,6 +129,15 @@ def fichier(chemin):
 @app.errorhandler(404)
 @app.errorhandler(403)
 def introuvable(err):
+    # Une requete API qui recoit du HTML casse le `await r.json()` d'en face
+    # avec un message incomprehensible : on repond dans la langue demandee.
+    if request.path.startswith("/api/"):
+        r = jsonify({"ok": False, "erreur": "introuvable",
+                     "message": "Cette adresse n'existe pas."})
+        r.status_code = err.code
+        r.headers["Cache-Control"] = "no-store, max-age=0"
+        return r
+
     page = f"""<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
 <title>Perdu dans l'abysse</title>
 <style>
@@ -108,10 +152,13 @@ def introuvable(err):
 </style></head><body><div>
   <h1>{err.code}</h1>
   <p>Ce fichier n'existe pas dans le dossier du hub.</p>
-  <p><a href="/">&#8592; Retour a l'abysse</a></p>
+  <p><a href="/abyss">&#8592; Retour a l'abysse</a></p>
 </div></body></html>"""
     return page, err.code
 
+# --------------------------------------------------------------------------
+#   Yu-Gi-Quiz
+# --------------------------------------------------------------------------
 def lance_yugiquiz():
     """Demarre yugiquiz/yugiquiz.py en sous-processus (serveur independant, port 5000)."""
     if not YUGIQUIZ.is_file():
@@ -149,14 +196,21 @@ def ip_locale():
 #   Lancement
 # --------------------------------------------------------------------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Hub Abyss")
+    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--sans-quiz", action="store_true",
+                        help="ne pas demarrer le Yu-Gi-Quiz")
     args = parser.parse_args()
 
-    processus_quiz = lance_yugiquiz()
+    processus_quiz = None if args.sans_quiz else lance_yugiquiz()
     if processus_quiz:
         atexit.register(arrete_yugiquiz, processus_quiz)
 
+    print(f"  Abyss : http://127.0.0.1:{args.port}/abyss")
+    print(f"  Base  : {comptes.CHEMIN}")
+    # Ce serveur est celui de developpement : en ligne, passe par gunicorn
+    # derriere Caddy ou Nginx (voir les notes de deploiement).
     try:
-        app.run(host="0.0.0.0", port=8000, debug=False)
+        app.run(host="0.0.0.0", port=args.port, debug=False)
     finally:
         arrete_yugiquiz(processus_quiz)

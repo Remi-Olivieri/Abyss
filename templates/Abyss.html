@@ -14,27 +14,133 @@
 
 <div class="enveloppe">
 
+  <div class="barre">
+    <div class="compte" id="compte"><!-- rempli par dessineCompte() --></div>
+  </div>
+
   <header class="entete">
     <h1 class="titre">Abyss</h1>
     <p class="sous-titre">Tous mes projets réunis au même endroit.</p>
   </header>
 
   <main class="grille" id="grille"></main>
+
+  <p class="note-masques" id="noteMasques" hidden></p>
 </div>
+
+<!-- ---------- Connexion / inscription ---------- -->
+<div class="voile" id="mAuth" hidden>
+  <div class="modale" role="dialog" aria-modal="true" aria-labelledby="titreAuth">
+    <div class="onglets" role="tablist">
+      <button class="onglet actif" id="ongConn" role="tab" aria-selected="true">Connexion</button>
+      <button class="onglet" id="ongInsc" role="tab" aria-selected="false">Créer un compte</button>
+    </div>
+
+    <h2 class="titre-modale" id="titreAuth">Se connecter</h2>
+
+    <form id="formConn" autocomplete="on">
+      <label class="champ">
+        <span>Pseudo</span>
+        <input id="cPseudo" name="username" autocomplete="username" required
+               maxlength="20" autocapitalize="none" spellcheck="false">
+      </label>
+      <label class="champ">
+        <span>Mot de passe</span>
+        <input id="cMdp" name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <label class="case">
+        <input id="cMemo" type="checkbox" checked>
+        <span>Rester connecté sur cet appareil</span>
+      </label>
+      <p class="erreur" id="cErr" hidden></p>
+      <button class="valider" type="submit" id="cGo">Entrer</button>
+    </form>
+
+    <form id="formInsc" autocomplete="on" hidden>
+      <label class="champ">
+        <span>Pseudo</span>
+        <input id="iPseudo" name="username" autocomplete="username" required
+               maxlength="20" autocapitalize="none" spellcheck="false">
+        <small>3 à 20 caractères : lettres, chiffres, tiret ou souligné. Il apparaîtra dans l'adresse de tes pages.</small>
+      </label>
+      <label class="champ">
+        <span>Mot de passe</span>
+        <input id="iMdp" type="password" autocomplete="new-password" required minlength="8">
+        <small>8 caractères au minimum.</small>
+      </label>
+      <label class="champ">
+        <span>Répéter le mot de passe</span>
+        <input id="iMdp2" type="password" autocomplete="new-password" required minlength="8">
+      </label>
+      <label class="champ">
+        <span>E-mail <em>(facultatif)</em></span>
+        <input id="iMail" type="email" autocomplete="email">
+        <small>Sert uniquement à te retrouver si tu perds ton mot de passe.</small>
+      </label>
+      <p class="avis" id="iAvis" hidden></p>
+      <p class="erreur" id="iErr" hidden></p>
+      <button class="valider" type="submit" id="iGo">Créer mon compte</button>
+    </form>
+
+    <button class="fermer" data-ferme="mAuth" aria-label="Fermer">&#10005;</button>
+  </div>
+</div>
+
+<!-- ---------- Projets affichés ---------- -->
+<div class="voile" id="mProjets" hidden>
+  <div class="modale" role="dialog" aria-modal="true" aria-labelledby="titreProjets">
+    <h2 class="titre-modale" id="titreProjets">Projets affichés</h2>
+    <p class="explication">Décoche ce qui ne t'intéresse pas : ces projets disparaîtront de ton accueil.
+      Ça ne change rien pour les autres.</p>
+    <div id="listeProjets"></div>
+    <button class="fermer" data-ferme="mProjets" aria-label="Fermer">&#10005;</button>
+  </div>
+</div>
+
+<!-- ---------- Mot de passe ---------- -->
+<div class="voile" id="mMdp" hidden>
+  <div class="modale" role="dialog" aria-modal="true" aria-labelledby="titreMdp">
+    <h2 class="titre-modale" id="titreMdp">Changer de mot de passe</h2>
+    <form id="formMdp">
+      <label class="champ">
+        <span>Mot de passe actuel</span>
+        <input id="pActuel" type="password" autocomplete="current-password" required>
+      </label>
+      <label class="champ">
+        <span>Nouveau mot de passe</span>
+        <input id="pNouveau" type="password" autocomplete="new-password" required minlength="8">
+      </label>
+      <label class="champ">
+        <span>Répéter le nouveau</span>
+        <input id="pNouveau2" type="password" autocomplete="new-password" required minlength="8">
+      </label>
+      <p class="explication">Les autres appareils connectés à ton compte seront déconnectés.</p>
+      <p class="erreur" id="pErr" hidden></p>
+      <button class="valider" type="submit">Changer</button>
+    </form>
+    <button class="fermer" data-ferme="mMdp" aria-label="Fermer">&#10005;</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
 
 <script>
 /* =========================================================
    LA SEULE PARTIE À MODIFIER
-   Un projet = un objet. Le jour du passage en ligne,
-   tu remplaces l'url, rien d'autre à toucher.
+   Un projet = un objet. L'`id` sert de clé aux préférences
+   d'affichage : ne le renomme pas sans vider la table
+   `preference`, sinon les masquages retombent sur du vide.
+   Il doit aussi figurer dans PROJETS_CONNUS, côté base.py.
    ========================================================= */
 /* le quiz vit sur un autre port, mais sur la MEME machine que ce hub :
    en deduire l'hote plutot que d'ecrire localhost permet d'ouvrir Abyss
-   depuis le telephone (python app.py --reseau) sans casser le lien. */
+   depuis le telephone sans casser le lien. En ligne derriere HTTPS, il
+   faudra le monter sur /quiz plutot que d'exposer le port 5000. */
 const HOTE = location.hostname || "localhost";
 
 const PROJETS = [
     {
+        id: "jeux-videos",
         nom: "Jeux Vidéos",
         texte: "Ma liste de jeux terminés par année avec notes et temps de jeu.",
         url: "jeux-videos.html",
@@ -42,6 +148,7 @@ const PROJETS = [
         embleme: "grille"
     },
     {
+        id: "collection",
         nom: "Collection Yu-Gi-Oh!",
         texte: "Suivi de ma collection Yu-Gi-Oh!",
         url: "collection-yugioh.html",
@@ -49,6 +156,7 @@ const PROJETS = [
         embleme: "pile"
     },
     {
+        id: "chainz",
         nom: "L'Atelier Chainz",
         texte: "Le site de mon jeu vidéo Chainz.",
         url: "https://chainz.zdimension.fr",
@@ -57,6 +165,7 @@ const PROJETS = [
         externe: true          // s'ouvre dans un nouvel onglet
     },
     {
+        id: "quiz",
         nom: "Yu-Gi-Quiz!",
         texte: "Devinez les noms des cartes avec juste les artworks.",
         url: `http://${HOTE}:5000`,
@@ -85,8 +194,61 @@ const EMBLEMES = {
 
 const echappe = (s) => String(s).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const el = (id) => document.getElementById(id);
 
-document.getElementById("grille").innerHTML = PROJETS.map((p) => `
+/* =========================================================
+   État de la session
+   ========================================================= */
+/* Une seule source de vérité : ce que le serveur a répondu. Le front ne
+   décide jamais tout seul qu'il est connecté — un cookie HttpOnly n'est
+   même pas lisible d'ici, et c'est très bien ainsi. */
+let MOI = { connecte: false, utilisateur: null, masques: [],
+            inscriptions: { ouvertes: true, restantes: null, libre_a: null } };
+
+/* Le cookie de session part tout seul (même origine). `credentials` est
+   explicite pour que personne n'ait de doute en relisant. */
+async function api(chemin, methode, charge) {
+  const options = { method: methode || "GET", credentials: "same-origin" };
+  if (charge !== undefined) {
+    /* application/json déclenche un pré-vol CORS : un formulaire posté
+       depuis un autre site ne peut donc pas atteindre ces routes. C'est la
+       protection CSRF, et le serveur refuse tout autre type. */
+    options.headers = { "Content-Type": "application/json" };
+    options.body = JSON.stringify(charge);
+  }
+  const r = await fetch(chemin, options);
+  let data = null;
+  try { data = await r.json(); } catch (e) { /* réponse illisible */ }
+  if (!r.ok || !data || data.ok === false) {
+    const err = new Error((data && data.message) || `Erreur ${r.status}.`);
+    err.code = data && data.erreur;
+    throw err;
+  }
+  return data;
+}
+
+function poseEtat(data) {
+  MOI = {
+    connecte: !!data.connecte,
+    utilisateur: data.utilisateur || null,
+    masques: Array.isArray(data.masques) ? data.masques : [],
+    /* si le serveur n'en dit rien, on suppose ouvert : mieux vaut un
+       formulaire qui échoue à l'envoi qu'un formulaire barré à tort */
+    inscriptions: data.inscriptions || { ouvertes: true, restantes: null, libre_a: null }
+  };
+  dessine();
+}
+
+/* =========================================================
+   Rendu
+   ========================================================= */
+function visibles() {
+  return PROJETS.filter((p) => MOI.masques.indexOf(p.id) < 0);
+}
+
+function dessineGrille() {
+  const liste = visibles();
+  el("grille").innerHTML = liste.map((p) => `
   <a class="carte" style="--accent:${p.accent}" href="${echappe(p.url)}"${
       p.externe ? ' target="_blank" rel="noopener noreferrer"' : ""}>
     <div class="bandeau">
@@ -96,6 +258,304 @@ document.getElementById("grille").innerHTML = PROJETS.map((p) => `
     <div class="illu" aria-hidden="true">${EMBLEMES[p.embleme] || ""}</div>
     <div class="corps"><p class="texte">${echappe(p.texte)}</p></div>
   </a>`).join("");
+
+  /* Tout masquer laisserait une page vide sans explication : on garde une
+     porte de sortie visible. */
+  if (!liste.length) {
+    el("grille").innerHTML =
+      `<p class="vide">Tu as masqué tous les projets.
+       <button class="lien" id="rouvrir2">Revoir les réglages</button></p>`;
+    const b = el("rouvrir2");
+    if (b) b.addEventListener("click", ouvreProjets);
+  }
+
+  const n = MOI.masques.length;
+  const note = el("noteMasques");
+  note.hidden = !(MOI.connecte && n > 0 && liste.length);
+  if (!note.hidden) {
+    note.innerHTML = `${n} projet${n > 1 ? "s" : ""} masqué${n > 1 ? "s" : ""} ·
+      <button class="lien" id="rouvrir">modifier</button>`;
+    el("rouvrir").addEventListener("click", ouvreProjets);
+  }
+}
+
+function dessineCompte() {
+  const zone = el("compte");
+  if (!MOI.connecte) {
+    zone.innerHTML = `<button class="bouton" id="btnConn">Se connecter</button>`;
+    el("btnConn").addEventListener("click", () => ouvreAuth("connexion"));
+    return;
+  }
+  zone.innerHTML = `
+    <div class="enveloppe-menu">
+      <button class="bouton pseudo" id="btnMenu" aria-expanded="false" aria-haspopup="true">
+        <span class="pastille" aria-hidden="true"></span>
+        ${echappe(MOI.utilisateur.pseudo)}
+        <span class="chevron" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="menu" id="menuCompte" hidden>
+        <button class="entree" id="mnProjets">Projets affichés</button>
+        <button class="entree" id="mnMdp">Changer de mot de passe</button>
+        <hr>
+        <button class="entree" id="mnSortie">Se déconnecter</button>
+      </div>
+    </div>`;
+  el("btnMenu").addEventListener("click", (e) => { e.stopPropagation(); basculeMenu(); });
+  el("mnProjets").addEventListener("click", () => { fermeMenu(); ouvreProjets(); });
+  el("mnMdp").addEventListener("click", () => { fermeMenu(); ouvre("mMdp", "pActuel"); });
+  el("mnSortie").addEventListener("click", sortir);
+}
+
+function dessine() { dessineCompte(); dessineGrille(); }
+
+/* =========================================================
+   Menu du compte
+   ========================================================= */
+function basculeMenu() {
+  const m = el("menuCompte");
+  if (!m) return;
+  m.hidden = !m.hidden;
+  el("btnMenu").setAttribute("aria-expanded", m.hidden ? "false" : "true");
+}
+function fermeMenu() {
+  const m = el("menuCompte");
+  if (m && !m.hidden) { m.hidden = true; el("btnMenu").setAttribute("aria-expanded", "false"); }
+}
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".enveloppe-menu")) fermeMenu();
+});
+
+/* =========================================================
+   Modales
+   ========================================================= */
+let RENDRE_FOCUS = null;
+
+function ouvre(id, champ) {
+  RENDRE_FOCUS = document.activeElement;
+  el(id).hidden = false;
+  const c = champ && el(champ);
+  if (c) c.focus();
+}
+function ferme(id) {
+  el(id).hidden = true;
+  if (RENDRE_FOCUS && document.contains(RENDRE_FOCUS)) RENDRE_FOCUS.focus();
+  RENDRE_FOCUS = null;
+}
+function fermeTout() {
+  ["mAuth", "mProjets", "mMdp"].forEach((id) => { if (!el(id).hidden) ferme(id); });
+}
+
+document.querySelectorAll("[data-ferme]").forEach((b) => {
+  b.addEventListener("click", () => ferme(b.dataset.ferme));
+});
+/* clic sur le voile, pas sur la boîte */
+document.querySelectorAll(".voile").forEach((v) => {
+  v.addEventListener("click", (e) => { if (e.target === v) ferme(v.id); });
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { fermeMenu(); fermeTout(); }
+});
+
+/* ---------- onglets connexion / inscription ---------- */
+function ouvreAuth(quoi) {
+  montreOnglet(quoi || "connexion");
+  cacheErreurs();
+  ouvre("mAuth", quoi === "inscription" ? "iPseudo" : "cPseudo");
+}
+function montreOnglet(quoi) {
+  const conn = quoi === "connexion";
+  el("formConn").hidden = !conn;
+  el("formInsc").hidden = conn;
+  el("ongConn").classList.toggle("actif", conn);
+  el("ongInsc").classList.toggle("actif", !conn);
+  el("ongConn").setAttribute("aria-selected", conn ? "true" : "false");
+  el("ongInsc").setAttribute("aria-selected", conn ? "false" : "true");
+  el("titreAuth").textContent = conn ? "Se connecter" : "Créer un compte";
+  if (!conn) majInscriptions();
+}
+
+/* Quand les places du jour sont prises, on le dit avant que la personne
+   remplisse tout le formulaire pour rien. */
+function majInscriptions() {
+  const ins = MOI.inscriptions || {};
+  const avis = el("iAvis");
+  avis.hidden = ins.ouvertes !== false;
+  if (!avis.hidden) {
+    avis.textContent = ins.libre_a
+      ? `Les inscriptions du jour sont pleines. Une place se libère ${quand(ins.libre_a)}.`
+      : "Les inscriptions sont fermées pour le moment.";
+  }
+}
+
+/* « le 3 septembre à 20:14 », ou « à 20:14 » si c'est aujourd'hui */
+function quand(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return "plus tard";
+  const heure = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === new Date().toDateString()) return `à ${heure}`;
+  return `le ${d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} à ${heure}`;
+}
+
+el("ongConn").addEventListener("click", () => { cacheErreurs(); montreOnglet("connexion"); el("cPseudo").focus(); });
+el("ongInsc").addEventListener("click", () => { cacheErreurs(); montreOnglet("inscription"); el("iPseudo").focus(); });
+
+function erreur(id, message) {
+  const p = el(id);
+  p.textContent = message;
+  p.hidden = false;
+}
+function cacheErreurs() {
+  ["cErr", "iErr", "pErr"].forEach((id) => { el(id).hidden = true; });
+}
+
+/* =========================================================
+   Actions
+   ========================================================= */
+el("formConn").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  cacheErreurs();
+  const bouton = el("cGo");
+  bouton.disabled = true;
+  try {
+    const data = await api("/api/connexion", "POST", {
+      pseudo: el("cPseudo").value.trim(),
+      mdp: el("cMdp").value,
+      memoriser: el("cMemo").checked
+    });
+    el("cMdp").value = "";
+    poseEtat(data);
+    ferme("mAuth");
+    toast(`Bonjour ${MOI.utilisateur.pseudo}.`);
+  } catch (err) {
+    erreur("cErr", err.message);
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
+el("formInsc").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  cacheErreurs();
+  if (el("iMdp").value !== el("iMdp2").value) {
+    erreur("iErr", "Les deux mots de passe ne sont pas identiques.");
+    return;
+  }
+  const bouton = el("iGo");
+  bouton.disabled = true;
+  try {
+    const data = await api("/api/inscription", "POST", {
+      pseudo: el("iPseudo").value.trim(),
+      mdp: el("iMdp").value,
+      email: el("iMail").value.trim()
+    });
+    el("iMdp").value = el("iMdp2").value = "";
+    poseEtat(data);
+    ferme("mAuth");
+    toast(`Bienvenue dans l'abysse, ${MOI.utilisateur.pseudo}.`);
+  } catch (err) {
+    erreur("iErr", err.message);
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
+el("formMdp").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  cacheErreurs();
+  if (el("pNouveau").value !== el("pNouveau2").value) {
+    erreur("pErr", "Les deux saisies ne sont pas identiques.");
+    return;
+  }
+  try {
+    await api("/api/mot-de-passe", "POST", {
+      actuel: el("pActuel").value,
+      nouveau: el("pNouveau").value
+    });
+    el("pActuel").value = el("pNouveau").value = el("pNouveau2").value = "";
+    ferme("mMdp");
+    toast("Mot de passe changé.");
+  } catch (err) {
+    erreur("pErr", err.message);
+  }
+});
+
+async function sortir() {
+  try {
+    await api("/api/deconnexion", "POST", {});
+  } catch (err) {
+    /* le cookie est peut-être déjà mort : on redescend quand même en
+       visiteur plutôt que de rester sur un état de connexion menteur */
+  }
+  fermeMenu();
+  poseEtat({ connecte: false, utilisateur: null, masques: [],
+             inscriptions: MOI.inscriptions });
+  toast("Déconnecté.");
+}
+
+/* ---------- projets affichés ---------- */
+function ouvreProjets() {
+  dessineListeProjets();
+  ouvre("mProjets");
+}
+function dessineListeProjets() {
+  el("listeProjets").innerHTML = PROJETS.map((p) => `
+    <label class="bascule">
+      <input type="checkbox" data-projet="${echappe(p.id)}"
+             ${MOI.masques.indexOf(p.id) < 0 ? "checked" : ""}>
+      <span class="pointe" style="--accent:${p.accent}" aria-hidden="true"></span>
+      <span class="etiquette">${echappe(p.nom)}</span>
+    </label>`).join("");
+
+  el("listeProjets").querySelectorAll("input[type=checkbox]").forEach((c) => {
+    c.addEventListener("change", () => enregistreMasques());
+  });
+}
+
+/* On envoie la liste complète plutôt qu'une bascule : deux onglets ouverts
+   ne peuvent pas diverger, et rejouer la requête ne change rien. */
+async function enregistreMasques() {
+  const avant = MOI.masques.slice();
+  const masques = [];
+  el("listeProjets").querySelectorAll("input[type=checkbox]").forEach((c) => {
+    if (!c.checked) masques.push(c.dataset.projet);
+  });
+  MOI.masques = masques;
+  dessineGrille();
+  try {
+    const data = await api("/api/preferences", "PUT", { masques });
+    MOI.masques = data.masques;
+    dessineGrille();
+  } catch (err) {
+    MOI.masques = avant;          // le serveur n'a pas suivi : on revient
+    dessineGrille();
+    dessineListeProjets();
+    toast("Réglage non enregistré : " + err.message, true);
+  }
+}
+
+/* ---------- toast ---------- */
+let minuteurToast;
+function toast(message, mauvais) {
+  const t = el("toast");
+  t.textContent = message;
+  t.className = "toast montre" + (mauvais ? " mauvais" : "");
+  t.hidden = false;
+  clearTimeout(minuteurToast);
+  minuteurToast = setTimeout(() => { t.className = "toast"; t.hidden = true; }, 3600);
+}
+
+/* =========================================================
+   Démarrage
+   ========================================================= */
+(async function () {
+  dessine();                       // la grille s'affiche avant la réponse
+  try {
+    poseEtat(await api("/api/moi"));
+  } catch (err) {
+    /* API injoignable : le hub reste une grille de liens, comme avant les
+       comptes. Mieux vaut un site amputé de sa connexion qu'une page vide. */
+  }
+})();
 
 /* ---------- Neige marine ---------- */
 (function () {

@@ -103,10 +103,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const SOURCES = [
-  { nom: 'Jokrem', url: 'https://script.google.com/macros/s/AKfycbzwnyJiuJ5LPszIF6Fcl4KpxpXLCiqr3PTAalbi7vnM8iigAK-awky7Ui_Wy7j6Gzsx/exec'},
-  { nom: 'Ilarak', url: 'https://script.google.com/macros/s/AKfycbzJvOpMSgiAcTKwc78VZQ91M4ejaVRXwWQa50S506abXX-X5gxaJB-DXd160MnVdclU/exec'}
-];
+/* Les journaux disponibles, remplis par l'annuaire au démarrage. Plus
+   aucune adresse en dur : le serveur sait qui a un journal public, et les
+   pseudos changent sans qu'on touche à ce fichier.
+   L'`url` est le chemin de l'API : tout le reste de la page (cache local,
+   mémoire du dernier classeur ouvert) continue de s'en servir comme clé. */
+let SOURCES = [];
 
 const CONFIG = { // Configs pour les covers
   imageDir: "/static/Cover/",
@@ -447,113 +449,24 @@ function noteColor(n){
 }
 
 /* ---------- Lecture d'un onglet ---------- */
-const HEAD = {
-  name:      ['nom du jeu', 'nom', 'jeu', 'titre'],
-  release:   ['date de sortie', 'sortie', 'date'],
-  base:      ['prix de base', 'prix officiel', 'prix fort'],
-  paid:      ['prix que j ai paye', 'prix paye', 'paye', 'prix reel'],
-  time:      ['temps de jeu', 'temps', 'duree', 'heures'],
-  rating:    ['note', 'score'],
-  month:     ['mois'],
-  played:    ['annee', 'annee faite', 'quand'],
-  review:    ['avis', 'commentaire', 'commentaires', 'points'],
-};
-function mapHeaders(row){
-  const idx = {}, heads = row.map(norm);
-  for(const key in HEAD){
-    let i = heads.findIndex(h => h && HEAD[key].includes(h));
-    if(i<0) i = heads.findIndex(h => h && HEAD[key].some(a=>h.startsWith(a)) && !Object.values(idx).includes(heads.indexOf(h)));
-    if(i>=0 && !Object.values(idx).includes(i)) idx[key]=i;
-  }
-  return idx;
-}
-function parseReview(txt){
-  return clean(txt).split(/\r?\n/).map(s=>clean(s)).filter(Boolean);
-}
-function guessMonthColumn(rows, idx){
-  const width = Math.max(...rows.map(r=>r.length));
-  for(let c=0;c<width;c++){
-    if(Object.values(idx).includes(c)) continue;
-    /* On saute une colonne qui porte déjà un intitulé — mais un intitulé,
-       c'est un mot. Un symbole isolé dans la première case (un « ² »,
-       une puce, une icône) n'en est pas un, et suffisait à masquer la
-       colonne des mois de tout un onglet : la feuille 2026 en portait un,
-       et ses jeux s'affichaient « 2026 » au lieu de « janvier 2026 », avec
-       le tri chronologique à plat. On ne renonce donc que devant un
-       en-tête qui contient de vraies lettres. */
-    if(/[a-z]/.test(norm(rows[0][c]))) continue;
-    let ok=0, bad=0;
-    for(let r=1;r<rows.length;r++){
-      const v = clean(rows[r][c]); if(!v) continue;
-      const n = +v.replace(',','.');
-      if(Number.isInteger(n) && n>=1 && n<=12) ok++; else bad++;
-    }
-    if(ok>=3 && bad===0) return c;
-  }
-  return undefined;
-}
-function noteFor(notes, r, nameCol, width){
-  if(notes[r+','+nameCol]) return {txt:notes[r+','+nameCol], col:nameCol};
-  for(let c=0;c<width;c++) if(notes[r+','+c]) return {txt:notes[r+','+c], col:c};
-  return {txt:'', col:null};
-}
-/* Renvoie null si l'onglet n'a pas de colonne "Nom du jeu" (feuille annexe),
-   sinon les colonnes repérées + les jeux. Chaque jeu garde son numéro de
-   ligne : c'est lui qui permet de réécrire au bon endroit. */
-function readSheet(rows, notes, sheetName){
-  if(!rows.length) return null;
-  const idx = mapHeaders(rows[0]);
-  if(idx.name===undefined) return null;
-  if(idx.month===undefined) idx.month = guessMonthColumn(rows, idx);
-  const sheetYear = /^\d{4}$/.test(sheetName.trim()) ? +sheetName.trim() : null;
-  const out = [];
-  for(let r=1;r<rows.length;r++){
-    const row = rows[r];
-    const name = clean(row[idx.name]);
-    if(!name) continue;
-    const g = {
-      name,
-      row: r+1,
-      noteCol: null,
-      bucket: sheetYear ? String(sheetYear) : sheetName,
-      year: sheetYear ?? (toNum(row[idx.played]) || null),
-      release: toDate(row[idx.release]),
-      base: toNum(row[idx.base]),
-      paid: toNum(row[idx.paid]),
-      hours: toHours(row[idx.time]),
-      rating: toNum(row[idx.rating]),
-      month: idx.month!==undefined ? toNum(row[idx.month]) : null,
-      review: idx.review!==undefined ? parseReview(row[idx.review]) : [],
-    };
-    // à défaut de colonne "Avis", on récupère le commentaire de cellule
-    if(!g.review.length){
-      const n = noteFor(notes, r, idx.name, row.length);
-      g.review = parseReview(n.txt);
-      g.noteCol = n.col;
-    }
-    out.push(g);
-  }
-  return { cols: idx, games: out };
-}
+/* Le serveur envoie des jeux tout faits. Les fonctions qui devinaient les
+   colonnes d'une feuille (HEAD, mapHeaders, guessMonthColumn, noteFor,
+   readSheet) n'ont plus d'objet : un jeu arrive avec ses champs nommés, et
+   son `id` remplace le couple « onglet + numéro de ligne ». */
 
-/* ---------- Jetons : un par adresse ---------- */
-
-const CLE_JETONS = 'journal-de-jeu:jetons';
-const jetons = {
-  tous(){ try{ return JSON.parse(localStorage.getItem(CLE_JETONS) || '{}') || {}; }catch(e){ return {}; } },
-  get(url){ const j = this.tous()[url]; return typeof j === 'string' ? j : ''; },
-  set(url, jeton){
-    const j = this.tous();
-    if(jeton) j[url] = jeton; else delete j[url];
-    try{ localStorage.setItem(CLE_JETONS, JSON.stringify(j)); }catch(e){}
-  },
-};
+/* Plus de jeton : l'autorisation d'écrire vient de la session Abyss, et le
+   cookie part tout seul avec chaque requête. Le serveur répond `write: true`
+   quand le journal demandé est celui du visiteur connecté. */
 
 try{
-  if(localStorage.getItem('journal-de-jeu:version') !== 'abyss-3'){
-    localStorage.removeItem('journal-de-jeu:source');
-    localStorage.removeItem('journal-de-jeu:data');
-    localStorage.setItem('journal-de-jeu:version', 'abyss-3');
+  if(localStorage.getItem('journal-de-jeu:version') !== 'abyss-4'){
+    /* le cache d'avant est indexé par adresse Apps Script, et contient des
+       feuilles au lieu de jeux : illisible pour la nouvelle version.
+       Les jetons partent avec, ils ne servent plus à rien. */
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('journal-de-jeu:'))
+      .forEach(k => localStorage.removeItem(k));
+    localStorage.setItem('journal-de-jeu:version', 'abyss-4');
   }
 }catch(e){}
 
@@ -565,7 +478,7 @@ const cacheStore = {
   set(url, v){ try{ localStorage.setItem(this.cle(url), JSON.stringify(v)); }catch(e){} },
 };
 
-let GAMES = [], BUCKETS = [], COLS = {}, CAN_WRITE = false, SRC = 0, PREMIERE_FOIS = true;
+let GAMES = [], BUCKETS = [], CAN_WRITE = false, SRC = 0, PREMIERE_FOIS = true, TITRE = '';
 /* le journal affiché, ou null si SOURCES est vide */
 const source = () => SOURCES[SRC] || null;
 
@@ -575,12 +488,6 @@ const CLE_CLASSEUR = 'journal-de-jeu:classeur';
 function memoriseClasseur(){
   try{ localStorage.setItem(CLE_CLASSEUR, source() ? source().url : ''); }catch(e){}
 }
-try{
-  const vu = localStorage.getItem(CLE_CLASSEUR);
-  const i = vu ? SOURCES.findIndex(s => s.url === vu) : -1;
-  if(i >= 0) SRC = i;
-}catch(e){}
-
 /* L'onglet le plus récent : la plus grande année parmi les onglets, et à
    défaut d'onglet nommé comme une année, le dernier de la liste. */
 function derniereAnnee(){
@@ -597,41 +504,22 @@ async function charger(opts = {}){
   // silencieux : rafraîchissement en arrière-plan pendant qu'on affiche déjà le cache
   const silencieux = !!opts.silencieux;
 
-  /* le jeton n'est envoyé que si tu en as un : sans lui le script doit
-     répondre les mêmes données, avec write:false */
-  const jeton = jetons.get(s.url);
-  const p = new URLSearchParams({ t: String(Date.now()) });
-  if(jeton) p.set('token', jeton);
-  const url = `${s.url}${s.url.includes('?') ? '&' : '?'}${p}`;
-
+  /* Plus de jeton dans l'adresse : le cookie de session part tout seul,
+     même origine oblige, et c'est le serveur qui décide de `write`. */
   let data = null, pourquoi = '';
   try{
-    const r = await fetch(url);
-    if(r.ok) data = await r.json(); else pourquoi = 'réponse HTTP ' + r.status;
-  }catch(e){ pourquoi = 'script injoignable'; }
+    const r = await fetch(s.url, {credentials: 'same-origin'});
+    if(r.ok) data = await r.json();
+    else{
+      try{ data = await r.json(); }catch(e){}
+      pourquoi = (data && data.message) || ('réponse HTTP ' + r.status);
+      data = null;
+    }
+  }catch(e){ pourquoi = 'serveur injoignable'; }
 
   if(!data || !data.ok){
-    /* Un jeton refusé se jette et se rejoue sans lui — la lecture n'en a pas
-       besoin. Y compris pendant un rafraîchissement silencieux : sinon un
-       jeton devenu caduc (jeton changé, script redéployé) fige la page sur
-       « actualisation impossible » à chaque ouverture, sans rien à cliquer
-       pour s'en sortir, et vider le cache du navigateur devient le seul
-       remède. Le `&& jeton` évite de boucler : la relecture part sans jeton,
-       si elle échoue encore c'est autre chose. */
-    if(data && data.error === 'token' && jeton){
-      jetons.set(s.url, '');
-      toast('Jeton refusé : retour en lecture seule.', true);
-      return charger(opts);
-    }
-    if(silencieux){
-      majEtat('erreur', 'actualisation impossible');
-      return;
-    }
-    if(!data){
-      showGate(`<b>Impossible de joindre le script.</b> ${esc(pourquoi)}.`);
-    } else {
-      showGate(`<b>Le script a répondu une erreur :</b> <code>${esc(String(data.error||'inconnue').slice(0,180))}</code>`);
-    }
+    if(silencieux){ majEtat('erreur', 'actualisation impossible'); return; }
+    showGate(pourquoi ? `<b>Impossible de charger le journal.</b> ${esc(pourquoi)}.` : null);
     return;
   }
 
@@ -679,51 +567,50 @@ function ecritEtat(){
     + esc(ETAT_TXT);
 }
 
-/* Range la réponse du script dans GAMES / BUCKETS / COLS. Appelée aussi
-   après chaque écriture : le script renvoie le classeur relu.
+/* Range la réponse dans GAMES / BUCKETS. Appelée aussi après chaque
+   écriture : le serveur renvoie le journal relu, comme le faisait le script.
    frais=false : c'est le cache local qui vient d'être affiché, la vraie
    requête est encore en vol — on le dit au lieu d'annoncer une synchro. */
 function applyData(data, frais){
-  GAMES = []; BUCKETS = []; COLS = {};
-  (data.sheets || []).forEach(sh=>{
-    const res = readSheet(sh.rows || [], sh.notes || {}, sh.name);
-    if(!res) return; // onglet sans colonne "Nom du jeu"
-    if(BUCKETS.indexOf(sh.name) < 0) BUCKETS.push(sh.name);
-    COLS[sh.name] = res.cols;
-    GAMES.push(...res.games);
-  });
+  /* Les jeux arrivent tout faits, avec les mêmes noms de champs que
+     produisait readSheet. Seul `id` est nouveau, et il remplace le couple
+     « onglet + numéro de ligne » qui servait à retrouver la bonne case. */
+  GAMES = (data.jeux || []).map(j => Object.assign({}, j, {
+    review: Array.isArray(j.review) ? j.review : [],
+  }));
+  BUCKETS = (data.periodes || []).slice();
   CAN_WRITE = data.write === true;
+  TITRE = data.titre || '';
   oublieTuiles();   // le mur garde ses tuiles : celles des jeux partis s'en vont
   // à l'ouverture seulement : on se place sur l'année la plus récente
   if(PREMIERE_FOIS && BUCKETS.length){ S.bucket = derniereAnnee(); PREMIERE_FOIS = false; }
   if(S.bucket !== 'all' && BUCKETS.indexOf(S.bucket) < 0) S.bucket = 'all';
-  // le nom du classeur n'est plus répété ici : il tient lieu de titre
+  majEntete();
   if(frais) majEtat('live', CAN_WRITE ? 'modifiable' : 'lecture seule');
   else majEtat('stale', 'actualisation...');
   majVerrou();
 }
 
-/* Envoi d'une écriture. Le jeton part en clair dans l'URL, comme avant :
-   c'est ce que doPost lit dans e.parameter.token. */
-async function envoyer(action, charge){
-  const s = source();
-  if(!s) throw new Error('aucun journal connecté');
-  if(!CAN_WRITE) throw new Error('lecture seule : déverrouille la modification');
-  const jeton = jetons.get(s.url);
-  const url = `${s.url}${s.url.includes('?') ? '&' : '?'}token=${encodeURIComponent(jeton)}`
-            + `&action=${encodeURIComponent(action)}&t=${Date.now()}`;
-  const corps = JSON.stringify(charge);
+/* ---------- écritures ----------
+   Une requête JSON vers Flask, cookie de session compris. Le serveur répond
+   le journal entier relu : la page se repose dessus au lieu de recoller à la
+   main ce qu'elle vient d'envoyer. */
+async function envoyer(methode, chemin, charge){
+  if(!CAN_WRITE) throw new Error('lecture seule : connecte-toi sur Abyss');
+  const opts = {method: methode, credentials: 'same-origin'};
+  if(charge !== undefined){
+    // application/json : un formulaire posté depuis un autre site ne peut
+    // pas produire ce type sans pré-vol CORS. C'est la parade CSRF.
+    opts.headers = {'Content-Type': 'application/json'};
+    opts.body = JSON.stringify(charge);
+  }
   let data = null, pourquoi = '';
   try{
-    const r = await fetch(url, {
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},   // évite le pré-vol CORS
-      body: corps,
-    });
-    if(r.ok) data = await r.json(); else pourquoi = 'réponse HTTP ' + r.status;
-  }catch(e){ pourquoi = 'script injoignable'; }
-  if(!data) throw new Error('écriture impossible — ' + pourquoi);
-  if(!data.ok) throw new Error(data.error === 'token' ? 'jeton refusé' : String(data.error || 'erreur inconnue'));
+    const r = await fetch(chemin, opts);
+    try{ data = await r.json(); }catch(e){}
+    if(!r.ok) pourquoi = (data && data.message) || ('réponse HTTP ' + r.status);
+  }catch(e){ pourquoi = 'serveur injoignable'; }
+  if(!data || data.ok === false) throw new Error(pourquoi || 'erreur inconnue');
   return data;
 }
 
@@ -786,7 +673,7 @@ function choisirClasseur(i){
   closeJnl();
   if(i === SRC || !SOURCES[i]) return;
   SRC = i; memoriseClasseur();
-  GAMES = []; BUCKETS = []; COLS = {}; CAN_WRITE = false;
+  GAMES = []; BUCKETS = []; CAN_WRITE = false;
   /* on change de journal : la fiche ouverte parle d'un jeu qui n'est plus
      dans le classeur affiché. render() ne ferme plus rien de lui-même, donc
      c'est ici que ça se dit. */
@@ -798,7 +685,7 @@ function choisirClasseur(i){
   majEtat('offline', 'connexion...');
   const s = source();
   const cache = cacheStore.get(s.url);
-  if(cache && cache.sheets && cache.sheets.length){
+  if(cache && cache.jeux && cache.jeux.length){
     applyData(cache, false); showApp(); render();
     charger({silencieux:true});
   } else {
@@ -906,67 +793,20 @@ function squelette(){
        </div>`).join('')}</div>`);
 }
 
-/* ---------- verrou : lecture seule / modification ---------- */
+/* ---------- verrou : lecture seule / modification ----------
+   Il n'y a plus rien à déverrouiller. Le serveur répond `write: true` quand
+   le journal affiché est celui du visiteur connecté, et `false` sinon. Le
+   bouton mène donc à Abyss au lieu d'ouvrir une boîte à jeton. */
 function majVerrou(){
-  document.getElementById('unlock').hidden = CAN_WRITE;
-  document.getElementById('relock').hidden = !CAN_WRITE;
-  document.getElementById('addBtn').hidden = !CAN_WRITE;
-  // la mise à jour de masse écrit dans le classeur : en lecture seule elle
+  const chezMoi = CAN_WRITE;
+  document.getElementById('unlock').hidden = chezMoi;
+  document.getElementById('relock').hidden = true;   // plus de retour arrière à faire
+  document.getElementById('addBtn').hidden = !chezMoi;
+  // la mise à jour de masse écrit dans le journal : en lecture seule elle
   // n'aurait rien à proposer d'autre qu'un refus, autant ne pas la montrer
-  document.getElementById('igdbBtn').hidden = !CAN_WRITE;
-}
-function openJeton(){
-  const s = source();
-  if(!s) return;
-  closeMenu();
-  const host = $('form');
-  host.innerHTML = `<div class="sheet form-sheet" role="dialog" aria-modal="true" aria-label="Déverrouiller la modification">
-    <div class="sheet-tools">
-      <span class="grp"><b class="fhead">Passer en mode éditeur</b></span>
-      <span class="grp"><button class="sbtn form-x" aria-label="Fermer">×</button></span>
-    </div>
-    <div class="form-in">
-      <label class="fld full"><u>Jeton</u>
-        <input id="j_tok" type="password" autocomplete="off" spellcheck="false"></label>
-      <div class="ferr" id="j_err" hidden></div>
-      <div class="frow">
-        <span class="spacer"></span>
-        <button class="ghost" id="j_cancel">Annuler</button>
-        <button class="cta auto" id="j_ok">Déverrouiller</button>
-      </div>
-    </div>
-  </div>`;
-  host.hidden = false;
-  verrouFond();
-  host.querySelector('.form-x').onclick = closeForm;
-  $('j_cancel').onclick = closeForm;
-  $('j_ok').onclick = validerJeton;
-  $('j_tok').addEventListener('keydown', e=>{ if(e.key === 'Enter') validerJeton(); });
-  $('j_tok').focus();
-}
-async function validerJeton(){
-  const s = source();
-  const jeton = $('j_tok').value.trim();
-  if(!jeton){
-    $('j_err').hidden = false;
-    $('j_err').textContent = 'Saisis le jeton, ou annule pour rester en lecture seule.';
-    return;
-  }
-  const btn = $('j_ok');
-  btn.disabled = true; btn.textContent = 'Vérification...';
-  jetons.set(s.url, jeton);
-  await charger();
-  /* charger() vide le jeton lui-même s'il est refusé ; CAN_WRITE ne passe
-     à true que si le script l'a confirmé, jamais parce qu'on a saisi
-     quelque chose */
-  if(CAN_WRITE){
-    closeForm();
-    toast('Passage en mode éditeur.');
-  } else if($('j_err')){
-    btn.disabled = false; btn.textContent = 'Déverrouiller';
-    $('j_err').hidden = false;
-    $('j_err').textContent = "Jeton incorrect.";
-  }
+  document.getElementById('igdbBtn').hidden = !chezMoi;
+  document.getElementById('unlock').textContent =
+    MOI.connecte ? 'Ouvrir mon journal' : 'Se connecter sur Abyss';
 }
 
 document.getElementById('gRetry').addEventListener('click', ()=> charger());
@@ -974,14 +814,13 @@ document.getElementById('reload').addEventListener('click', ()=>{
   closeMenu();
   charger({silencieux:true});
 });
-document.getElementById('unlock').addEventListener('click', openJeton);
-document.getElementById('relock').addEventListener('click', ()=>{
-  const s = source();
+document.getElementById('unlock').addEventListener('click', ()=>{
   closeMenu();
-  if(!s) return;
-  jetons.set(s.url, '');
-  toast('Retour en lecture seule.');
-  charger();
+  /* Connecté sans journal : on lui en crée un et on l'y emmène. Connecté
+     avec un journal : on l'ouvre. Pas connecté : direction Abyss. */
+  if(!MOI.connecte){ location.href = '/abyss'; return; }
+  if(MOI.pseudo){ ouvrirLeMien(); return; }
+  creerMonJournal();
 });
 
 /* ---------- état ----------
@@ -1035,22 +874,91 @@ let decouverteEnVol = false;
    autre chose, même quand le tirage retombe sur les mêmes jeux de départ. */
 const DECOUVERTE_VUS = new Set();
 
-(function demarrer(){
+/* ---------- qui suis-je, et quels journaux existent ----------
+   Un seul appel au démarrage : l'annuaire des journaux publics, plus l'état
+   de la session. C'est lui qui remplit SOURCES, jusqu'ici écrit en dur. */
+let MOI = { connecte: false, pseudo: null };
+
+async function chargeAnnuaire(){
+  const r = await fetch('/api/journal', {credentials: 'same-origin'});
+  const d = await r.json();
+  if(!d.ok) throw new Error(d.message || 'annuaire illisible');
+  MOI = { connecte: !!d.connecte, pseudo: d.moi || null };
+  SOURCES = (d.journaux || []).map(j => ({
+    nom: j.pseudo,
+    titre: j.titre,
+    url: '/api/journal/' + encodeURIComponent(j.pseudo),
+  }));
+  /* Le sien d'abord : c'est celui qu'on vient consulter neuf fois sur dix,
+     et c'est le seul qu'on puisse modifier. */
+  if(MOI.pseudo){
+    const i = SOURCES.findIndex(x => x.nom === MOI.pseudo);
+    if(i > 0) SOURCES.unshift(SOURCES.splice(i, 1)[0]);
+  }
+}
+
+function ouvrirLeMien(){
+  const i = SOURCES.findIndex(x => x.nom === MOI.pseudo);
+  if(i >= 0 && i !== SRC) choisirClasseur(i);
+  else if(i >= 0) charger();
+}
+
+/* Créer son journal : une seule requête, et le serveur renvoie la page vide
+   toute prête. Rejouable sans dégât, il rend l'existant s'il y en a un. */
+async function creerMonJournal(){
+  try{
+    const data = await (async ()=>{
+      const r = await fetch('/api/journal', {
+        method: 'POST', credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'}, body: '{}',
+      });
+      const d = await r.json();
+      if(!r.ok || d.ok === false) throw new Error(d.message || 'création impossible');
+      return d;
+    })();
+    MOI.pseudo = data.pseudo;
+    SOURCES.unshift({nom: data.pseudo, titre: data.titre,
+                     url: '/api/journal/' + encodeURIComponent(data.pseudo)});
+    SRC = 0; memoriseClasseur();
+    PREMIERE_FOIS = true;
+    applyData(data, true); showApp(); render();
+    toast('Ton journal est prêt. Ajoute ton premier jeu.');
+  }catch(e){
+    toast('Création impossible — ' + (e.message || 'erreur inconnue'), true);
+  }
+}
+
+(async function demarrer(){
   document.documentElement.style.setProperty('--cov-ratio', CONFIG.coverRatio);
   /* Part avant tout le reste, et sans qu'on l'attende : le rendu se fait
      avec le manifeste de la dernière visite, celui-ci le corrige derrière
      s'il a changé. Attendre sa réponse retarderait l'affichage du cache,
      qui est justement ce qu'on veut instantané. */
   chargeManifeste();
-  majEntete();
   majEtat('offline', 'connexion...');
+
+  /* L'annuaire vient avant tout : sans lui on ne sait même pas quel journal
+     ouvrir. C'est le seul temps d'attente incompressible de la page. */
+  try{ await chargeAnnuaire(); }
+  catch(e){ showGate('<b>Serveur injoignable.</b> Le hub Abyss ne répond pas.'); return; }
+
+  /* Le classeur ouvert la dernière fois, s'il existe toujours. Le fichier
+     est relu ici et non plus au chargement du script : SOURCES était vide
+     à ce moment-là. */
+  try{
+    const vu = localStorage.getItem(CLE_CLASSEUR);
+    const i = vu ? SOURCES.findIndex(x => x.url === vu) : -1;
+    if(i >= 0) SRC = i;
+  }catch(e){}
+
+  majEntete();
   const s = source();
   if(!s || !s.url){ showGate(null); return; }
 
   // le cache s'affiche tout de suite, quitte à ne pas être à jour : la vraie
   // requête part en même temps, en silence, et remplace dès qu'elle répond
   const cache = cacheStore.get(s.url);
-  if(cache && cache.sheets && cache.sheets.length){
+  if(cache && cache.jeux && cache.jeux.length){
     applyData(cache, false);
     showApp();
     render();
@@ -1649,10 +1557,6 @@ async function ajouteWishlist(i, btn){
   if(!s) return;
   if(!CAN_WRITE){ toast('Passe en mode éditeur pour ajouter un jeu.', true); return; }
   const cible = ongletWishlist();
-  const modele = COLS[cible] ? cible
-    : (COLS[derniereAnnee()] ? derniereAnnee() : BUCKETS[0]);
-  const cols = COLS[cible] || COLS[modele];
-  if(!cols){ toast("Aucun onglet ne sert de modèle pour écrire.", true); return; }
 
   btn.disabled = true;
   const texte = btn.textContent;
@@ -1673,9 +1577,8 @@ async function ajouteWishlist(i, btn){
   }catch(e){}
 
   try{
-    const data = await envoyer('enregistrer', {
-      sheet: cible, modele: modele || null, cols: cols,
-      colsFrom: null, from: null, noteCol: null, review: '',
+    const data = await envoyer('POST', '/api/journal/jeu', {
+      periode: cible, review: '',
       values: {
         name: s.titre, rating: null, month: null, hours: null,
         base: base, paid: null, release: s.iso || null,
@@ -2355,25 +2258,17 @@ function lireForm(){
   if(rel.value || isoDate(rel.dataset.orig) || !rel.dataset.orig) v.release = rel.value || null;
   return v;   // ni support ni année : l'onglet suffit, et le Sheet garde ce qu'il a
 }
+/* Un onglet inexistant n'est plus un problème : il n'y a pas d'en-têtes à
+   recopier, la période est un simple champ du jeu. Créer « En cours » revient
+   à y ranger un premier jeu. */
 function chargeUtile(){
   const cible = cibleOnglet();
   if(!cible) throw new Error("Donne un nom au nouvel onglet.");
-  // l'onglet n'existe pas encore (« En cours » la première fois, ou un
-  // nouvel onglet) : on copie les en-têtes de l'année la plus récente
-  const recent = derniereAnnee();
-  const modele = COLS[cible] ? cible
-    : (EDIT && COLS[EDIT.bucket] ? EDIT.bucket : (COLS[recent] ? recent : BUCKETS[0]));
-  const cols = COLS[cible] || COLS[modele];
-  if(!cols) throw new Error("Aucun onglet ne sert de modèle : impossible de savoir où écrire.");
   const v = lireForm();
   if(!v.name) throw new Error("Il faut au moins un nom de jeu.");
   return {
-    sheet: cible,
-    modele: modele || null,
-    cols: cols,
-    colsFrom: EDIT ? (COLS[EDIT.bucket] || cols) : null,
-    from: EDIT ? {sheet: EDIT.bucket, row: EDIT.row, expect: EDIT.name} : null,
-    noteCol: EDIT ? EDIT.noteCol : null,
+    id: EDIT ? EDIT.id : null,          // null = ajout
+    periode: cible,
     review: statutCoche() ? '' : clean($('f_review').value),
     values: v,
   };
@@ -2391,14 +2286,16 @@ async function submitForm(){
                    && norm(JEU_PICK.nom) === norm(charge.values.name)) ? JEU_PICK : null;
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   try{
-    const data = await envoyer('enregistrer', charge);
-    const ajout = !charge.from;
+    const ajout = !charge.id;
+    const data = ajout
+      ? await envoyer('POST', '/api/journal/jeu', charge)
+      : await envoyer('PUT', '/api/journal/jeu/' + charge.id, charge);
     cacheStore.set(source().url, data);
     applyData(data, true);
     // le jeu vient d'atterrir dans un autre onglet (En cours, une autre
     // année...) : on s'y place, sinon il disparaît sous les yeux
-    if(S.bucket !== 'all' && S.bucket !== charge.sheet && BUCKETS.indexOf(charge.sheet) >= 0){
-      S.bucket = charge.sheet; S.range = null;
+    if(S.bucket !== 'all' && S.bucket !== charge.periode && BUCKETS.indexOf(charge.periode) >= 0){
+      S.bucket = charge.periode; S.range = null;
     }
     closeForm(); render();
     toast(ajout ? `« ${charge.values.name} » ajouté` : `« ${charge.values.name} » mis à jour`);
@@ -2415,15 +2312,11 @@ async function submitForm(){
 }
 async function supprimerJeu(btn){
   if(!EDIT) return;
-  const nom = EDIT.name;
-  const charge = {
-    sheet: EDIT.bucket, row: EDIT.row, expect: EDIT.name,
-    cols: COLS[EDIT.bucket] || {},
-  };
+  const nom = EDIT.name, id = EDIT.id;
   formErr('');
   btn.disabled = true; btn.textContent = 'Suppression...';
   try{
-    const data = await envoyer('supprimer', charge);
+    const data = await envoyer('DELETE', '/api/journal/jeu/' + id);
     cacheStore.set(source().url, data);
     applyData(data, true); closeForm(); render();
     toast(`« ${nom} » retiré du journal`);
@@ -3585,7 +3478,6 @@ function ouvrirIgdb(){
   IGD.stop = false;
   // le script a pu être redéployé depuis la dernière fois : on lui laisse
   // sa chance à chaque ouverture plutôt qu'une seule fois par onglet
-  IGDB_LOT_OK = true;
   IGD.lignes = []; IGD.file = []; IGD.fi = 0; IGD.dernier = null;
   IGD.compte = {dates:0, prix:0, jaquettes:0, echecs:0};
   IGD.echecs = [];
@@ -3871,50 +3763,29 @@ function igdbBouton(){
 }
 
 /* ---------- étape 4 : l'écriture ---------- */
-/* Ce qui part pour un jeu : les deux cellules concernées, pas une de plus.
-   Apps Script laisse une colonne tranquille quand sa valeur est absente de
-   `values` (poser_ : « champ non envoyé »), et ne vide une cellule que sur
-   un null explicite. La note, le mois, le temps de jeu, le prix payé et
-   l'avis ne sont donc pas réécrits — pas même à l'identique, ce qui évite
-   au passage tout aller-retour de format sur des colonnes qu'on n'a aucune
-   raison de toucher. */
+/* Ce qui part pour un jeu : les deux champs concernés, pas un de plus.
+   Le serveur ne touche qu'aux champs présents dans `values` — la note, le
+   mois, le temps de jeu, le prix payé et l'avis ne sont donc pas réécrits,
+   pas même à l'identique. Ni `periode` ni `review` ici : les omettre est
+   justement ce qui dit de ne pas y toucher. */
 function igdbCharge(l){
-  const g = l.g;
-  const cols = COLS[g.bucket];
-  if(!cols) throw new Error(`onglet « ${g.bucket} » inconnu`);
   const values = {};
   if(l.date) values.release = l.date.apres;
   if(l.prix) values.base = l.prix.apres;
-  return {
-    sheet: g.bucket,
-    modele: g.bucket,
-    cols: cols,
-    colsFrom: cols,
-    from: {sheet: g.bucket, row: g.row, expect: g.name},
-    values: values,
-    // ni review ni noteCol : l'avis n'est pas concerné, et un `review`
-    // absent est justement ce qui dit au script de ne pas y toucher
-  };
+  return { id: l.g.id, values: values };
 }
 
-/* Deux façons d'écrire, selon ce que le classeur sait faire :
+/* Écriture par paquets : une seule relecture du journal pour vingt jeux au
+   lieu d'une par jeu. C'est la relecture qui coûte, pas l'écriture.
 
-     - par paquets, via l'action « lot » : une seule relecture du classeur
-       pour vingt lignes, au lieu d'une par ligne. C'est la relecture qui
-       coûte, pas l'écriture.
-     - une ligne à la fois, via « enregistrer », si le script n'a pas
-       encore été redéployé avec l'action « lot ».
-
-   La bascule est automatique et silencieuse : un vieux script répond
-   « action inconnue », on note qu'il ne sait pas et on continue sans lui.
-   Enregistrer un .gs ne suffit pas à le déployer — il faut créer une
-   nouvelle version — donc ce cas arrivera, et il ne doit rien casser. */
+   Le repli « un par un » de l'époque Apps Script a disparu : il servait aux
+   scripts pas encore redéployés avec l'action « lot ». Flask, lui, sait
+   toujours traiter un paquet. */
 const IGDB_LOT = 20;
-let IGDB_LOT_OK = true;
 
 /* Écrit un paquet et renvoie les motifs d'échec, un par jeu. Les compteurs
-   sont tenus ici : c'est le seul endroit qui sache exactement laquelle des
-   lignes est passée et laquelle a résisté. */
+   sont tenus ici : c'est le seul endroit qui sache exactement lequel des
+   jeux est passé et lequel a résisté. */
 async function igdbEnvoyerPaquet(paquet){
   const echecs = [], utiles = [];
   paquet.forEach(l=>{
@@ -3927,32 +3798,22 @@ async function igdbEnvoyerPaquet(paquet){
     if(u.ligne.prix) IGD.compte.prix++;
   };
 
-  if(IGDB_LOT_OK){
-    try{
-      IGD.dernier = await envoyer('lot', {modifs: utiles.map(u => u.charge)});
-      const refuses = ((IGD.dernier.fait || {}).echecs) || [];
-      const rates = {};
-      refuses.forEach(e=>{
-        rates[e.i] = true;
-        echecs.push(`${e.jeu || '?'} — ${e.error}`);
-      });
-      utiles.forEach((u,k)=>{ if(!rates[k]) compter(u); });
-      return echecs;
-    }catch(e){
-      const motif = e.message || 'erreur inconnue';
-      if(!/action inconnue/i.test(motif)){
-        // panne franche : le paquet entier n'est pas passé, on le dit
-        return echecs.concat(utiles.map(u => `${u.ligne.g.name} — ${motif}`));
-      }
-      IGDB_LOT_OK = false;      // script pas encore redéployé : on se rabat
-    }
+  try{
+    IGD.dernier = await envoyer('PUT', '/api/journal/lot',
+                                {modifs: utiles.map(u => u.charge)});
+    const refuses = ((IGD.dernier.fait || {}).echecs) || [];
+    const rates = {};
+    refuses.forEach(e=>{
+      rates[e.i] = true;
+      echecs.push(`${e.jeu || '?'} — ${e.error}`);
+    });
+    utiles.forEach((u,k)=>{ if(!rates[k]) compter(u); });
+    return echecs;
+  }catch(e){
+    // panne franche : le paquet entier n'est pas passé, on le dit
+    const motif = e.message || 'erreur inconnue';
+    return echecs.concat(utiles.map(u => `${u.ligne.g.name} — ${motif}`));
   }
-  for(const u of utiles){
-    if(IGD.stop) break;
-    try{ IGD.dernier = await envoyer('enregistrer', u.charge); compter(u); }
-    catch(e){ echecs.push(`${u.ligne.g.name} — ${e.message || 'erreur inconnue'}`); }
-  }
-  return echecs;
 }
 
 async function igdbEcriture(){
@@ -3975,9 +3836,7 @@ async function igdbEcriture(){
   while(i < aFaire.length){
     if(jeton !== IGD.jeton) return;
     if(IGD.stop) break;
-    // la taille est relue à chaque tour : la bascule vers une-par-une peut
-    // se produire au premier paquet, et la suite doit en tenir compte
-    const paquet = aFaire.slice(i, i + (IGDB_LOT_OK ? IGDB_LOT : 1));
+    const paquet = aFaire.slice(i, i + IGDB_LOT);
     igdbAvance(i, aFaire.length, paquet[0].g.name
       + (paquet.length > 1 ? ` (+${paquet.length - 1})` : ''));
     const rates = await igdbEnvoyerPaquet(paquet);

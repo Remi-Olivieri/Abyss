@@ -12,6 +12,8 @@
   --meduse:#E0559B;
   --plancton:#5B9BF5;
 
+  --rouge:#E86A6A;
+
   --r:14px;
 }
 
@@ -34,6 +36,17 @@ body{
   user-select:none;
 }
 
+/* ... sauf dans les champs, ou couper le copier-coller serait une punition :
+   un mot de passe se colle depuis un gestionnaire, pas a la main. */
+input,textarea{
+  -webkit-user-select:text;
+  user-select:text;
+}
+
+/* Sans ce !important, les regles `display:flex` des modales l'emportent sur
+   l'attribut hidden du HTML, et tout s'affiche en permanence. */
+[hidden]{display:none !important}
+
 /* neige marine */
 #neige{
   position:fixed;
@@ -47,8 +60,84 @@ body{
   z-index:1;
   max-width:1080px;
   margin:0 auto;
-  padding:72px 26px 90px;
+  padding:26px 26px 90px;
 }
+
+/* ---------- Barre du compte ---------- */
+.barre{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  min-height:38px;
+  margin-bottom:24px;
+}
+.compte{position:relative}
+.enveloppe-menu{position:relative}
+
+.bouton{
+  font:inherit;
+  font-size:14px;
+  color:var(--os);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 15px;
+  border-radius:999px;
+  border:1px solid rgba(150,195,220,.18);
+  background:linear-gradient(170deg,rgba(20,36,55,.92),rgba(9,17,28,.92));
+  cursor:pointer;
+  transition:border-color .25s ease, box-shadow .25s ease, transform .2s ease;
+}
+.bouton:hover,.bouton:focus-visible{
+  border-color:rgba(120,200,230,.45);
+  box-shadow:0 0 22px -8px rgba(120,200,230,.6);
+}
+.bouton:focus-visible{outline:2px solid var(--plancton);outline-offset:3px}
+.bouton:active{transform:translateY(1px)}
+
+.pastille{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--algue);
+  box-shadow:0 0 8px var(--algue);
+  flex:none;
+}
+.chevron{color:var(--brume);font-size:11px;flex:none}
+
+/* ---------- Menu deroulant ---------- */
+.menu{
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  z-index:30;
+  min-width:236px;
+  padding:6px;
+  border-radius:12px;
+  /* fond opaque plutot qu'un backdrop-filter : le flou coute une passe de
+     compositing a chaque image, et fait ramer la neige derriere */
+  background:#0C1523;
+  border:1px solid rgba(150,195,220,.16);
+  box-shadow:0 18px 42px rgba(0,0,0,.66);
+}
+.menu hr{
+  border:0;
+  border-top:1px solid rgba(150,195,220,.1);
+  margin:5px 8px;
+}
+.entree{
+  display:block;
+  width:100%;
+  text-align:left;
+  font:inherit;
+  font-size:14px;
+  color:var(--os);
+  padding:9px 11px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  cursor:pointer;
+}
+.entree:hover,.entree:focus-visible{background:rgba(120,190,225,.12)}
+.entree:focus-visible{outline:2px solid var(--plancton);outline-offset:-2px}
 
 /* ---------- En-tête ---------- */
 .entete{
@@ -174,6 +263,244 @@ body{
   color:#A9BCCC;
 }
 
+/* ---------- Projets masqués ---------- */
+.note-masques{
+  margin:26px 0 0;
+  font-size:13px;
+  color:#586A7C;
+}
+.vide{
+  grid-column:1/-1;
+  margin:0;
+  padding:44px 20px;
+  text-align:center;
+  color:var(--brume);
+  border:1px dashed rgba(150,195,220,.16);
+  border-radius:var(--r);
+}
+.lien{
+  font:inherit;
+  font-size:inherit;
+  color:var(--plancton);
+  background:none;
+  border:0;
+  padding:0;
+  cursor:pointer;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+.lien:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+
+/* ---------- Modales ---------- */
+.voile{
+  position:fixed;
+  inset:0;
+  z-index:60;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:22px;
+  /* opaque et sans flou : meme raison que pour le menu */
+  background:rgba(3,6,11,.82);
+  overflow-y:auto;
+}
+.modale{
+  position:relative;
+  width:100%;
+  max-width:420px;
+  padding:26px 26px 28px;
+  border-radius:18px;
+  background:linear-gradient(170deg,#101C2C,#080F1A);
+  border:1px solid rgba(150,195,220,.16);
+  box-shadow:0 30px 70px rgba(0,0,0,.7);
+}
+.titre-modale{
+  font-family:"Eczar",Georgia,serif;
+  font-size:23px;
+  font-weight:600;
+  margin:0 0 18px;
+}
+.explication{
+  margin:0 0 16px;
+  font-size:13px;
+  color:var(--brume);
+}
+.fermer{
+  position:absolute;
+  top:14px;
+  right:14px;
+  width:32px;
+  height:32px;
+  font-size:13px;
+  color:var(--brume);
+  background:transparent;
+  border:1px solid rgba(150,195,220,.14);
+  border-radius:9px;
+  cursor:pointer;
+}
+.fermer:hover{color:var(--os);border-color:rgba(150,195,220,.35)}
+.fermer:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+
+.onglets{
+  display:flex;
+  gap:4px;
+  margin:0 40px 20px 0;
+  padding:4px;
+  border-radius:11px;
+  background:rgba(3,8,15,.7);
+}
+.onglet{
+  flex:1;
+  font:inherit;
+  font-size:13.5px;
+  color:var(--brume);
+  padding:7px 10px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  cursor:pointer;
+  transition:color .2s ease,background .2s ease;
+}
+.onglet.actif{
+  color:var(--os);
+  background:rgba(120,190,225,.14);
+}
+.onglet:focus-visible{outline:2px solid var(--plancton);outline-offset:-2px}
+
+/* ---------- Champs ---------- */
+.champ{display:block;margin-bottom:15px}
+.champ > span{
+  display:block;
+  font-size:12.5px;
+  letter-spacing:.02em;
+  color:var(--brume);
+  margin-bottom:6px;
+}
+.champ > span em{font-style:normal;opacity:.65}
+.champ input{
+  width:100%;
+  font:inherit;
+  font-size:15px;
+  color:var(--os);
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(150,195,220,.16);
+  background:rgba(3,8,15,.66);
+  transition:border-color .2s ease,box-shadow .2s ease;
+}
+.champ input:focus{
+  outline:none;
+  border-color:rgba(120,200,230,.55);
+  box-shadow:0 0 0 3px rgba(91,155,245,.16);
+}
+.champ small{
+  display:block;
+  margin-top:6px;
+  font-size:11.5px;
+  line-height:1.45;
+  color:#586A7C;
+}
+
+.case{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:0 0 18px;
+  font-size:13px;
+  color:var(--brume);
+  cursor:pointer;
+}
+.case input{width:16px;height:16px;accent-color:var(--plancton);flex:none}
+
+.valider{
+  width:100%;
+  font:inherit;
+  font-size:15px;
+  font-weight:500;
+  color:#04121C;
+  padding:11px 16px;
+  border:0;
+  border-radius:11px;
+  background:linear-gradient(180deg,#7FD6F2,#3E9DD0);
+  cursor:pointer;
+  transition:filter .2s ease,transform .15s ease;
+}
+.valider:hover{filter:brightness(1.08)}
+.valider:active{transform:translateY(1px)}
+.valider:disabled{opacity:.55;cursor:progress}
+.valider:focus-visible{outline:2px solid var(--plancton);outline-offset:3px}
+
+.erreur{
+  margin:0 0 14px;
+  padding:9px 12px;
+  font-size:13px;
+  color:#FFD9D9;
+  border-radius:9px;
+  border:1px solid rgba(232,106,106,.35);
+  background:rgba(232,106,106,.12);
+}
+
+/* Information, pas echec : les places du jour sont prises */
+.avis{
+  margin:0 0 14px;
+  padding:9px 12px;
+  font-size:13px;
+  line-height:1.5;
+  color:#FBE6C5;
+  border-radius:9px;
+  border:1px solid rgba(232,163,74,.34);
+  background:rgba(232,163,74,.1);
+}
+
+/* ---------- Bascules de projets ---------- */
+.bascule{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:11px 12px;
+  margin-bottom:7px;
+  border-radius:11px;
+  border:1px solid rgba(150,195,220,.1);
+  background:rgba(3,8,15,.5);
+  cursor:pointer;
+  transition:border-color .2s ease,background .2s ease;
+}
+.bascule:hover{border-color:rgba(150,195,220,.3)}
+.bascule input{width:17px;height:17px;accent-color:var(--plancton);flex:none}
+.bascule .pointe{
+  width:9px;height:9px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 9px color-mix(in srgb,var(--accent) 70%,transparent);
+  flex:none;
+}
+.bascule .etiquette{font-size:14px}
+.bascule:has(input:not(:checked)){opacity:.5}
+.bascule:has(input:not(:checked)) .pointe{box-shadow:none}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:26px;
+  z-index:80;
+  transform:translate(-50%,14px);
+  max-width:min(90vw,440px);
+  padding:11px 18px;
+  font-size:14px;
+  border-radius:11px;
+  background:#0E1B2B;
+  border:1px solid rgba(150,195,220,.2);
+  box-shadow:0 16px 40px rgba(0,0,0,.6);
+  opacity:0;
+  transition:opacity .25s ease,transform .25s ease;
+  pointer-events:none;
+}
+.toast.montre{opacity:1;transform:translate(-50%,0)}
+.toast.mauvais{
+  border-color:rgba(232,106,106,.45);
+  color:#FFD9D9;
+}
+
 /* ---------- Pied de page ---------- */
 .pied-page{
   margin-top:52px;
@@ -188,7 +515,8 @@ body{
 }
 
 @media (max-width:620px){
-  .enveloppe{padding:48px 18px 64px}
+  .enveloppe{padding:18px 18px 64px}
+  .modale{padding:22px 20px 24px}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition-duration:.01ms !important}
