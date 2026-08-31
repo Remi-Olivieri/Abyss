@@ -20,6 +20,9 @@ STATIQUE = (BASE / "static").resolve() # images, css, json
 TEMPLATES = (BASE / "templates").resolve() # les pages html
 DONNEES = (BASE / "donnees").resolve() # la base sqlite : jamais servie
 ACCUEIL = "Abyss.html"
+PROFIL = "profil.html"
+JEUX_VIDEOS = "jeux-videos.html"
+COLLECTION = "collection-yugioh.html"
 YUGIQUIZ = BASE / "yugiquiz" / "yugiquiz.py"
 PORT_YUGIQUIZ = 5000
 
@@ -122,6 +125,34 @@ def ancien_abyss():
 def accueil():
     return envoie(ACCUEIL)
 
+# Meme principe pour les trois autres pages : une adresse propre, et
+# l'ancien nom en .html qui redirige dessus plutot que de casser un
+# marque-page. /abyss/profil est sous /abyss : c'est une page du hub,
+# pas un projet a cote.
+@app.route("/profil.html")
+def ancien_profil():
+    return redirect("/abyss/profil", code=301)
+
+@app.route("/abyss/profil")
+def profil():
+    return envoie(PROFIL)
+
+@app.route("/jeux-videos.html")
+def ancien_archive():
+    return redirect("/archive", code=301)
+
+@app.route("/archive")
+def archive():
+    return envoie(JEUX_VIDEOS)
+
+@app.route("/collection-yugioh.html")
+def ancienne_collection():
+    return redirect("/collection", code=301)
+
+@app.route("/collection")
+def collection():
+    return envoie(COLLECTION)
+
 @app.route("/<path:chemin>")
 def fichier(chemin):
     return envoie(chemin)
@@ -155,6 +186,17 @@ def introuvable(err):
   <p><a href="/abyss">&#8592; Retour a l'abysse</a></p>
 </div></body></html>"""
     return page, err.code
+
+@app.errorhandler(413)
+def trop_lourd(err):
+    # Depuis l'avatar, une requete peut depasser MAX_CONTENT_LENGTH avant
+    # meme d'atteindre la route : sans ce gestionnaire, Werkzeug renvoyait
+    # sa page HTML par defaut, illisible pour un `await r.json()`.
+    r = jsonify({"ok": False, "erreur": "trop_lourd",
+                 "message": "Ce fichier est trop volumineux."})
+    r.status_code = 413
+    r.headers["Cache-Control"] = "no-store, max-age=0"
+    return r
 
 # --------------------------------------------------------------------------
 #   Yu-Gi-Quiz

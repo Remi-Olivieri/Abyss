@@ -117,7 +117,10 @@ def valeurs_propres(values: dict) -> dict:
         elif cle == "month":
             propres[colonne] = None if v in (None, "") else int(nombre(v, 1, 12))
         elif cle == "rating":
-            propres[colonne] = nombre(v, 0, 100)
+            # la note est sur 10 partout dans la page (champ, couleurs,
+            # classement) : 100 ne serait pas une plage large mais une
+            # faute de frappe (85 au lieu de 8,5) acceptee sans un mot
+            propres[colonne] = nombre(v, 0, 10)
         elif cle == "hours":
             propres[colonne] = nombre(v, 0, 100000)
         else:                                   # prix_base, prix_paye
@@ -165,13 +168,17 @@ def annuaire():
     n'a aucune raison d'ouvrir la liste.
     """
     lignes = cx().execute(
-        "SELECT u.pseudo, p.titre, COUNT(j.id) AS jeux"
+        "SELECT u.id, u.pseudo, u.avatar, u.avatar_maj_le, p.titre, COUNT(j.id) AS jeux"
         " FROM page p JOIN utilisateur u ON u.id = p.utilisateur_id"
         " LEFT JOIN jeu j ON j.page_id = p.id"
         " WHERE p.projet = ? AND p.visibilite = 'publique'"
         " GROUP BY p.id ORDER BY jeux DESC, u.pseudo", (PROJET,)).fetchall()
     return [{"pseudo": l["pseudo"], "titre": l["titre"] or f"Journal de {l['pseudo']}",
-             "jeux": l["jeux"]} for l in lignes]
+             "jeux": l["jeux"], "avatar": comptes.url_avatar(l)} for l in lignes]
+
+
+def nb_jeux(page_id) -> int:
+    return cx().execute("SELECT COUNT(*) FROM jeu WHERE page_id = ?", (page_id,)).fetchone()[0]
 
 
 # --------------------------------------------------------------------------
@@ -183,11 +190,21 @@ def periodes_de(page_id) -> list:
     Les annees d'abord et croissantes, puis les autres periodes, puis les
     deux statuts a la fin : c'est l'ordre qu'avaient les onglets du classeur,
     et la page s'en sert tel quel pour dessiner ses pastilles.
+
+    « En cours » et « Wishlist » sont toujours la, meme sans jeu dedans :
+    ce sont des tiroirs fixes du journal, pas des periodes qui apparaissent
+    et disparaissent avec ce qu'on y range.
+
+    Un journal tout neuf n'a encore aucune annee : sans exemple, « categorie »
+    ne dit rien a personne. L'annee en cours tient lieu de modele, vide,
+    jusqu'au premier jeu range ailleurs.
     """
     vues = [l["periode"] for l in cx().execute(
         "SELECT DISTINCT periode FROM jeu WHERE page_id = ?", (page_id,)).fetchall()]
     annees = sorted([p for p in vues if annee_de(p) is not None], key=lambda p: int(p))
-    statuts = [p for p in ("En cours", "Wishlist") if p in vues]
+    if not annees:
+        annees = [maintenant()[:4]]
+    statuts = ["En cours", "Wishlist"]
     autres = sorted(p for p in vues if p not in annees and p not in statuts)
     return annees + autres + statuts
 
@@ -317,13 +334,21 @@ def refus(err):
 
 @blueprint_journal.get("")
 def liste():
-    """L'annuaire : qui a un journal, et le mien s'il existe."""
+    """L'annuaire : qui a un journal, et le mien s'il existe.
+
+    Le sien porte son nombre de jeux, comme les autres : un journal prive
+    n'apparait pas dans l'annuaire public, sa page le sait quand meme.
+    """
     u = actuel()
     mienne = ma_page(u)
+    moi = None if mienne is None else {
+        "pseudo": mienne["pseudo"], "jeux": nb_jeux(mienne["id"]),
+        "avatar": comptes.url_avatar(u),   # u vient de actuel() : u.* complet
+    }
     return reponse({"ok": True,
                     "journaux": annuaire(),
                     "connecte": u is not None,
-                    "moi": None if mienne is None else mienne["pseudo"]})
+                    "moi": moi})
 
 
 @blueprint_journal.post("")
@@ -397,3 +422,29 @@ def lot():
         except (TypeError, ValueError):
             echecs.append({"i": i, "jeu": None, "error": "identifiant illisible"})
     return reponse(dict(contenu(page, u), fait={"echecs": echecs}))
+
+
+@blueprint_journal.delete("/lot")
+def suppression_lot():
+    """Suppression groupee, pour la selection multiple du mur.
+
+    Meme esprit que /lot en ecriture : un identifiant qui ne pointe pas
+    vers un jeu a soi est ignore plutot que de faire echouer tout le reste
+    (renomme, mur repeint entre-temps, id deja supprime par un autre
+    onglet ouvert...).
+    """
+    u, page = ma_page_ou_refus()
+    ids = corps().get("ids") or []
+    if not isinstance(ids, list) or len(ids) > 200:
+        return echec("format", "Liste d'identifiants attendue (200 au plus).", 400)
+    c = cx()
+    supprimes = 0
+    with c:
+        for i in ids:
+            try:
+                jeu = jeu_a_moi(int(i), page)
+            except (Refus, TypeError, ValueError):
+                continue
+            c.execute("DELETE FROM jeu WHERE id = ?", (jeu["id"],))
+            supprimes += 1
+    return reponse(dict(contenu(page, u), supprimes=supprimes))

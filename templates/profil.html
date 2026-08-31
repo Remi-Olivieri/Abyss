@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ton profil - Abyss</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style_abyss.css">
+<style>
+  /* cette barre-ci porte un retour à gauche en plus du compte à droite */
+  .barre{justify-content:space-between}
+  .carte-profil{
+    padding:26px 26px 28px;
+    margin-bottom:22px;
+    border-radius:18px;
+    background:linear-gradient(170deg,#101C2C,#080F1A);
+    border:1px solid rgba(150,195,220,.16);
+  }
+  .carte-profil h2{
+    font-family:"Eczar",Georgia,serif;
+    font-size:20px;
+    font-weight:600;
+    margin:0 0 6px;
+  }
+  .carte-profil .champ:last-of-type{margin-bottom:18px}
+  #gate{max-width:46ch}
+  .avatar-zone{display:flex;align-items:center;gap:18px;margin-bottom:4px}
+  .avatar-cadre{
+    position:relative;flex:none;width:76px;height:76px;border-radius:50%;
+    overflow:hidden;background:rgba(3,8,15,.66);border:1px solid rgba(150,195,220,.16);
+  }
+  .avatar-apercu{width:100%;height:100%;object-fit:cover}
+  .avatar-vide{
+    position:absolute;inset:0;
+    background:linear-gradient(160deg,rgba(120,200,230,.16),transparent 70%);
+  }
+  .avatar-actions{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+</style>
+</head>
+<body>
+<canvas id="neige" aria-hidden="true"></canvas>
+
+<div class="enveloppe">
+
+  <div class="barre">
+    <a class="back" href="/abyss" aria-label="Retour à Abyss">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <div class="compte" id="compte"><!-- rempli par dessineCompte() --></div>
+  </div>
+
+  <header class="entete">
+    <h1 class="titre">Ton profil</h1>
+    <p class="sous-titre" id="sousTitre">&nbsp;</p>
+  </header>
+
+  <main id="corps" hidden>
+    <section class="carte-profil">
+      <h2>Photo de profil</h2>
+      <div class="avatar-zone">
+        <span class="avatar-cadre">
+          <img class="avatar-apercu" id="avatarApercu" alt="" hidden>
+          <span class="avatar-vide" id="avatarVide"></span>
+        </span>
+        <div class="avatar-actions">
+          <label class="bouton avatar-choisir">
+            Choisir une image
+            <input type="file" id="avatarFichier" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+          </label>
+          <button type="button" class="lien" id="avatarSupprimer" hidden>Retirer la photo</button>
+        </div>
+      </div>
+      <p class="explication">2 Mo maximum.</p>
+      <p class="erreur" id="avatarErr" hidden></p>
+    </section>
+
+    <section class="carte-profil">
+      <h2>Projets affichés</h2>
+      <p class="explication">Décoche ceux que tu ne veux pas voir sur Abyss.</p>
+      <div id="listeProjets"></div>
+    </section>
+
+    <section class="carte-profil">
+      <h2>Adresse e-mail</h2>
+      <p class="explication">Sert uniquement à te retrouver si tu perds ton mot de passe.</p>
+      <form id="formEmail">
+        <label class="champ">
+          <span>E-mail <em>(facultatif)</em></span>
+          <input id="eMail" type="email" autocomplete="email">
+        </label>
+        <label class="champ">
+          <span>Mot de passe actuel</span>
+          <input id="eMdp" type="password" autocomplete="current-password" required>
+        </label>
+        <p class="erreur" id="eErr" hidden></p>
+        <button class="valider" type="submit" id="eGo">Changer l'e-mail</button>
+      </form>
+    </section>
+
+    <section class="carte-profil">
+      <h2>Mot de passe</h2>
+      <form id="formMdp">
+        <label class="champ">
+          <span>Mot de passe actuel</span>
+          <input id="pActuel" type="password" autocomplete="current-password" required>
+        </label>
+        <label class="champ">
+          <span>Nouveau mot de passe</span>
+          <input id="pNouveau" type="password" autocomplete="new-password" required minlength="8">
+        </label>
+        <label class="champ">
+          <span>Répéter le nouveau</span>
+          <input id="pNouveau2" type="password" autocomplete="new-password" required minlength="8">
+        </label>
+        <p class="explication">Les autres appareils connectés à ton compte seront déconnectés.</p>
+        <p class="erreur" id="pErr" hidden></p>
+        <button class="valider" type="submit" id="pGo">Changer le mot de passe</button>
+      </form>
+    </section>
+  </main>
+
+  <div id="gate" hidden>
+    <p class="explication">Connecte-toi pour voir ton profil.</p>
+    <a class="lien" href="/abyss">Retour à Abyss</a>
+  </div>
+
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* La liste des projets masquables : la meme qu'Abyss.html, juste ce qu'il
+   faut pour dessiner la case a cocher de chacun — id, nom, accent. */
+const PROJETS = [
+    { id: "jeux-videos", nom: "Jeux Vidéos", accent: "var(--algue)" },
+    { id: "collection", nom: "Collection Yu-Gi-Oh!", accent: "var(--luciole)" },
+    { id: "chainz", nom: "L'Atelier Chainz", accent: "var(--meduse)" },
+    { id: "quiz", nom: "Yu-Gi-Quiz!", accent: "var(--plancton)" },
+];
+
+const echappe = (s) => String(s).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const el = (id) => document.getElementById(id);
+
+async function api(chemin, methode, charge) {
+  const options = { method: methode || "GET", credentials: "same-origin" };
+  if (charge !== undefined) {
+    options.headers = { "Content-Type": "application/json" };
+    options.body = JSON.stringify(charge);
+  }
+  const r = await fetch(chemin, options);
+  let data = null;
+  try { data = await r.json(); } catch (e) { /* reponse illisible */ }
+  if (!r.ok || !data || data.ok === false) {
+    const err = new Error((data && data.message) || `Erreur ${r.status}.`);
+    err.code = data && data.erreur;
+    throw err;
+  }
+  return data;
+}
+
+function erreur(id, message) {
+  const p = el(id);
+  p.textContent = message;
+  p.hidden = false;
+}
+
+let minuteurToast;
+function toast(message, mauvais) {
+  const t = el("toast");
+  t.textContent = message;
+  t.className = "toast montre" + (mauvais ? " mauvais" : "");
+  t.hidden = false;
+  clearTimeout(minuteurToast);
+  minuteurToast = setTimeout(() => { t.className = "toast"; t.hidden = true; }, 3600);
+}
+
+/* =========================================================
+   Afficher / masquer un mot de passe — meme bouton qu'ailleurs sur Abyss
+   ========================================================= */
+function posePasswordOeil(input){
+  const wrap = document.createElement("div");
+  wrap.className = "mdp-wrap";
+  input.replaceWith(wrap);
+  wrap.appendChild(input);
+
+  const bouton = document.createElement("button");
+  bouton.type = "button";
+  bouton.className = "mdp-oeil";
+  bouton.setAttribute("aria-pressed", "false");
+  bouton.setAttribute("aria-label", "Afficher le mot de passe");
+  bouton.innerHTML = `
+    <svg class="oeil-ouvert" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1.4 12S5.2 4.8 12 4.8 22.6 12 22.6 12 18.8 19.2 12 19.2 1.4 12 1.4 12Z"/>
+      <circle cx="12" cy="12" r="3.15"/>
+    </svg>
+    <svg class="oeil-barre" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.85 5.15A11.6 11.6 0 0 1 12 4.8c6.8 0 11.4 7.2 11.4 7.2a15.4 15.4 0 0 1-3.35 4.02M6.62 6.63C3.32 8.72 1.4 12 1.4 12s4.6 7.2 11.4 7.2a10.9 10.9 0 0 0 4.4-.92"/>
+      <path d="M9.6 9.6a3.15 3.15 0 0 0 4.42 4.42"/>
+      <path d="M2 2l20 20"/>
+    </svg>`;
+  wrap.appendChild(bouton);
+
+  bouton.addEventListener("click", () => {
+    const clair = input.type !== "text";
+    input.type = clair ? "text" : "password";
+    bouton.classList.toggle("on", clair);
+    bouton.setAttribute("aria-pressed", String(clair));
+    bouton.setAttribute("aria-label", clair ? "Masquer le mot de passe" : "Afficher le mot de passe");
+  });
+}
+document.querySelectorAll(".champ input[type=password]").forEach(posePasswordOeil);
+
+/* =========================================================
+   Menu du compte — identique à Abyss.html
+   ========================================================= */
+let MOI = { connecte: false, utilisateur: null, masques: [] };
+
+function dessineCompte() {
+  const zone = el("compte");
+  if (!MOI.connecte) { zone.innerHTML = ""; return; }
+  zone.innerHTML = `
+    <div class="enveloppe-menu">
+      <button class="bouton pseudo" id="btnMenu" aria-expanded="false" aria-haspopup="true">
+        <span class="pastille" aria-hidden="true"></span>
+        ${echappe(MOI.utilisateur.pseudo)}
+        <span class="chevron" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="menu" id="menuCompte" hidden>
+        <button class="entree" id="mnSortie">Se déconnecter</button>
+      </div>
+    </div>`;
+  el("btnMenu").addEventListener("click", (e) => { e.stopPropagation(); basculeMenu(); });
+  el("mnSortie").addEventListener("click", sortir);
+}
+function basculeMenu() {
+  const m = el("menuCompte");
+  if (!m) return;
+  m.hidden = !m.hidden;
+  el("btnMenu").setAttribute("aria-expanded", m.hidden ? "false" : "true");
+}
+function fermeMenu() {
+  const m = el("menuCompte");
+  if (m && !m.hidden) { m.hidden = true; el("btnMenu").setAttribute("aria-expanded", "false"); }
+}
+/* Une sélection de texte commencée dans le menu et relâchée dehors ne doit
+   pas le fermer : on ne ferme que si le clic ET le mousedown qui l'a
+   précédé visaient tous les deux en dehors du menu. */
+let SOURIS_DEHORS = false;
+document.addEventListener("mousedown", (e) => {
+  SOURIS_DEHORS = !e.target.closest(".enveloppe-menu");
+});
+document.addEventListener("click", (e) => {
+  if (SOURIS_DEHORS && !e.target.closest(".enveloppe-menu")) fermeMenu();
+});
+async function sortir() {
+  try { await api("/api/deconnexion", "POST", {}); } catch (e) { /* cookie deja mort */ }
+  location.href = "/abyss";
+}
+
+/* =========================================================
+   Projets affichés
+   ========================================================= */
+function dessineListeProjets() {
+  el("listeProjets").innerHTML = PROJETS.map((p) => `
+    <label class="bascule">
+      <input type="checkbox" data-projet="${echappe(p.id)}"
+             ${MOI.masques.indexOf(p.id) < 0 ? "checked" : ""}>
+      <span class="pointe" style="--accent:${p.accent}" aria-hidden="true"></span>
+      <span class="etiquette">${echappe(p.nom)}</span>
+    </label>`).join("");
+
+  el("listeProjets").querySelectorAll("input[type=checkbox]").forEach((c) => {
+    c.addEventListener("change", () => enregistreMasques());
+  });
+}
+
+/* On envoie la liste complète plutôt qu'une bascule : deux onglets ouverts
+   ne peuvent pas diverger, et rejouer la requête ne change rien. */
+async function enregistreMasques() {
+  const avant = MOI.masques.slice();
+  const masques = [];
+  el("listeProjets").querySelectorAll("input[type=checkbox]").forEach((c) => {
+    if (!c.checked) masques.push(c.dataset.projet);
+  });
+  MOI.masques = masques;
+  try {
+    const data = await api("/api/preferences", "PUT", { masques });
+    MOI.masques = data.masques;
+  } catch (err) {
+    MOI.masques = avant;          // le serveur n'a pas suivi : on revient
+    dessineListeProjets();
+    toast("Réglage non enregistré : " + err.message, true);
+  }
+}
+
+/* =========================================================
+   Photo de profil
+   Envoyée en data: URL dans un corps JSON, comme le reste des écritures
+   du compte : un POST multipart n'aurait pas passé la garde CSRF, qui
+   n'accepte que application/json (voir comptes.py, exige_json).
+   ========================================================= */
+function majAvatarApercu() {
+  const img = el("avatarApercu"), vide = el("avatarVide"), suppr = el("avatarSupprimer");
+  const url = MOI.utilisateur.avatar;
+  img.hidden = !url;
+  vide.hidden = !!url;
+  suppr.hidden = !url;
+  if (url) img.src = url;
+}
+el("avatarFichier").addEventListener("change", () => {
+  const fichier = el("avatarFichier").files[0];
+  if (!fichier) return;
+  el("avatarErr").hidden = true;
+  if (fichier.size > 2 * 1024 * 1024) {
+    erreur("avatarErr", "Image trop lourde (2 Mo maximum).");
+    el("avatarFichier").value = "";
+    return;
+  }
+  const lecteur = new FileReader();
+  lecteur.onload = async () => {
+    try {
+      const data = await api("/api/avatar", "POST", { image: lecteur.result });
+      MOI.utilisateur = data.utilisateur;
+      majAvatarApercu();
+      toast("Photo de profil mise à jour.");
+    } catch (err) {
+      erreur("avatarErr", err.message);
+    } finally {
+      el("avatarFichier").value = "";
+    }
+  };
+  lecteur.readAsDataURL(fichier);
+});
+el("avatarSupprimer").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/avatar", "DELETE");
+    MOI.utilisateur = data.utilisateur;
+    majAvatarApercu();
+    toast("Photo de profil retirée.");
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
+
+/* =========================================================
+   E-mail
+   ========================================================= */
+el("formEmail").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  el("eErr").hidden = true;
+  const bouton = el("eGo");
+  bouton.disabled = true;
+  try {
+    const data = await api("/api/email", "POST", {
+      mdp: el("eMdp").value,
+      email: el("eMail").value.trim()
+    });
+    el("eMdp").value = "";
+    MOI.utilisateur = data.utilisateur;
+    toast("Adresse e-mail mise à jour.");
+  } catch (err) {
+    erreur("eErr", err.message);
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
+/* =========================================================
+   Mot de passe
+   ========================================================= */
+el("formMdp").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  el("pErr").hidden = true;
+  if (el("pNouveau").value !== el("pNouveau2").value) {
+    erreur("pErr", "Les deux saisies ne sont pas identiques.");
+    return;
+  }
+  const bouton = el("pGo");
+  bouton.disabled = true;
+  try {
+    await api("/api/mot-de-passe", "POST", {
+      actuel: el("pActuel").value,
+      nouveau: el("pNouveau").value
+    });
+    el("pActuel").value = el("pNouveau").value = el("pNouveau2").value = "";
+    toast("Mot de passe changé.");
+  } catch (err) {
+    erreur("pErr", err.message);
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
+/* =========================================================
+   Démarrage — page reservee aux connectes
+   ========================================================= */
+(async function () {
+  let data;
+  try {
+    data = await api("/api/moi");
+  } catch (e) {
+    el("gate").hidden = false;
+    return;
+  }
+  if (!data.connecte) {
+    el("gate").hidden = false;
+    return;
+  }
+  MOI = { connecte: true, utilisateur: data.utilisateur,
+          masques: Array.isArray(data.masques) ? data.masques : [] };
+  dessineCompte();
+  el("sousTitre").textContent = `Connecté en tant que ${MOI.utilisateur.pseudo}.`;
+  majAvatarApercu();
+  dessineListeProjets();
+  el("eMail").value = MOI.utilisateur.email || "";
+  el("corps").hidden = false;
+})();
+
+/* ---------- Neige marine ---------- */
+(function () {
+  const reduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const c = document.getElementById("neige");
+  if (reduit || !c.getContext) { c.style.display = "none"; return; }
+  const ctx = c.getContext("2d");
+  let w = 0, h = 0, grains = [];
+
+  const halo = (function () {
+    const t = 40, s = document.createElement("canvas");
+    s.width = s.height = t;
+    const g = s.getContext("2d");
+    const d = g.createRadialGradient(t / 2, t / 2, 0, t / 2, t / 2, t / 2);
+    d.addColorStop(0, "rgba(232,247,255,1)");
+    d.addColorStop(.16, "rgba(188,230,250,.62)");
+    d.addColorStop(.42, "rgba(130,198,232,.2)");
+    d.addColorStop(1, "rgba(110,185,225,0)");
+    g.fillStyle = d;
+    g.fillRect(0, 0, t, t);
+    return s;
+  })();
+
+  function init() {
+    const d = window.devicePixelRatio || 1;
+    w = window.innerWidth; h = window.innerHeight;
+    c.width = w * d; c.height = h * d;
+    c.style.width = w + "px"; c.style.height = h + "px";
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    const n = Math.min(210, Math.round((w * h) / 20000));
+    grains = Array.from({ length: n }, () => {
+      const p = Math.random();
+      return {
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: .5 + p * 2,
+        v: .035 + p * .21,
+        a: .1 + p * .42,
+        ph: Math.random() * Math.PI * 2,
+        sp: .006 + Math.random() * .016,
+        d: Math.random() * Math.PI * 2
+      };
+    });
+  }
+
+  function boucle() {
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalCompositeOperation = "lighter";
+    for (const g of grains) {
+      g.y += g.v;
+      g.d += .004;
+      g.ph += g.sp;
+      if (g.y > h + 8) { g.y = -8; g.x = Math.random() * w; }
+      const x = g.x + Math.sin(g.d) * 10;
+      const taille = g.r * 9;
+      ctx.globalAlpha = g.a * (.7 + .3 * Math.sin(g.ph));
+      ctx.drawImage(halo, x - taille / 2, g.y - taille / 2, taille, taille);
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+    requestAnimationFrame(boucle);
+  }
+
+  init();
+  let redim;
+  window.addEventListener("resize", () => {
+    clearTimeout(redim);
+    redim = setTimeout(init, 150);
+  });
+  boucle();
+})();
+</script>
+</body>
+</html>

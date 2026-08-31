@@ -29,13 +29,17 @@ Trois protections :
 
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
 import os
 import re
 import secrets
+import smtplib
 import sqlite3
 import threading
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
 from pathlib import Path
 
 from flask import Blueprint, g, jsonify, request
@@ -46,6 +50,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 # --------------------------------------------------------------------------
 CHEMIN = Path(os.environ.get(
     "ABYSS_BASE", Path(__file__).parent.resolve() / "donnees" / "abyss.sqlite3"))
+
+# Sous static/, donc servi tel quel par envoie() dans app.py : pas de route
+# a part pour l'avatar, juste un fichier de plus a cote des jaquettes.
+DOSSIER_AVATARS = Path(__file__).parent.resolve() / "static" / "Avatars"
+AVATAR_MAXI = 2 * 1024 * 1024  # 2 Mo decodes ; MAX_CONTENT_LENGTH (app.py)
+                                # plafonne deja le corps entier a 4 Mo
 
 # Combien de comptes peuvent naitre par tranche de 24 h. Fenetre glissante et
 # non remise a zero a minuit : aucun fuseau horaire a gerer, et pas d'heure
@@ -65,9 +75,10 @@ MOTIF_PSEUDO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{1,18}[A-Za-z0-9]$")
 # Ces mots occuperaient un segment d'URL deja pris : un compte nomme "api"
 # rendrait /jeux-videos/api ambigu.
 RESERVES = {
-    "abyss", "admin", "api", "cartes", "collection", "compte", "connexion",
-    "cover", "deconnexion", "inscription", "index", "jaquettes", "jeux-videos",
-    "login", "moi", "quiz", "static", "templates", "www", "yugiquiz",
+    "abyss", "admin", "api", "archive", "cartes", "collection", "compte",
+    "connexion", "cover", "deconnexion", "inscription", "index", "jaquettes",
+    "jeux-videos", "login", "moi", "profil", "quiz", "reinitialiser",
+    "static", "templates", "www", "yugiquiz",
 }
 
 MDP_MINI = 8
@@ -75,6 +86,7 @@ MDP_MAXI = 200          # scrypt sur une entree enorme = deni de service gratuit
 
 DUREE_SESSION = timedelta(days=30)       # « rester connecte »
 DUREE_COURTE = timedelta(hours=12)       # sinon
+DUREE_REINIT = timedelta(hours=1)        # lien de reinitialisation du mot de passe
 
 FENETRE_ESSAIS = timedelta(minutes=15)
 ESSAIS_MAX = 10
@@ -85,6 +97,15 @@ COOKIE = "abyss_session"
 # forcer en production.
 FORCE_SECURE = os.environ.get("ABYSS_COOKIE_SECURE", "").strip() in ("1", "oui", "true")
 
+# Serveur SMTP pour le lien de reinitialisation. Sans ABYSS_SMTP_HOTE, rien
+# n'est configure : le lien part sur la console au lieu d'un vrai mail,
+# assez pour developper et tester en local sans brancher de serveur de mail.
+SMTP_HOTE = os.environ.get("ABYSS_SMTP_HOTE", "").strip()
+SMTP_PORT = int(os.environ.get("ABYSS_SMTP_PORT", "587") or 587)
+SMTP_UTILISATEUR = os.environ.get("ABYSS_SMTP_UTILISATEUR", "").strip()
+SMTP_MDP = os.environ.get("ABYSS_SMTP_MDP", "")
+SMTP_EXPEDITEUR = os.environ.get("ABYSS_SMTP_EXPEDITEUR", "").strip() or SMTP_UTILISATEUR
+
 
 class Refus(Exception):
     """Erreur previsible, a montrer telle quelle a la personne."""
@@ -92,6 +113,34 @@ class Refus(Exception):
     def __init__(self, code, message, statut=400):
         super().__init__(message)
         self.code, self.message, self.statut = code, message, statut
+
+
+def envoie_mail(destinataire, sujet, corps) -> None:
+    """Un mail texte brut, ou son contenu sur la console si aucun serveur
+    SMTP n'est configure.
+
+    Ce deuxieme cas n'est pas une erreur : en local, personne n'a envie de
+    brancher un vrai serveur de mail pour tester la reinitialisation. En
+    ligne, ABYSS_SMTP_HOTE (et les reglages qui vont avec) font partir un
+    vrai message.
+    """
+    if not SMTP_HOTE:
+        # flush=True : sous gunicorn ou une sortie redirigee, la sortie
+        # standard est bufferisee par bloc et n'apparaitrait sinon jamais
+        # a temps pour suivre le lien pendant que le jeton est valide
+        print(f"\n---- mail (SMTP non configure) pour {destinataire} ----\n"
+              f"Sujet : {sujet}\n\n{corps}\n---- fin du mail ----\n", flush=True)
+        return
+    msg = EmailMessage()
+    msg["Subject"] = sujet
+    msg["From"] = SMTP_EXPEDITEUR
+    msg["To"] = destinataire
+    msg.set_content(corps)
+    with smtplib.SMTP(SMTP_HOTE, SMTP_PORT, timeout=10) as s:
+        s.starttls()
+        if SMTP_UTILISATEUR:
+            s.login(SMTP_UTILISATEUR, SMTP_MDP)
+        s.send_message(msg)
 
 
 # --------------------------------------------------------------------------
@@ -166,7 +215,28 @@ CREATE TABLE jeu(
 CREATE INDEX idx_jeu_page ON jeu(page_id, periode, rang);
 """
 
-MIGRATIONS = [SCHEMA, PAGES]
+# Migration 3 : la reinitialisation de mot de passe. Meme forme que
+# `session` (jeton en clair nulle part, sha256 en base) et meme duree de
+# vie courte, mais dans sa propre table : un compte n'a jamais qu'un lien
+# de reinitialisation valide a la fois, sans rapport avec ses sessions.
+REINIT = """
+CREATE TABLE reinitialisation(
+  empreinte      TEXT PRIMARY KEY,
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  expire_le      TEXT NOT NULL
+);
+"""
+
+# Migration 4 : la photo de profil. Le fichier vit sous static/Avatars/,
+# nomme par l'id du compte ; ces deux colonnes disent juste son extension
+# et quand il a change, pour que l'adresse porte un ?v= qui varie et que
+# le navigateur n'affiche jamais une photo perimee depuis son cache.
+AVATAR = """
+ALTER TABLE utilisateur ADD COLUMN avatar TEXT;
+ALTER TABLE utilisateur ADD COLUMN avatar_maj_le TEXT;
+"""
+
+MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR]
 
 _local = threading.local()
 
@@ -231,6 +301,7 @@ def menage() -> None:
     c = cx()
     with c:
         c.execute("DELETE FROM session WHERE expire_le <= ?", (maintenant(),))
+        c.execute("DELETE FROM reinitialisation WHERE expire_le <= ?", (maintenant(),))
         c.execute("DELETE FROM essai WHERE quand < ?", (depuis(FENETRE_ESSAIS * 4),))
 
 
@@ -260,6 +331,20 @@ def verifie_mdp(mdp) -> str:
     return mdp
 
 
+def verifie_email(email):
+    """None pour vider le champ (facultatif) ; sinon une adresse plausible.
+
+    Pas un vrai validateur RFC : juste de quoi attraper une faute de frappe
+    avant qu'elle ne rende un compte impossible a recuperer plus tard.
+    """
+    email = (email or "").strip()
+    if not email:
+        return None
+    if len(email) > 200 or "@" not in email or " " in email:
+        raise Refus("email", "Cette adresse n'a pas l'air valide.")
+    return email
+
+
 def par_pseudo(pseudo):
     return cx().execute("SELECT * FROM utilisateur WHERE pseudo_norm = ?",
                         (normalise(pseudo),)).fetchone()
@@ -268,13 +353,14 @@ def par_pseudo(pseudo):
 def cree_compte(pseudo, mdp, email=None) -> int:
     pseudo = verifie_pseudo(pseudo)
     verifie_mdp(mdp)
+    email = verifie_email(email)
     c = cx()
     try:
         with c:
             cur = c.execute(
                 "INSERT INTO utilisateur(pseudo, pseudo_norm, email, empreinte, cree_le)"
                 " VALUES(?,?,?,?,?)",
-                (pseudo, normalise(pseudo), (email or "").strip() or None,
+                (pseudo, normalise(pseudo), email,
                  generate_password_hash(mdp), maintenant()))
     except sqlite3.IntegrityError:
         raise Refus("pseudo", "Ce pseudo est deja pris.", 409)
@@ -344,6 +430,138 @@ def ferme_toutes(uid) -> None:
     c = cx()
     with c:
         c.execute("DELETE FROM session WHERE utilisateur_id = ?", (uid,))
+
+
+# --------------------------------------------------------------------------
+#   Reinitialisation du mot de passe
+# --------------------------------------------------------------------------
+def demande_reinitialisation(pseudo) -> None:
+    """Envoie un lien si le compte existe et a un e-mail. Silencieuse sinon :
+    la route qui l'appelle repond toujours pareil, pour ne jamais laisser
+    deviner si un pseudo existe ou a un e-mail associe.
+    """
+    u = par_pseudo(pseudo)
+    if u is None or not u["email"]:
+        return
+    jeton = secrets.token_urlsafe(32)
+    c = cx()
+    with c:
+        # un seul lien valide a la fois : en redemander un invalide le precedent
+        c.execute("DELETE FROM reinitialisation WHERE utilisateur_id = ?", (u["id"],))
+        c.execute("INSERT INTO reinitialisation(empreinte, utilisateur_id, expire_le)"
+                  " VALUES(?,?,?)", (_empreinte(jeton), u["id"], dans(DUREE_REINIT)))
+    lien = f"{request.host_url}reinitialiser.html?jeton={jeton}"
+    corps = (
+        f"Bonjour {u['pseudo']},\n\n"
+        "Quelqu'un (toi, on espere) a demande a reinitialiser le mot de passe "
+        "de ton compte Abyss.\n\n"
+        f"Choisis-en un nouveau ici, le lien est valable une heure :\n{lien}\n\n"
+        "Si ce n'est pas toi qui as fait cette demande, ignore ce message : "
+        "rien ne change a ton compte.\n"
+    )
+    envoie_mail(u["email"], "Reinitialiser ton mot de passe Abyss", corps)
+
+
+def reinitialisation_valide(jeton):
+    """La ligne utilisateur si le jeton ouvre une reinitialisation vivante."""
+    if not jeton:
+        return None
+    c = cx()
+    ligne = c.execute(
+        "SELECT r.expire_le, u.* FROM reinitialisation r"
+        " JOIN utilisateur u ON u.id = r.utilisateur_id WHERE r.empreinte = ?",
+        (_empreinte(jeton),)).fetchone()
+    if ligne is None or ligne["expire_le"] <= maintenant():
+        return None
+    return ligne
+
+
+def consomme_reinitialisation(jeton, nouveau):
+    """Change le mot de passe et rend le lien inutilisable. Renvoie le compte.
+
+    Chasse aussi toutes les sessions ouvertes : si ce lien a fuite ou a ete
+    devine, changer le mot de passe doit couper qui serait deja entre.
+    """
+    u = reinitialisation_valide(jeton)
+    if u is None:
+        raise Refus("jeton", "Ce lien n'est plus valide. Demande-en un nouveau.", 400)
+    nouveau = verifie_mdp(nouveau)
+    c = cx()
+    with c:
+        c.execute("UPDATE utilisateur SET empreinte = ? WHERE id = ?",
+                  (generate_password_hash(nouveau), u["id"]))
+        c.execute("DELETE FROM reinitialisation WHERE utilisateur_id = ?", (u["id"],))
+    ferme_toutes(u["id"])
+    return u
+
+
+# --------------------------------------------------------------------------
+#   Avatar
+# --------------------------------------------------------------------------
+def url_avatar(u):
+    """L'adresse de la photo, ou None si le compte n'en a pas.
+
+    ?v= porte la date d'enregistrement : remplacer la photo change
+    l'adresse, donc le navigateur ne peut pas la garder en cache par erreur.
+    """
+    if not u["avatar"]:
+        return None
+    v = (u["avatar_maj_le"] or "").replace(":", "").replace("+", "")
+    return f"/static/Avatars/{u['id']}.{u['avatar']}?v={v}"
+
+
+def _signature_image(donnees: bytes):
+    """Devine le format aux premiers octets, jamais au Content-Type ou a
+    l'extension annonces par le navigateur : ni l'un ni l'autre ne prouve
+    quoi que ce soit sur le contenu reel du fichier.
+    """
+    if donnees.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if donnees.startswith(b"\xff\xd8\xff"):
+        return "jpg"
+    if donnees[:6] in (b"GIF87a", b"GIF89a"):
+        return "gif"
+    if donnees[:4] == b"RIFF" and donnees[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def enregistre_avatar(u, data_url) -> str:
+    """Decode l'image (une data: URL, telle que FileReader la donne cote
+    navigateur) et l'enregistre. Renvoie l'extension retenue.
+    """
+    m = re.match(r"^data:image/[\w.+-]+;base64,(.+)$", data_url or "", re.S)
+    if not m:
+        raise Refus("avatar", "Image illisible.")
+    try:
+        donnees = base64.b64decode(m.group(1), validate=True)
+    except (binascii.Error, ValueError):
+        raise Refus("avatar", "Image illisible.")
+    if len(donnees) > AVATAR_MAXI:
+        raise Refus("avatar", f"Image trop lourde ({AVATAR_MAXI // (1024 * 1024)} Mo maximum).")
+    ext = _signature_image(donnees)
+    if ext is None:
+        raise Refus("avatar", "Format d'image non reconnu (jpg, png, gif ou webp).")
+    DOSSIER_AVATARS.mkdir(parents=True, exist_ok=True)
+    # une photo posee plus tot sous une autre extension ne doit pas trainer
+    for autre in ("jpg", "png", "gif", "webp"):
+        if autre != ext:
+            (DOSSIER_AVATARS / f"{u['id']}.{autre}").unlink(missing_ok=True)
+    (DOSSIER_AVATARS / f"{u['id']}.{ext}").write_bytes(donnees)
+    c = cx()
+    with c:
+        c.execute("UPDATE utilisateur SET avatar = ?, avatar_maj_le = ? WHERE id = ?",
+                  (ext, maintenant(), u["id"]))
+    return ext
+
+
+def supprime_avatar(u) -> None:
+    for ext in ("jpg", "png", "gif", "webp"):
+        (DOSSIER_AVATARS / f"{u['id']}.{ext}").unlink(missing_ok=True)
+    c = cx()
+    with c:
+        c.execute("UPDATE utilisateur SET avatar = NULL, avatar_maj_le = NULL WHERE id = ?",
+                  (u["id"],))
 
 
 # --------------------------------------------------------------------------
@@ -457,7 +675,8 @@ def etat(u) -> dict:
     return {
         "ok": True,
         "connecte": u is not None,
-        "utilisateur": None if u is None else {"pseudo": u["pseudo"], "email": u["email"]},
+        "utilisateur": None if u is None else
+            {"pseudo": u["pseudo"], "email": u["email"], "avatar": url_avatar(u)},
         "masques": [] if u is None else masques(u["id"]),
         # accompagne les deux cas : la page doit savoir, avant d'afficher le
         # formulaire, s'il reste des places
@@ -571,6 +790,46 @@ def preferences():
     return reponse({"ok": True, "masques": enregistre_masques(u["id"], demande)})
 
 
+@blueprint_comptes.post("/email")
+def changer_email():
+    """Change l'e-mail associe au compte. Le mot de passe le confirme :
+
+    sans lui, une session volee pourrait poser sa propre adresse et
+    detourner « mot de passe oublie » vers une boite qui n'est pas la
+    tienne. Contrairement au mot de passe, ca ne chasse pas les autres
+    sessions : ce n'est pas un identifiant de connexion.
+    """
+    u = actuel()
+    if u is None:
+        return echec("connexion", "Il faut etre connecte.", 401)
+    d = corps()
+    if identifiants_bons(u["pseudo"], d.get("mdp")) is None:
+        return echec("identifiants", "Mot de passe incorrect.", 403)
+    email = verifie_email(d.get("email"))
+    c = cx()
+    with c:
+        c.execute("UPDATE utilisateur SET email = ? WHERE id = ?", (email, u["id"]))
+    return reponse(etat(par_pseudo(u["pseudo"])))
+
+
+@blueprint_comptes.post("/avatar")
+def poser_avatar():
+    u = actuel()
+    if u is None:
+        return echec("connexion", "Il faut etre connecte.", 401)
+    enregistre_avatar(u, corps().get("image"))
+    return reponse(etat(par_pseudo(u["pseudo"])))
+
+
+@blueprint_comptes.delete("/avatar")
+def retirer_avatar():
+    u = actuel()
+    if u is None:
+        return echec("connexion", "Il faut etre connecte.", 401)
+    supprime_avatar(u)
+    return reponse(etat(par_pseudo(u["pseudo"])))
+
+
 @blueprint_comptes.post("/mot-de-passe")
 def mot_de_passe():
     u = actuel()
@@ -588,3 +847,31 @@ def mot_de_passe():
     # de passe doit chasser qui serait entre, sans se deconnecter soi-meme.
     ferme_toutes(u["id"])
     return avec_cookie(reponse({"ok": True}), ouvre_session(u["id"], True), True)
+
+
+@blueprint_comptes.post("/mot-de-passe-oublie")
+def mot_de_passe_oublie():
+    pseudo = corps().get("pseudo", "")
+    cle_ip = "oubli:" + (request.remote_addr or "?")
+    cle_compte = "oubli:@" + normalise(pseudo)
+    if trop_d_essais(cle_ip) or trop_d_essais(cle_compte):
+        return echec("debit", "Trop d'essais. Reviens dans un quart d'heure.", 429)
+    note_essai(cle_ip)
+    note_essai(cle_compte)
+    demande_reinitialisation(pseudo)
+    # Le meme message dans tous les cas : pseudo inconnu, sans e-mail, ou
+    # lien parti pour de vrai. Rien ici ne doit dire lequel.
+    return reponse({"ok": True, "message":
+        "Si ce pseudo existe et a un e-mail associe, un lien vient de lui etre envoye."})
+
+
+@blueprint_comptes.post("/mot-de-passe-oublie/confirmer")
+def mot_de_passe_oublie_confirmer():
+    cle_ip = "oubliconf:" + (request.remote_addr or "?")
+    if trop_d_essais(cle_ip):
+        return echec("debit", "Trop d'essais. Reviens dans un quart d'heure.", 429)
+    note_essai(cle_ip)
+    d = corps()
+    u = consomme_reinitialisation(d.get("jeton", ""), d.get("nouveau"))
+    oublie_essais(cle_ip)
+    return avec_cookie(reponse(etat(u)), ouvre_session(u["id"], True), True)

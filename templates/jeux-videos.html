@@ -13,20 +13,21 @@
 
 <header class="top">
   <div class="wrap top-in">
-    <a class="back" href="/Abyss.html" aria-label="Retour à Abyss">
+    <a class="back" href="/abyss" aria-label="Retour à Abyss">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 12H5M12 19l-7-7 7-7"/>
       </svg>
     </a>
     <div class="brand">
-      <button class="jnl" id="jnl" aria-haspopup="true" aria-expanded="false">
-        <b id="brand-title">Jeux Vidéos</b>
-        <svg class="jnl-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 9l6 6 6-6"/>
-        </svg>
-      </button>
+      <b id="brand-title">Jeux Vidéos</b>
       <span id="brand-sub"></span>
-      <div class="menu jnl-menu" id="jnlMenu" hidden role="menu"></div>
+      <button class="jnl-search" id="jnlSearchBtn" aria-haspopup="dialog" title="Rechercher un journal">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M21 21l-4.3-4.3"/>
+        </svg>
+        <span>Rechercher</span>
+      </button>
     </div>
     <nav class="tabs" id="tabs" role="tablist"></nav>
     <div class="cog-wrap">
@@ -38,9 +39,9 @@
         </svg>
       </button>
       <div class="menu" id="menu" hidden role="menu">
-        <div class="menu-info" id="src"></div>
-        <button class="menu-item" id="reload" role="menuitem">Rafraîchir</button>
         <button class="menu-item" id="bilanBtn" role="menuitem">Télécharger un résumé</button>
+        <button class="menu-item" id="exportJsonBtn" role="menuitem">Exporter en JSON</button>
+        <button class="menu-item" id="exportCsvBtn" role="menuitem">Exporter en CSV</button>
         <button class="menu-item" id="igdbBtn" role="menuitem" hidden>Mettre à jour depuis IGDB</button>
         <button class="menu-item" id="unlock" role="menuitem">Passer en mode éditeur</button>
         <button class="menu-item quit" id="relock" role="menuitem" hidden>Repasser en lecture seule</button>
@@ -55,6 +56,12 @@
     <p id="gMsg"></p>
     <div class="gate-err" id="gErr" hidden></div>
     <button class="cta" id="gRetry" hidden>Réessayer</button>
+  </section>
+
+  <section class="wrap gate" id="invite" hidden>
+    <h2>Tu n'as pas encore de journal</h2>
+    <p>Crée le tien pour commencer à noter les jeux que tu as terminés.</p>
+    <button class="cta" id="inviteCreate">Créer mon journal</button>
   </section>
 
   <div id="app" hidden>
@@ -85,7 +92,19 @@
       </label>
       <!-- rempli par renderSort() : la liste dépend de l'onglet affiché -->
       <select class="sel" id="sort" aria-label="Trier"></select>
+      <button class="select-toggle" id="selectBtn" hidden>Sélection multiple</button>
       <button class="add" id="addBtn" hidden>+ Ajouter un jeu</button>
+    </div>
+    <!-- affichée à la place des outils tant qu'on choisit des jeux -->
+    <div class="selection-bar" id="selectionBar" hidden>
+      <b id="selectionCompte">0 sélectionné</b>
+      <button type="button" class="lien-select" id="selectTout">Tout</button>
+      <button type="button" class="lien-select" id="selectAucun">Aucun</button>
+      <span class="spacer"></span>
+      <select class="sel" id="selectCible" aria-label="Déplacer vers"></select>
+      <button class="ghost" id="selectDeplacer">Déplacer</button>
+      <button class="ghost danger" id="selectSupprimer">Supprimer</button>
+      <button class="ghost" id="selectAnnuler">Annuler</button>
     </div>
     <div id="out"></div>
   </section>
@@ -100,6 +119,7 @@
 <div class="sheet-back" id="jaq" hidden></div>
 <div class="sheet-back" id="bilan" hidden></div>
 <div class="sheet-back" id="igdb" hidden></div>
+<div class="sheet-back" id="recherche" hidden></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -123,6 +143,21 @@ const norm = s => (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g
   .toLowerCase().replace(/[’'`.:]/g,' ').replace(/\s+/g,' ').trim();
 const clean = s => (s||'').toString().replace(/\u00a0/g,' ').trim();
 const $ = id => document.getElementById(id);
+/* Ferme une fenêtre au clic sur son fond, mais pas quand ce clic est en
+   fait la fin d'une sélection de texte commencée dans la fenêtre : le
+   mousedown part du contenu, la souris dérape pendant le geste, et le
+   'click' qui suit atterrit sur le fond — sans ce garde-fou ça fermait la
+   fenêtre en pleine modification. On ne ferme que si le clic ET le
+   mousedown qui le précède visaient tous les deux le fond lui-même. */
+function fermeSurFond(id, ferme){
+  const fond = $(id);
+  let surFond = false;
+  fond.addEventListener('mousedown', e=>{ surFond = e.target.id === id; });
+  fond.addEventListener('click', e=>{
+    if(surFond && e.target.id === id) ferme();
+    surFond = false;
+  });
+}
 const esc = s => (s===null||s===undefined?'':String(s))
   .replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fr = (n,d=1) => n.toFixed(d).replace('.',',');
@@ -195,12 +230,12 @@ function compteARebours(iso){
     : { avant:false, txt:`sorti depuis ${duree}` };
 }
 
-/* Cinq fenêtres peuvent se recouvrir : la fiche, le formulaire, le choix de
-   jaquette, le bilan en image et la mise à jour depuis IGDB. Chacune décidait
-   du défilement de la page pour son propre compte, donc en fermer une pendant
-   qu'une autre est encore ouverte rendait la page défilable derrière. Un seul
-   endroit regarde maintenant l'état des cinq. */
-const FENETRES = ['sheet','form','jaq','bilan','igdb'];
+/* Six fenêtres peuvent se recouvrir : la fiche, le formulaire, le choix de
+   jaquette, le bilan en image, la mise à jour depuis IGDB et la recherche de
+   journal. Chacune décidait du défilement de la page pour son propre compte,
+   donc en fermer une pendant qu'une autre est encore ouverte rendait la page
+   défilable derrière. Un seul endroit regarde maintenant l'état des six. */
+const FENETRES = ['sheet','form','jaq','bilan','igdb','recherche'];
 function verrouFond(){
   const ouverte = FENETRES.some(id => { const e = $(id); return e && !e.hidden; });
   document.body.style.overflow = ouverte ? 'hidden' : '';
@@ -241,12 +276,14 @@ const TRIS = [
   ['time',        'Temps de jeu ↓'],
   ['az',          'A → Z'],
 ];
-/* Les tris proposés selon la famille d'onglets ; null = tous. La wishlist a
-   la sienne parce qu'elle ne se lit pas comme le reste : c'est un
-   calendrier, la prochaine sortie doit être en haut, donc la date
-   croissante — celle qui ailleurs n'aurait aucun intérêt. */
+/* Les tris proposés selon la famille d'onglets. La wishlist a la sienne
+   parce qu'elle ne se lit pas comme le reste : c'est un calendrier, la
+   prochaine sortie doit être en haut, donc la date croissante — celle qui
+   ailleurs n'aurait aucun intérêt. Le solde encore moins : un jeu déjà
+   terminé ou en cours n'est plus à vendre, ce tri n'a de sens que là où
+   les prix bougent encore. */
 const TRIS_PAR_FAMILLE = {
-  periode:  null,
+  periode:  TRIS.map(([k]) => k).filter(k => k !== 'solde'),
   statut:   ['release', 'az'],
   wishlist: ['solde', 'release_asc', 'release', 'az'],
 };
@@ -531,40 +568,11 @@ async function charger(opts = {}){
 
 /* L'état de la connexion tient dans la pastille de l'engrenage — verte quand
    les données viennent du script, ambrée pendant une actualisation, rouge
-   quand celle-ci a échoué, éteinte quand rien n'a pu être joint — et en
-   toutes lettres dans le menu. */
-let DERNIERE_SYNC = 0;                      // horodatage, pas une heure toute faite
-let ETAT_MODE = 'offline', ETAT_TXT = '';   // ce que la pastille dit en ce moment
-
-/* « il y a 2 min » plutôt que « 21 h 14 » : en ouvrant le menu, ce qu'on
-   cherche à savoir c'est si les données sont fraîches, pas quelle heure il
-   était quand elles sont arrivées. Au-delà d'une journée le relatif cesse
-   d'être lisible — « il y a 37 h » ne dit rien à personne — on repasse donc
-   à une date. */
-function ilYa(t){
-  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
-  if(s < 45) return "à l'instant";
-  const min = Math.round(s / 60);
-  if(min < 60) return `il y a ${min} min`;
-  const h = Math.round(min / 60);
-  if(h < 24) return `il y a ${h} h`;
-  return 'le ' + new Date(t).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
-}
+   quand celle-ci a échoué, éteinte quand rien n'a pu être joint. */
 function majEtat(mode, txt){
   const c = document.getElementById('cog');
-  if(mode === 'live') DERNIERE_SYNC = Date.now();
-  ETAT_MODE = mode; ETAT_TXT = txt;
   c.dataset.etat = mode;
   c.setAttribute('aria-label', 'Paramètres — ' + txt);
-  ecritEtat();
-}
-/* Réécrit la ligne du menu sans toucher à l'état. Appelée à chaque
-   ouverture : sans ça le texte resterait figé sur ce qu'il valait au moment
-   de la synchro, c'est-à-dire toujours « à l'instant ». */
-function ecritEtat(){
-  document.getElementById('src').innerHTML =
-    (ETAT_MODE === 'live' && DERNIERE_SYNC ? `synchronisé ${ilYa(DERNIERE_SYNC)}<br>` : '')
-    + esc(ETAT_TXT);
 }
 
 /* Range la réponse dans GAMES / BUCKETS. Appelée aussi après chaque
@@ -620,57 +628,117 @@ function closeMenu(){
 }
 function toggleMenu(){
   const m = document.getElementById('menu'), ouvert = m.hidden;
-  // un seul menu ouvert à la fois, et l'âge de la synchro relu au passage
-  if(ouvert){ closeJnl(); closePer(); ecritEtat(); }
+  if(ouvert){ fermerRecherche(); closePer(); }   // un seul menu ouvert à la fois
   m.hidden = !ouvert;
   document.getElementById('cog').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
 }
 document.getElementById('cog').addEventListener('click', e=>{ e.stopPropagation(); toggleMenu(); });
+/* Une sélection de texte commencée dans un de ces menus et relâchée dehors
+   ne doit pas le fermer : on ne ferme que si le clic ET le mousedown qui
+   l'a précédé visaient tous les deux en dehors, comme fermeSurFond(). */
+let HORS_COG = false, HORS_TAB = false;
+document.addEventListener('mousedown', e=>{
+  HORS_COG = !e.target.closest('.cog-wrap');
+  HORS_TAB = !e.target.closest('.tab-wrap');
+});
 document.addEventListener('click', e=>{
-  if(!document.getElementById('menu').hidden && !e.target.closest('.cog-wrap')) closeMenu();
-  if(!document.getElementById('jnlMenu').hidden && !e.target.closest('.brand')) closeJnl();
-  if(!e.target.closest('.tab-wrap')) closePer();
+  if(HORS_COG && !document.getElementById('menu').hidden && !e.target.closest('.cog-wrap')) closeMenu();
+  if(HORS_TAB && !e.target.closest('.tab-wrap')) closePer();
 });
 document.addEventListener('keydown', e=>{
   if(e.key === 'Escape'){
     if(!document.getElementById('menu').hidden) closeMenu();
-    if(!document.getElementById('jnlMenu').hidden) closeJnl();
     closePer();
   }
 });
 
 /* ---------- changer de classeur ----------
-   Le titre est le bouton : « Journal de Jokrem » déroule la liste des
-   classeurs déclarés dans SOURCES, et un clic ouvre celui qu'on désigne. */
+   Plus un menu déroulant sous le titre, mais une recherche façon réseau
+   social : le bouton loupe ouvre #recherche, où taper un nom filtre les
+   journaux connus (le sien, et les journaux publics de l'annuaire). */
 function majEntete(){
   const s = source();
   document.getElementById('brand-title').textContent =
     s && s.nom ? `Journal de ${s.nom}` : 'Journal de jeu';
 }
-function renderJournaux(){
-  const menu = document.getElementById('jnlMenu');
-  const items = SOURCES.map((s,i)=>
-    `<button class="menu-item${i===SRC?' on':''}" role="menuitem" data-i="${i}">
-       ${esc(s.nom || ('Classeur ' + (i+1)))}${i===SRC?'<span class="tick">✓</span>':''}</button>`).join('');
-  menu.innerHTML = items;
-  menu.querySelectorAll('.menu-item').forEach(b=>{
+
+/* Une teinte stable par pseudo, pour que l'avatar d'une même personne ne
+   change pas de couleur d'une recherche à l'autre. */
+function teinteAvatar(nom){
+  let h = 0;
+  for(const c of (nom || '?')) h = (h * 31 + c.codePointAt(0)) % 360;
+  return h;
+}
+function rechercheHTML(){
+  return `<div class="sheet recherche-sheet" role="dialog" aria-modal="true" aria-label="Rechercher un journal">
+    <div class="sheet-tools">
+      <span class="grp"><b class="fhead">Rechercher un journal</b></span>
+      <span class="grp"><button class="sbtn rsearch-x" aria-label="Fermer">×</button></span>
+    </div>
+    <div class="rsearch-in">
+      <label class="rsearch-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+        </svg>
+        <input class="rsearch-input" id="rsearchInput" type="text" placeholder="Nom du joueur..." autocomplete="off" spellcheck="false">
+      </label>
+      <div class="rsearch-list" id="rsearchList"></div>
+    </div>
+  </div>`;
+}
+function renderRechercheListe(){
+  const brut = document.getElementById('rsearchInput').value;
+  const q = norm(brut);
+  const liste = document.getElementById('rsearchList');
+  const items = SOURCES.map((s,i)=>({s,i})).filter(({s}) => !q || norm(s.nom).includes(q));
+  if(!items.length){
+    liste.innerHTML = `<p class="rsearch-vide">Aucun journal ne correspond à « ${esc(brut)} ».</p>`;
+    return;
+  }
+  liste.innerHTML = items.map(({s,i})=>{
+    const compte = typeof s.jeux === 'number' ? `${s.jeux} jeu${s.jeux>1?'x':''}` : 'journal public';
+    const sous = s.moi ? `Ton journal - ${compte}` : compte.charAt(0).toUpperCase() + compte.slice(1);
+    const avatar = s.avatar
+      ? `<img class="rsearch-avatar" src="${esc(s.avatar)}" alt="">`
+      : `<span class="rsearch-avatar" style="--h:${teinteAvatar(s.nom)}">${esc(initials(s.nom || '?'))}</span>`;
+    return `<button class="rsearch-item${i===SRC?' on':''}" data-i="${i}">
+      ${avatar}
+      <span class="rsearch-meta"><b>${esc(s.nom || '?')}</b><i>${esc(sous)}</i></span>
+      ${i===SRC?'<span class="tick">✓</span>':''}
+    </button>`;
+  }).join('');
+  liste.querySelectorAll('.rsearch-item').forEach(b=>{
     b.onclick = ()=> choisirClasseur(+b.dataset.i);
   });
 }
-function closeJnl(){
-  document.getElementById('jnlMenu').hidden = true;
-  document.getElementById('jnl').setAttribute('aria-expanded', 'false');
+function fermerRecherche(){
+  const host = document.getElementById('recherche');
+  if(host.hidden) return;
+  host.hidden = true; host.innerHTML = '';
+  verrouFond();
 }
-function toggleJnl(){
-  const m = document.getElementById('jnlMenu'), ouvert = m.hidden;
-  if(ouvert){ closeMenu(); closePer(); renderJournaux(); }
-  m.hidden = !ouvert;
-  document.getElementById('jnl').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+function ouvrirRecherche(){
+  closeMenu(); closePer();
+  const host = document.getElementById('recherche');
+  host.innerHTML = rechercheHTML();
+  host.hidden = false;
+  verrouFond();
+  host.querySelector('.rsearch-x').onclick = fermerRecherche;
+  const champ = document.getElementById('rsearchInput');
+  champ.addEventListener('input', renderRechercheListe);
+  champ.addEventListener('keydown', e=>{
+    if(e.key !== 'Enter') return;
+    const premier = document.querySelector('#rsearchList .rsearch-item');
+    if(premier) premier.click();
+  });
+  renderRechercheListe();
+  champ.focus();
 }
-document.getElementById('jnl').addEventListener('click', e=>{ e.stopPropagation(); toggleJnl(); });
+fermeSurFond('recherche', fermerRecherche);
+document.getElementById('jnlSearchBtn').addEventListener('click', e=>{ e.stopPropagation(); ouvrirRecherche(); });
 
 function choisirClasseur(i){
-  closeJnl();
+  fermerRecherche();
   if(i === SRC || !SOURCES[i]) return;
   SRC = i; memoriseClasseur();
   GAMES = []; BUCKETS = []; CAN_WRITE = false;
@@ -678,9 +746,9 @@ function choisirClasseur(i){
      dans le classeur affiché. render() ne ferme plus rien de lui-même, donc
      c'est ici que ça se dit. */
   closeSheet();
+  sortirSelection();   // les identifiants choisis ne veulent rien dire ailleurs
   PREMIERE_FOIS = true; S.bucket = 'all'; S.q = ''; S.range = null; S.open = null;
   document.getElementById('q').value = '';
-  DERNIERE_SYNC = 0;   // autre journal : sa synchro n'a rien à voir avec l'ancienne
   majEntete();
   majEtat('offline', 'connexion...');
   const s = source();
@@ -699,12 +767,13 @@ function choisirClasseur(i){
 /* Écran d'aide : soit aucun journal n'est configuré, soit celui-ci ne
    répond pas. Plus rien à saisir ici — l'adresse est dans le fichier. */
 function showGate(erreur){
-  closeSheet(); closeForm(); closeMenu(); closeJnl();
+  closeSheet(); closeForm(); closeMenu(); fermerRecherche();
   majEntete();
   majEtat('offline', source() ? 'non connecté' : 'aucun journal');
   document.getElementById('app').hidden = true;
   document.getElementById('tabs').hidden = true;
   document.getElementById('cog').hidden = !source();
+  document.getElementById('invite').hidden = true;
   document.getElementById('gate').hidden = false;
   const s = source();
   document.getElementById('gTitle').textContent =
@@ -719,13 +788,38 @@ function showGate(erreur){
 }
 function showApp(){
   document.getElementById('gate').hidden = true;
+  document.getElementById('invite').hidden = true;
   document.getElementById('tabs').hidden = false;
   document.getElementById('cog').hidden = false;
   document.getElementById('app').hidden = false;
-  document.querySelector('.tools').hidden = false;
+  // pas pendant une sélection en cours : un rafraîchissement de fond ne
+  // doit pas faire revenir les outils par-dessus le bandeau de sélection
+  if(!SELECTION_ACTIVE) document.querySelector('.tools').hidden = false;
   // le squelette les avait rendus inertes le temps de l'attente
   document.getElementById('q').disabled = false;
   document.getElementById('sort').disabled = false;
+}
+
+/* Connecté mais aucun journal : plutôt que d'atterrir sur celui d'un
+   inconnu ou de cacher la création dans les paramètres, l'écran d'accueil
+   propose directement de créer le sien. */
+function showInvite(){
+  closeSheet(); closeForm(); closeMenu(); fermerRecherche();
+  /* Aucun journal n'est réellement affiché ici : SRC restait à sa valeur
+     par défaut (0), si bien que la recherche marquait le premier journal
+     public comme déjà sélectionné — cocher une coche sur laquelle cliquer
+     ne faisait rien, puisque choisirClasseur() ignore un clic sur ce qui
+     est déjà "SRC". -1 n'existe dans aucune liste : rien ne coche, et le
+     premier clic ouvre bien le journal visé. */
+  SRC = -1;
+  // pas de source affichée ici : SOURCES[0] serait le journal public de
+  // quelqu'un d'autre, et l'annoncer dans l'en-tête serait trompeur
+  document.getElementById('brand-title').textContent = 'Jeux Vidéos';
+  document.getElementById('app').hidden = true;
+  document.getElementById('tabs').hidden = true;
+  document.getElementById('cog').hidden = true;
+  document.getElementById('gate').hidden = true;
+  document.getElementById('invite').hidden = false;
 }
 
 /* ---------- squelette du premier chargement ----------
@@ -752,6 +846,7 @@ const FANTOMES_TABS = [46,84,92,98];
 
 function squelette(){
   document.getElementById('gate').hidden = true;
+  document.getElementById('invite').hidden = true;
   document.getElementById('app').hidden = false;
   document.getElementById('cog').hidden = false;
   document.getElementById('tabs').hidden = false;
@@ -805,15 +900,13 @@ function majVerrou(){
   // la mise à jour de masse écrit dans le journal : en lecture seule elle
   // n'aurait rien à proposer d'autre qu'un refus, autant ne pas la montrer
   document.getElementById('igdbBtn').hidden = !chezMoi;
+  document.getElementById('selectBtn').hidden = !chezMoi;
+  if(!chezMoi) sortirSelection();
   document.getElementById('unlock').textContent =
     MOI.connecte ? 'Ouvrir mon journal' : 'Se connecter sur Abyss';
 }
 
 document.getElementById('gRetry').addEventListener('click', ()=> charger());
-document.getElementById('reload').addEventListener('click', ()=>{
-  closeMenu();
-  charger({silencieux:true});
-});
 document.getElementById('unlock').addEventListener('click', ()=>{
   closeMenu();
   /* Connecté sans journal : on lui en crée un et on l'y emmène. Connecté
@@ -822,6 +915,7 @@ document.getElementById('unlock').addEventListener('click', ()=>{
   if(MOI.pseudo){ ouvrirLeMien(); return; }
   creerMonJournal();
 });
+document.getElementById('inviteCreate').addEventListener('click', creerMonJournal);
 
 /* ---------- état ----------
    range : tranche de notes choisie dans l'histogramme, ou null.
@@ -830,6 +924,13 @@ document.getElementById('unlock').addEventListener('click', ()=>{
    Déclaré avant demarrer() : le rendu du cache s'exécute tout de suite,
    avant même que le reste du script ait fini de s'exécuter. */
 const S = { bucket:'all', q:'', sort:'note', open:null, range:null };
+
+/* Sélection multiple : un identifiant de jeu par entrée, pas une tuile —
+   la fiche voyage, l'onglet aussi, seul l'id reste vrai d'un rendu à
+   l'autre. Changer d'onglet la vide (voir choisirOnglet) : mélanger des
+   jeux de deux onglets qu'on ne voit plus ensemble serait trompeur. */
+let SELECTION_ACTIVE = false;
+const SELECTION = new Set();
 
 /* Les jeux dans l'ordre où la fiche ouverte les feuillette — figé à
    l'ouverture, relu par render() qui y retrouve la fiche après un
@@ -851,9 +952,9 @@ const TUILES = new Map();
 // séparateur invisible entre les morceaux d'une clé : ni un nom d'onglet
 // ni un nom de jeu ne peut le contenir, donc aucune collision possible
 const SEP = '\u0001';
-/* La clé d'une tuile : le couple (onglet, ligne), la même identité que
-   partout ailleurs — c'est elle qui sert à réécrire la bonne cellule. */
-const cleTuile = x => x.bucket + SEP + x.row;
+/* La clé d'une tuile : l'id du jeu, stable et unique — ce que `row`
+   donnait avant que la base remplace les feuilles (voir journal.py). */
+const cleTuile = x => String(x.id);
 /* Tout ce que la tuile donne à voir. Si rien n'a bougé là-dedans, le nœud
    existant fait l'affaire tel quel. L'adresse de la jaquette en fait partie
    plutôt que le seul nom : elle change quand l'image arrive, quand elle est
@@ -883,17 +984,29 @@ async function chargeAnnuaire(){
   const r = await fetch('/api/journal', {credentials: 'same-origin'});
   const d = await r.json();
   if(!d.ok) throw new Error(d.message || 'annuaire illisible');
-  MOI = { connecte: !!d.connecte, pseudo: d.moi || null };
+  MOI = { connecte: !!d.connecte, pseudo: d.moi ? d.moi.pseudo : null };
   SOURCES = (d.journaux || []).map(j => ({
     nom: j.pseudo,
     titre: j.titre,
+    jeux: j.jeux,
+    avatar: j.avatar,
     url: '/api/journal/' + encodeURIComponent(j.pseudo),
   }));
   /* Le sien d'abord : c'est celui qu'on vient consulter neuf fois sur dix,
-     et c'est le seul qu'on puisse modifier. */
+     et c'est le seul qu'on puisse modifier. Un journal prive n'apparait pas
+     dans cet annuaire, qui ne liste que les journaux publics : on l'ajoute
+     nous-memes plutot que de laisser la page par defaut retomber sur
+     n'importe qui d'autre. `moi` sert à la recherche : c'est ce qui lui
+     fait dire « Ton journal » — avec son nombre de jeux, connu même quand
+     le journal est privé et absent de l'annuaire ci-dessus. */
   if(MOI.pseudo){
     const i = SOURCES.findIndex(x => x.nom === MOI.pseudo);
     if(i > 0) SOURCES.unshift(SOURCES.splice(i, 1)[0]);
+    else if(i < 0) SOURCES.unshift({nom: MOI.pseudo,
+                                     url: '/api/journal/' + encodeURIComponent(MOI.pseudo)});
+    SOURCES[0].moi = true;
+    SOURCES[0].jeux = d.moi.jeux;
+    SOURCES[0].avatar = d.moi.avatar;
   }
 }
 
@@ -917,7 +1030,7 @@ async function creerMonJournal(){
       return d;
     })();
     MOI.pseudo = data.pseudo;
-    SOURCES.unshift({nom: data.pseudo, titre: data.titre,
+    SOURCES.unshift({nom: data.pseudo, titre: data.titre, moi: true, jeux: 0,
                      url: '/api/journal/' + encodeURIComponent(data.pseudo)});
     SRC = 0; memoriseClasseur();
     PREMIERE_FOIS = true;
@@ -942,14 +1055,24 @@ async function creerMonJournal(){
   try{ await chargeAnnuaire(); }
   catch(e){ showGate('<b>Serveur injoignable.</b> Le hub Abyss ne répond pas.'); return; }
 
-  /* Le classeur ouvert la dernière fois, s'il existe toujours. Le fichier
-     est relu ici et non plus au chargement du script : SOURCES était vide
-     à ce moment-là. */
-  try{
-    const vu = localStorage.getItem(CLE_CLASSEUR);
-    const i = vu ? SOURCES.findIndex(x => x.url === vu) : -1;
-    if(i >= 0) SRC = i;
-  }catch(e){}
+  /* Connecté sans journal : plutôt que d'atterrir par défaut sur celui d'un
+     inconnu, on propose tout de suite d'en créer un. */
+  if(MOI.connecte && !MOI.pseudo){ showInvite(); return; }
+
+  /* Le sien avant tout le reste : chargeAnnuaire() l'a placé en tête de
+     SOURCES, donc c'est toujours lui qui s'ouvre en arrivant depuis Abyss,
+     peu importe le dernier classeur consulté. Ce souvenir ne sert donc plus
+     qu'à qui n'a pas de journal à soi — pour retomber sur le même journal
+     public d'une visite à l'autre. */
+  if(MOI.pseudo){
+    SRC = 0;
+  } else {
+    try{
+      const vu = localStorage.getItem(CLE_CLASSEUR);
+      const i = vu ? SOURCES.findIndex(x => x.url === vu) : -1;
+      if(i >= 0) SRC = i;
+    }catch(e){}
+  }
 
   majEntete();
   const s = source();
@@ -1030,6 +1153,7 @@ function filtered(){
    barre s'allonge sans fin à chaque nouvelle année. */
 function choisirOnglet(k){
   closePer();
+  sortirSelection();   // les jeux choisis restaient d'un autre onglet, invisibles ici
   S.bucket = k;
   S.range = null;   // l'histogramme est recalculé : la tranche choisie ne vaut plus
   render();
@@ -1046,7 +1170,7 @@ function togglePer(periodes){
   if(!m) return;
   const ouvert = m.hidden;
   if(ouvert){
-    closeMenu(); closeJnl();                     // un seul menu ouvert à la fois
+    closeMenu(); fermerRecherche();               // un seul menu ouvert à la fois
     m.innerHTML = periodes.map(b=>
       `<button class="menu-item${b===S.bucket?' on':''}" role="menuitem" data-b="${esc(b)}">
          ${esc(b)}${b===S.bucket?'<span class="tick">✓</span>':''}</button>`).join('');
@@ -1070,7 +1194,7 @@ function renderTabs(){
     + (periodes.length ? `<span class="tab-wrap">
         <button class="tab tab-menu" id="perBtn" role="tab" aria-haspopup="true"
                 aria-expanded="false" aria-selected="${surPeriode}">
-          <span>${esc(surPeriode ? S.bucket : 'Années')}</span>
+          <span>${esc(surPeriode ? S.bucket : 'Catégories')}</span>
           <svg class="tab-chev" width="10" height="10" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9l6 6 6-6"/>
@@ -1093,7 +1217,7 @@ function familleTri(){
 function renderSort(){
   const famille = familleTri();
   const permis = TRIS_PAR_FAMILLE[famille];
-  const dispo = permis ? TRIS.filter(([k]) => permis.indexOf(k) >= 0) : TRIS;
+  const dispo = TRIS.filter(([k]) => permis.indexOf(k) >= 0);
   // on reprend le tri retenu pour cette famille d'onglets
   let tri = TRI_MEMO[famille];
   if(!dispo.some(([k]) => k === tri)) tri = 'az';   // garde-fou
@@ -1346,6 +1470,10 @@ function tuilePour(cle, x, i){
     hydrateCovers(el);
   }
   el.dataset.i = i;   // le rang dans filtered(), que la fiche relit au clic
+  el.dataset.id = x.id;
+  // hors de la signature exprès : la sélection ne doit pas refaire l'intérieur
+  el.classList.toggle('selectionnable', SELECTION_ACTIVE);
+  el.classList.toggle('selectionne', SELECTION.has(x.id));
   return el;
 }
 
@@ -1411,8 +1539,99 @@ function oublieTuiles(){
    côté, il ne remonte donc jamais jusqu'ici. */
 document.getElementById('out').addEventListener('click', e=>{
   const t = e.target.closest('.tile');
-  if(t && t.dataset.i !== undefined) ouvreFiche(+t.dataset.i, t);
+  if(!t) return;
+  if(SELECTION_ACTIVE){
+    const id = +t.dataset.id;
+    if(SELECTION.has(id)) SELECTION.delete(id); else SELECTION.add(id);
+    t.classList.toggle('selectionne', SELECTION.has(id));
+    majBarreSelection();
+    return;
+  }
+  if(t.dataset.i !== undefined) ouvreFiche(+t.dataset.i, t);
 });
+
+/* ---------- sélection multiple : déplacer ou supprimer en lot ----------
+   Le serveur sait déjà faire du lot (voir /api/journal/lot, utilisé par
+   la mise à jour IGDB) : ce bloc ne fait qu'y donner accès depuis le mur. */
+function toggleSelectionMode(){
+  SELECTION_ACTIVE = !SELECTION_ACTIVE;
+  SELECTION.clear();
+  document.getElementById('selectBtn').classList.toggle('actif', SELECTION_ACTIVE);
+  document.getElementById('selectBtn').textContent = SELECTION_ACTIVE ? 'Terminer' : 'Sélection multiple';
+  document.querySelector('.tools').hidden = SELECTION_ACTIVE;
+  document.getElementById('selectionBar').hidden = !SELECTION_ACTIVE;
+  if(SELECTION_ACTIVE) remplitCibleSelection();
+  majBarreSelection();
+  renderWall();
+}
+function sortirSelection(){
+  if(!SELECTION_ACTIVE) return;
+  toggleSelectionMode();
+}
+function remplitCibleSelection(){
+  document.getElementById('selectCible').innerHTML =
+    BUCKETS.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
+}
+function majBarreSelection(){
+  const n = SELECTION.size;
+  document.getElementById('selectionCompte').textContent =
+    `${n} sélectionné${n>1?'s':''}`;
+  document.getElementById('selectDeplacer').disabled = n === 0;
+  const del = document.getElementById('selectSupprimer');
+  del.disabled = n === 0;
+  del.classList.remove('armed');
+  del.textContent = 'Supprimer';
+}
+document.getElementById('selectBtn').addEventListener('click', toggleSelectionMode);
+document.getElementById('selectAnnuler').addEventListener('click', sortirSelection);
+document.getElementById('selectTout').addEventListener('click', ()=>{
+  filtered().forEach(x => SELECTION.add(x.id));
+  renderWall();
+  majBarreSelection();
+});
+document.getElementById('selectAucun').addEventListener('click', ()=>{
+  SELECTION.clear();
+  renderWall();
+  majBarreSelection();
+});
+document.getElementById('selectDeplacer').addEventListener('click', async ()=>{
+  const cible = document.getElementById('selectCible').value;
+  if(!SELECTION.size || !cible) return;
+  const ids = Array.from(SELECTION);
+  try{
+    const data = await envoyer('PUT', '/api/journal/lot',
+      {modifs: ids.map(id => ({id, periode: cible}))});
+    cacheStore.set(source().url, data);
+    applyData(data, true);
+    toast(`${ids.length} jeu${ids.length>1?'x':''} déplacé${ids.length>1?'s':''} vers « ${cible} ».`);
+    sortirSelection();
+    render();
+  }catch(e){ toast(e.message, true); }
+});
+document.getElementById('selectSupprimer').addEventListener('click', async ()=>{
+  const btn = document.getElementById('selectSupprimer');
+  if(!SELECTION.size) return;
+  if(!btn.classList.contains('armed')){
+    btn.classList.add('armed');
+    btn.textContent = `Confirmer (${SELECTION.size})`;
+    setTimeout(()=>{
+      if(btn.isConnected && btn.classList.contains('armed')){
+        btn.classList.remove('armed'); btn.textContent = 'Supprimer';
+      }
+    }, 5000);
+    return;
+  }
+  const ids = Array.from(SELECTION);
+  try{
+    const data = await envoyer('DELETE', '/api/journal/lot', {ids});
+    cacheStore.set(source().url, data);
+    applyData(data, true);
+    toast(`${ids.length} jeu${ids.length>1?'x':''} supprimé${ids.length>1?'s':''}.`);
+    sortirSelection();
+    render();
+  }catch(e){ toast(e.message, true); }
+});
+
 function emptyHTML(){
   if(S.q || S.range){
     return `<div class="empty"><h3>Aucun jeu trouvé...</h3>`
@@ -1865,6 +2084,12 @@ function paintSheet(sens){
     boite.scrollTop = 0;
     boite.dataset.jeu = cle;
     animeFiche(sens);
+    /* Le retour au mur (focus + halo) vise le jeu qu'on regarde à la
+       fermeture, pas celui sur lequel on avait cliqué au départ : sans
+       cette mise à jour, feuilleter avec les flèches puis fermer ramenait
+       toujours sur la toute première tuile. */
+    const tuileActuelle = TUILES.get(cle);
+    if(tuileActuelle) FICHE_RETOUR = tuileActuelle;
   }
 
   host.hidden = false;
@@ -1934,14 +2159,20 @@ function joueHalo(){
   setTimeout(()=>{ tuile.classList.remove('revenu'); }, 700);
 }
 
-/* Remet le défilement puis le focus. preventScroll est indispensable : sans
-   lui, focus() ramène la tuile dans le champ de vision et déplace le mur
-   sous les yeux, ce qu'on cherche précisément à éviter. */
+/* Remet le défilement puis le focus, sur la tuile du jeu qu'on regardait à
+   la fermeture — pas forcément celle sur laquelle on avait cliqué, si on a
+   feuilleté avec les flèches entre-temps. C'est elle qui décide d'où
+   défiler : preventScroll coupe le scroll-into-view par défaut de focus(),
+   sinon les deux se disputeraient la position finale. Sans tuile (jeu
+   supprimé, filtre changé...), on retombe sur le défilement d'avant. */
 function rendreFocus(){
   const tuile = FICHE_RETOUR;
   FICHE_RETOUR = null;
-  if(Math.abs(window.scrollY - FICHE_SCROLL) > 1) window.scrollTo(0, FICHE_SCROLL);
-  if(!tuile || !tuile.isConnected) return;
+  if(!tuile || !tuile.isConnected){
+    if(Math.abs(window.scrollY - FICHE_SCROLL) > 1) window.scrollTo(0, FICHE_SCROLL);
+    return;
+  }
+  tuile.scrollIntoView({block: 'center'});
   try{ tuile.focus({preventScroll: true}); }catch(err){ tuile.focus(); }
   HALO = tuile;
 }
@@ -1958,18 +2189,32 @@ function jaquetteTuile(g){
   return (tuile && tuile.isConnected) ? tuile.querySelector('.cov') : null;
 }
 
+/* Un rafraîchissement de fond qui aboutit pendant la transition reconstruit
+   les tuiles (voir render()) — dont celle qui porte le nom de transition,
+   si elle bouge de place ou change de contenu. Le navigateur abandonne
+   alors l'animation sans le dire : la fiche apparaît d'un coup, comme
+   téléportée, au lieu de voir la jaquette voyager jusqu'à sa place.
+   TRANSITION_EN_COURS dit à render() de repousser cette reconstruction
+   plutôt que de la faire sous les pieds de l'animation. */
+let TRANSITION_EN_COURS = false;
+let RENDU_MUR_EN_ATTENTE = false;
+function finTransition(){
+  TRANSITION_EN_COURS = false;
+  if(RENDU_MUR_EN_ATTENTE){ RENDU_MUR_EN_ATTENTE = false; renderWall(); }
+}
 function ouvreFiche(i, tuile){
   FICHE_RETOUR = tuile || null;
   FICHE_SCROLL = window.scrollY;
   const src = tuile && tuile.querySelector('.cov');
   if(!document.startViewTransition || !src){ openSheet(i); return; }
   nomVT(src, true);
+  TRANSITION_EN_COURS = true;
   const vt = document.startViewTransition(()=>{
     nomVT(src, false);           // la tuile rend le nom...
     openSheet(i);
     nomVT(jaquetteFiche(), true);  // ...la fiche le reprend
   });
-  vt.finished.catch(()=>{}).then(()=> nomVT(src, false));
+  vt.finished.catch(()=>{}).then(()=>{ nomVT(src, false); finTransition(); });
 }
 
 function fermeFiche(){
@@ -1979,6 +2224,7 @@ function fermeFiche(){
   const src = jaquetteFiche();
   if(!document.startViewTransition || !src || !g){ closeSheet(); joueHalo(); return; }
   nomVT(src, true);
+  TRANSITION_EN_COURS = true;
   const vt = document.startViewTransition(()=>{
     nomVT(src, false);
     closeSheet();
@@ -1987,6 +2233,7 @@ function fermeFiche(){
   vt.finished.catch(()=>{}).then(()=>{
     nomVT(jaquetteTuile(g), false);
     joueHalo();          // sous la photo de la transition, il serait invisible
+    finTransition();
   });
 }
 
@@ -1998,10 +2245,12 @@ function closeSheet(){
   S.open = null;
   rendreFocus();
 }
-document.getElementById('sheet').addEventListener('click', e=>{
-  if(e.target.id === 'sheet') fermeFiche();
-});
+fermeSurFond('sheet', fermeFiche);
 document.addEventListener('keydown', e=>{
+  if(!document.getElementById('recherche').hidden){
+    if(e.key === 'Escape') fermerRecherche();
+    return;
+  }
   // la mise à jour depuis IGDB occupe l'écran seule : rien ne s'ouvre
   // par-dessus, donc rien d'autre ne prend Échap tant qu'elle est là
   if(!document.getElementById('igdb').hidden){
@@ -2026,7 +2275,7 @@ document.addEventListener('keydown', e=>{
     const per = document.getElementById('perMenu');
     if(e.key === 'Escape' && S.range
        && document.getElementById('menu').hidden
-       && document.getElementById('jnlMenu').hidden
+       && document.getElementById('recherche').hidden
        && (!per || per.hidden)) viderTranche();
     return;
   }
@@ -2060,9 +2309,6 @@ function timeText(h){
 function numText(n){ return (n===null||n===undefined||n==='') ? '' : String(n).replace('.',','); }
 
 function formHTML(g){
-  // « En cours » et « Wishlist » ont leur case à cocher : ils ne doivent pas
-  // traîner aussi dans la liste des années
-  const opts = BUCKETS.filter(b=>!estStatutNom(b)).map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
   const mois = MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
   const avis = g ? g.review.join('\n') : '';
   return `<div class="sheet form-sheet" role="dialog" aria-modal="true">
@@ -2073,12 +2319,13 @@ function formHTML(g){
     <div class="form-in">
       <div class="fgrid">
         <div class="fld full acw">
-          <label for="f_name"><u>Nom du jeu</u></label>
+          <label for="f_name"><u>Nom du jeu <span class="req" aria-hidden="true">*</span></u></label>
           <input id="f_name" type="text" value="${esc(g?g.name:'')}" autocomplete="off"
                  spellcheck="false" role="combobox" aria-controls="f_ac"
                  aria-autocomplete="list" aria-expanded="false">
           <div class="ac" id="f_ac" role="listbox" aria-label="Jeux trouvés sur IGDB" hidden></div>
         </div>
+        <p class="fld full doublon-avis" id="f_doublon" hidden></p>
         <button type="button" class="fpick" id="f_pick" hidden>
           <img id="f_pickimg" alt="" decoding="async">
           <span class="fpick-txt">
@@ -2093,10 +2340,13 @@ function formHTML(g){
         <label class="fld fcheck wish">
           <input id="f_wish" type="checkbox">
           <span>Wishlist</span></label>
-        <label class="fld" id="f_bucketwrap"><u>Année</u>
-          <select id="f_bucket">${opts}<option value="__new">＋ Ajouter...</option></select></label>
-        <label class="fld" id="f_newwrap" hidden><u>Nom du nouvel onglet</u>
-          <input id="f_new" type="text" autocomplete="off"></label>
+        <div class="fld acw" id="f_bucketwrap">
+          <label for="f_bucket"><u>Catégorie <span class="req" aria-hidden="true">*</span></u></label>
+          <input id="f_bucket" type="text" autocomplete="off" spellcheck="false"
+                 role="combobox" aria-controls="f_bucket_ac"
+                 aria-autocomplete="list" aria-expanded="false">
+          <div class="ac" id="f_bucket_ac" role="listbox" aria-label="Catégories existantes" hidden></div>
+        </div>
         <label class="fld" id="f_monthwrap"><u>Mois</u>
           <select id="f_month"><option value="">—</option>${mois}</select></label>
         <label class="fld" id="f_ratingwrap"><u>Note sur 10</u>
@@ -2114,7 +2364,6 @@ function formHTML(g){
           <span class="ta-wrap"><span class="ta-hl" id="f_review_hl" aria-hidden="true"></span
             ><textarea id="f_review" rows="5">${esc(avis)}</textarea></span></label>
       </div>
-      <div class="ferr" id="f_err" hidden></div>
       <div class="frow">
         ${g ? '<button class="ghost danger" id="f_del">Supprimer ce jeu</button>' : ''}
         <span class="spacer"></span>
@@ -2132,11 +2381,98 @@ function statutCoche(){ return $('f_encours').checked || $('f_wish').checked; }
 function cibleOnglet(){
   if($('f_wish').checked) return ongletWishlist();
   if($('f_encours').checked) return ongletEnCours();
-  const b = $('f_bucket').value;
-  return b === '__new' ? clean($('f_new').value) : b;
+  return clean($('f_bucket').value);
 }
-function syncOnglet(){
-  $('f_newwrap').hidden = statutCoche() || $('f_bucket').value !== '__new';
+
+/* ---------- onglet : un champ texte plutôt qu'un menu + un second champ
+   qui apparaissait dessous et décalait tout le reste du formulaire. Taper
+   un nom crée l'onglet s'il n'existe pas encore ; la liste qui flotte
+   au-dessus (comme la recherche du nom du jeu) propose ceux qui existent
+   déjà, sans jamais pousser les autres champs. */
+const BAC = { onglets: [], i: -1 };
+function ongletsExistants(){
+  // « En cours » et « Wishlist » ont leur case à cocher : ils ne doivent
+  // pas traîner aussi dans cette liste
+  return BUCKETS.filter(b => !estStatutNom(b));
+}
+function bacFerme(){
+  const b = $('f_bucket_ac');
+  BAC.onglets = []; BAC.i = -1;
+  if(b){ b.hidden = true; b.innerHTML = ''; }
+  const champ = $('f_bucket');
+  if(champ) champ.setAttribute('aria-expanded', 'false');
+}
+function bacOuvre(onglets){
+  const b = $('f_bucket_ac');
+  if(!b) return;
+  if(!onglets.length){
+    const texte = clean($('f_bucket').value);
+    b.innerHTML = texte
+      ? `<p class="ac-empty">Aucune catégorie ne correspond — valide pour créer « ${esc(texte)} ».</p>`
+      : '';
+    b.hidden = !texte;
+    BAC.onglets = []; BAC.i = -1;
+    $('f_bucket').setAttribute('aria-expanded', String(!!texte));
+    return;
+  }
+  BAC.onglets = onglets; BAC.i = -1;
+  b.innerHTML = onglets.map((o,i)=>
+    `<button type="button" class="ac-item" role="option" aria-selected="false" data-i="${i}">
+       <span class="ac-txt"><b>${esc(o)}</b></span></button>`).join('');
+  b.hidden = false;
+  $('f_bucket').setAttribute('aria-expanded', 'true');
+  b.querySelectorAll('.ac-item').forEach(el=>{
+    // mousedown et pas click : sinon le champ perd le focus en premier, la
+    // liste se referme, et le clic atterrit dans le vide
+    el.addEventListener('mousedown', e=>{ e.preventDefault(); bacChoisir(+el.dataset.i); });
+  });
+}
+function bacChoisir(i){
+  const o = BAC.onglets[i];
+  if(o === undefined) return;
+  $('f_bucket').value = o;
+  bacFerme();
+}
+function bacBouge(pas){
+  const b = $('f_bucket_ac');
+  if(!b || b.hidden || !BAC.onglets.length) return;
+  const n = BAC.onglets.length;
+  BAC.i = BAC.i < 0 ? (pas > 0 ? 0 : n - 1) : (BAC.i + pas + n) % n;
+  b.querySelectorAll('.ac-item').forEach((el,k)=>{
+    const on = k === BAC.i;
+    el.classList.toggle('on', on);
+    el.setAttribute('aria-selected', on ? 'true' : 'false');
+    if(on) el.scrollIntoView({block:'nearest'});
+  });
+}
+function bacFrappe(){
+  const q = norm($('f_bucket').value);
+  const tous = ongletsExistants();
+  bacOuvre(q ? tous.filter(o => norm(o).includes(q)) : tous);
+}
+function bacTouche(e){
+  const b = $('f_bucket_ac');
+  const ouvert = b && !b.hidden && BAC.onglets.length;
+  if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault();
+    ouvert ? bacBouge(e.key === 'ArrowDown' ? 1 : -1) : bacFrappe();
+  }else if(e.key === 'Enter'){
+    if(!ouvert || BAC.i < 0) return;
+    e.preventDefault(); bacChoisir(BAC.i);
+  }else if(e.key === 'Escape'){
+    if(!b || b.hidden) return;
+    // la liste se referme, le formulaire reste ouvert : stopPropagation
+    // empêche le gestionnaire global de prendre Échap pour lui
+    e.preventDefault(); e.stopPropagation(); bacFerme();
+  }
+}
+function brancherBucket(){
+  const champ = $('f_bucket');
+  if(!champ) return;
+  champ.addEventListener('input', bacFrappe);
+  champ.addEventListener('focus', bacFrappe);
+  champ.addEventListener('keydown', bacTouche);
+  champ.addEventListener('blur', ()=> setTimeout(bacFerme, 0));
 }
 /* Un jeu en cours n'a rien à dire de sa fin : on retire de l'écran l'année,
    le mois, la note, le temps de jeu et l'avis. Décocher les fait revenir,
@@ -2149,12 +2485,78 @@ function syncStatut(){
   ['f_bucketwrap','f_monthwrap','f_ratingwrap','f_timewrap','f_reviewwrap']
     .forEach(id => { $(id).hidden = sansFin; });
   $('f_paidwrap').hidden = $('f_wish').checked;
-  syncOnglet();
 }
-function formErr(txt){
-  const b = $('f_err');
-  b.hidden = !txt;
-  if(txt) b.textContent = txt;
+
+/* ---------- doublon ----------
+   Le nom seul dit s'il y a doublon ; l'avis flotte pendant la frappe, et
+   submitForm() bloque l'ajout une première fois sur ce même repérage — un
+   second clic confirme, pour ne pas empêcher un vrai replay d'un jeu déjà
+   terminé (voir submitForm et le bouton "Ajouter quand même ?"). */
+function trouveDoublon(nom){
+  const q = norm(nom);
+  if(!q) return null;
+  return GAMES.find(g => (!EDIT || g.id !== EDIT.id) && norm(g.name) === q) || null;
+}
+function majDoublon(){
+  const zone = $('f_doublon');
+  // le nom a changé : la confirmation « Ajouter quand même ? » ne valait
+  // que pour l'ancien, sans quoi un second clic confirmerait le mauvais jeu
+  const ok = $('f_ok');
+  if(ok && ok.classList.contains('armed')){
+    ok.classList.remove('armed');
+    ok.textContent = EDIT ? 'Enregistrer' : 'Ajouter';
+  }
+  if(!zone) return;
+  const g = trouveDoublon($('f_name').value);
+  if(!g){ zone.hidden = true; return; }
+  const ou = estStatut(g) ? g.bucket : (g.year || g.bucket);
+  zone.hidden = false;
+  zone.innerHTML = `Déjà dans ton journal - <b>${esc(ou)}</b>`
+    + (g.rating !== null ? `, noté <b>${fr(g.rating,1)}</b>` : '') + '.';
+}
+/* ---------- validation ----------
+   Un champ en faute s'entoure de rouge, et le premier motif part en toast
+   — plus lisible qu'un bloc de texte qui poussait le reste du formulaire.
+   L'entourage se dissipe dès que le champ est retouché : pas besoin de
+   resoumettre pour voir l'erreur partir. */
+const CHAMPS_VALIDES = ['f_bucket','f_name','f_rating','f_time','f_base','f_paid'];
+function champErr(id, actif){
+  const champ = $(id);
+  const wrap = champ && champ.closest('.fld');
+  if(wrap) wrap.classList.toggle('err', actif);
+}
+function razErreurs(){
+  CHAMPS_VALIDES.forEach(id => champErr(id, false));
+}
+/* vide = optionnel, ce n'est pas une erreur ; non vide mais illisible en
+   est une — c'était jusque-là avalé en silence et transformé en case vide */
+function champInvalide(id, parseur, mini, maxi){
+  const brut = clean($(id).value);
+  if(!brut) return false;
+  const n = parseur(brut);
+  if(n === null) return true;
+  if(mini !== undefined && n < mini) return true;
+  if(maxi !== undefined && n > maxi) return true;
+  return false;
+}
+function validerFormulaire(){
+  const sansFin = statutCoche();
+  const erreurs = [];
+  if(!sansFin && !clean($('f_bucket').value))
+    erreurs.push({champ:'f_bucket', message:"Donne un nom à la catégorie."});
+  if(!clean($('f_name').value))
+    erreurs.push({champ:'f_name', message:'Il faut au moins un nom de jeu.'});
+  // la note est sur 10 partout dans la page : 85 tapé pour 8,5 doit se
+  // voir tout de suite, pas finir en 85/10 dans les stats sans un mot
+  if(!sansFin && champInvalide('f_rating', toNum, 0, 10))
+    erreurs.push({champ:'f_rating', message:'Note illisible — un nombre entre 0 et 10, par exemple 8.5.'});
+  if(!sansFin && champInvalide('f_time', toHours))
+    erreurs.push({champ:'f_time', message:'Temps de jeu incorrect.'});
+  if(champInvalide('f_base', toNum))
+    erreurs.push({champ:'f_base', message:'Prix de base incorrect.'});
+  if(!$('f_wish').checked && champInvalide('f_paid', toNum))
+    erreurs.push({champ:'f_paid', message:'Prix payé incorrect.'});
+  return erreurs;
 }
 /* Rejoue le texte de l'avis dans le calque colore : une ligne qui commence
    par + passe en vert, par - en rouge, le reste garde la couleur normale.
@@ -2183,7 +2585,7 @@ function openForm(g){
   // en ajout — et pour un jeu en cours ou convoité qu'on vient de terminer —
   // on propose toujours l'année la plus récente, pas l'onglet affiché
   const defaut = (g && !enCours && !wish) ? g.bucket : derniereAnnee();
-  if(BUCKETS.indexOf(defaut) >= 0) bu.value = defaut;
+  bu.value = ongletsExistants().indexOf(defaut) >= 0 ? defaut : '';
   /* Mois terminé : pré-rempli au mois courant, et modifiable comme avant.
      Seulement quand ça a un sens, c'est-à-dire pour un jeu qu'on termine
      maintenant — un ajout, ou un jeu en cours / convoité qu'on bascule en
@@ -2209,7 +2611,6 @@ function openForm(g){
     if($('f_wish').checked) $('f_encours').checked = false;
     syncStatut();
   };
-  bu.onchange = syncOnglet;
   host.querySelector('.form-x').onclick = closeForm;
   $('f_cancel').onclick = closeForm;
   $('f_ok').onclick = submitForm;
@@ -2225,6 +2626,15 @@ function openForm(g){
   ta.addEventListener('scroll', ()=>{ $('f_review_hl').scrollTop = ta.scrollTop; });
   majAvis();
   brancherAuto();          // complétion du nom depuis IGDB (voir plus bas)
+  brancherBucket();        // liste des onglets existants pendant la frappe
+  $('f_name').addEventListener('input', majDoublon);
+  majDoublon();
+  // un champ retouché n'est plus en faute : inutile de resoumettre pour
+  // voir son entourage rouge partir
+  CHAMPS_VALIDES.forEach(id=>{
+    const champ = $(id);
+    if(champ) champ.addEventListener('input', ()=> champErr(id, false));
+  });
   $('f_name').focus();
 }
 function closeForm(){
@@ -2237,7 +2647,7 @@ function closeForm(){
   EDIT = null;
   verrouFond();
 }
-$('form').addEventListener('click', e=>{ if(e.target.id === 'form') closeForm(); });
+fermeSurFond('form', closeForm);
 
 function lireForm(){
   // en cours ou wishlist : note, mois et temps de jeu partent vides, quoi
@@ -2262,23 +2672,42 @@ function lireForm(){
    recopier, la période est un simple champ du jeu. Créer « En cours » revient
    à y ranger un premier jeu. */
 function chargeUtile(){
-  const cible = cibleOnglet();
-  if(!cible) throw new Error("Donne un nom au nouvel onglet.");
-  const v = lireForm();
-  if(!v.name) throw new Error("Il faut au moins un nom de jeu.");
   return {
     id: EDIT ? EDIT.id : null,          // null = ajout
-    periode: cible,
+    periode: cibleOnglet(),
     review: statutCoche() ? '' : clean($('f_review').value),
-    values: v,
+    values: lireForm(),
   };
 }
 async function submitForm(){
   const btn = $('f_ok'), texte = btn.textContent;
-  formErr('');
-  let charge;
-  try{ charge = chargeUtile(); }
-  catch(e){ formErr(e.message); return; }
+  razErreurs();
+  const erreurs = validerFormulaire();
+  if(erreurs.length){
+    erreurs.forEach(er => champErr(er.champ, true));
+    toast(erreurs[0].message, true);
+    $(erreurs[0].champ).focus();
+    return;
+  }
+  /* Un jeu du même nom existe déjà ailleurs dans le journal : bloqué une
+     première fois — c'est l'ajout tapé deux fois par mégarde qu'on veut
+     attraper — mais un second clic confirme que c'est voulu, pour ne pas
+     empêcher un vrai replay. armé retombe si le nom change entre-temps
+     (voir majDoublon), pour ne jamais confirmer le mauvais jeu. */
+  const doublon = !EDIT && trouveDoublon($('f_name').value);
+  if(doublon && !btn.classList.contains('armed')){
+    champErr('f_name', true);
+    btn.classList.add('armed');
+    btn.textContent = 'Ajouter quand même ?';
+    toast(`« ${doublon.name} » est déjà dans ton journal. Reclique pour l'ajouter quand même.`, true);
+    setTimeout(()=>{
+      if(btn.isConnected && btn.classList.contains('armed')){
+        btn.classList.remove('armed'); btn.textContent = texte;
+      }
+    }, 5000);
+    return;
+  }
+  const charge = chargeUtile();
   /* La jaquette retenue dans le formulaire, relevée avant l'envoi : closeForm()
      l'oublie, et le nom peut avoir été retouché depuis le choix — auquel cas
      elle ne vaut plus, on repart sur une recherche normale. */
@@ -2306,14 +2735,13 @@ async function submitForm(){
     if(retenue) poseJaquetteChoisie(charge.values.name, retenue.image);
     else if(ajout) jaquetteAuto(charge.values.name, charge.values.release);
   }catch(e){
-    formErr(e.message);
-    btn.disabled = false; btn.textContent = texte;
+    toast(e.message, true);
+    btn.disabled = false; btn.classList.remove('armed'); btn.textContent = texte;
   }
 }
 async function supprimerJeu(btn){
   if(!EDIT) return;
   const nom = EDIT.name, id = EDIT.id;
-  formErr('');
   btn.disabled = true; btn.textContent = 'Suppression...';
   try{
     const data = await envoyer('DELETE', '/api/journal/jeu/' + id);
@@ -2321,7 +2749,7 @@ async function supprimerJeu(btn){
     applyData(data, true); closeForm(); render();
     toast(`« ${nom} » retiré du journal`);
   }catch(e){
-    formErr(e.message);
+    toast(e.message, true);
     btn.disabled = false; btn.classList.remove('armed'); btn.textContent = 'Supprimer ce jeu';
   }
 }
@@ -2446,7 +2874,7 @@ async function choisirJaq(btn, choix){
     toast('Téléchargement impossible' + (data && data.raison ? ' — ' + data.raison : ''), true);
   }
 }
-$('jaq').addEventListener('click', e=>{ if(e.target.id === 'jaq') closeJaq(); });
+fermeSurFond('jaq', closeJaq);
 
 /* La jaquette désignée dans le formulaire : elle part sur le disque
    maintenant que le jeu existe et que son nom est arrêté. */
@@ -2714,6 +3142,54 @@ function brancherAuto(){
     if(ch) ch.addEventListener('input', ()=>{ ch.dataset.auto = ''; });
   });
 }
+
+/* =======================================================================
+   Export du journal
+   Tout est déjà en mémoire (GAMES) : pas de requête, juste mettre en
+   forme et déclencher un téléchargement. Disponible pour n'importe quel
+   journal affiché, comme le bilan en image — c'est déjà ce qu'on regarde,
+   pas besoin d'en être le propriétaire pour en garder une copie.
+   ======================================================================= */
+function telecharge(contenu, type, nom){
+  const blob = new Blob([contenu], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nom; a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // laisse le temps au téléchargement de démarrer avant de libérer l'URL
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+}
+function exporteJSON(){
+  if(!GAMES.length){ toast('Ce journal est vide : rien à exporter.', true); return; }
+  const nom = (source() && source().nom) || 'journal';
+  telecharge(JSON.stringify(GAMES, null, 2), 'application/json',
+             `journal-${slug(nom) || 'jeux'}.json`);
+  closeMenu();
+}
+/* Une valeur par cellule CSV : guillemets doublés, et la cellule entière
+   entre guillemets dès qu'elle contient une virgule, un guillemet ou un
+   retour à la ligne — l'avis tient sur plusieurs lignes, entre autres. */
+function celluleCSV(v){
+  if(v === null || v === undefined) return '';
+  const s = String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function exporteCSV(){
+  if(!GAMES.length){ toast('Ce journal est vide : rien à exporter.', true); return; }
+  const colonnes = ['bucket','name','year','month','rating','hours','base','paid','release','review'];
+  const entetes = ['onglet','nom','année','mois','note','heures','prix_base','prix_payé','sortie','avis'];
+  const lignes = GAMES.map(g => colonnes.map(c =>
+    celluleCSV(c === 'review' ? g.review.join('\n') : g[c])).join(','));
+  // BOM UTF-8 : sans lui, Excel lit les accents de travers en ouvrant le fichier
+  const csv = '\uFEFF' + entetes.join(',') + '\n' + lignes.join('\n');
+  const nom = (source() && source().nom) || 'journal';
+  telecharge(csv, 'text/csv;charset=utf-8', `journal-${slug(nom) || 'jeux'}.csv`);
+  closeMenu();
+}
+$('exportJsonBtn').addEventListener('click', exporteJSON);
+$('exportCsvBtn').addEventListener('click', exporteCSV);
 
 /* =======================================================================
    Bilan en image
@@ -3418,7 +3894,7 @@ function fermerBilan(){
   libererBilan();
   verrouFond();
 }
-$('bilan').addEventListener('click', e=>{ if(e.target.id === 'bilan') fermerBilan(); });
+fermeSurFond('bilan', fermerBilan);
 $('bilanBtn').addEventListener('click', ouvrirBilan);
 
 /* =======================================================================
@@ -3524,7 +4000,7 @@ function igdbPortees(){
   const portees = [{nom: 'Tout le journal', bucket: 'all', jeux: GAMES.slice()}];
   BUCKETS.forEach(b=>{
     const jeux = GAMES.filter(x => x.bucket === b);
-    if(jeux.length) portees.push({nom: `Onglet « ${b} »`, bucket: b, jeux: jeux});
+    if(jeux.length) portees.push({nom: `Catégorie « ${b} »`, bucket: b, jeux: jeux});
   });
   return portees;
 }
@@ -3534,7 +4010,7 @@ function igdbReglages(){
   const portees = igdbPortees();
   igdbCorps().innerHTML = `
     <div class="fgrid">
-      <label class="fld full"><u>Onglets</u>
+      <label class="fld full"><u>Catégories</u>
         <select id="igdb_portee">${portees.map((p,i)=>
           `<option value="${i}"${p.bucket === S.bucket ? ' selected' : ''}>${esc(p.nom)} — ${p.jeux.length} jeu${p.jeux.length > 1 ? 'x' : ''}</option>`
         ).join('')}</select></label>
@@ -3927,7 +4403,7 @@ function igdbFini(){
   $('igdb_fin').onclick = fermerIgdb;
 }
 
-$('igdb').addEventListener('click', e=>{ if(e.target.id === 'igdb') fermerIgdb(); });
+fermeSurFond('igdb', fermerIgdb);
 $('igdbBtn').addEventListener('click', ouvrirIgdb);
 
 /* ---------- rendu global ---------- */
@@ -3948,7 +4424,11 @@ function render(){
 
   majEntete();
   document.getElementById('addBtn').hidden = !CAN_WRITE;
-  renderTabs(); renderSort(); renderStats(); renderDist(); renderWall();
+  renderTabs(); renderSort(); renderStats(); renderDist();
+  // reconstruire les tuiles pendant que l'une d'elles voyage vers la fiche
+  // casse la transition en cours (voir TRANSITION_EN_COURS) : on la repousse
+  if(TRANSITION_EN_COURS) RENDU_MUR_EN_ATTENTE = true;
+  else renderWall();
   // prix Steam et suggestions : uniquement quand la wishlist est à l'écran
   if(estWishlistNom(S.bucket)){ majTarifs(); chargeDecouverte(); }
   renderDecouverte();
@@ -3961,8 +4441,7 @@ function render(){
      tri et renderDist() annuler la tranche de notes, donc l'ordre de la
      liste — et le rang de la fiche dedans. */
   const liste = filtered();
-  const i = liste.findIndex(x =>
-    x.bucket === vu.bucket && x.row === vu.row && x.name === vu.name);
+  const i = liste.findIndex(x => x.id === vu.id);
   // plus là : ligne supprimée, ou sortie du filtre affiché
   if(i < 0){ closeSheet(); return; }
   SHEET_LIST = liste;

@@ -74,6 +74,22 @@ input,textarea{
 .compte{position:relative}
 .enveloppe-menu{position:relative}
 
+/* Bouton retour, même langage que .fermer : un carré arrondi discret,
+   pas un lien souligné qui jure avec le reste des boutons de la barre.
+   position + z-index : .compte est en position:relative pour ancrer son
+   menu déroulant, ce qui le fait peindre par-dessus tout voisin statique
+   sur leur zone de recouvrement — invisible, mais le clic y reste pris.
+   Le bouton retour gagne toujours l'empilement, quoi qu'il arrive à côté. */
+.back{
+  position:relative;z-index:1;
+  width:34px;height:34px;border-radius:9px;color:var(--brume);
+  display:grid;place-items:center;flex:none;
+  border:1px solid rgba(150,195,220,.14);
+  transition:color .2s ease,border-color .2s ease;
+}
+.back:hover{color:var(--os);border-color:rgba(150,195,220,.35)}
+.back:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+
 .bouton{
   font:inherit;
   font-size:14px;
@@ -101,6 +117,10 @@ input,textarea{
   box-shadow:0 0 8px var(--algue);
   flex:none;
 }
+.avatar-mini{
+  width:19px;height:19px;border-radius:50%;object-fit:cover;flex:none;
+  border:1px solid rgba(150,195,220,.3);
+}
 .chevron{color:var(--brume);font-size:11px;flex:none}
 
 /* ---------- Menu deroulant ---------- */
@@ -127,6 +147,7 @@ input,textarea{
   display:block;
   width:100%;
   text-align:left;
+  text-decoration:none;
   font:inherit;
   font-size:14px;
   color:var(--os);
@@ -135,6 +156,7 @@ input,textarea{
   border-radius:8px;
   background:transparent;
   cursor:pointer;
+  box-sizing:border-box;
 }
 .entree:hover,.entree:focus-visible{background:rgba(120,190,225,.12)}
 .entree:focus-visible{outline:2px solid var(--plancton);outline-offset:-2px}
@@ -401,6 +423,46 @@ input,textarea{
   color:#586A7C;
 }
 
+/* ---------- afficher / masquer un mot de passe ----------
+   Les deux yeux restent tout le temps dans le DOM, superposes au centre
+   du bouton : c'est l'opacite et une legere rotation qui les echangent,
+   pas un hidden qui coupe l'un pour faire apparaitre l'autre d'un coup. */
+.mdp-wrap{position:relative}
+.mdp-wrap input{padding-right:44px}
+.mdp-oeil{
+  position:absolute;
+  right:4px;
+  top:50%;
+  transform:translateY(-50%);
+  width:34px;
+  height:34px;
+  padding:0;
+  background:transparent;
+  border:none;
+  border-radius:50%;
+  color:var(--brume);
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  transition:color .18s ease,background .18s ease;
+}
+.mdp-oeil:hover{color:var(--os);background:rgba(150,195,220,.14)}
+.mdp-oeil:active{transform:translateY(-50%) scale(.88)}
+.mdp-oeil:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+.mdp-oeil.on{color:var(--plancton)}
+.mdp-oeil.on:hover{background:rgba(91,155,245,.14)}
+.mdp-oeil svg{
+  grid-area:1/1;
+  transition:opacity .22s ease,transform .32s cubic-bezier(.34,1.56,.64,1);
+}
+.mdp-oeil .oeil-ouvert{opacity:1;transform:scale(1) rotate(0deg)}
+.mdp-oeil .oeil-barre{opacity:0;transform:scale(.4) rotate(-20deg)}
+.mdp-oeil.on .oeil-ouvert{opacity:0;transform:scale(.4) rotate(20deg)}
+.mdp-oeil.on .oeil-barre{opacity:1;transform:scale(1) rotate(0deg)}
+@media (prefers-reduced-motion:reduce){
+  .mdp-oeil svg{transition:opacity .12s linear;transform:none!important}
+}
+
 .case{
   display:flex;
   align-items:center;
@@ -429,6 +491,7 @@ input,textarea{
 .valider:active{transform:translateY(1px)}
 .valider:disabled{opacity:.55;cursor:progress}
 .valider:focus-visible{outline:2px solid var(--plancton);outline-offset:3px}
+.lien-oubli{display:block;width:100%;margin-top:14px;font-size:13px;text-align:center}
 
 .erreur{
   margin:0 0 14px;

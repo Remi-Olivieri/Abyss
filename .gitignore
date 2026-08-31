@@ -3,5 +3,7 @@ static/CardsCropped/
 static/Cover/
 donnees/
 __pycache__/
+changements.txt
+tests.py
 *.pyc
 .igdb-jeton.json
