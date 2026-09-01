@@ -14,6 +14,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import comptes
 import journal
 from jaquettes import blueprint_jaquettes
+from suggestions import blueprint_suggestions
 
 BASE = Path(__file__).parent.resolve() # le dossier du projet
 STATIQUE = (BASE / "static").resolve() # images, css, json
@@ -23,6 +24,7 @@ ACCUEIL = "Abyss.html"
 PROFIL = "profil.html"
 JEUX_VIDEOS = "jeux-videos.html"
 COLLECTION = "collection-yugioh.html"
+SUGGESTIONS = "suggestions.html"
 YUGIQUIZ = BASE / "yugiquiz" / "yugiquiz.py"
 PORT_YUGIQUIZ = 5000
 
@@ -63,6 +65,7 @@ comptes.init()
 app.register_blueprint(comptes.blueprint_comptes)
 app.register_blueprint(journal.blueprint_journal)
 app.register_blueprint(blueprint_jaquettes(STATIQUE / "Cover"))
+app.register_blueprint(blueprint_suggestions)
 
 # --------------------------------------------------------------------------
 #   Envoi des fichiers
@@ -136,6 +139,13 @@ def ancien_profil():
 @app.route("/abyss/profil")
 def profil():
     return envoie(PROFIL)
+
+# La page est servie a tout le monde ; c'est l'API qu'elle interroge qui
+# repond 404 a qui n'est pas admin. Garder la page ouverte evite un
+# deuxieme controle d'acces a tenir, celui qui compte etant cote donnees.
+@app.route("/abyss/suggestions")
+def page_suggestions():
+    return envoie(SUGGESTIONS)
 
 @app.route("/jeux-videos.html")
 def ancien_archive():

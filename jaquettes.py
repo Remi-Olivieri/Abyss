@@ -90,6 +90,7 @@ import urllib.parse
 import urllib.request
 
 from flask import Blueprint, jsonify, request
+from howlongtobeatpy import HowLongToBeat
 
 # --------------------------------------------------------------------------
 #   Reglages
@@ -106,14 +107,28 @@ ICI = Path(__file__).parent.resolve()
 FICHIER_IDENTIFIANTS = ICI / "igdb.json"
 FICHIER_JETON = ICI / ".igdb-jeton.json"
 
-# taille de l'image gardee sur le disque : la resolution d'origine, sans
-# recadrage ni compression -- c'est celle que stash.games affichait aussi,
-# puisqu'il ne faisait que la relayer depuis IGDB.
-TAILLE = "t_original"
+# Taille de l'image gardee sur le disque. Le mur affiche des tuiles de
+# 158 px et la fiche plafonne a 680 px : 528x748 couvre les deux, ecran
+# retina compris. t_original demandait 1620x2160 en general et jusqu'a
+# 2893x3857 -- cent fois plus de pixels que d'affiches, 265 Mo de jaquettes
+# pour 517 jeux, et des tuiles d'un demi-mega chacune. Invisible en local,
+# ou tout passe par la boucle locale ; tres visible des que la page est
+# servie depuis internet.
+#
+# Le suffixe _2x est la variante retina d'IGDB : t_cover_big fait 264x374,
+# t_cover_big_2x le double. C'est aussi ce qui garantit du vrai webp --
+# t_original renvoyait le format source d'IGDB, souvent PNG ou JPEG, que
+# l'ecriture enregistrait quand meme sous une extension .webp.
+TAILLE = "t_cover_big_2x"
 # taille des apercus de la fenetre de choix : charges depuis IGDB par le
 # navigateur, jamais ecrits sur le disque -- pas besoin de l'originale pour
 # une vignette de 130 px, ca ralentirait juste l'ouverture de la fenetre
 TAILLE_APERCU = "t_cover_big"
+# captures d'ecran de la fiche detaillee : 889x500, chargees par le
+# navigateur comme les apercus ci-dessus, jamais ecrites sur le disque
+TAILLE_CAPTURE = "t_screenshot_big"
+# la meme capture quand on clique dessus pour la voir en grand
+TAILLE_CAPTURE_GRANDE = "t_1080p"
 
 # L'extension des jaquettes sur le disque. En constante parce que trois
 # endroits doivent s'accorder dessus : l'ecriture du fichier, l'adresse
@@ -133,7 +148,12 @@ DELAI = 10                 # secondes avant d'abandonner une requete
 # chiffre mais finit par repondre 429 quand on insiste. Une frappe dans le
 # formulaire n'atteint jamais ces plafonds -- c'est la mise a jour de tout
 # le journal qui les frole, avec ses trois appels par jeu.
-CADENCE = {"igdb": 0.26, "steam": 0.30}
+# 0.28 plutot que 0.25 pile : IGDB compte 4 requetes par seconde, et
+# viser exactement le plafond n'y laisse aucune marge -- la moindre
+# irregularite du reseau fait tomber deux appels dans la meme seconde.
+# Sur la mise a jour d'un journal entier ces quelques centiemes coutent
+# une demi-minute ; un seul refus en coute davantage.
+CADENCE = {"igdb": 0.28, "steam": 0.30}
 MAX_IMAGE = 20 * 1024 * 1024  # une jaquette en resolution d'origine peut peser lourd
 MAX_REPONSE = 4 * 1024 * 1024
 
@@ -239,6 +259,22 @@ def _motif(err):
 
 _DERNIER_APPEL = {}
 _VERROU_CADENCE = threading.Lock()
+# Ralentissement temporaire, pose apres un « trop de requetes ». Mettre a
+# jour tout un journal, c'est un quart d'heure d'appels a la file : si le
+# service se plaint, continuer au meme rythme ne fait que multiplier les
+# refus. On s'ecarte, puis on revient au rythme normal tout seul.
+_PENALITE = {}
+PENALITE_FACTEUR = 2.5
+PENALITE_DUREE = 60
+
+
+def _ralentit(service):
+    """Elargit la cadence de ce service pendant une minute."""
+    if not service:
+        return
+    with _VERROU_CADENCE:
+        _PENALITE[service] = time.time() + PENALITE_DUREE
+    _dit(f"{service} demande de ralentir : cadence elargie {PENALITE_DUREE} s")
 
 
 def _patiente(service):
@@ -256,22 +292,50 @@ def _patiente(service):
     if not intervalle:
         return
     with _VERROU_CADENCE:
+        if _PENALITE.get(service, 0) > time.time():
+            intervalle *= PENALITE_FACTEUR
         attente = intervalle - (time.time() - _DERNIER_APPEL.get(service, 0.0))
         if attente > 0:
             time.sleep(attente)
         _DERNIER_APPEL[service] = time.time()
 
 
-def _appelle(adresse, entetes=None, corps=None, limite=MAX_REPONSE):
+# Les codes qui valent la peine d'etre rejoues : 429 « trop de requetes »
+# et les pannes passageres du service. Le reste -- 400, 401, 403, 404 --
+# ne changera pas d'avis en une seconde, insister ne ferait qu'allonger la
+# mise a jour d'un journal entier.
+HTTP_A_REJOUER = {429, 500, 502, 503, 504}
+ESSAIS = 3
+
+
+def _attente_apres(err, essai):
+    """Combien attendre avant de rejouer. Le service a le dernier mot.
+
+    Retry-After est la reponse de l'interesse : quand il est la, on le
+    suit. Sinon on double a chaque fois (1 s, puis 2 s), ce qui laisse
+    passer une rafale sans immobiliser la mise a jour.
+    """
+    entete = ""
+    try:
+        entete = (err.headers.get("Retry-After") or "").strip()
+    except Exception:                             # noqa: BLE001 - en-tetes absents ou exotiques
+        entete = ""
+    if entete.isdigit():
+        return min(int(entete), 30)
+    return min(2 ** essai, 8)
+
+
+def _appelle(adresse, entetes=None, corps=None, limite=MAX_REPONSE, service=None):
     """(donnees, type de contenu, souci). souci vaut None, 'absent' ou un motif.
 
-    Une resolution DNS qui echoue, une coupure reseau d'une fraction de
-    seconde : ca arrive et ca n'a rien a voir avec l'adresse demandee, donc
-    un second essai suffit generalement. Un code HTTP (403, 404...) est en
-    revanche definitif -- IGDB ne va pas changer d'avis une seconde plus
-    tard -- inutile d'attendre pour rien.
+    Deux sortes d'echecs se rejouent. Une resolution DNS qui echoue, une
+    coupure reseau d'une fraction de seconde : ca arrive et ca n'a rien a
+    voir avec l'adresse demandee. Et un service qui repond « trop de
+    requetes » ou « je suis surcharge » : la un second essai, un peu plus
+    tard, passe presque toujours -- alors qu'abandonner tout de suite
+    faisait echouer des dizaines de jeux a la file pendant une mise a jour.
     """
-    for essai in (0, 1):
+    for essai in range(ESSAIS):
         requete = urllib.request.Request(adresse, data=corps, headers=entetes or {})
         try:
             with urllib.request.urlopen(requete, timeout=DELAI) as reponse:
@@ -280,12 +344,21 @@ def _appelle(adresse, entetes=None, corps=None, limite=MAX_REPONSE):
             return brut, type_contenu, None
         except urllib.error.HTTPError as err:
             souci = _motif(err)
+            if err.code in HTTP_A_REJOUER and essai < ESSAIS - 1:
+                if err.code == 429:
+                    # on va trop vite pour lui : tous les appels suivants
+                    # s'espacent, pas seulement celui qu'on rejoue
+                    _ralentit(service)
+                attente = _attente_apres(err, essai)
+                _dit(f"{adresse} -> {souci}, nouvel essai dans {attente} s")
+                time.sleep(attente)
+                continue
             if souci != "absent":
                 _dit(f"{adresse} -> {souci}")
             return None, "", souci
         except Exception as err:                  # noqa: BLE001 - on veut tout attraper
             souci = _motif(err)
-            if essai == 0:
+            if essai < ESSAIS - 1:
                 _dit(f"{adresse} -> {souci} (nouvel essai)")
                 time.sleep(0.6)
                 continue
@@ -385,7 +458,8 @@ def interroge(requete):
             "Content-Type": "text/plain",
         }
         _patiente("igdb")
-        brut, _, souci = _appelle(IGDB_URL, entetes, requete.encode("utf-8"))
+        brut, _, souci = _appelle(IGDB_URL, entetes, requete.encode("utf-8"),
+                                   service="igdb")
         if souci == "HTTP 401" and not essai:
             continue
         if souci:
@@ -455,6 +529,28 @@ def toutes_les_fiches(nom, limite=40):
         f'search "{echappe}"; fields {CHAMPS}; limit {int(limite)};')
     if souci:
         return [], souci
+
+    # Repli quand la recherche plein texte ne renvoie rien.
+    #
+    # `search` d'IGDB passe par un index plein texte qui ecarte les mots
+    # outils anglais. Un titre qui n'est fait que de ceux-la ne laisse donc
+    # aucun terme a chercher, et la reponse est vide -- pas parce que le jeu
+    # manque, mais parce que la requete s'est videe en route. Verifie :
+    # « We », « Were », « Here », « Too » et toutes leurs combinaisons
+    # renvoient zero, alors que la serie « We Were Here » compte huit fiches
+    # chez IGDB. « It Takes Two » ou « The Last of Us » repondent, eux :
+    # il leur reste au moins un mot porteur.
+    #
+    # `name ~ *"..."*` ne passe pas par cet index : c'est une comparaison
+    # directe sur le titre, insensible a la casse. Elle ne rattrape pas les
+    # fautes de frappe, d'ou l'ordre -- `search` d'abord pour sa tolerance,
+    # celle-ci seulement quand il n'a rien trouve. Un appel de plus, et
+    # uniquement dans ce cas-la.
+    if not resultats:
+        resultats, souci = interroge(
+            f'fields {CHAMPS}; where name ~ *"{echappe}"*; limit {int(limite)};')
+        if souci:
+            return [], souci
 
     cherche = slug(nom, "-")
     fiches, vues = [], set()
@@ -566,14 +662,31 @@ def retenue_pour(fiches, annee):
 CHAMPS_BOUTIQUE = "external_games.category, external_games.uid, external_games.url"
 
 
+def _appid_dans(liens):
+    """L'appid Steam dans une liste external_games, ou "" s'il n'y en a pas.
+
+    La categorie 1 designe Steam ; IGDB l'a marquee obsolete au profit
+    d'external_game_source, d'ou le repli sur l'adresse, qui porte l'appid
+    en clair. Deux appelants s'en servent : boutique_steam pour le prix, et
+    detail_complet pour le lien vers la boutique.
+    """
+    for lien in liens or []:
+        if lien.get("category") == 1 and str(lien.get("uid") or "").isdigit():
+            return str(lien["uid"])
+    for lien in liens or []:
+        trouve = re.search(r"store\.steampowered\.com/app/(\d+)",
+                           str(lien.get("url") or ""))
+        if trouve:
+            return trouve.group(1)
+    return ""
+
+
 def boutique_steam(id_igdb):
     """L'identifiant Steam de ce jeu IGDB. Renvoie (appid, souci).
 
     ("", None) veut dire « pas sur Steam » : ce n'est pas une panne, c'est
-    une reponse. La categorie 1 designe Steam dans external_games ; IGDB
-    l'a marquee obsolete au profit d'external_game_source, donc si la
-    requete est refusee on la rejoue sans elle et on lit l'adresse, qui
-    porte l'appid en clair.
+    une reponse. La requete est rejouee sans le champ category si IGDB la
+    refuse -- voir _appid_dans pour pourquoi il est en sursis.
     """
     try:
         numero = int(id_igdb)
@@ -590,17 +703,7 @@ def boutique_steam(id_igdb):
         return "", souci
     if not resultats:
         return "", None
-
-    liens = resultats[0].get("external_games") or []
-    for lien in liens:
-        if lien.get("category") == 1 and str(lien.get("uid") or "").isdigit():
-            return str(lien["uid"]), None
-    for lien in liens:
-        trouve = re.search(r"store\.steampowered\.com/app/(\d+)",
-                           str(lien.get("url") or ""))
-        if trouve:
-            return trouve.group(1), None
-    return "", None
+    return _appid_dans(resultats[0].get("external_games")), None
 
 
 # Steam limite le nombre d'appels par quart d'heure, et un prix ne bouge
@@ -643,7 +746,7 @@ def tarif_steam(appid):
         "filters": "price_overview,is_free",
     })
     _patiente("steam")
-    brut, _, souci = _appelle(f"{STEAM_URL}?{parametres}", ENTETES_STEAM)
+    brut, _, souci = _appelle(f"{STEAM_URL}?{parametres}", ENTETES_STEAM, service="steam")
     if souci:
         return None, ("fiche Steam absente" if souci == "absent" else souci)
     try:
@@ -794,6 +897,172 @@ def fiches_par_id(ids):
     return sortie, None
 
 
+# --------------------------------------------------------------------------
+#   Images larges : les bannieres de profil
+# --------------------------------------------------------------------------
+# t_1080p pour la banniere affichee, t_screenshot_med pour la vignette du
+# choix : on en montre une vingtaine d'un coup, les charger toutes en 1080p
+# ferait ramer la fenetre pour des images qu'on regarde une seconde.
+TAILLE_BANNIERE = "t_1080p"
+TAILLE_BANNIERE_APERCU = "t_screenshot_med"
+
+# Les artworks d'abord, les captures ensuite. Un artwork est une illustration
+# large dessinee pour le jeu : c'est exactement ce que doit etre une
+# banniere. Une capture d'ecran fait l'affaire quand il n'y a pas d'artwork,
+# mais elle porte souvent une interface de jeu en travers.
+CHAMPS_LARGES = "name, artworks.image_id, screenshots.image_id"
+IMAGES_PAR_JEU = 4
+
+
+def images_larges(ids):
+    """Des images de banniere pour ces jeux. Renvoie (liste, souci).
+
+    Une seule requete pour toute la selection : proposer vingt jeux ne doit
+    pas couter vingt allers-retours. Chaque entree porte le nom du jeu, ce
+    qui permet a la fenetre de choix de dire d'ou vient l'image -- « une
+    jolie image » sans savoir de quel jeu ne veut rien dire.
+    """
+    numeros = []
+    for numero in ids:
+        try:
+            numeros.append(int(numero))
+        except (TypeError, ValueError):
+            continue
+    if not numeros:
+        return [], None
+    liste = ",".join(str(n) for n in numeros)
+    resultats, souci = interroge(
+        f"fields {CHAMPS_LARGES}; where id = ({liste}); limit {len(numeros)};")
+    if souci:
+        return [], souci
+
+    sortie = []
+    for jeu in resultats:
+        vues = []
+        for source in ("artworks", "screenshots"):
+            for img in (jeu.get(source) or []):
+                cle = img.get("image_id")
+                if cle and cle not in vues:
+                    vues.append(cle)
+        for cle in vues[:IMAGES_PAR_JEU]:
+            sortie.append({
+                "image_id": cle,
+                "jeu": jeu.get("name") or "",
+                "id_igdb": jeu.get("id"),
+                "apercu": f"{IGDB_IMG}/{TAILLE_BANNIERE_APERCU}/{cle}.jpg",
+                "grande": f"{IGDB_IMG}/{TAILLE_BANNIERE}/{cle}.jpg",
+            })
+    return sortie, None
+
+
+# --------------------------------------------------------------------------
+#   Fiche detaillee : au-dela du strict necessaire pour choisir une jaquette
+# --------------------------------------------------------------------------
+CHAMPS_DETAIL = ("platforms.name, involved_companies.company.name, "
+                  "involved_companies.developer, genres.name, summary, "
+                  "screenshots.image_id, videos.video_id, aggregated_rating, "
+                  "first_release_date, url, "
+                  "external_games.category, external_games.uid, external_games.url")
+CAPTURES_MAX = 8
+
+# La plateforme, le developpeur et les genres d'un jeu ne changent jamais ;
+# sa description et ses captures, presque jamais. Ce cache sert surtout au
+# rattachement en masse (voir la mise a jour depuis IGDB) : l'analyse
+# demande la fiche de chaque jeu, l'ecriture la redemanderait aussitot pour
+# en tirer les trois colonnes. Une heure suffit a couvrir l'aller-retour,
+# et rend au passage immediate la reouverture d'une meme fiche detaillee.
+_DETAIL = {}
+DUREE_DETAIL = 3600
+
+
+def detail_complet(id_igdb):
+    """Tout ce qu'IGDB sait d'une fiche precise, au-dela du strict necessaire
+    pour choisir une jaquette. Renvoie (detail, souci).
+
+    Sert a deux choses : ecrire une fois pour toutes la plateforme, le
+    developpeur et les genres d'un jeu qu'on vient de rattacher a une fiche
+    (voir journal.py), et nourrir la fenetre « Voir plus d'informations » a
+    chaque ouverture -- description, captures, bande-annonce et note
+    critique ne sont eux jamais stockes en base, pour ne jamais montrer une
+    image ou un avis perime.
+    """
+    try:
+        id_igdb = int(id_igdb)
+    except (TypeError, ValueError):
+        return None, "identifiant IGDB invalide"
+
+    garde = _DETAIL.get(id_igdb)
+    if garde and time.time() - garde[1] < DUREE_DETAIL:
+        return garde[0], None
+
+    resultats, souci = interroge(f"fields {CHAMPS_DETAIL}; where id = {id_igdb}; limit 1;")
+    if souci:
+        return None, souci
+    if not resultats:
+        return None, None
+    jeu = resultats[0]
+    plateformes = [p.get("name") for p in (jeu.get("platforms") or []) if p.get("name")]
+    developpeurs = [c["company"]["name"] for c in (jeu.get("involved_companies") or [])
+                    if c.get("developer") and (c.get("company") or {}).get("name")]
+    genres = [g.get("name") for g in (jeu.get("genres") or []) if g.get("name")]
+    # deux tailles par capture : la vignette de la bande, et le format
+    # d'affichage quand on clique dessus pour la voir en grand
+    images = [{"apercu": f"{IGDB_IMG}/{TAILLE_CAPTURE}/{s['image_id']}.webp",
+               "grande": f"{IGDB_IMG}/{TAILLE_CAPTURE_GRANDE}/{s['image_id']}.webp"}
+              for s in (jeu.get("screenshots") or []) if s.get("image_id")]
+    videos = jeu.get("videos") or []
+    trailer = videos[0].get("video_id") if videos else None
+    note = jeu.get("aggregated_rating")
+    date, annee, iso = _date_fr(jeu.get("first_release_date"))
+    # l'appid sort de la meme requete : le lien boutique ne coute donc rien
+    # de plus, la ou le prix demanderait en plus d'aller interroger Steam
+    appid = _appid_dans(jeu.get("external_games"))
+    detail = {
+        "plateforme": ", ".join(plateformes) or None,
+        "developpeur": ", ".join(developpeurs) or None,
+        "genres": ", ".join(genres) or None,
+        "description": jeu.get("summary") or None,
+        "images": images[:CAPTURES_MAX],
+        "trailer": f"https://www.youtube.com/embed/{trailer}" if trailer else None,
+        "note_critique": round(note) if note is not None else None,
+        "date": date, "annee": annee, "iso": iso,
+        "lien": jeu.get("url") or "",
+        "steam": f"https://store.steampowered.com/app/{appid}/" if appid else "",
+    }
+    _DETAIL[id_igdb] = (detail, time.time())
+    return detail, None
+
+
+def temps_hltb(nom):
+    """Les temps pour finir ce jeu, d'apres HowLongToBeat. Renvoie (temps, souci).
+
+    Pas de jeton, pas de cle : une recherche publique, comme celle que ferait
+    quelqu'un depuis le site. howlongtobeatpy trie deja par ressemblance ;
+    en dessous de 0.4 le premier resultat n'a probablement rien a voir avec
+    le jeu demande, autant ne rien montrer que montrer les temps d'un autre.
+    """
+    nom = (nom or "").strip()
+    if not nom:
+        return None, None
+    try:
+        resultats = HowLongToBeat().search(nom)
+    except Exception as err:                      # noqa: BLE001 - site tiers, forme d'echec imprevisible
+        return None, f"{type(err).__name__}: {err}"[:160]
+    if not resultats:
+        return None, None
+    meilleur = max(resultats, key=lambda r: r.similarity)
+    if meilleur.similarity < 0.4:
+        return None, None
+    def _heures(v):
+        return round(v, 1) if v else None
+    return {
+        "histoire": _heures(meilleur.main_story),
+        "extra": _heures(meilleur.main_extra),
+        "complet": _heures(meilleur.completionist),
+        "lien": meilleur.game_web_link or "",
+    }, None
+
+
 def appid_du_nom(nom, sortie=None):
     """L'identifiant Steam d'un jeu designe par son nom. Renvoie (appid, souci).
 
@@ -860,6 +1129,68 @@ def telecharge(image, cible):
                 pass
 
 
+# --------------------------------------------------------------------------
+#   Le nom du fichier d'une jaquette
+# --------------------------------------------------------------------------
+# Le dossier des jaquettes, retenu au montage du blueprint. journal.py en a
+# besoin pour renommer un fichier quand un jeu se rattache a une fiche, et
+# il n'a aucune raison de connaitre l'arborescence du site.
+DOSSIER_JAQUETTES = None
+
+
+def cle_jaquette(nom, id_igdb=None):
+    """Le nom de fichier d'une jaquette, sans extension.
+
+    L'identifiant IGDB quand on l'a, le nom du jeu sinon. Deux jeux qui
+    portent exactement le meme titre -- « God of War » de 2005 et celui de
+    2018, « Doom », « Tomb Raider » -- se partageaient jusqu'ici un unique
+    fichier, donc une seule image pour les deux. L'identifiant les separe,
+    puisque c'est justement ce qu'IGDB garantit unique.
+
+    Le repli sur le nom garde tout ce qui existe deja affiche : un jeu
+    qu'IGDB ne connait pas n'a pas d'identifiant, et sa jaquette continue
+    de s'appeler comme lui. La page applique la meme regle (voir
+    cleJaquette dans jeux-videos.html) : les deux doivent s'accorder, sans
+    quoi la page demande un fichier que le serveur n'ecrit pas.
+    """
+    if id_igdb:
+        try:
+            return str(int(id_igdb))
+        except (TypeError, ValueError):
+            pass
+    return slug(nom)
+
+
+def renomme_jaquette(ancienne, nouvelle):
+    """Fait suivre une jaquette quand la cle d'un jeu change. Renvoie True
+    si un fichier a bouge.
+
+    Appelee au moment ou un jeu recoit son identifiant IGDB : son image
+    s'appelait jusque-la par son nom, elle doit desormais s'appeler par
+    l'identifiant, sinon la page la redemanderait a IGDB alors qu'elle est
+    deja sur le disque.
+
+    Ne fait rien si la destination existe deja -- deux entrees du meme jeu
+    (une partie rejouee une autre annee) tombent sur la meme cle, et la
+    seconde n'a pas a ecraser ce que la premiere a mis en place.
+    """
+    if DOSSIER_JAQUETTES is None or not ancienne or not nouvelle or ancienne == nouvelle:
+        return False
+    for cle in (ancienne, nouvelle):
+        if not re.fullmatch(r"[a-z0-9_]+", cle):
+            return False
+    source = DOSSIER_JAQUETTES / (ancienne + EXTENSION)
+    cible = DOSSIER_JAQUETTES / (nouvelle + EXTENSION)
+    try:
+        if not source.is_file() or cible.exists():
+            return False
+        os.replace(source, cible)
+        return True
+    except OSError as err:
+        _dit(f"renommage {source.name} -> {cible.name} : {err}")
+        return False
+
+
 # Ce qu'une proposition de jaquette emporte avec elle. Pas seulement de quoi
 # l'afficher : « id » et « iso » servent au formulaire, qui realigne la date
 # de sortie et le prix sur la fiche dont on vient de choisir l'image. Changer
@@ -882,17 +1213,27 @@ def blueprint_jaquettes(dossier, url_publique="/static/Cover/"):
       /api/jeu/maj           tout ce qu'IGDB sait d'un jeu deja enregistre
       /api/wishlist/prix     le prix du jour des jeux convoites, promos comprises
       /api/decouverte        des jeux proches de ceux qu'on a le mieux notes
+
+    La fiche detaillee (description, captures, HowLongToBeat...) vit dans
+    journal.py : /api/journal/jeu/<id>/detail, qui sait en plus retomber sur
+    la plateforme/le developpeur/les genres deja en base si IGDB ne repond
+    pas.
     """
     dossier = Path(dossier)
     if not url_publique.endswith("/"):
         url_publique += "/"
     bp = Blueprint("jaquettes", __name__)
 
-    def _cible(nom):
-        """Le fichier ou doit atterrir la jaquette, ou None si le nom ne
-        donne rien d'ecrivable. Le nom vient du navigateur : on ne garde que
-        des lettres, des chiffres et des tirets bas, jamais un chemin."""
-        fichier = slug(nom)
+    global DOSSIER_JAQUETTES
+    DOSSIER_JAQUETTES = dossier
+
+    def _cible(nom, id_igdb=None):
+        """Le fichier ou doit atterrir la jaquette, ou None si rien
+        d'ecrivable n'en sort. L'identifiant IGDB prime sur le nom quand la
+        page le connait -- voir cle_jaquette. Tout vient du navigateur : on
+        ne garde que des lettres, des chiffres et des tirets bas, jamais un
+        chemin."""
+        fichier = cle_jaquette(nom, id_igdb)
         if not fichier or not re.fullmatch(r"[a-z0-9_]+", fichier):
             return None, None
         return dossier / (fichier + EXTENSION), fichier
@@ -918,7 +1259,7 @@ def blueprint_jaquettes(dossier, url_publique="/static/Cover/"):
         def travail():
             donnees = request.get_json(silent=True) or {}
             nom = str(donnees.get("nom") or "").strip()
-            cible, fichier = _cible(nom)
+            cible, fichier = _cible(nom, donnees.get("id_igdb"))
             if not cible:
                 return jsonify(etat="introuvable")
             # le bouton d'une tuile sans jaquette force la recherche : le
@@ -950,7 +1291,7 @@ def blueprint_jaquettes(dossier, url_publique="/static/Cover/"):
         def travail():
             donnees = request.get_json(silent=True) or {}
             nom = str(donnees.get("nom") or "").strip()
-            cible, fichier = _cible(nom)
+            cible, fichier = _cible(nom, donnees.get("id_igdb"))
             if not cible:
                 return jsonify(etat="introuvable")
             ecrit, souci = telecharge(str(donnees.get("image") or ""), cible)
@@ -1025,9 +1366,10 @@ def blueprint_jaquettes(dossier, url_publique="/static/Cover/"):
             donnees = request.get_json(silent=True) or {}
             nom = str(donnees.get("nom") or "").strip()
             veut_prix = bool(donnees.get("prix"))
+            veut_detail = bool(donnees.get("detail"))
             jaquettes = str(donnees.get("jaquettes") or "manquantes")
 
-            cible, _fichier = _cible(nom)
+            cible, _fichier = _cible(nom, donnees.get("id_igdb"))
             # « inconnue » : le nom ne donne aucun nom de fichier ecrivable,
             # donc la question de la jaquette ne se pose meme pas
             if not cible:
@@ -1059,10 +1401,23 @@ def blueprint_jaquettes(dossier, url_publique="/static/Cover/"):
             if veut_prix and choix:
                 valeur, appid, souci_prix = prix_du_jeu(choix["id"])
 
+            # La fiche detaillee sert au rattachement en masse : la page
+            # compare ces trois champs a ce qu'elle a deja et n'envoie a
+            # l'ecriture que les jeux qui en manquent. L'appel remplit au
+            # passage le cache de detail_complet, si bien que l'ecriture
+            # qui suivra ne redemandera rien a IGDB.
+            fiche_detail = None
+            if veut_detail and choix:
+                complet, _souci_detail = detail_complet(choix["id"])
+                if complet:
+                    fiche_detail = {cle: complet[cle] for cle in
+                                    ("plateforme", "developpeur", "genres")}
+
             return jsonify(
                 etat="ok",
                 jaquette=jaquette,
                 surete=surete,
+                detail=fiche_detail,
                 fiche={cle: choix[cle] for cle in
                        ("id", "titre", "date", "iso", "annee", "nature",
                         "derive", "image", "apercu", "lien")},

@@ -39,14 +39,25 @@
         </svg>
       </button>
       <div class="menu" id="menu" hidden role="menu">
+        <button class="menu-item" id="statsBtn" role="menuitem">Statistiques</button>
         <button class="menu-item" id="bilanBtn" role="menuitem">Télécharger un résumé</button>
-        <button class="menu-item" id="exportJsonBtn" role="menuitem">Exporter en JSON</button>
-        <button class="menu-item" id="exportCsvBtn" role="menuitem">Exporter en CSV</button>
+        <button class="menu-item" id="exportBtn" role="menuitem">Exporter...</button>
         <button class="menu-item" id="igdbBtn" role="menuitem" hidden>Mettre à jour depuis IGDB</button>
         <button class="menu-item" id="unlock" role="menuitem">Passer en mode éditeur</button>
         <button class="menu-item quit" id="relock" role="menuitem" hidden>Repasser en lecture seule</button>
       </div>
     </div>
+    <!-- Dernier de la barre, et volontairement en dehors de la colonne
+         centrale : la marge droite de la page est vide, autant l'occuper.
+         Voir .entete-action dans le CSS pour la façon dont il en sort. -->
+    <a class="entete-action" id="suggBtn" href="/abyss?suggestion=jeux-videos"
+       title="Proposer une idée ou signaler un bug">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>
+      </svg>
+      <span>Suggestion / Bug</span>
+    </a>
   </div>
 </header>
 
@@ -92,21 +103,14 @@
       </label>
       <!-- rempli par renderSort() : la liste dépend de l'onglet affiché -->
       <select class="sel" id="sort" aria-label="Trier"></select>
-      <button class="select-toggle" id="selectBtn" hidden>Sélection multiple</button>
       <button class="add" id="addBtn" hidden>+ Ajouter un jeu</button>
     </div>
-    <!-- affichée à la place des outils tant qu'on choisit des jeux -->
-    <div class="selection-bar" id="selectionBar" hidden>
-      <b id="selectionCompte">0 sélectionné</b>
-      <button type="button" class="lien-select" id="selectTout">Tout</button>
-      <button type="button" class="lien-select" id="selectAucun">Aucun</button>
-      <span class="spacer"></span>
-      <select class="sel" id="selectCible" aria-label="Déplacer vers"></select>
-      <button class="ghost" id="selectDeplacer">Déplacer</button>
-      <button class="ghost danger" id="selectSupprimer">Supprimer</button>
-      <button class="ghost" id="selectAnnuler">Annuler</button>
-    </div>
     <div id="out"></div>
+  </section>
+
+  <!-- onglet « Statistiques », rempli par renderAnalyse() -->
+  <section class="wrap analyse" id="analyse" hidden>
+    <div class="tip" id="anTip"></div>
   </section>
 
   <!-- suggestions IGDB, remplies par renderDecouverte() : wishlist seulement -->
@@ -120,6 +124,9 @@
 <div class="sheet-back" id="bilan" hidden></div>
 <div class="sheet-back" id="igdb" hidden></div>
 <div class="sheet-back" id="recherche" hidden></div>
+<div class="sheet-back" id="export" hidden></div>
+<div class="sheet-back" id="detail" hidden></div>
+<div class="sheet-back" id="zoom" hidden></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -230,12 +237,128 @@ function compteARebours(iso){
     : { avant:false, txt:`sorti depuis ${duree}` };
 }
 
-/* Six fenêtres peuvent se recouvrir : la fiche, le formulaire, le choix de
-   jaquette, le bilan en image, la mise à jour depuis IGDB et la recherche de
-   journal. Chacune décidait du défilement de la page pour son propre compte,
-   donc en fermer une pendant qu'une autre est encore ouverte rendait la page
-   défilable derrière. Un seul endroit regarde maintenant l'état des six. */
-const FENETRES = ['sheet','form','jaq','bilan','igdb','recherche'];
+/* Neuf fenêtres peuvent se recouvrir : la fiche, le formulaire, le choix de
+   jaquette, le bilan en image, la mise à jour depuis IGDB, la recherche de
+   journal, l'export, le détail d'un jeu et une capture en grand. Chacune
+   décidait du défilement de la page pour son propre compte, donc en fermer
+   une pendant qu'une autre est encore ouverte rendait la page défilable
+   derrière. Un seul endroit regarde maintenant l'état des neuf. */
+/* =======================================================================
+   Rattrapage automatique des fiches IGDB.
+
+   Les classeurs remplis avant l'arrivée des fiches détaillées n'ont ni
+   identifiant IGDB ni plateforme/développeur/genres. Demander à chacun
+   d'aller lancer la mise à jour à la main ne marche pas : personne ne le
+   fait. La page s'en charge donc seule, une fois, à la première ouverture
+   qui suit — le serveur dit quand (voir contenu(), journal.py).
+
+   Deux garde-fous, parce que ça écrit dans le classeur de quelqu'un sans
+   qu'il l'ait demandé :
+
+     - seules les correspondances SÛRES sont écrites. « plusieurs fiches »
+       et « à vérifier » sont précisément les cas où l'on risque d'attacher
+       le mauvais jeu — et un mauvais identifiant renomme aussi la jaquette.
+       Ceux-là restent pour la mise à jour manuelle, qui les montre.
+     - seul l'identifiant part. Ni date, ni prix : ces colonnes-là ont pu
+       être corrigées à la main, et rien ne justifie de les écraser au dos
+       de leur propriétaire. Les trois autres colonnes sont relues par le
+       serveur à partir de l'identifiant.
+   ======================================================================= */
+let RATTRAPAGE_FAIT = false;
+let RATTRAPAGE_STOP = false;
+const RATTRAPAGE_ABANDON = 8;    // échecs d'affilée = le serveur ne suit plus
+
+function rattrapageBanniere(texte, fini){
+  let b = $('rattrapage');
+  if(!b){
+    b = document.createElement('div');
+    b.id = 'rattrapage';
+    b.className = 'rattrapage';
+    document.body.appendChild(b);
+  }
+  b.innerHTML = `<span class="rattrapage-txt">${esc(texte)}</span>` +
+    (fini ? '' : '<button class="rattrapage-x" type="button">Plus tard</button>');
+  const x = b.querySelector('.rattrapage-x');
+  if(x) x.onclick = ()=>{ RATTRAPAGE_STOP = true; };
+  return b;
+}
+function rattrapageFerme(){
+  const b = $('rattrapage');
+  if(b) b.remove();
+}
+/* Que la passe aille au bout, soit interrompue ou tombe en panne, la
+   question a été posée : on ne la reposera pas à chaque ouverture. Ce qui
+   reste sans fiche demeure accessible par la mise à jour manuelle. */
+async function rattrapageClos(){
+  try{ await envoyer('POST', '/api/journal/rattrapage', {}); }catch(e){}
+}
+
+async function rattrapageIgdb(){
+  const aFaire = GAMES.filter(g => !g.idIgdb);
+  if(!aFaire.length){ rattrapageClos(); return; }
+
+  RATTRAPAGE_STOP = false;
+  let vus = 0, surs = 0, echecs = 0, ecrits = 0, abandon = false;
+  let file = [];
+  rattrapageBanniere(`Mise à jour de ton classeur… 0/${aFaire.length}`);
+
+  // les écritures partent par paquets : une relecture du journal pour
+  // vingt jeux au lieu d'une par jeu, comme la mise à jour manuelle
+  const vide = async ()=>{
+    if(!file.length) return;
+    const paquet = file.splice(0, file.length);
+    try{
+      const rep = await envoyer('PUT', '/api/journal/lot', {modifs: paquet});
+      const refuses = ((rep.fait || {}).echecs) || [];
+      ecrits += paquet.length - refuses.length;
+      if(rep.jeux) applyData(rep, true);
+    }catch(e){ /* le paquet est perdu, la passe continue */ }
+  };
+
+  for(const g of aFaire){
+    if(RATTRAPAGE_STOP) break;
+    let data;
+    try{
+      data = await apiPatient('/api/jeu/maj', {
+        nom: g.name,
+        sortie: g.release || '',
+        prix: false,           // le prix payé est une donnée personnelle
+        detail: true,
+        jaquettes: 'aucune',   // une jaquette se choisit, ça ne s'automatise pas
+      });
+      echecs = 0;
+    }catch(e){
+      // le serveur ne répond plus : s'acharner ne ferait qu'empirer
+      if(++echecs >= RATTRAPAGE_ABANDON){ abandon = true; break; }
+      continue;
+    }finally{
+      vus++;
+      rattrapageBanniere(`Mise à jour de ton classeur… ${vus}/${aFaire.length}`);
+    }
+    if(data.etat === 'ok' && data.fiche && data.surete === 'sure'){
+      surs++;
+      file.push({id: g.id, values: {id_igdb: data.fiche.id}});
+      if(file.length >= IGDB_LOT) await vide();
+    }
+  }
+  await vide();
+  /* Une passe qui s'arrête parce que le serveur ne répondait plus n'a rien
+     tranché du tout : la marquer « faite » brûlerait l'unique chance du
+     rattrapage sur une panne passagère. On ne clôt que si on est allé au
+     bout, ou si la personne a écarté la bannière elle-même. */
+  if(!abandon) await rattrapageClos();
+
+  render();
+  if(ecrits){
+    rattrapageBanniere(`${ecrits} jeu${ecrits > 1 ? 'x' : ''} complété${
+      ecrits > 1 ? 's' : ''} depuis IGDB.`, true);
+    setTimeout(rattrapageFerme, 6000);
+  }else{
+    rattrapageFerme();
+  }
+}
+
+const FENETRES = ['sheet','form','jaq','bilan','igdb','recherche','export','detail','zoom'];
 function verrouFond(){
   const ouverte = FENETRES.some(id => { const e = $(id); return e && !e.hidden; });
   document.body.style.overflow = ouverte ? 'hidden' : '';
@@ -391,8 +514,18 @@ function remiseDe(x){
   return t && t.remise > 0 ? t.remise : 0;
 }
 
-function coverURL(name){
-  const f = slug(name);
+/* Le nom de fichier d'une jaquette : l'identifiant IGDB quand le jeu en a
+   un, son nom sinon. Deux jeux au titre identique — « God of War » de 2005
+   et celui de 2018, « Doom », « Tomb Raider » — tombaient jusqu'ici sur le
+   même fichier, donc sur une seule image pour les deux.
+
+   Doit dire exactement la même chose que cle_jaquette() en Python : c'est
+   le serveur qui écrit les fichiers, la page qui les demande. */
+function cleJaquette(g){
+  return g && g.idIgdb ? String(g.idIgdb) : slug(g ? g.name : '');
+}
+function coverURL(cle){
+  const f = cle;
   if(!f) return '';
   // le manifeste dit ce qui existe : on ne demande jamais un fichier absent
   if(JAQUETTES && !(f in JAQUETTES)) return '';
@@ -423,11 +556,12 @@ function coverTag(g, cls, prioritaire){
     : 'loading="lazy"';
   return `<img class="cov ${cls}" alt="" ${charge} decoding="async"
     data-name="${esc(g.name)}" data-release="${esc(g.release || '')}"
+    data-cle="${esc(cleJaquette(g))}" data-igdb="${esc(g.idIgdb || '')}"
     data-color="${noteColor(g.rating)}">`;
 }
 
 // Un bouton dans le coin de la cover pour télécharger l'image
-function boutonJaquette(nom, sortie){
+function boutonJaquette(nom, sortie, idIgdb){
   const b = document.createElement('span');
   b.className = 'cov-get';
   b.setAttribute('role', 'button');
@@ -442,7 +576,7 @@ function boutonJaquette(nom, sortie){
     if(b.classList.contains('busy')) return;
     b.classList.add('busy');
     // force : le fichier existe peut-être déjà, mais le navigateur garde un vieil échec en cache
-    jaquetteAuto(nom, sortie, true).finally(()=> b.classList.remove('busy'));
+    jaquetteAuto(nom, sortie, true, idIgdb).finally(()=> b.classList.remove('busy'));
   };
   b.addEventListener('click', lance);
   b.addEventListener('keydown', e=>{ if(e.key === 'Enter' || e.key === ' ') lance(e); });
@@ -450,13 +584,13 @@ function boutonJaquette(nom, sortie){
 }
 function hydrateCovers(root){
   root.querySelectorAll('img.cov').forEach(img=>{
-    const url = coverURL(img.dataset.name);
+    const url = coverURL(img.dataset.cle);
     const initiales = ()=>{
       const d = document.createElement('div');
       d.className = Array.from(img.classList).filter(c=>c!=='chargement').join(' ') + ' ph';
       d.style.setProperty('--c', img.dataset.color);
       d.textContent = initials(img.dataset.name);
-      d.appendChild(boutonJaquette(img.dataset.name, img.dataset.release));
+      d.appendChild(boutonJaquette(img.dataset.name, img.dataset.release, img.dataset.igdb));
       img.replaceWith(d);
     };
     if(!url){ initiales(); return; }
@@ -516,6 +650,13 @@ const cacheStore = {
 };
 
 let GAMES = [], BUCKETS = [], CAN_WRITE = false, SRC = 0, PREMIERE_FOIS = true, TITRE = '';
+/* L'onglet sur lequel le classeur affiché s'ouvre, choisi par son auteur.
+   Vide = aucun choix, on retombe sur l'année la plus récente. */
+let ONGLET_DEFAUT = '';
+/* Les onglets qui ne rangent aucun jeu : ce sont des vues sur le classeur,
+   pas des tiroirs. Ils ne figurent donc jamais dans BUCKETS, et tout ce qui
+   valide un nom d'onglet doit les connaître à part. */
+const ONGLETS_VUE = ['all', 'stats'];
 /* le journal affiché, ou null si SOURCES est vide */
 const source = () => SOURCES[SRC] || null;
 
@@ -525,12 +666,18 @@ const CLE_CLASSEUR = 'journal-de-jeu:classeur';
 function memoriseClasseur(){
   try{ localStorage.setItem(CLE_CLASSEUR, source() ? source().url : ''); }catch(e){}
 }
-/* L'onglet le plus récent : la plus grande année parmi les onglets, et à
-   défaut d'onglet nommé comme une année, le dernier de la liste. */
+/* L'année la plus récente : la plus grande parmi les onglets, et à défaut
+   d'onglet nommé comme une année, le dernier de la liste.
+
+   Ne sert plus qu'à proposer une catégorie au formulaire d'ajout — un jeu
+   qu'on vient de finir appartient presque toujours à l'année en cours.
+   L'ouverture du classeur, elle, se fait sur « Tout » ou sur l'onglet que
+   son auteur a désigné (voir ONGLET_DEFAUT). */
 function derniereAnnee(){
   const annees = BUCKETS.filter(b => /^\d{4}$/.test(String(b).trim()));
   if(annees.length) return annees.reduce((a,b) => +String(b).trim() > +String(a).trim() ? b : a);
-  // ni « En cours » ni « Wishlist » ne sont des périodes : jamais d'onglet par défaut
+  // « En cours » et « Wishlist » ne sont pas des périodes : on ne range pas
+  // un jeu terminé dans un statut, ils sont donc écartés d'office
   const autres = BUCKETS.filter(b => !estStatutNom(b));
   return autres[autres.length - 1] || BUCKETS[BUCKETS.length - 1] || 'all';
 }
@@ -591,12 +738,38 @@ function applyData(data, frais){
   TITRE = data.titre || '';
   oublieTuiles();   // le mur garde ses tuiles : celles des jeux partis s'en vont
   // à l'ouverture seulement : on se place sur l'année la plus récente
-  if(PREMIERE_FOIS && BUCKETS.length){ S.bucket = derniereAnnee(); PREMIERE_FOIS = false; }
-  if(S.bucket !== 'all' && BUCKETS.indexOf(S.bucket) < 0) S.bucket = 'all';
+  ONGLET_DEFAUT = data.ongletDefaut || '';
+  /* Sans choix de l'auteur, on ouvre sur « Tout » : c'est la vue qui montre
+     le classeur entier, donc celle qui ne cache rien à qui arrive. Ouvrir
+     sur l'année en cours, comme avant, donnait un classeur presque vide en
+     janvier et laissait croire qu'il n'y avait que ça.
+     derniereAnnee() reste utilisée à l'ajout d'un jeu, où « Tout » n'est
+     pas une catégorie où ranger quoi que ce soit.
+
+     Le choix de l'auteur passe devant, à condition qu'il existe encore : un
+     onglet vidé de ses jeux disparaît de BUCKETS, et s'ouvrir sur un onglet
+     absent afficherait une page vide sans que rien n'explique pourquoi. */
+  if(PREMIERE_FOIS && BUCKETS.length){
+    const voulu = ONGLETS_VUE.includes(ONGLET_DEFAUT)
+      || BUCKETS.indexOf(ONGLET_DEFAUT) >= 0 ? ONGLET_DEFAUT : '';
+    S.bucket = voulu || 'all';
+    PREMIERE_FOIS = false;
+  }
+  /* « stats » et « all » ne sont pas des tiroirs du classeur : ils
+     n'apparaissent pas dans BUCKETS et ce garde-fou les effacerait. */
+  if(!ONGLETS_VUE.includes(S.bucket) && BUCKETS.indexOf(S.bucket) < 0) S.bucket = 'all';
   majEntete();
   if(frais) majEtat('live', CAN_WRITE ? 'modifiable' : 'lecture seule');
   else majEtat('stale', 'actualisation...');
   majVerrou();
+  /* Le serveur ne dit « rattrapage » qu'au propriétaire d'un classeur
+     rempli avant que les fiches IGDB existent. On laisse la page finir de
+     s'afficher avant de lancer quoi que ce soit : le rattrapage est long
+     et secondaire, il n'a aucune raison de retarder le premier écran. */
+  if(frais && data.rattrapage && CAN_WRITE && !RATTRAPAGE_FAIT){
+    RATTRAPAGE_FAIT = true;
+    setTimeout(rattrapageIgdb, 1200);
+  }
 }
 
 /* ---------- écritures ----------
@@ -696,12 +869,18 @@ function renderRechercheListe(){
     return;
   }
   liste.innerHTML = items.map(({s,i})=>{
-    const compte = typeof s.jeux === 'number' ? `${s.jeux} jeu${s.jeux>1?'x':''}` : 'journal public';
+    const compte = typeof s.jeux === 'number' ? `${s.jeux} jeu${s.jeux>1?'x':''} terminé${s.jeux>1?'s':''}` : 'journal public';
     const sous = s.moi ? `Ton journal - ${compte}` : compte.charAt(0).toUpperCase() + compte.slice(1);
     const avatar = s.avatar
       ? `<img class="rsearch-avatar" src="${esc(s.avatar)}" alt="">`
       : `<span class="rsearch-avatar" style="--h:${teinteAvatar(s.nom)}">${esc(initials(s.nom || '?'))}</span>`;
-    return `<button class="rsearch-item${i===SRC?' on':''}" data-i="${i}">
+    /* La bannière tapisse la ligne, très en retrait : elle dit à qui
+       appartient le journal d'un coup d'œil sans rendre le texte illisible.
+       L'adresse n'est pas écrite dans le HTML mais posée juste après, en
+       JavaScript : esc() n'échappe pas l'apostrophe, qui suffirait à sortir
+       d'un url('...') et à injecter du CSS. Rien à échapper, rien à oublier. */
+    return `<button class="rsearch-item${i===SRC?' on':''}${
+        s.banniere ? ' rsearch-orne' : ''}" data-i="${i}">
       ${avatar}
       <span class="rsearch-meta"><b>${esc(s.nom || '?')}</b><i>${esc(sous)}</i></span>
       ${i===SRC?'<span class="tick">✓</span>':''}
@@ -709,6 +888,8 @@ function renderRechercheListe(){
   }).join('');
   liste.querySelectorAll('.rsearch-item').forEach(b=>{
     b.onclick = ()=> choisirClasseur(+b.dataset.i);
+    const s = SOURCES[+b.dataset.i];
+    if(s && s.banniere) b.style.setProperty('--banniere', `url("${s.banniere}")`);
   });
 }
 function fermerRecherche(){
@@ -746,7 +927,6 @@ function choisirClasseur(i){
      dans le classeur affiché. render() ne ferme plus rien de lui-même, donc
      c'est ici que ça se dit. */
   closeSheet();
-  sortirSelection();   // les identifiants choisis ne veulent rien dire ailleurs
   PREMIERE_FOIS = true; S.bucket = 'all'; S.q = ''; S.range = null; S.open = null;
   document.getElementById('q').value = '';
   majEntete();
@@ -792,9 +972,7 @@ function showApp(){
   document.getElementById('tabs').hidden = false;
   document.getElementById('cog').hidden = false;
   document.getElementById('app').hidden = false;
-  // pas pendant une sélection en cours : un rafraîchissement de fond ne
-  // doit pas faire revenir les outils par-dessus le bandeau de sélection
-  if(!SELECTION_ACTIVE) document.querySelector('.tools').hidden = false;
+  document.querySelector('.tools').hidden = false;
   // le squelette les avait rendus inertes le temps de l'attente
   document.getElementById('q').disabled = false;
   document.getElementById('sort').disabled = false;
@@ -900,8 +1078,6 @@ function majVerrou(){
   // la mise à jour de masse écrit dans le journal : en lecture seule elle
   // n'aurait rien à proposer d'autre qu'un refus, autant ne pas la montrer
   document.getElementById('igdbBtn').hidden = !chezMoi;
-  document.getElementById('selectBtn').hidden = !chezMoi;
-  if(!chezMoi) sortirSelection();
   document.getElementById('unlock').textContent =
     MOI.connecte ? 'Ouvrir mon journal' : 'Se connecter sur Abyss';
 }
@@ -924,13 +1100,6 @@ document.getElementById('inviteCreate').addEventListener('click', creerMonJourna
    Déclaré avant demarrer() : le rendu du cache s'exécute tout de suite,
    avant même que le reste du script ait fini de s'exécuter. */
 const S = { bucket:'all', q:'', sort:'note', open:null, range:null };
-
-/* Sélection multiple : un identifiant de jeu par entrée, pas une tuile —
-   la fiche voyage, l'onglet aussi, seul l'id reste vrai d'un rendu à
-   l'autre. Changer d'onglet la vide (voir choisirOnglet) : mélanger des
-   jeux de deux onglets qu'on ne voit plus ensemble serait trompeur. */
-let SELECTION_ACTIVE = false;
-const SELECTION = new Set();
 
 /* Les jeux dans l'ordre où la fiche ouverte les feuillette — figé à
    l'ouverture, relu par render() qui y retrouve la fiche après un
@@ -961,7 +1130,7 @@ const cleTuile = x => String(x.id);
    remplacée, ou quand le manifeste apprend qu'elle n'existe pas — trois cas
    où la tuile doit être refaite, et un seul terme pour les couvrir. */
 const sigTuile = x => [x.name, x.rating, x.hours, x.bucket, x.release,
-                       coverURL(x.name), sigPromo(x)].join(SEP);
+                       coverURL(cleJaquette(x)), sigPromo(x)].join(SEP);
 
 /* Suggestions IGDB (voir « Découverte par similarité » plus bas). Déclarées
    ici pour la même raison que tout ce bloc : render() appelle désormais
@@ -990,6 +1159,7 @@ async function chargeAnnuaire(){
     titre: j.titre,
     jeux: j.jeux,
     avatar: j.avatar,
+    banniere: j.banniere,
     url: '/api/journal/' + encodeURIComponent(j.pseudo),
   }));
   /* Le sien d'abord : c'est celui qu'on vient consulter neuf fois sur dix,
@@ -1007,6 +1177,7 @@ async function chargeAnnuaire(){
     SOURCES[0].moi = true;
     SOURCES[0].jeux = d.moi.jeux;
     SOURCES[0].avatar = d.moi.avatar;
+    SOURCES[0].banniere = d.moi.banniere;
   }
 }
 
@@ -1153,7 +1324,6 @@ function filtered(){
    barre s'allonge sans fin à chaque nouvelle année. */
 function choisirOnglet(k){
   closePer();
-  sortirSelection();   // les jeux choisis restaient d'un autre onglet, invisibles ici
   S.bucket = k;
   S.range = null;   // l'histogramme est recalculé : la tranche choisie ne vaut plus
   render();
@@ -1172,13 +1342,70 @@ function togglePer(periodes){
   if(ouvert){
     closeMenu(); fermerRecherche();               // un seul menu ouvert à la fois
     m.innerHTML = periodes.map(b=>
-      `<button class="menu-item${b===S.bucket?' on':''}" role="menuitem" data-b="${esc(b)}">
+      `<button class="menu-item${b===S.bucket?' on':''}${
+         b===ONGLET_DEFAUT?' defaut':''}" role="menuitem" data-b="${esc(b)}">
          ${esc(b)}${b===S.bucket?'<span class="tick">✓</span>':''}</button>`).join('');
-    m.querySelectorAll('.menu-item').forEach(x=> x.onclick = ()=> choisirOnglet(x.dataset.b));
+    m.querySelectorAll('.menu-item').forEach(x=>{
+      x.onclick = ()=> choisirOnglet(x.dataset.b);
+      x.oncontextmenu = e => menuOnglet(e, x.dataset.b);
+    });
   }
   m.hidden = !ouvert;
   document.getElementById('perBtn').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
 }
+/* ---------- clic droit sur un onglet ----------
+   Un seul choix pour l'instant, mais un vrai menu contextuel plutôt qu'une
+   bascule directe : un clic droit qui agit tout seul, sans rien montrer,
+   est impossible à découvrir et impossible à annuler.
+
+   Réservé au propriétaire : le réglage s'écrit dans son classeur. Chez
+   quelqu'un d'autre, le clic droit rend la main au navigateur — son menu
+   habituel vaut mieux que le nôtre, qui n'aurait rien à proposer. */
+function fermeMenuOnglet(){
+  const m = document.getElementById('ongletMenu');
+  if(m) m.remove();
+}
+function menuOnglet(e, onglet){
+  if(!CAN_WRITE || !onglet) return;      // pas chez moi : menu du navigateur
+  e.preventDefault();
+  e.stopPropagation();
+  fermeMenuOnglet();
+  const actuel = onglet === ONGLET_DEFAUT;
+  const m = document.createElement('div');
+  m.id = 'ongletMenu';
+  m.className = 'menu onglet-menu';
+  m.innerHTML = `<button class="menu-item" type="button">${
+    actuel ? 'Ne plus ouvrir sur cet onglet' : 'Définir comme onglet par défaut'}</button>`;
+  document.body.appendChild(m);
+  /* posé après l'insertion : sa taille n'est connue qu'une fois dans la
+     page, et sans elle on ne peut pas l'empêcher de déborder à droite */
+  const l = Math.min(e.clientX, innerWidth - m.offsetWidth - 8);
+  const t = Math.min(e.clientY, innerHeight - m.offsetHeight - 8);
+  m.style.left = Math.max(8, l) + 'px';
+  m.style.top  = Math.max(8, t) + 'px';
+  m.querySelector('.menu-item').onclick = ()=>{
+    fermeMenuOnglet();
+    poseOngletDefaut(actuel ? null : onglet);
+  };
+}
+document.addEventListener('click', fermeMenuOnglet);
+document.addEventListener('scroll', fermeMenuOnglet, true);
+window.addEventListener('resize', fermeMenuOnglet);
+
+async function poseOngletDefaut(onglet){
+  try{
+    const data = await envoyer('POST', '/api/journal/onglet-defaut', {onglet: onglet});
+    cacheStore.set(source().url, data);
+    /* applyData remet PREMIERE_FOIS à false depuis longtemps : l'onglet
+       affiché ne bouge donc pas sous les doigts. On ne fait que réafficher
+       la barre pour que la puce suive. */
+    applyData(data, true);
+    renderTabs();
+    toast(onglet ? `Ton classeur s'ouvrira sur « ${onglet} ».`
+                 : "Ton classeur s'ouvrira de nouveau sur l'année la plus récente.");
+  }catch(err){ toast(err.message || 'Enregistrement impossible', true); }
+}
+
 function renderTabs(){
   const t = document.getElementById('tabs');
   const periodes = BUCKETS.filter(b => !estStatutNom(b));
@@ -1187,12 +1414,19 @@ function renderTabs(){
   /* Pas de compteur sur les onglets : le chiffre alourdissait une barre
      qu'on parcourt du regard. Il est allé dans le bandeau juste en dessous,
      où « Jeux terminés » le donnait déjà pour les années. */
+  /* L'onglet d'ouverture porte une puce. Un titre l'explique au survol :
+     une pastille muette laisserait deviner, et personne ne devine. */
+  const marque = k => k && k === ONGLET_DEFAUT
+    ? ' data-defaut="1" title="S\'ouvre sur cet onglet"' : '';
   const bouton = (k, l) =>
-    `<button class="tab" role="tab" data-b="${esc(k)}" aria-selected="${S.bucket===k}">${esc(l)}</button>`;
+    `<button class="tab" role="tab" data-b="${esc(k)}"${marque(k)
+      } aria-selected="${S.bucket===k}">${esc(l)}</button>`;
 
   t.innerHTML = bouton('all', 'Tout')
     + (periodes.length ? `<span class="tab-wrap">
-        <button class="tab tab-menu" id="perBtn" role="tab" aria-haspopup="true"
+        <button class="tab tab-menu" id="perBtn" role="tab" aria-haspopup="true"${
+          periodes.indexOf(ONGLET_DEFAUT) >= 0
+            ? ' data-defaut="1" title="S\'ouvre sur un onglet de cette liste"' : ''}
                 aria-expanded="false" aria-selected="${surPeriode}">
           <span>${esc(surPeriode ? S.bucket : 'Catégories')}</span>
           <svg class="tab-chev" width="10" height="10" viewBox="0 0 24 24" fill="none"
@@ -1204,7 +1438,10 @@ function renderTabs(){
       </span>` : '')
     + statuts.map(b => bouton(b, b)).join('');
 
-  t.querySelectorAll('.tab[data-b]').forEach(b=> b.onclick = ()=> choisirOnglet(b.dataset.b));
+  t.querySelectorAll('.tab[data-b]').forEach(b=>{
+    b.onclick = ()=> choisirOnglet(b.dataset.b);
+    b.oncontextmenu = e => menuOnglet(e, b.dataset.b);
+  });
   const pb = document.getElementById('perBtn');
   if(pb) pb.addEventListener('click', e=>{ e.stopPropagation(); togglePer(periodes); });
 }
@@ -1471,9 +1708,6 @@ function tuilePour(cle, x, i){
   }
   el.dataset.i = i;   // le rang dans filtered(), que la fiche relit au clic
   el.dataset.id = x.id;
-  // hors de la signature exprès : la sélection ne doit pas refaire l'intérieur
-  el.classList.toggle('selectionnable', SELECTION_ACTIVE);
-  el.classList.toggle('selectionne', SELECTION.has(x.id));
   return el;
 }
 
@@ -1540,96 +1774,7 @@ function oublieTuiles(){
 document.getElementById('out').addEventListener('click', e=>{
   const t = e.target.closest('.tile');
   if(!t) return;
-  if(SELECTION_ACTIVE){
-    const id = +t.dataset.id;
-    if(SELECTION.has(id)) SELECTION.delete(id); else SELECTION.add(id);
-    t.classList.toggle('selectionne', SELECTION.has(id));
-    majBarreSelection();
-    return;
-  }
   if(t.dataset.i !== undefined) ouvreFiche(+t.dataset.i, t);
-});
-
-/* ---------- sélection multiple : déplacer ou supprimer en lot ----------
-   Le serveur sait déjà faire du lot (voir /api/journal/lot, utilisé par
-   la mise à jour IGDB) : ce bloc ne fait qu'y donner accès depuis le mur. */
-function toggleSelectionMode(){
-  SELECTION_ACTIVE = !SELECTION_ACTIVE;
-  SELECTION.clear();
-  document.getElementById('selectBtn').classList.toggle('actif', SELECTION_ACTIVE);
-  document.getElementById('selectBtn').textContent = SELECTION_ACTIVE ? 'Terminer' : 'Sélection multiple';
-  document.querySelector('.tools').hidden = SELECTION_ACTIVE;
-  document.getElementById('selectionBar').hidden = !SELECTION_ACTIVE;
-  if(SELECTION_ACTIVE) remplitCibleSelection();
-  majBarreSelection();
-  renderWall();
-}
-function sortirSelection(){
-  if(!SELECTION_ACTIVE) return;
-  toggleSelectionMode();
-}
-function remplitCibleSelection(){
-  document.getElementById('selectCible').innerHTML =
-    BUCKETS.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
-}
-function majBarreSelection(){
-  const n = SELECTION.size;
-  document.getElementById('selectionCompte').textContent =
-    `${n} sélectionné${n>1?'s':''}`;
-  document.getElementById('selectDeplacer').disabled = n === 0;
-  const del = document.getElementById('selectSupprimer');
-  del.disabled = n === 0;
-  del.classList.remove('armed');
-  del.textContent = 'Supprimer';
-}
-document.getElementById('selectBtn').addEventListener('click', toggleSelectionMode);
-document.getElementById('selectAnnuler').addEventListener('click', sortirSelection);
-document.getElementById('selectTout').addEventListener('click', ()=>{
-  filtered().forEach(x => SELECTION.add(x.id));
-  renderWall();
-  majBarreSelection();
-});
-document.getElementById('selectAucun').addEventListener('click', ()=>{
-  SELECTION.clear();
-  renderWall();
-  majBarreSelection();
-});
-document.getElementById('selectDeplacer').addEventListener('click', async ()=>{
-  const cible = document.getElementById('selectCible').value;
-  if(!SELECTION.size || !cible) return;
-  const ids = Array.from(SELECTION);
-  try{
-    const data = await envoyer('PUT', '/api/journal/lot',
-      {modifs: ids.map(id => ({id, periode: cible}))});
-    cacheStore.set(source().url, data);
-    applyData(data, true);
-    toast(`${ids.length} jeu${ids.length>1?'x':''} déplacé${ids.length>1?'s':''} vers « ${cible} ».`);
-    sortirSelection();
-    render();
-  }catch(e){ toast(e.message, true); }
-});
-document.getElementById('selectSupprimer').addEventListener('click', async ()=>{
-  const btn = document.getElementById('selectSupprimer');
-  if(!SELECTION.size) return;
-  if(!btn.classList.contains('armed')){
-    btn.classList.add('armed');
-    btn.textContent = `Confirmer (${SELECTION.size})`;
-    setTimeout(()=>{
-      if(btn.isConnected && btn.classList.contains('armed')){
-        btn.classList.remove('armed'); btn.textContent = 'Supprimer';
-      }
-    }, 5000);
-    return;
-  }
-  const ids = Array.from(SELECTION);
-  try{
-    const data = await envoyer('DELETE', '/api/journal/lot', {ids});
-    cacheStore.set(source().url, data);
-    applyData(data, true);
-    toast(`${ids.length} jeu${ids.length>1?'x':''} supprimé${ids.length>1?'s':''}.`);
-    sortirSelection();
-    render();
-  }catch(e){ toast(e.message, true); }
 });
 
 function emptyHTML(){
@@ -1800,7 +1945,7 @@ async function ajouteWishlist(i, btn){
       periode: cible, review: '',
       values: {
         name: s.titre, rating: null, month: null, hours: null,
-        base: base, paid: null, release: s.iso || null,
+        base: base, paid: null, release: s.iso || null, id_igdb: s.id || null,
       },
     });
     cacheStore.set(source().url, data);
@@ -1809,7 +1954,7 @@ async function ajouteWishlist(i, btn){
     DECOUVERTE = DECOUVERTE.filter((_, k) => k !== i);
     render();
     toast(`« ${s.titre} » ajouté à la wishlist`);
-    if(s.image) poseJaquetteChoisie(s.titre, s.image);
+    if(s.image) poseJaquetteChoisie(s.titre, s.image, s.id);
   }catch(e){
     toast('Ajout impossible — ' + (e.message || 'erreur inconnue'), true);
     btn.disabled = false; btn.textContent = texte;
@@ -1913,7 +2058,6 @@ function corpsFiche(g){
     // rien n'a été payé pour un jeu de la wishlist : la case dirait « — »
     wish ? null : ['Payé', money(g.paid)]
   ].filter(Boolean);
-  const search = encodeURIComponent(g.name);
   const rang = rangJeu(g), med = medailleDe(rang);
   return `${statut
       ? `<span class="sheet-note ${wish ? 'wish' : 'encours'}">${esc(statut)}</span>`
@@ -1928,10 +2072,7 @@ function corpsFiche(g){
       : `<div class="pros"><span class="pt" style="opacity:.6">Pas d'avis écrit pour ce jeu.</span></div>`}
     <div class="facts">${facts.map(([u,b,brut])=>
       `<div class="fact"><u>${u}</u><b>${brut || esc(b)}</b></div>`).join('')}</div>
-    <div class="links">
-      <a href="https://www.google.com/search?q=${search}+jeu" target="_blank" rel="noopener">Chercher sur le web</a>
-      <a href="https://howlongtobeat.com/?q=${search}" target="_blank" rel="noopener">HowLongToBeat</a>
-    </div>`;
+    <button type="button" class="detail-btn">Voir plus d'informations</button>`;
 }
 
 /* La coquille, montée une seule fois par ouverture. Les gestionnaires posés
@@ -1971,15 +2112,21 @@ function monteFiche(host){
     if(S.open < SHEET_LIST.length - 1){ S.open++; paintSheet(1); }
   };
   boite.addEventListener('keydown', e=> piegeFocus(boite, e));
-  /* Le bouton « copier » vit dans le titre, donc dans le corps réécrit à
-     chaque jeu : on écoute la boîte plutôt que le bouton, une fois pour
-     toutes. */
+  /* Le bouton « copier » et « voir plus d'informations » vivent tous deux
+     dans le corps, réécrit à chaque jeu : on écoute la boîte plutôt que les
+     boutons, une fois pour toutes. */
   boite.addEventListener('click', e=>{
-    if(!e.target.closest('.titre-copie')) return;
-    const g = jeu();
-    if(!g) return;
-    copier(g.name).then(ok =>
-      toast(ok ? `« ${g.name} » copié` : 'Copie impossible', !ok));
+    if(e.target.closest('.titre-copie')){
+      const g = jeu();
+      if(!g) return;
+      copier(g.name).then(ok =>
+        toast(ok ? `« ${g.name} » copié` : 'Copie impossible', !ok));
+      return;
+    }
+    if(e.target.closest('.detail-btn')){
+      const g = jeu();
+      if(g) ouvrirDetail(g);
+    }
   });
 }
 
@@ -1992,13 +2139,13 @@ function coverInitiales(hote, g){
   d.className = 'cov xl ph';
   d.style.setProperty('--c', noteColor(g.rating));
   d.textContent = initials(g.name);
-  d.appendChild(boutonJaquette(g.name, g.release));
+  d.appendChild(boutonJaquette(g.name, g.release, g.idIgdb));
   hote.replaceChildren(d);
 }
 function coverFiche(g){
   const hote = document.querySelector('#sheet .sheet-cover');
   if(!hote) return;
-  const url = coverURL(g.name);
+  const url = coverURL(cleJaquette(g));
   if(!url){ coverInitiales(hote, g); return; }
 
   let img = hote.querySelector('img.cov');
@@ -2247,6 +2394,24 @@ function closeSheet(){
 }
 fermeSurFond('sheet', fermeFiche);
 document.addEventListener('keydown', e=>{
+  /* L'ordre suit la pile : la fenêtre du dessus prend Échap et rend la
+     main. Une fenêtre oubliée ici laisserait Échap traverser jusqu'à celle
+     du dessous et fermer la mauvaise — c'est ce qui arrivait au détail
+     d'un jeu, qui refermait la fiche derrière lui. */
+  if(!document.getElementById('zoom').hidden){
+    if(e.key === 'Escape') fermerZoom();
+    else if(e.key === 'ArrowLeft') zoomBouge(-1);
+    else if(e.key === 'ArrowRight') zoomBouge(1);
+    return;
+  }
+  if(!document.getElementById('detail').hidden){
+    if(e.key === 'Escape') fermerDetail();
+    return;
+  }
+  if(!document.getElementById('export').hidden){
+    if(e.key === 'Escape') fermerExport();
+    return;
+  }
   if(!document.getElementById('recherche').hidden){
     if(e.key === 'Escape') fermerRecherche();
     return;
@@ -2331,8 +2496,18 @@ function formHTML(g){
           <span class="fpick-txt">
             <b id="f_pickt"></b>
             <i id="f_pickd"></i>
-            <small>Clique pour changer la jaquette</small>
+            <small>Clique pour changer le jeu</small>
           </span>
+        </button>
+        <!-- Dit la règle AVANT d'enregistrer, pas au moment du refus : un
+             formulaire qui ne repousse qu'à la fin fait retaper pour rien.
+             Et c'est un bouton, pas un simple texte : la fiche retenue
+             (#f_pick) porte « changer de jeu », mais elle est cachée tant
+             qu'il n'y en a pas — sans ce relais, un jeu que la liste ne
+             propose pas n'aurait aucun moyen d'être cherché, et l'ajout
+             serait sans issue. -->
+        <button type="button" class="fpick-vide" id="f_pickvide" hidden>
+          <b>Aucun jeu choisi.</b>
         </button>
         <label class="fld fcheck">
           <input id="f_encours" type="checkbox">
@@ -2357,9 +2532,12 @@ function formHTML(g){
           <input id="f_base" type="text" inputmode="decimal" value="${esc(numText(g?g.base:null))}"></label>
         <label class="fld" id="f_paidwrap"><u>Prix payé (€)</u>
           <input id="f_paid" type="text" inputmode="decimal" value="${esc(numText(g?g.paid:null))}"></label>
-        <label class="fld full"><u>Date de sortie</u>
-          <input id="f_release" type="date" value="${esc(isoDate(g?g.release:''))}"
-                 data-orig="${esc(g&&g.release?g.release:'')}"></label>
+        <!-- La date de sortie ne se saisit plus : elle vient de la fiche IGDB
+             retenue (voir alignePick) et s'affiche déjà sous le nom du jeu sur
+             la fiche. Le champ reste, caché, parce que c'est encore lui qui
+             porte la valeur entre le choix d'une jaquette et l'enregistrement. -->
+        <input id="f_release" type="hidden" value="${esc(isoDate(g?g.release:''))}"
+               data-orig="${esc(g&&g.release?g.release:'')}">
         <label class="fld full" id="f_reviewwrap"><u>Avis (Commencer par + ou -)</u>
           <span class="ta-wrap"><span class="ta-hl" id="f_review_hl" aria-hidden="true"></span
             ><textarea id="f_review" rows="5">${esc(avis)}</textarea></span></label>
@@ -2546,6 +2724,16 @@ function validerFormulaire(){
     erreurs.push({champ:'f_bucket', message:"Donne un nom à la catégorie."});
   if(!clean($('f_name').value))
     erreurs.push({champ:'f_name', message:'Il faut au moins un nom de jeu.'});
+  /* Un ajout passe forcément par une fiche IGDB. C'est ce rattachement qui
+     apporte la jaquette, la date de sortie, la plateforme, le développeur
+     et les genres : un jeu tapé à la main n'a rien de tout ça et reste un
+     trou dans les statistiques — exactement ce qu'un rattrapage entier a
+     servi à combler après coup.
+     Seulement à l'ajout : une modification doit rester possible sur les
+     jeux d'avant, qui n'ont jamais eu de fiche. */
+  if(!EDIT && !(JEU_PICK && JEU_PICK.id))
+    erreurs.push({champ:'f_name', message:
+      "Choisis le jeu dans la liste qui s'ouvre sous le nom."});
   // la note est sur 10 partout dans la page : 85 tapé pour 8,5 doit se
   // voir tout de suite, pas finir en 85/10 dans les stats sans un mot
   if(!sansFin && champInvalide('f_rating', toNum, 0, 10))
@@ -2629,6 +2817,7 @@ function openForm(g){
   brancherBucket();        // liste des onglets existants pendant la frappe
   $('f_name').addEventListener('input', majDoublon);
   majDoublon();
+  posePick(null);          // pose aussi le rappel « choisis une fiche »
   // un champ retouché n'est plus en faute : inutile de resoumettre pour
   // voir son entourage rouge partir
   CHAMPS_VALIDES.forEach(id=>{
@@ -2666,6 +2855,11 @@ function lireForm(){
   const rel = $('f_release');
   // si la date d'origine n'était pas lisible par le champ, on n'y touche pas
   if(rel.value || isoDate(rel.dataset.orig) || !rel.dataset.orig) v.release = rel.value || null;
+  // absent si aucune fiche IGDB n'a été retenue cette fois : un jeu déjà
+  // rattaché garde son rattachement, la clé n'est envoyée que pour en poser
+  // un nouveau — c'est elle qui déclenche plateforme/développeur/genres
+  // côté serveur (voir enrichit_igdb en Python).
+  if(JEU_PICK && JEU_PICK.id) v.id_igdb = JEU_PICK.id;
   return v;   // ni support ni année : l'onglet suffit, et le Sheet garde ce qu'il a
 }
 /* Un onglet inexistant n'est plus un problème : il n'y a pas d'en-têtes à
@@ -2732,8 +2926,8 @@ async function submitForm(){
        modification : c'est un geste explicite, pas une récupération
        automatique. Sinon, et seulement à l'ajout, on cherche — modifier un
        jeu ne doit pas écraser une jaquette déposée à la main. */
-    if(retenue) poseJaquetteChoisie(charge.values.name, retenue.image);
-    else if(ajout) jaquetteAuto(charge.values.name, charge.values.release);
+    if(retenue) poseJaquetteChoisie(charge.values.name, retenue.image, charge.values.id_igdb);
+    else if(ajout) jaquetteAuto(charge.values.name, charge.values.release, false, charge.values.id_igdb);
   }catch(e){
     toast(e.message, true);
     btn.disabled = false; btn.classList.remove('armed'); btn.textContent = texte;
@@ -2769,12 +2963,51 @@ async function api(chemin, corps){
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(corps),
   });
-  if(!r.ok) throw new Error('http ' + r.status);
+  /* Le code de retour est accroché à l'erreur, pas seulement écrit dedans :
+     un 503 (nginx qui limite le débit de /api/) et un câble débranché
+     appellent deux réactions opposées, et seul l'appelant sait laquelle.
+     Sans ce champ les deux se ressemblaient sous un même « serveur
+     injoignable » — de quoi chercher la panne chez IGDB pendant des heures
+     alors que le refus venait de nginx, trois couches plus tôt. */
+  if(!r.ok){
+    const err = new Error('http ' + r.status);
+    err.statut = r.status;
+    throw err;
+  }
   return r.json();
 }
+/* Ce que le navigateur affichera d'un appel qui n'a pas abouti. Nommer qui
+   a refusé, toujours : « injoignable » est le seul cas où personne n'a
+   répondu, et c'est le seul qui mérite ce mot. */
+function raisonReseau(e){
+  const s = e && e.statut;
+  if(s === 503 || s === 429) return 'trop de requêtes (limite de débit du serveur)';
+  if(s) return `refus du serveur (HTTP ${s})`;
+  return 'serveur injoignable';
+}
+/* nginx plafonne le débit de /api/ pour qu'un inconnu ne puisse pas griller
+   le quota IGDB depuis internet. Or une mise à jour du classeur, c'est un
+   appel par jeu à la file : elle tape dans ce plafond bien avant la fin.
+   Un refus de débit n'est pas une panne, il dit « pas tout de suite » —
+   alors on patiente et on redemande, plutôt que de faire tomber des
+   centaines de jeux d'affilée pendant que tout va bien. */
+const ATTENTE_DEBIT = [3000, 6000];
+async function apiPatient(chemin, corps){
+  for(let essai = 0; ; essai++){
+    try{
+      return await api(chemin, corps);
+    }catch(e){
+      if((e.statut === 503 || e.statut === 429) && essai < ATTENTE_DEBIT.length){
+        await new Promise(reprend => setTimeout(reprend, ATTENTE_DEBIT[essai]));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
 /* la jaquette est arrivée : on la remet en jeu sous un nouveau numéro */
-function poseJaquette(nom){
-  const f = slug(nom);
+function poseJaquette(cle){
+  const f = cle;
   /* le manifeste est tenu à jour sur place : redemander la liste entière
      pour une seule image serait un aller-retour de plus pour rien. La date
      posée ici n'est pas exactement celle du fichier, mais elle ne sert qu'à
@@ -2788,13 +3021,19 @@ function poseJaquette(nom){
   // la fiche ouverte montre la même jaquette en grand : elle aussi
   if(!$('sheet').hidden && S.open !== null) paintSheet();
 }
-async function jaquetteAuto(nom, sortie, force){
+/* `idIgdb` est celui du JEU tel qu'il est enregistré, pas celui de la fiche
+   qu'IGDB va proposer : c'est lui qui décide du nom du fichier, et la page
+   ira le chercher sous ce nom-là. Les faire diverger reviendrait à écrire
+   une image que personne ne redemande jamais. */
+async function jaquetteAuto(nom, sortie, force, idIgdb){
+  const cle = idIgdb ? String(idIgdb) : slug(nom);
   let data;
-  try{ data = await api('/api/jaquette', {nom: nom, sortie: sortie || '', force: !!force}); }
+  try{ data = await api('/api/jaquette',
+    {nom: nom, sortie: sortie || '', force: !!force, id_igdb: idIgdb || null}); }
   catch(e){ return; }
-  if(data.etat === 'telechargee'){ poseJaquette(nom); toast('Jaquette récupérée'); }
-  else if(data.etat === 'deja-la'){ poseJaquette(nom); }
-  else if(data.etat === 'choix'){ openJaq(nom, data.propositions || []); }
+  if(data.etat === 'telechargee'){ poseJaquette(cle); toast('Jaquette récupérée'); }
+  else if(data.etat === 'deja-la'){ poseJaquette(cle); }
+  else if(data.etat === 'choix'){ openJaq(nom, data.propositions || [], null, idIgdb); }
   else if(data.etat === 'introuvable'){ toast(`Aucune jaquette trouvée pour « ${nom} »`); }
   // le motif exact plutôt qu'un « ça n'a pas marché » : HTTP 403, certificat
   // SSL, délai dépassé... c'est la seule chose qui permette d'y remédier
@@ -2806,14 +3045,27 @@ async function jaquetteAuto(nom, sortie, force){
    refuser ne laisse rien derrière — il n'y a rien à supprimer. Quand
    plusieurs fiches portent le même nom, la plus probable (celle dont
    l'année colle à la date de sortie) est en tête, en doré. */
-let JAQ_NOM = null, JAQ_SUITE = null;
-function jaqHTML(nom, propositions, retenir){
+let JAQ_NOM = null, JAQ_SUITE = null, JAQ_IGDB = null;
+function jaqHTML(nom, propositions, retenir, opts){
+  opts = opts || {};
+  /* La barre de recherche n'apparaît que pour désigner un jeu : le titre
+     du classeur ne trouve pas toujours la bonne fiche — « Getting Over It »
+     ne ramène rien, « Getting Over It with Bennett Foddy » tombe dessus du
+     premier coup — et sans moyen de reformuler, ces cas-là resteraient
+     impossibles à corriger. */
+  const barre = opts.terme === undefined ? '' : `
+      <div class="jaq-chercher">
+        <input type="text" id="jaqTerme" value="${esc(opts.terme)}"
+               placeholder="Chercher un autre titre..." autocomplete="off" spellcheck="false">
+        <button type="button" class="ghost" id="jaqChercher">Chercher</button>
+      </div>`;
   return `<div class="sheet jaq-sheet" role="dialog" aria-modal="true">
     <div class="sheet-tools">
-      <span class="grp"><b class="fhead">Jaquette de « ${esc(nom)} »</b></span>
+      <span class="grp"><b class="fhead">${opts.titre ? esc(opts.titre) : `Jaquette de « ${esc(nom)} »`}</b></span>
       <span class="grp"><button class="sbtn jaq-x" aria-label="Fermer">×</button></span>
     </div>
     <div class="jaq-in">
+      ${barre}
       <div class="jaq-grid">
         ${propositions.map((p,i)=>`
           <button class="jaq-item${p.suggere ? ' suggeree' : ''}" data-i="${i}" title="${esc(p.lien||'')}">
@@ -2831,12 +3083,14 @@ function jaqHTML(nom, propositions, retenir){
    le clic rappelle cette fonction avec la fiche choisie. C'est ce que fait le
    formulaire, où le fichier ne peut pas encore être nommé — le nom du jeu
    n'est arrêté qu'à l'enregistrement. */
-function openJaq(nom, propositions, suite){
-  if(!propositions.length) return;
+function openJaq(nom, propositions, suite, idIgdb, opts){
+  opts = opts || {};
+  if(!propositions.length && opts.terme === undefined) return;
   JAQ_NOM = nom;
+  JAQ_IGDB = idIgdb || null;
   JAQ_SUITE = suite || null;
   const host = $('jaq');
-  host.innerHTML = jaqHTML(nom, propositions, !!suite);
+  host.innerHTML = jaqHTML(nom, propositions, !!suite, opts);
   host.hidden = false;
   verrouFond();
   host.querySelector('.jaq-x').onclick = closeJaq;
@@ -2844,16 +3098,32 @@ function openJaq(nom, propositions, suite){
   host.querySelectorAll('.jaq-item').forEach(b=>{
     b.onclick = ()=> choisirJaq(b, propositions[+b.dataset.i]);
   });
+  const champ = $('jaqTerme');
+  if(champ && opts.surRecherche){
+    const relance = ()=>{
+      const t = clean(champ.value);
+      if(t) opts.surRecherche(t);
+    };
+    $('jaqChercher').onclick = relance;
+    champ.addEventListener('keydown', e=>{
+      if(e.key !== 'Enter') return;
+      // la fenêtre ne doit pas se refermer sur un Entrée de recherche
+      e.preventDefault(); e.stopPropagation();
+      relance();
+    });
+    champ.focus();
+    champ.select();
+  }
 }
 function closeJaq(){
   const host = $('jaq');
   if(host.hidden) return;
   host.hidden = true; host.innerHTML = '';
-  JAQ_NOM = null; JAQ_SUITE = null;
+  JAQ_NOM = null; JAQ_SUITE = null; JAQ_IGDB = null;
   verrouFond();
 }
 async function choisirJaq(btn, choix){
-  const nom = JAQ_NOM;
+  const nom = JAQ_NOM, idIgdb = JAQ_IGDB;
   // mode sélecteur : on rend la main au formulaire, rien ne part sur le disque
   if(JAQ_SUITE){
     const suite = JAQ_SUITE;
@@ -2865,10 +3135,11 @@ async function choisirJaq(btn, choix){
   host.querySelectorAll('.jaq-item').forEach(b=>{ b.disabled = true; });
   btn.classList.add('pris');
   let data;
-  try{ data = await api('/api/jaquette/choisir', {nom: nom, image: choix.image}); }
+  try{ data = await api('/api/jaquette/choisir',
+    {nom: nom, image: choix.image, id_igdb: idIgdb || null}); }
   catch(e){ data = null; }
   if(data && data.etat === 'telechargee'){
-    closeJaq(); poseJaquette(nom); toast('Jaquette enregistrée');
+    closeJaq(); poseJaquette(idIgdb ? String(idIgdb) : slug(nom)); toast('Jaquette enregistrée');
   }else{
     closeJaq();
     toast('Téléchargement impossible' + (data && data.raison ? ' — ' + data.raison : ''), true);
@@ -2878,11 +3149,13 @@ fermeSurFond('jaq', closeJaq);
 
 /* La jaquette désignée dans le formulaire : elle part sur le disque
    maintenant que le jeu existe et que son nom est arrêté. */
-async function poseJaquetteChoisie(nom, image){
+async function poseJaquetteChoisie(nom, image, idIgdb){
   let data;
-  try{ data = await api('/api/jaquette/choisir', {nom: nom, image: image}); }
+  try{ data = await api('/api/jaquette/choisir',
+    {nom: nom, image: image, id_igdb: idIgdb || null}); }
   catch(e){ return; }
-  if(data.etat === 'telechargee'){ poseJaquette(nom); toast('Jaquette enregistrée'); }
+  if(data.etat === 'telechargee'){
+    poseJaquette(idIgdb ? String(idIgdb) : slug(nom)); toast('Jaquette enregistrée'); }
   else toast('Téléchargement impossible' + (data.raison ? ' — ' + data.raison : ''), true);
 }
 
@@ -3005,6 +3278,11 @@ function posePick(fiche){
   JEU_PICK = fiche;
   const b = $('f_pick');
   if(!b) return;
+  /* Le rappel ne s'affiche qu'à l'ajout : les jeux entrés avant cette règle
+     n'ont pas de fiche et doivent rester modifiables sans qu'on leur en
+     réclame une à chaque ouverture. */
+  const vide = $('f_pickvide');
+  if(vide) vide.hidden = !!EDIT || !!(fiche && fiche.id);
   if(!fiche || !fiche.image){ b.hidden = true; return; }
   $('f_pickimg').src = fiche.apercu;
   $('f_pickt').textContent = fiche.titre;
@@ -3135,9 +3413,22 @@ function brancherAuto(){
   champ.addEventListener('blur', ()=> setTimeout(acFerme, 0));
   const pick = $('f_pick');
   if(pick) pick.onclick = changerPick;
+  const vide = $('f_pickvide');
+  if(vide) vide.onclick = ()=>{
+    // changerPick se tait quand le nom est vide : ici il faut le dire,
+    // sinon le clic n'a l'air de rien faire
+    if(!clean($('f_name').value)){
+      toast("Tape d'abord le nom du jeu.", true);
+      $('f_name').focus();
+      return;
+    }
+    changerPick();
+  };
   // une valeur retapée à la main n'est plus « remplie automatiquement » :
-  // la fiche suivante ne doit pas passer par-dessus
-  ['f_release','f_base'].forEach(id=>{
+  // la fiche suivante ne doit pas passer par-dessus. f_release n'y est pas :
+  // lui n'accepte plus la frappe (readonly), donc data-auto ne s'y efface
+  // jamais autrement qu'en choisissant une autre fiche.
+  ['f_base'].forEach(id=>{
     const ch = $(id);
     if(ch) ch.addEventListener('input', ()=>{ ch.dataset.auto = ''; });
   });
@@ -3149,6 +3440,7 @@ function brancherAuto(){
    forme et déclencher un téléchargement. Disponible pour n'importe quel
    journal affiché, comme le bilan en image — c'est déjà ce qu'on regarde,
    pas besoin d'en être le propriétaire pour en garder une copie.
+   Nom et catégorie partent toujours ; le reste se choisit dans la fenêtre.
    ======================================================================= */
 function telecharge(contenu, type, nom){
   const blob = new Blob([contenu], {type});
@@ -3161,12 +3453,108 @@ function telecharge(contenu, type, nom){
   // laisse le temps au téléchargement de démarrer avant de libérer l'URL
   setTimeout(()=> URL.revokeObjectURL(url), 1000);
 }
-function exporteJSON(){
-  if(!GAMES.length){ toast('Ce journal est vide : rien à exporter.', true); return; }
-  const nom = (source() && source().nom) || 'journal';
-  telecharge(JSON.stringify(GAMES, null, 2), 'application/json',
-             `journal-${slug(nom) || 'jeux'}.json`);
+const CHAMPS_EXPORT = [
+  ['rating', 'Note'], ['hours', 'Temps de jeu'], ['base', 'Prix de base'],
+  ['paid', 'Prix payé'], ['release', 'Date de sortie'], ['month', 'Mois'],
+  ['review', 'Avis'],
+];
+function exportHTML(){
+  const categories = BUCKETS.map(b =>
+    `<label class="fld fcheck"><input type="checkbox" value="${esc(b)}" checked><span>${esc(b)}</span></label>`
+  ).join('');
+  const champs = CHAMPS_EXPORT.map(([k,l]) =>
+    `<label class="fld fcheck"><input type="checkbox" value="${k}" checked><span>${esc(l)}</span></label>`
+  ).join('');
+  return `<div class="sheet export-sheet" role="dialog" aria-modal="true" aria-label="Exporter le journal">
+    <div class="sheet-tools">
+      <span class="grp"><b class="fhead">Exporter le journal</b></span>
+      <span class="grp"><button class="sbtn export-x" aria-label="Fermer">×</button></span>
+    </div>
+    <div class="export-in">
+      <div class="export-format" role="group" aria-label="Format du fichier">
+        <button type="button" class="export-format-btn on" data-format="json">JSON</button>
+        <button type="button" class="export-format-btn" data-format="csv">CSV</button>
+      </div>
+      <div class="export-section">
+        <div class="export-section-head">
+          <span class="export-section-title">Catégories</span>
+        </div>
+        <div class="export-grid" id="exportCategories">${categories}</div>
+      </div>
+      <div class="export-section">
+        <div class="export-section-head">
+          <span class="export-section-title">Données</span>
+          <span class="export-hint">nom et catégorie toujours inclus</span>
+        </div>
+        <div class="export-grid" id="exportChamps">${champs}</div>
+      </div>
+      <p class="export-info" id="exportInfo"></p>
+      <div class="frow">
+        <span class="spacer"></span>
+        <button class="ghost" id="export-annuler">Annuler</button>
+        <button class="cta auto" id="export-go">Exporter</button>
+      </div>
+    </div>
+  </div>`;
+}
+/* Le nombre de jeux qui partiraient avec la sélection actuelle des
+   catégories — un retour immédiat, plutôt que de le découvrir dans le
+   fichier téléchargé. */
+function majExportInfo(){
+  const host = $('export');
+  const categories = new Set(Array.from(host.querySelectorAll('#exportCategories input:checked'))
+    .map(c => c.value));
+  const n = GAMES.filter(g => categories.has(g.bucket)).length;
+  $('exportInfo').innerHTML = `<b>${n}</b> jeu${n>1?'x':''} avec cette sélection`;
+}
+function ouvrirExport(){
   closeMenu();
+  if(!GAMES.length){ toast('Ce journal est vide : rien à exporter.', true); return; }
+  const host = $('export');
+  host.innerHTML = exportHTML();
+  host.hidden = false;
+  verrouFond();
+  host.querySelector('.export-x').onclick = fermerExport;
+  $('export-annuler').onclick = fermerExport;
+  $('export-go').onclick = lancerExport;
+  host.querySelectorAll('.export-format-btn').forEach(b => b.onclick = ()=>{
+    host.querySelectorAll('.export-format-btn').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+  });
+  host.querySelectorAll('#exportCategories input').forEach(c => c.addEventListener('change', majExportInfo));
+  majExportInfo();
+}
+function fermerExport(){
+  const host = $('export');
+  if(host.hidden) return;
+  host.hidden = true; host.innerHTML = '';
+  verrouFond();
+}
+fermeSurFond('export', fermerExport);
+$('exportBtn').addEventListener('click', ouvrirExport);
+
+function lancerExport(){
+  const host = $('export');
+  const format = host.querySelector('.export-format-btn.on').dataset.format;
+  const categories = new Set(Array.from(host.querySelectorAll('#exportCategories input:checked'))
+    .map(c => c.value));
+  const champs = Array.from(host.querySelectorAll('#exportChamps input:checked')).map(c => c.value);
+  const jeux = GAMES.filter(g => categories.has(g.bucket));
+  if(!jeux.length){ toast('Aucune catégorie choisie : rien à exporter.', true); return; }
+  if(format === 'json') exporteJSON(jeux, champs);
+  else exporteCSV(jeux, champs);
+  fermerExport();
+}
+function exporteJSON(jeux, champs){
+  const colonnes = ['id','bucket','name', ...champs];
+  const sortie = jeux.map(g => {
+    const o = {};
+    colonnes.forEach(c => { o[c] = g[c]; });
+    return o;
+  });
+  const nom = (source() && source().nom) || 'journal';
+  telecharge(JSON.stringify(sortie, null, 2), 'application/json',
+             `journal-${slug(nom) || 'jeux'}.json`);
 }
 /* Une valeur par cellule CSV : guillemets doublés, et la cellule entière
    entre guillemets dès qu'elle contient une virgule, un guillemet ou un
@@ -3176,20 +3564,199 @@ function celluleCSV(v){
   const s = String(v);
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
-function exporteCSV(){
-  if(!GAMES.length){ toast('Ce journal est vide : rien à exporter.', true); return; }
-  const colonnes = ['bucket','name','year','month','rating','hours','base','paid','release','review'];
-  const entetes = ['onglet','nom','année','mois','note','heures','prix_base','prix_payé','sortie','avis'];
-  const lignes = GAMES.map(g => colonnes.map(c =>
+const LIBELLES_EXPORT = {bucket:'onglet', name:'nom', rating:'note', month:'mois',
+  hours:'heures', base:'prix_base', paid:'prix_payé', release:'sortie', review:'avis'};
+function exporteCSV(jeux, champs){
+  const colonnes = ['bucket','name', ...champs];
+  const entetes = colonnes.map(c => LIBELLES_EXPORT[c] || c);
+  const lignes = jeux.map(g => colonnes.map(c =>
     celluleCSV(c === 'review' ? g.review.join('\n') : g[c])).join(','));
   // BOM UTF-8 : sans lui, Excel lit les accents de travers en ouvrant le fichier
   const csv = '\uFEFF' + entetes.join(',') + '\n' + lignes.join('\n');
   const nom = (source() && source().nom) || 'journal';
   telecharge(csv, 'text/csv;charset=utf-8', `journal-${slug(nom) || 'jeux'}.csv`);
-  closeMenu();
 }
-$('exportJsonBtn').addEventListener('click', exporteJSON);
-$('exportCsvBtn').addEventListener('click', exporteCSV);
+
+/* =======================================================================
+   Voir plus d'informations
+   Plateforme/d\u00E9veloppeur/genres viennent du classeur (d\u00E9j\u00E0 en base) ; le
+   reste \u2014 description, captures, bande-annonce, note critique, temps pour
+   finir \u2014 est redemand\u00E9 au serveur \u00E0 chaque ouverture, jamais gard\u00E9 d'un
+   jeu \u00E0 l'autre : voir /api/journal/jeu/<id>/detail c\u00F4t\u00E9 Flask.
+   ======================================================================= */
+let DETAIL_JETON = 0;
+
+function detailHTML(g){
+  return `<div class="sheet detail-sheet" role="dialog" aria-modal="true"
+      aria-label="Plus d'informations sur ${esc(g.name)}">
+    <div class="sheet-tools">
+      <span class="grp"><b class="fhead">${esc(g.name)}</b></span>
+      <span class="grp"><button class="sbtn detail-x" aria-label="Fermer">\u00D7</button></span>
+    </div>
+    <div class="detail-in" id="detailIn">
+      <p class="detail-etat">Recherche des informations\u2026</p>
+    </div>
+  </div>`;
+}
+
+async function ouvrirDetail(g){
+  const host = $('detail');
+  host.innerHTML = detailHTML(g);
+  host.hidden = false;
+  verrouFond();
+  host.querySelector('.detail-x').onclick = fermerDetail;
+
+  const jeton = ++DETAIL_JETON;
+  let data;
+  try{
+    const r = await fetch(`/api/journal/jeu/${g.id}/detail`, {credentials: 'same-origin'});
+    data = await r.json();
+  }catch(e){
+    data = {ok: false, message: 'serveur injoignable'};
+  }
+  // la fen\u00EAtre a \u00E9t\u00E9 referm\u00E9e, ou un autre jeu ouvert entre-temps
+  if(jeton !== DETAIL_JETON || host.hidden) return;
+  peintDetail(data, g);
+}
+
+function fermerDetail(){
+  const host = $('detail');
+  if(host.hidden) return;
+  DETAIL_JETON++;              // ce qui r\u00E9pondra apr\u00E8s nous ne sert plus
+  host.hidden = true; host.innerHTML = '';
+  verrouFond();
+}
+fermeSurFond('detail', fermerDetail);
+
+/* Un fait par ligne, comme .facts sur la fiche elle-m\u00EAme \u2014 sauf que la
+   valeur peut ici tenir sur plusieurs lignes (une longue liste de
+   plateformes), d'o\u00F9 une classe \u00E0 soi plut\u00F4t que la r\u00E9utiliser telle
+   quelle. */
+function detailFaitHTML(u, b){
+  return `<div class="detail-fait"><u>${esc(u)}</u><b>${esc(b)}</b></div>`;
+}
+function detailTempsHTML(libelle, heures){
+  if(heures === null || heures === undefined) return '';
+  return `<div class="detail-temps"><b>${fr(heures, 1)}&#8239;h</b><span>${esc(libelle)}</span></div>`;
+}
+function peintDetail(data, g){
+  const zone = document.querySelector('#detail .detail-in');
+  if(!zone) return;
+  if(!data.ok){
+    zone.innerHTML = `<p class="detail-etat">Informations injoignables : ${
+      esc(data.message || 'pas de r\u00E9ponse')}</p>`;
+    return;
+  }
+  const hltb = data.hltb || null;
+  const rien = !data.plateforme && !data.developpeur && !data.genres && !data.description
+    && !(data.images || []).length && !data.trailer && !hltb
+    && (data.note_critique === null || data.note_critique === undefined);
+  if(rien){
+    zone.innerHTML = `<p class="detail-etat">Aucune information trouv\u00E9e pour ce jeu.</p>`;
+    return;
+  }
+
+  const faits = [
+    data.plateforme  ? detailFaitHTML('Plateformes',  data.plateforme)  : '',
+    data.developpeur ? detailFaitHTML('D\u00E9veloppeur',  data.developpeur) : '',
+    data.genres      ? detailFaitHTML('Genres',       data.genres)      : '',
+    (data.note_critique !== null && data.note_critique !== undefined)
+      ? detailFaitHTML('Note critique', `${data.note_critique} / 100`) : '',
+  ].join('');
+
+  const temps = hltb ? [
+    detailTempsHTML('Histoire',           hltb.histoire),
+    detailTempsHTML('Histoire + annexes', hltb.extra),
+    detailTempsHTML('Complet',            hltb.complet),
+  ].join('') : '';
+
+  const media = data.trailer
+    ? `<div class="detail-media"><iframe src="${esc(data.trailer)}"
+        title="Bande-annonce" loading="lazy" allow="encrypted-media" allowfullscreen></iframe></div>`
+    : '';
+  /* Chaque vignette porte l'adresse de sa version large : c'est le serveur
+     qui compose les deux tailles (voir detail_complet), la page n'a pas à
+     connaître la façon dont IGDB nomme ses images. */
+  const galerie = (data.images || []).length
+    ? `<div class="detail-galerie">${data.images.map((im, i) =>
+        `<img src="${esc(im.apercu)}" data-grande="${esc(im.grande)}" data-i="${i}"
+           alt="Capture ${i + 1}" loading="lazy">`).join('')}</div>`
+    : '';
+
+  /* Les liens de recherche ne vivent plus sur la fiche elle-même : ils
+     n'ont d'intérêt qu'ici, où l'on est justement venu chercher plus. Celui
+     de HowLongToBeat pointe sur la fiche exacte quand on l'a trouvée,
+     plutôt que sur une recherche à refaire à la main. */
+  const cherche = encodeURIComponent(g.name);
+  const liens = [
+    `<a href="https://www.google.com/search?q=${cherche}+jeu" target="_blank" rel="noopener">Chercher sur le web</a>`,
+    data.lien ? `<a href="${esc(data.lien)}" target="_blank" rel="noopener">IGDB</a>` : '',
+    data.steam ? `<a href="${esc(data.steam)}" target="_blank" rel="noopener">Steam</a>` : '',
+    `<a href="${hltb && hltb.lien ? esc(hltb.lien) : `https://howlongtobeat.com/?q=${cherche}`}"
+       target="_blank" rel="noopener">HowLongToBeat</a>`,
+  ].filter(Boolean).join('');
+
+  zone.innerHTML = `
+    ${media}
+    ${data.description ? `<p class="detail-desc">${esc(data.description)}</p>` : ''}
+    ${faits ? `<div class="detail-faits">${faits}</div>` : ''}
+    ${temps ? `<div class="detail-temps-grid"><u>Temps pour finir <span class="detail-source">HowLongToBeat</span></u>
+      <div class="detail-temps-row">${temps}</div></div>` : ''}
+    ${galerie}
+    <div class="links">${liens}</div>`;
+
+  // les captures s'ouvrent en grand : la bande ne sert qu'à choisir laquelle
+  const vues = (data.images || []).map(im => im.grande);
+  zone.querySelectorAll('.detail-galerie img').forEach(img=>{
+    img.onclick = ()=> ouvrirZoom(vues, +img.dataset.i);
+  });
+}
+
+/* ---------- une capture en grand ----------
+   La dernière fenêtre de la pile, et la plus simple : une image, deux
+   flèches, rien à charger d'autre. On garde la liste entière plutôt que
+   l'image seule, pour passer de l'une à l'autre sans revenir en arrière. */
+const ZOOM = {images: [], i: 0};
+function ouvrirZoom(images, i){
+  if(!images || !images.length) return;
+  ZOOM.images = images;
+  ZOOM.i = Math.max(0, Math.min(i || 0, images.length - 1));
+  const host = $('zoom');
+  host.innerHTML = `<div class="zoom-boite" role="dialog" aria-modal="true" aria-label="Capture d'écran">
+      <img id="zoomImg" alt="">
+      <button class="sbtn zoom-x" aria-label="Fermer">×</button>
+      ${images.length > 1 ? `<button class="sbtn zoom-prev" aria-label="Capture précédente">‹</button>
+        <button class="sbtn zoom-next" aria-label="Capture suivante">›</button>
+        <span class="zoom-rang"></span>` : ''}
+    </div>`;
+  host.hidden = false;
+  verrouFond();
+  host.querySelector('.zoom-x').onclick = fermerZoom;
+  const prev = host.querySelector('.zoom-prev'), next = host.querySelector('.zoom-next');
+  if(prev) prev.onclick = ()=> zoomBouge(-1);
+  if(next) next.onclick = ()=> zoomBouge(1);
+  peintZoom();
+}
+function peintZoom(){
+  const img = $('zoomImg');
+  if(!img) return;
+  img.src = ZOOM.images[ZOOM.i];
+  const rang = document.querySelector('#zoom .zoom-rang');
+  if(rang) rang.textContent = `${ZOOM.i + 1} / ${ZOOM.images.length}`;
+}
+function zoomBouge(sens){
+  if(ZOOM.images.length < 2) return;
+  // on boucle : arrivé au bout, la suivante est la première
+  ZOOM.i = (ZOOM.i + sens + ZOOM.images.length) % ZOOM.images.length;
+  peintZoom();
+}
+function fermerZoom(){
+  const host = $('zoom');
+  if(host.hidden) return;
+  host.hidden = true; host.innerHTML = '';
+  verrouFond();
+}
+fermeSurFond('zoom', fermerZoom);
 
 /* =======================================================================
    Bilan en image
@@ -3343,9 +3910,9 @@ async function bilPolices(){
 }
 /* coverURL() porte déjà le paramètre ?v= de cache-buster une fois qu'une
    jaquette a été récupérée automatiquement : le bilan en profite tel quel. */
-function bilCover(nom){
+function bilCover(g){
   return new Promise(res=>{
-    const url = coverURL(nom);
+    const url = coverURL(cleJaquette(g));
     if(!url) return res(null);
     const im = new Image();
     let fini = false;
@@ -3426,7 +3993,7 @@ async function bilanCanvas(){
   const classement = notes.slice().sort((a,b)=>b.rating-a.rating);
   const top = classement.slice(0, 5);
   const suivants = classement.slice(5, 10);
-  const jaquettes = await Promise.all(top.map(x => bilCover(x.name)));
+  const jaquettes = await Promise.all(top.map(x => bilCover(x)));
 
   const brouillon = document.createElement('canvas');
   brouillon.width = L; brouillon.height = 2600;
@@ -3567,17 +4134,36 @@ async function bilanCanvas(){
       bilArrondi(c, bx, sol-bh, bw, bh, Math.min(4, bw/2));
       c.fill();
     });
+    /* Même correction que sur l'histogramme de la page (.avg dans le CSS) :
+       le repère se dessinait en or sur des barres claires — #E9A13C vers 5,
+       #A8C24A vers 7 — où l'or ne se détache pas, et c'est précisément là
+       qu'une moyenne tombe. Il porte donc son propre fond : un trait sombre
+       posé sous le trait doré, une pastille sombre sous le chiffre.
+       L'ordre compte, le sombre d'abord. */
     if(avg !== null){
-      const xa = M + pos(avg);
+      const xa = Math.round(M + pos(avg)) + .5;
       c.save();
-      c.strokeStyle = 'rgba(229,196,107,.55)';
-      c.lineWidth = 1;
       c.setLineDash([5,5]);
-      c.beginPath(); c.moveTo(Math.round(xa)+.5, y-4); c.lineTo(Math.round(xa)+.5, sol); c.stroke();
+      c.lineWidth = 3;
+      c.strokeStyle = 'rgba(10,8,14,.7)';
+      c.beginPath(); c.moveTo(xa, y-4); c.lineTo(xa, sol); c.stroke();
+      c.lineWidth = 1;
+      c.strokeStyle = BIL.or;
+      c.beginPath(); c.moveTo(xa, y-4); c.lineTo(xa, sol); c.stroke();
       c.restore();
+
+      const etiquette = `moy. ${fr(avg,2)}`;
+      const police = `500 15px ${BIL.mono}`;
       const flip = xa > W - 90;
-      bilEcrire(c, `moy. ${fr(avg,2)}`, xa + (flip ? -8 : 8), y+10,
-        {f:`500 15px ${BIL.mono}`, c:BIL.or, a: flip ? 'right' : 'left'});
+      const lg = bilLargeur(c, etiquette, police);
+      const tx = xa + (flip ? -8 : 8);
+      c.save();
+      c.fillStyle = 'rgba(10,8,14,.82)';
+      bilArrondi(c, (flip ? tx - lg : tx) - 6, y - 4, lg + 12, 21, 6);
+      c.fill();
+      c.restore();
+      bilEcrire(c, etiquette, tx, y + 10,
+        {f: police, c: BIL.or, a: flip ? 'right' : 'left'});
     }
 
     y = sol + 1;
@@ -3644,7 +4230,7 @@ async function bilanCanvas(){
 async function ficheCanvas(g){
   await bilPolices();
   const { L, M, W } = BIL;
-  const im = await bilCover(g.name);
+  const im = await bilCover(g);
   const statut = statutDe(g), wish = estWishlist(g);
   const enCours = !!statut;   // en cours ou convoité : pas de note à afficher
 
@@ -3895,6 +4481,15 @@ function fermerBilan(){
   verrouFond();
 }
 fermeSurFond('bilan', fermerBilan);
+/* Les statistiques sont une lecture à part du classeur, pas un tiroir de
+   plus : elles vivent dans les réglages, à côté du résumé et de l'export,
+   avec lesquels elles ont plus à voir qu'avec les onglets. La barre
+   d'onglets reste affichée pendant qu'on les consulte — c'est par elle
+   qu'on en ressort. */
+$('statsBtn').addEventListener('click', ()=>{
+  closeMenu();
+  choisirOnglet('stats');
+});
 $('bilanBtn').addEventListener('click', ouvrirBilan);
 
 /* =======================================================================
@@ -3932,9 +4527,9 @@ const IGD = {
   fi: 0,
   t0: 0,
   dernier: null,   // dernière réponse d'écriture : le classeur relu
-  compte: {dates:0, prix:0, jaquettes:0, echecs:0},
+  compte: {dates:0, prix:0, jaquettes:0, detail:0, echecs:0},
   echecs: [],
-  opts: {dates:true, prix:true, jaquettes:true},
+  opts: {dates:true, prix:true, jaquettes:true, detail:true},
 };
 
 const SURETE = {
@@ -4023,6 +4618,9 @@ function igdbReglages(){
       <label class="fld fcheck">
         <input id="igdb_jaq" type="checkbox"${IGD.opts.jaquettes ? ' checked' : ''}>
         <span>Jaquettes manquantes</span></label>
+      <label class="fld fcheck">
+        <input id="igdb_detail" type="checkbox"${IGD.opts.detail ? ' checked' : ''}>
+        <span>Plateforme, développeur, genres</span></label>
     </div>
     <div class="frow"><span class="spacer"></span>
       <button class="ghost" id="igdb_annuler">Annuler</button>
@@ -4033,8 +4631,9 @@ function igdbReglages(){
       dates: $('igdb_dates').checked,
       prix: $('igdb_prix').checked,
       jaquettes: $('igdb_jaq').checked,
+      detail: $('igdb_detail').checked,
     };
-    if(!IGD.opts.dates && !IGD.opts.prix && !IGD.opts.jaquettes){
+    if(!IGD.opts.dates && !IGD.opts.prix && !IGD.opts.jaquettes && !IGD.opts.detail){
       toast("Coche au moins une chose à mettre à jour.", true);
       return;
     }
@@ -4093,16 +4692,17 @@ async function igdbAnalyse(){
     igdbAvance(i, total, g.name);
     let data;
     try{
-      data = await api('/api/jeu/maj', {
+      data = await apiPatient('/api/jeu/maj', {
         nom: g.name,
         sortie: g.release || '',
         prix: IGD.opts.prix,
+        detail: IGD.opts.detail,
         // Flask attend un mot, pas un booléen : « aucune » lui évite de
         // rassembler des propositions dont personne ne veut
         jaquettes: IGD.opts.jaquettes ? 'manquantes' : 'aucune',
       });
     }catch(e){
-      data = {etat:'injoignable', raison:'serveur injoignable'};
+      data = {etat:'injoignable', raison: raisonReseau(e)};
     }
     if(jeton !== IGD.jeton) return;
     IGD.lignes.push(igdbRapport(g, data));
@@ -4123,7 +4723,7 @@ function igdbRapport(g, data){
     surete: data.surete || '',
     jaquette: data.jaquette || '',
     propositions: data.propositions || [],
-    date: null, prix: null, coche: false,
+    date: null, prix: null, detail: null, coche: false,
   };
   if(l.etat !== 'ok' || !l.fiche) return l;
 
@@ -4138,8 +4738,26 @@ function igdbRapport(g, data){
       l.prix = {avant: av, apres: data.prix};
     }
   }
-  l.coche = !!(l.date || l.prix) && l.surete !== 'douteuse';
+  /* Le rattachement à une fiche IGDB, et les trois colonnes qui en
+     découlent. Un jeu déjà rattaché à la même fiche et déjà rempli n'est
+     pas un écart : ce sont les jeux d'avant cette fonctionnalité qu'on
+     cherche ici, ceux qui n'ont encore ni identifiant ni plateforme. */
+  if(IGD.opts.detail && data.detail){
+    const d = data.detail;
+    const change = g.idIgdb !== l.fiche.id
+      || (d.plateforme || null)  !== (g.plateforme || null)
+      || (d.developpeur || null) !== (g.developpeur || null)
+      || (d.genres || null)      !== (g.genres || null);
+    if(change) l.detail = d;
+  }
+  l.coche = igdbAChanger(l) && l.surete !== 'douteuse';
   return l;
+}
+/* Un jeu a quelque chose à écrire. Rassemblé ici parce que quatre endroits
+   posaient la même question, et qu'en oublier un laisserait des lignes
+   cochées que l'écriture n'enverrait jamais. */
+function igdbAChanger(l){
+  return !!(l.date || l.prix || l.detail || l.rattache);
 }
 
 /* Les jaquettes à proposer, dédoublonnées par nom de fichier : le même jeu
@@ -4151,10 +4769,10 @@ function igdbFileJaquettes(){
     if(l.etat !== 'ok' || !l.propositions.length) return;
     // déjà illustré : le bouton de la tuile sert à en changer, un par un
     if(l.jaquette !== 'absente') return;
-    const cle = slug(l.g.name);
+    const cle = cleJaquette(l.g);
     if(!cle || vus[cle]) return;
     vus[cle] = true;
-    file.push({nom: l.g.name, propositions: l.propositions});
+    file.push({nom: l.g.name, jeuId: l.g.id, propositions: l.propositions});
   });
   return file;
 }
@@ -4177,13 +4795,17 @@ function igdbLigneHTML(l, i){
         class="igdb-tag ${l.surete}">${esc(SURETE[l.surete] || '')}</i></span>
       ${l.date ? igdbDelta('Date', l.date.avant ? dateFmt(l.date.avant) : 'aucune', dateFmt(l.date.apres)) : ''}
       ${l.prix ? igdbDelta('Prix', money(l.prix.avant), money(l.prix.apres)) : ''}
+      ${l.detail ? `<span class="igdb-delta"><u>Fiche</u>
+        <b class="igdb-ap">${esc([l.detail.developpeur, l.detail.genres].filter(Boolean).join(' · ') || 'plateforme et genres')}</b></span>` : ''}
     </span>
+    ${l.surete === 'sure' ? '' :
+      `<button type="button" class="igdb-fiche-btn" data-corr="${i}">Changer de jeu</button>`}
   </label>`;
 }
 function igdbRevue(){
   IGD.etape = 'revue';
   IGD.file = igdbFileJaquettes();
-  const avec  = IGD.lignes.filter(l => l.date || l.prix);
+  const avec  = IGD.lignes.filter(igdbAChanger);
   const rates = IGD.lignes.filter(l => l.etat !== 'ok');
   igdbEntete('Ce qui va changer');
 
@@ -4192,14 +4814,16 @@ function igdbRevue(){
     <p class="igdb-info">
       <b>${IGD.lignes.length}</b> jeu${IGD.lignes.length > 1 ? 'x' : ''} analysé${IGD.lignes.length > 1 ? 's' : ''} :
       <b>${avec.length}</b> à corriger${nJaq ? `, <b>${nJaq}</b> jaquette${nJaq > 1 ? 's' : ''} à proposer` : ''}.
-      ${avec.length ? 'Seules les cellules « Date de sortie » et « Prix de base » sont touchées.' : ''}
+      ${avec.length ? `Seules les cellules « Date de sortie », « Prix de base »${
+        IGD.opts.detail ? ' et la fiche détaillée (plateforme, développeur, genres)' : ''} sont touchées.` : ''}
     </p>
     ${avec.length
       ? `<div class="igdb-liste">${avec.map(igdbLigneHTML).join('')}</div>`
-      : `<p class="igdb-note">Aucune date ni aucun prix à corriger${nJaq ? ' — il reste les jaquettes.' : ' : le journal est déjà à jour.'}</p>`}
+      : `<p class="igdb-note">Rien à corriger${nJaq ? ' — il reste les jaquettes.' : ' : le journal est déjà à jour.'}</p>`}
     ${rates.length ? `<details class="igdb-repli">
       <summary>${rates.length} jeu${rates.length > 1 ? 'x' : ''} sans réponse d'IGDB</summary>
-      <ul>${rates.map(l=>`<li>${esc(l.g.name)} <i>— ${esc(l.etat === 'introuvable' ? 'aucune fiche trouvée' : (l.raison || 'IGDB injoignable'))}</i></li>`).join('')}</ul>
+      ${igdbMotifsHTML(rates)}
+      <ul>${rates.map(l=>`<li>${esc(l.g.name)} <i>— ${esc(motifLigne(l))}</i></li>`).join('')}</ul>
     </details>` : ''}
     <div class="frow">
       ${avec.length ? '<button class="ghost" id="igdb_tous">Tout cocher</button><button class="ghost" id="igdb_aucun">Tout décocher</button>' : ''}
@@ -4216,23 +4840,92 @@ function igdbRevue(){
   const cocher = v => igdbCorps().querySelectorAll('.igdb-ligne input').forEach(c=>{
     c.checked = v; avec[+c.dataset.i].coche = v;
   });
+  /* « Changer de jeu » : le bouton vit dans le <label> de la ligne, donc un
+     clic cocherait la case en passant — d'où le preventDefault. */
+  igdbCorps().querySelectorAll('.igdb-fiche-btn').forEach(b=>{
+    b.onclick = e=>{
+      e.preventDefault(); e.stopPropagation();
+      corrigeFiche(avec[+b.dataset.corr]);
+    };
+  });
   if($('igdb_tous'))  $('igdb_tous').onclick  = ()=>{ cocher(true);  igdbBouton(); };
   if($('igdb_aucun')) $('igdb_aucun').onclick = ()=>{ cocher(false); igdbBouton(); };
   $('igdb_annuler').onclick = fermerIgdb;
   $('igdb_ok').onclick = ()=>{
-    if(IGD.lignes.some(l => l.coche && (l.date || l.prix))) igdbEcriture();
+    if(IGD.lignes.some(l => l.coche && igdbAChanger(l))) igdbEcriture();
     else if(IGD.file.length) igdbJaquette();
     else fermerIgdb();
   };
   igdbBouton();
 }
+/* Pourquoi une ligne n'a rien donné. « Aucune fiche trouvée » veut dire
+   qu'IGDB a répondu mais ne connaît pas ce titre ; tout le reste est une
+   panne de liaison, et c'est le motif exact qui permet d'y remédier. */
+function motifLigne(l){
+  if(l.etat === 'introuvable') return 'aucune fiche trouvée';
+  return l.raison || 'IGDB injoignable';
+}
+/* Les échecs regroupés par motif. Trente jeux qui échouent pour la même
+   raison, c'est un seul problème à régler — la liste nom par nom, elle, ne
+   le montre pas. */
+function igdbMotifsHTML(rates){
+  const compte = new Map();
+  rates.forEach(l=>{
+    const m = motifLigne(l);
+    compte.set(m, (compte.get(m) || 0) + 1);
+  });
+  if(compte.size < 2 && rates.length < 4) return '';
+  const lignes = [...compte.entries()].sort((a,b)=> b[1] - a[1])
+    .map(([m,k])=> `<li><b>${k}×</b> ${esc(m)}</li>`).join('');
+  return `<ul class="igdb-motifs">${lignes}</ul>`;
+}
+
+/* ---------- désigner soi-même la bonne fiche ----------
+   Sur un titre que plusieurs jeux portent — « Doom », « God of War »,
+   « Tomb Raider » — ou qu'IGDB n'a pas reconnu, le rapprochement
+   automatique se trompe. La date de sortie tranche presque toujours (elle
+   suffit pour 96 % du journal), mais quand elle ne suffit pas, seul un
+   œil humain peut décider. La grille des jaquettes sert déjà exactement à
+   ça ailleurs : on la réutilise telle quelle, titres et dates affichés.
+
+   La fiche retenue est celle qui sera écrite : c'est son identifiant qui
+   part, et le serveur en tire plateforme, développeur et genres. */
+async function corrigeFiche(l, terme){
+  const cherche = terme || l.g.name;
+  let data;
+  try{ data = await api('/api/jeu/suggestions', {nom: cherche}); }
+  catch(e){ data = null; }
+  const jeux = (data && data.etat === 'ok' && data.jeux) || [];
+  if(!jeux.length && !terme){
+    toast(`Aucune fiche proposée pour « ${cherche} »`, true);
+    return;
+  }
+  if(!jeux.length) toast(`Rien trouvé pour « ${cherche} »`, true);
+  openJaq(l.g.name, jeux, choix=>{
+    l.fiche = choix;
+    l.surete = 'sure';              // choisi à la main : plus rien à deviner
+    l.rattache = true;              // l'identifiant part, options ou pas
+    /* on repart du choix : la date suit la fiche, et les trois colonnes
+       seront relues côté serveur à partir de l'identifiant */
+    l.date = (IGD.opts.dates && choix.iso && choix.iso !== (l.g.release || ''))
+      ? {avant: l.g.release || '', apres: choix.iso} : null;
+    if(IGD.opts.detail) l.detail = {plateforme: null, developpeur: null, genres: null};
+    l.coche = igdbAChanger(l);
+    igdbRevue();                    // la liste se redessine avec le nouveau choix
+  }, null, {
+    titre: `Quel jeu est « ${l.g.name} » ?`,
+    terme: cherche,
+    surRecherche: t => corrigeFiche(l, t),
+  });
+}
+
 /* Le bouton principal dit ce qu'il va faire, et il change à chaque case
    décochée : « Écrire 12 lignes », puis « Passer aux jaquettes », puis
    « Fermer » quand il ne reste plus rien. */
 function igdbBouton(){
   const b = $('igdb_ok');
   if(!b) return;
-  const n = IGD.lignes.filter(l => l.coche && (l.date || l.prix)).length;
+  const n = IGD.lignes.filter(l => l.coche && igdbAChanger(l)).length;
   if(n) b.textContent = `Écrire ${n} ligne${n > 1 ? 's' : ''}`;
   else if(IGD.file.length) b.textContent = `Voir les ${IGD.file.length} jaquette${IGD.file.length > 1 ? 's' : ''}`;
   else b.textContent = 'Fermer';
@@ -4248,6 +4941,11 @@ function igdbCharge(l){
   const values = {};
   if(l.date) values.release = l.date.apres;
   if(l.prix) values.base = l.prix.apres;
+  /* Seul l'identifiant part : plateforme, développeur et genres sont
+     relus depuis IGDB par le serveur (enrichit_igdb), jamais dictés
+     d'ici. Il vient de répondre à l'analyse, donc il les a en cache et
+     l'écriture ne lui coûte pas un aller-retour de plus. */
+  if(l.detail || l.rattache) values.id_igdb = l.fiche.id;
   return { id: l.g.id, values: values };
 }
 
@@ -4272,6 +4970,7 @@ async function igdbEnvoyerPaquet(paquet){
   const compter = u => {
     if(u.ligne.date) IGD.compte.dates++;
     if(u.ligne.prix) IGD.compte.prix++;
+    if(u.ligne.detail || u.ligne.rattache) IGD.compte.detail++;
   };
 
   try{
@@ -4297,12 +4996,13 @@ async function igdbEcriture(){
   IGD.etape = 'ecriture';
   IGD.stop = false;
   IGD.t0 = Date.now();
-  IGD.compte.dates = 0; IGD.compte.prix = 0; IGD.compte.echecs = 0;
+  IGD.compte.dates = 0; IGD.compte.prix = 0; IGD.compte.detail = 0; IGD.compte.echecs = 0;
   IGD.echecs = [];
-  const aFaire = IGD.lignes.filter(l => l.coche && (l.date || l.prix));
+  const aFaire = IGD.lignes.filter(l => l.coche && igdbAChanger(l));
   igdbEntete('Écriture dans le classeur');
   igdbCorps().innerHTML = `
-    <p class="igdb-info">Seules la date de sortie et le prix de base est touchées.</p>
+    <p class="igdb-info">Seules la date de sortie, le prix de base${
+      IGD.opts.detail ? ' et la fiche détaillée' : ''} sont touchés.</p>
     ${igdbJauge()}
     <div class="frow"><span class="spacer"></span>
       <button class="ghost" id="igdb_stop">Interrompre</button></div>`;
@@ -4361,20 +5061,27 @@ function igdbJaquette(){
   $('igdb_stop').onclick = igdbFini;
   $('igdb_passer').onclick = ()=>{ IGD.fi++; igdbJaquette(); };
   igdbCorps().querySelectorAll('.jaq-item').forEach(b=>{
-    b.onclick = ()=> igdbPoser(b, e.nom, e.propositions[+b.dataset.i]);
+    b.onclick = ()=> igdbPoser(b, e.nom, e.propositions[+b.dataset.i], e.jeuId);
   });
 }
-async function igdbPoser(btn, nom, choix){
+async function igdbPoser(btn, nom, choix, jeuId){
   const jeton = ++IGD.jeton;
   igdbCorps().querySelectorAll('.jaq-item').forEach(b=>{ b.disabled = true; });
   btn.classList.add('pris');
+  /* Le jeu est relu dans GAMES plutôt que pris dans le rapport : l'écriture
+     vient de passer juste avant, et c'est elle qui a pu lui donner son
+     identifiant IGDB. Le rapport, lui, date d'avant. */
+  const jeu = GAMES.find(x => x.id === jeuId);
+  const idIgdb = jeu ? jeu.idIgdb : null;
+  const cle = idIgdb ? String(idIgdb) : slug(nom);
   let data;
-  try{ data = await api('/api/jaquette/choisir', {nom: nom, image: choix.image}); }
+  try{ data = await api('/api/jaquette/choisir',
+    {nom: nom, image: choix.image, id_igdb: idIgdb || null}); }
   catch(e){ data = null; }
   if(jeton !== IGD.jeton) return;       // la fenêtre a été fermée entre-temps
   if(data && data.etat === 'telechargee'){
     IGD.compte.jaquettes++;
-    poseJaquette(nom);
+    poseJaquette(cle);
   }else{
     toast('Téléchargement impossible' + (data && data.raison ? ' — ' + data.raison : ''), true);
   }
@@ -4394,8 +5101,9 @@ function igdbFini(){
       <span class="igdb-chiffre"><b>${c.dates}</b> <u>date${plu(c.dates)} corrigée${plu(c.dates)}</u></span>
       <span class="igdb-chiffre"><b>${c.prix}</b> <u>prix mis à jour</u></span>
       <span class="igdb-chiffre"><b>${c.jaquettes}</b> <u>jaquette${plu(c.jaquettes)} récupérée${plu(c.jaquettes)}</u></span>
+      <span class="igdb-chiffre"><b>${c.detail}</b> <u>fiche${plu(c.detail)} détaillée${plu(c.detail)}</u></span>
     </div>
-    ${(!c.dates && !c.prix && !c.jaquettes)
+    ${(!c.dates && !c.prix && !c.jaquettes && !c.detail)
       ? '<p class="igdb-note">Rien à changer : le journal était déjà à jour.</p>' : ''}
     ${c.echecs ? `<div class="ferr">${c.echecs} ligne${c.echecs > 1 ? 's n\'ont' : " n'a"} pas pu être écrite${c.echecs > 1 ? 's' : ''} :<br>${IGD.echecs.map(esc).join('<br>')}</div>` : ''}
     <div class="frow"><span class="spacer"></span>
@@ -4407,6 +5115,274 @@ fermeSurFond('igdb', fermerIgdb);
 $('igdbBtn').addEventListener('click', ouvrirIgdb);
 
 /* ---------- rendu global ---------- */
+/* =======================================================================
+   Onglet « Statistiques »
+
+   Quatre lectures de la même question : qu'est-ce qui va avec une bonne
+   note ? Deux formes, choisies par la nature de la donnée et pas par goût.
+
+   - Temps de jeu et prix sont des quantités continues. Un nuage de points
+     est la seule forme qui n'invente rien : il montre la dispersion, les
+     cas isolés, et les paquets. Les mettre en barres obligerait à
+     découper en tranches, et le découpage déciderait de la conclusion.
+   - Genre et développeur sont des catégories, et un jeu en porte
+     plusieurs. Un nuage empilerait des centaines de points sur une
+     poignée d'abscisses, illisible. Des barres classées par moyenne
+     répondent directement à « lesquels je note le mieux ».
+
+   Chaque moyenne est accompagnée du nombre de jeux derrière elle, et rien
+   n'est affiché sous ANALYSE_MINI : une moyenne sur deux jeux n'est pas un
+   fait, c'est un hasard avec une décimale.
+
+   Tout est en SVG écrit à la main. Pas de bibliothèque : la page n'a pas
+   d'étape de construction, et quatre graphiques ne valent pas 300 Ko.
+   ======================================================================= */
+const ANALYSE_MINI = 3;      // en dessous, une moyenne ne veut rien dire
+
+/* Les jeux sur lesquels une statistique a un sens : terminés et notés. Un
+   jeu en cours ou en wishlist n'a pas de note, et sa présence ferait
+   mentir tous les effectifs. */
+function jeuxAnalyses(){
+  return GAMES.filter(x => !estStatut(x) && x.rating !== null && x.rating !== undefined);
+}
+
+/* Coefficient de Pearson : entre -1 et 1. Sans lui, un nuage laisse croire
+   ce qu'on veut y voir — c'est le chiffre qui tranche entre « ça monte »
+   et « ça ne dit rien ». */
+function correlation(paires){
+  const n = paires.length;
+  if(n < 3) return null;
+  const mx = paires.reduce((s,p)=>s+p[0],0)/n;
+  const my = paires.reduce((s,p)=>s+p[1],0)/n;
+  let num = 0, dx = 0, dy = 0;
+  paires.forEach(([a,b])=>{ num += (a-mx)*(b-my); dx += (a-mx)**2; dy += (b-my)**2; });
+  const den = Math.sqrt(dx*dy);
+  return den ? num/den : null;
+}
+function litCorrelation(r){
+  if(r === null) return 'trop peu de jeux pour en dire quoi que ce soit';
+  const f = Math.abs(r);
+  const sens = r > 0 ? 'monte avec' : 'baisse quand monte';
+  if(f < 0.2) return `aucun lien visible (r = ${fr(r,2)})`;
+  if(f < 0.4) return `un lien faible, la note ${sens} (r = ${fr(r,2)})`;
+  if(f < 0.6) return `un lien net, la note ${sens} (r = ${fr(r,2)})`;
+  return `un lien fort, la note ${sens} (r = ${fr(r,2)})`;
+}
+
+/* ---------- le nuage de points ---------- */
+const AN_L = 640, AN_H = 360, AN_MG = 46, AN_MB = 34, AN_MT = 12, AN_MR = 12;
+
+function nuageHTML(titre, points, uniteX, fmtX, sous, log){
+  if(points.length < 3){
+    return carteAnalyse(titre, 'Moins de trois jeux renseignés : rien à tracer.', '');
+  }
+  const xMax = Math.max(...points.map(p => p.x));
+  const py = v => AN_MT + (1 - v/10) * (AN_H - AN_MT - AN_MB);
+  const large = AN_L - AN_MG - AN_MR;
+
+  /* Échelle logarithmique quand les valeurs s'étalent sur plusieurs ordres
+     de grandeur — c'est le cas du temps de jeu : moitié des jeux sous 12 h,
+     et un à 3 581 h. En linéaire, tout se tasserait contre l'axe gauche sur
+     moins d'un pour cent de la largeur et le graphique ne dirait plus rien.
+     Aucun point n'est écarté pour autant : c'est la règle qui change, pas
+     les données. */
+  let px, graduations;
+  if(log){
+    const bas = 1, haut = Math.pow(10, Math.ceil(Math.log10(Math.max(xMax, 10))));
+    const l = v => Math.log10(Math.max(v, bas));
+    px = v => AN_MG + (l(v) - l(bas)) / (l(haut) - l(bas)) * large;
+    graduations = [];
+    for(let v = bas; v <= haut; v *= 10) graduations.push(v);
+  }else{
+    const haut = echelleHaute(xMax);
+    px = v => AN_MG + (v / haut) * large;
+    graduations = [0,1,2,3,4].map(i => haut/4*i);
+  }
+
+  const grilleY = [0,2,4,6,8,10].map(v =>
+    `<line class="an-grille" x1="${AN_MG}" y1="${py(v).toFixed(1)}" x2="${AN_L-AN_MR}" y2="${py(v).toFixed(1)}"/>
+     <text class="an-axe" x="${AN_MG-8}" y="${(py(v)+3.5).toFixed(1)}" text-anchor="end">${v}</text>`).join('');
+  const grilleX = graduations.map(v =>
+    `<text class="an-axe" x="${px(v).toFixed(1)}" y="${AN_H-AN_MB+18}" text-anchor="middle">${esc(fmtX(v))}</text>`).join('');
+
+  /* Les points sont tracés du plus grand rayon au plus petit ? Non : dans
+     l'ordre reçu, mais semi-transparents. Là où les jeux se tassent, les
+     disques s'additionnent et la densité se voit — un aplat opaque ne
+     dirait pas si un point en cache deux ou vingt. */
+  const disques = points.map(p =>
+    `<circle class="an-pt" cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="4.5"
+       fill="${noteColor(p.y)}" data-info="${esc(p.nom)} — ${fr(p.y,1)}/10, ${esc(fmtX(p.x))}"/>`).join('');
+
+  const r = correlation(points.map(p => [p.x, p.y]));
+  return carteAnalyse(titre,
+    `${points.length} jeu${points.length>1?'x':''} · ${litCorrelation(r)}${
+      log ? ' · échelle logarithmique' : ''}${sous ? ' · ' + sous : ''}`,
+    `<svg class="an-svg" viewBox="0 0 ${AN_L} ${AN_H}" role="img"
+          aria-label="${esc(titre)}, ${points.length} jeux">
+       ${grilleY}${grilleX}
+       <line class="an-cadre" x1="${AN_MG}" y1="${AN_MT}" x2="${AN_MG}" y2="${AN_H-AN_MB}"/>
+       <line class="an-cadre" x1="${AN_MG}" y1="${AN_H-AN_MB}" x2="${AN_L-AN_MR}" y2="${AN_H-AN_MB}"/>
+       <text class="an-unite" x="${AN_L-AN_MR}" y="${AN_H-4}" text-anchor="end">${esc(uniteX)}</text>
+       ${disques}
+     </svg>`);
+}
+
+/* Un maximum d'axe rond : 47 h devient 50, 1250 € devient 1500. Un axe qui
+   s'arrête sur la valeur exacte du plus grand point colle ce point au bord
+   et donne des graduations illisibles. */
+function echelleHaute(v){
+  if(v <= 0) return 1;
+  const ordre = Math.pow(10, Math.floor(Math.log10(v)));
+  return Math.ceil(v / (ordre/2)) * (ordre/2);
+}
+
+/* ---------- les barres classées ---------- */
+/* Une barre se déplie sur la liste des jeux qu'elle résume. Une moyenne
+   sans ce qu'il y a derrière n'est qu'un chiffre : « Puzzle 7,41 » ne dit
+   pas si c'est un genre régulier ou deux chefs-d'œuvre qui rattrapent
+   quatre ratages. La liste est là, en un clic, triée par note.
+
+   Repliée par défaut, et une seule ouverte à la fois : vingt genres
+   dépliés d'un coup redonneraient le mur de jeux, qui existe déjà. */
+function barresHTML(titre, groupes, legende){
+  const lignes = Object.entries(groupes)
+    .filter(([, jeux]) => jeux.length >= ANALYSE_MINI)
+    .map(([nom, jeux]) => ({
+      nom: nom,
+      n: jeux.length,
+      moy: jeux.reduce((s,x)=>s+x.rating,0) / jeux.length,
+      jeux: jeux.slice().sort((a,b) => b.rating - a.rating),
+    }))
+    .sort((a,b) => b.moy - a.moy);
+
+  if(!lignes.length){
+    return carteAnalyse(titre,
+      `Aucun n'atteint ${ANALYSE_MINI} jeux notés.`, '');
+  }
+  const corps = lignes.map(l => `
+    <div class="an-item">
+      <button type="button" class="an-ligne" aria-expanded="false"
+        data-info="${esc(l.nom)} — ${fr(l.moy,2)}/10 sur ${l.n} jeu${l.n>1?'x':''}, clique pour voir lesquels">
+        <span class="an-nom">${esc(l.nom)}</span>
+        <span class="an-piste"><i style="width:${(l.moy*10).toFixed(1)}%;background:${noteColor(l.moy)}"></i></span>
+        <span class="an-val">${fr(l.moy,2)}<em>${l.n}</em></span>
+      </button>
+      <div class="an-jeux" hidden>${l.jeux.map(j => `
+        <span class="an-jeu">
+          <b>${esc(j.name)}</b>
+          <i style="color:${noteColor(j.rating)}">${fr(j.rating,1)}</i>
+        </span>`).join('')}</div>
+    </div>`).join('');
+  return carteAnalyse(titre, legende, `<div class="an-barres">${corps}</div>`);
+}
+
+function carteAnalyse(titre, sous, corps){
+  return `<article class="an-carte">
+    <header class="an-tete"><h3>${esc(titre)}</h3><span>${esc(sous)}</span></header>
+    ${corps || '<p class="an-vide">Rien à montrer pour l\'instant.</p>'}
+  </article>`;
+}
+
+/* Regroupe les JEUX par valeur d'un champ à valeurs multiples
+   (« Platform, Puzzle, Adventure ») : un jeu compte dans chacune.
+   Les jeux et pas seulement leurs notes, parce que la barre se déplie sur
+   la liste — la moyenne se recalcule à partir d'eux. */
+function groupePar(jeux, champ){
+  const d = {};
+  jeux.forEach(x => String(x[champ] || '').split(',').forEach(v => {
+    const k = v.trim();
+    if(k) (d[k] = d[k] || []).push(x);
+  }));
+  return d;
+}
+
+function renderAnalyse(){
+  const hote = document.getElementById('analyse');
+  const jeux = jeuxAnalyses();
+  if(!jeux.length){
+    hote.innerHTML = `<div class="tip" id="anTip"></div>
+      <p class="an-rien">Aucun jeu terminé et noté : les statistiques arriveront avec eux.</p>`;
+    return;
+  }
+  const heures = jeux.filter(x => x.hours).map(x => ({x: x.hours, y: x.rating, nom: x.name}));
+
+  /* Le prix demande une précaution : un jeu à 0 € n'est pas un jeu bon
+     marché, c'est un jeu qui n'a pas été acheté (offert, bundle, gratuit).
+     Le mettre dans le nuage collerait une colonne verticale contre l'axe
+     et écraserait les vrais prix. Mais l'écarter en silence cacherait le
+     fait le plus intéressant du lot — alors il est dit en toutes lettres
+     dans le sous-titre, et il vaut mieux qu'un point de plus. */
+  const payants = jeux.filter(x => x.paid > 0);
+  const offerts = jeux.filter(x => x.paid === 0);
+  const moyenne = l => l.reduce((s,x)=>s+x.rating,0) / l.length;
+  const prix = payants.map(x => ({x: x.paid, y: x.rating, nom: x.name}));
+  const compare = (offerts.length >= ANALYSE_MINI && payants.length >= ANALYSE_MINI)
+    ? `${offerts.length} jeux obtenus sans payer : ${fr(moyenne(offerts),2)} de moyenne, contre ${
+        fr(moyenne(payants),2)} pour les payants`
+    : '';
+
+  hote.innerHTML = `<div class="tip" id="anTip"></div>
+    <div class="an-entete">
+      <h2>Statistiques</h2>
+      <p>Sur ${jeux.length} jeu${jeux.length>1?'x':''} terminé${jeux.length>1?'s':''} et noté${jeux.length>1?'s':''}.</p>
+    </div>
+    <div class="an-grille2">
+      ${nuageHTML('Note et temps de jeu', heures, 'heures de jeu',
+                  v => fr(v,0) + ' h', '', true)}
+      ${nuageHTML('Note et prix payé', prix, 'prix payé',
+                  v => fr(v,0) + ' €', compare, false)}
+      ${barresHTML('Note moyenne par genre', groupePar(jeux, 'genres'), ``)}
+      ${barresHTML('Note moyenne par développeur', groupePar(jeux, 'developpeur'), ``)}
+    </div>`;
+  brancheInfobulleAnalyse();
+  brancheDepliage();
+}
+
+/* Un seul gestionnaire pour toutes les barres, posé sur la section : elles
+   sont redessinées à chaque rendu, et rattacher vingt écouteurs à chaque
+   fois ne servirait qu'à les oublier une fois sur deux.
+
+   onclick et non addEventListener : renderAnalyse() rappelle cette
+   fonction à chaque rendu. Avec addEventListener les écouteurs
+   s'empileraient, et deux d'entre eux s'annuleraient — le premier ouvre la
+   liste, le second la voit ouverte et la referme aussitôt. Une affectation
+   remplace au lieu d'ajouter. */
+function brancheDepliage(){
+  const hote = document.getElementById('analyse');
+  if(!hote) return;
+  hote.onclick = e=>{
+    const b = e.target.closest('.an-ligne');
+    if(!b) return;
+    const liste = b.nextElementSibling;
+    const ouvrir = liste.hidden;
+    // on referme celle d'avant : deux listes ouvertes noient la comparaison
+    hote.querySelectorAll('.an-jeux').forEach(l => { l.hidden = true; });
+    hote.querySelectorAll('.an-ligne').forEach(x => x.setAttribute('aria-expanded', 'false'));
+    if(ouvrir){
+      liste.hidden = false;
+      b.setAttribute('aria-expanded', 'true');
+    }
+  };
+}
+
+/* Une seule infobulle pour les quatre graphiques : elle suit le pointeur et
+   lit data-info, que le point vienne d'un nuage ou d'une barre. */
+function brancheInfobulleAnalyse(){
+  const hote = document.getElementById('analyse');
+  const tip = document.getElementById('anTip');
+  if(!hote || !tip) return;
+  hote.onmousemove = e => {
+    const cible = e.target.closest('[data-info]');
+    if(!cible){ tip.classList.remove('show'); return; }
+    tip.textContent = cible.dataset.info;
+    const b = hote.getBoundingClientRect();
+    tip.style.left = (e.clientX - b.left) + 'px';
+    tip.style.top  = (e.clientY - b.top - 12) + 'px';
+    tip.classList.add('show');
+  };
+  hote.onmouseleave = ()=> tip.classList.remove('show');
+}
+
 function render(){
   /* La fiche ouverte survit au rendu. render() commençait par closeSheet(),
      si bien qu'un rafraîchissement de fond qui aboutissait pendant qu'on
@@ -4424,7 +5400,27 @@ function render(){
 
   majEntete();
   document.getElementById('addBtn').hidden = !CAN_WRITE;
-  renderTabs(); renderSort(); renderStats(); renderDist();
+  renderTabs();
+
+  /* L'onglet des statistiques n'est pas un tiroir : il n'a ni mur, ni tri,
+     ni recherche, ni histogramme. Tout ce qui parle d'une liste de jeux est
+     donc rangé, et lui seul s'affiche — plutôt que de laisser un bandeau de
+     stats et une barre d'outils sans objet flotter au-dessus du vide. */
+  const vueStats = S.bucket === 'stats';
+  document.getElementById('analyse').hidden = !vueStats;
+  document.getElementById('statsWrap').hidden = vueStats;
+  document.getElementById('dist').hidden = vueStats;
+  document.querySelector('.tools').hidden = vueStats;
+  document.getElementById('out').hidden = vueStats;
+  if(vueStats){
+    document.getElementById('deco').hidden = true;
+    renderAnalyse();
+    document.getElementById('brand-sub').textContent = '- Statistiques';
+    closeSheet();
+    return;
+  }
+
+  renderSort(); renderStats(); renderDist();
   // reconstruire les tuiles pendant que l'une d'elles voyage vers la fiche
   // casse la transition en cours (voir TRANSITION_EN_COURS) : on la repousse
   if(TRANSITION_EN_COURS) RENDU_MUR_EN_ATTENTE = true;

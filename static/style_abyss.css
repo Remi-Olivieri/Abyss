@@ -64,14 +64,59 @@ input,textarea{
 }
 
 /* ---------- Barre du compte ---------- */
+/* position + z-index sur la barre ENTIERE, et non plus sur tel ou tel
+   bouton qu'on aurait pense a proteger.
+   Le titre qui suit porte line-height:.94, bien en dessous de la hauteur
+   naturelle de sa police : son texte deborde de sa propre boite et vient
+   recouvrir le bas de la barre. Invisible -- le titre est en
+   background-clip:text, donc transparent la ou il deborde -- mais le clic
+   y reste pris, et la moitie basse des boutons devient morte.
+   .back avait deja eu le probleme et l'avait resolu pour lui seul ; le
+   bouton suivant ajoute a la barre est retombe dans le meme trou. D'ou le
+   correctif ici et pas la : c'est la barre qui doit passer devant ce qui
+   la suit, quels que soient les boutons qu'on y mettra. */
 .barre{
+  position:relative;
+  z-index:2;
   display:flex;
   justify-content:flex-end;
   align-items:center;
   min-height:38px;
   margin-bottom:24px;
 }
+/* La barre alignait tout a droite quand elle ne portait que le compte.
+   Depuis qu'un bouton l'accompagne, c'est cette cale qui les separe --
+   justify-content:flex-end les aurait colles l'un a l'autre. */
+.barre-espace{flex:1}
 .compte{position:relative}
+
+/* ---------- suggestions et bugs ---------- */
+.sugg-genres{display:flex;gap:8px;margin-bottom:15px}
+.sugg-genre{flex:1}
+/* Le rond natif est masque, pas retire : il continue de porter le clavier,
+   le nom du groupe et l'etat coche, c'est juste l'etiquette qui se peint. */
+.sugg-genre input{position:absolute;opacity:0;width:0;height:0}
+.sugg-genre span{
+  display:block;text-align:center;
+  padding:9px 12px;border-radius:10px;
+  font-size:14px;color:var(--brume);
+  border:1px solid rgba(150,195,220,.16);
+  background:rgba(3,8,15,.66);
+  cursor:pointer;
+  transition:border-color .2s ease,color .2s ease,background .2s ease;
+}
+.sugg-genre:hover span{color:var(--os)}
+.sugg-genre input:checked + span{
+  color:var(--os);
+  border-color:rgba(120,200,230,.55);
+  background:rgba(120,200,230,.10);
+}
+.sugg-genre input:focus-visible + span{outline:2px solid var(--plancton);outline-offset:2px}
+
+@media (max-width:520px){
+  .barre{flex-wrap:wrap;gap:10px}
+  #btnSugg{font-size:13px;padding:7px 12px}
+}
 .enveloppe-menu{position:relative}
 
 /* Bouton retour, même langage que .fermer : un carré arrondi discret,
@@ -399,7 +444,7 @@ input,textarea{
   margin-bottom:6px;
 }
 .champ > span em{font-style:normal;opacity:.65}
-.champ input{
+.champ input,.champ textarea,.champ select{
   width:100%;
   font:inherit;
   font-size:15px;
@@ -410,7 +455,8 @@ input,textarea{
   background:rgba(3,8,15,.66);
   transition:border-color .2s ease,box-shadow .2s ease;
 }
-.champ input:focus{
+.champ textarea{resize:vertical;min-height:96px;line-height:1.5}
+.champ input:focus,.champ textarea:focus,.champ select:focus{
   outline:none;
   border-color:rgba(120,200,230,.55);
   box-shadow:0 0 0 3px rgba(91,155,245,.16);

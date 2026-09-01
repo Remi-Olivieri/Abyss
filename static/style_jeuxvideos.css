@@ -94,6 +94,40 @@ input,textarea{caret-color:var(--gold)}
   transition:color .15s,border-color .15s,background .15s;
 }
 .jnl-search:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+/* Action de l'en-tête, tout à droite — et, dès qu'il y a la place, en
+   dehors de la colonne centrale.
+
+   Toute la page tient dans .wrap, large de --maxw : sur un grand écran il
+   reste deux marges vides de part et d'autre, et ce bouton n'a aucune
+   raison de rester enfermé au bord de la colonne alors que la marge droite
+   ne sert à rien.
+
+   Pourquoi hors flux et pas une marge négative : .tabs porte
+   margin-left:auto, donc c'est elle qui absorbe l'espace libre. Retirer de
+   la largeur au dernier élément lui en rend d'autant, et TOUT le groupe de
+   droite glisse — l'engrenage serait sorti de la colonne avec le bouton.
+   position:absolute le retire du calcul : plus rien d'autre ne bouge.
+   Le repère est .top (sticky, donc positionné), dont la largeur exclut la
+   barre de défilement — contrairement à 100vw, qui la compte.
+
+   Le seuil n'est pas décoratif, il se calcule. La colonne s'arrête à
+   (L + 1120)/2 - 20 ; le bouton fait ~150 px et se pose à 24 du bord. Pour
+   qu'il ne recouvre pas l'engrenage il faut L - 174 >= (L + 1120)/2 - 6,
+   soit L >= 1456. En dessous, il reste dans la colonne au bout de la barre,
+   à droite de l'engrenage — là où il tient sans gêner personne. */
+.entete-action{
+  flex:0 0 auto;display:flex;align-items:center;gap:6px;
+  height:27px;padding:0 11px 0 9px;border-radius:99px;
+  color:var(--muted);border:1px solid var(--line);
+  font-family:var(--mono);font-size:11px;letter-spacing:.02em;
+  text-decoration:none;white-space:nowrap;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.entete-action:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+.entete-action:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (min-width:1460px){
+  .entete-action{position:absolute;right:24px;top:50%;transform:translateY(-50%)}
+}
 .brand span{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase}
 /* pas d'overflow ici : il rognerait le menu déroulant des années. Le
    défilement horizontal ne sert plus, la barre ne grandit plus avec les
@@ -127,6 +161,9 @@ input,textarea{caret-color:var(--gold)}
 .menu-item{
   display:block;width:100%;text-align:left;padding:9px 10px;border-radius:8px;
   font-size:13.5px;color:var(--text);transition:background .15s;
+  /* l'entree « Suggestion » est un lien vers Abyss, les autres sont des
+     boutons : sans ces deux lignes elle serait soulignee et plus etroite */
+  text-decoration:none;box-sizing:border-box;
 }
 .menu-item:hover{background:var(--bg3)}
 .menu-item.quit{color:var(--muted)}
@@ -225,12 +262,59 @@ input,textarea{caret-color:var(--gold)}
 .hist.picked .bar:not(.on):hover i{opacity:.65}
 .bar.on{background:rgba(242,237,228,.08)}
 .bar.on i{filter:brightness(1.2)}
-.avg{position:absolute;top:-4px;bottom:0;width:1px;background:var(--gold);opacity:.55;pointer-events:none}
-.avg span{
-  position:absolute;top:-6px;left:6px;font-family:var(--mono);font-size:10px;
-  color:var(--gold);white-space:nowrap;letter-spacing:.04em;
+/* ---------- le repère de la moyenne ----------
+   Deux choses le rendaient illisible, et il fallait les deux pour que ça
+   se voie : l'opacité de .55 portée par .avg descendait aussi sur le
+   chiffre (il est dedans), qui se retrouvait délavé partout ; et l'or seul
+   n'a presque aucun contraste sur les barres claires de l'échelle —
+   #E9A13C vers 5, #A8C24A vers 7 — c'est-à-dire justement là où une
+   moyenne a le plus de chances de tomber.
+   Le repère porte donc maintenant son propre contraste, au lieu de compter
+   sur la couleur qu'il aura derrière lui : liseré sombre autour du trait,
+   pastille sombre sous le chiffre. Il se lit sur n'importe quelle barre,
+   et sur le fond de la page quand il n'y en a pas. */
+.avg{
+  position:absolute;top:-4px;bottom:0;width:1px;pointer-events:none;
+  background:var(--gold);
+  box-shadow:0 0 0 1px rgba(10,8,14,.72);
 }
-.avg.flip span{left:auto;right:6px}
+.avg span{
+  position:absolute;top:-9px;left:7px;font-family:var(--mono);font-size:10px;
+  color:var(--gold);white-space:nowrap;letter-spacing:.04em;
+  padding:2px 6px;border-radius:6px;
+  background:rgba(10,8,14,.85);
+  border:1px solid rgba(229,196,107,.32);
+}
+.avg.flip span{left:auto;right:7px}
+/* ---------- l'onglet d'ouverture ----------
+   Une puce dorée en haut à droite de l'onglet, hors du texte : elle ne
+   décale rien et ne se confond pas avec l'onglet actif, qui lui se
+   distingue par son fond. Sur une entrée du menu des catégories, la même
+   puce mais alignée à droite, là où il y a la place. */
+.tab[data-defaut]{position:relative}
+.tab[data-defaut]::after{
+  content:'';position:absolute;top:4px;right:5px;
+  width:5px;height:5px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 6px rgba(229,196,107,.7);
+}
+.menu-item.defaut{position:relative;padding-right:22px}
+.menu-item.defaut::after{
+  content:'';position:absolute;top:50%;right:9px;margin-top:-2.5px;
+  width:5px;height:5px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 6px rgba(229,196,107,.7);
+}
+/* Le menu du clic droit : posé au pointeur, donc en coordonnées de la
+   fenêtre. z-index au-dessus de l'en-tête collant (40), sinon il passerait
+   dessous en apparaissant juste sous la barre d'onglets.
+
+   right:auto est indispensable : .menu pose right:0 pour s'accrocher sous
+   son bouton, et un élément qui a à la fois left (posé ici en style en
+   ligne) et right s'étire de l'un à l'autre — le menu aurait fait toute
+   la largeur de l'écran. */
+.onglet-menu{
+  position:fixed;right:auto;z-index:60;min-width:210px;
+}
+
 .haxis{position:relative;height:24px;border-top:1px solid var(--line-strong)}
 .haxis span{
   position:absolute;top:6px;transform:translateX(-50%);
@@ -244,6 +328,94 @@ input,textarea{caret-color:var(--gold)}
 }
 .tip.show{opacity:1}
 .tip b{font-family:var(--mono);font-weight:700}
+
+/* ---------- onglet « Statistiques » ---------- */
+.analyse{position:relative;padding-top:6px;padding-bottom:20px}
+.an-entete{margin-bottom:20px}
+.an-entete h2{
+  font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 6px;
+}
+.an-entete p{margin:0;max-width:74ch;color:var(--muted);font-size:13px;line-height:1.55}
+.an-rien{padding:60px 0;text-align:center;color:var(--muted)}
+
+/* Deux colonnes dès qu'il y a la place : les quatre graphiques se
+   comparent du regard, et les empiler obligerait à faire défiler entre
+   deux lectures de la même question. */
+.an-grille2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+.an-carte{
+  padding:16px 18px 18px;border-radius:14px;
+  background:linear-gradient(170deg,rgba(38,31,51,.55),rgba(23,19,31,.55));
+  border:1px solid var(--line);
+}
+.an-tete{margin-bottom:12px}
+.an-tete h3{font-family:var(--display);font-weight:600;font-size:15px;margin:0}
+.an-tete span{
+  display:block;margin-top:3px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--muted);
+}
+.an-vide{margin:0;padding:26px 0;text-align:center;color:var(--muted);font-size:13px}
+
+/* ---------- le nuage ---------- */
+.an-svg{display:block;width:100%;height:auto;overflow:visible}
+.an-grille{stroke:var(--line);stroke-width:1}
+.an-cadre{stroke:var(--line-strong);stroke-width:1}
+.an-axe{fill:var(--muted);font-family:var(--mono);font-size:10px}
+.an-unite{fill:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+/* semi-transparents : là où les jeux se tassent, les disques s'additionnent
+   et la densité se lit. Opaques, un point en cacherait vingt. */
+.an-pt{opacity:.62;transition:opacity .12s,r .12s}
+.an-pt:hover{opacity:1;r:7}
+
+/* ---------- les barres ---------- */
+.an-barres{display:flex;flex-direction:column;gap:5px}
+.an-item{display:flex;flex-direction:column}
+/* La barre est un vrai bouton : elle se déplie, donc elle doit répondre au
+   clavier et s'annoncer comme actionnable. display:grid pour garder
+   exactement la mise en page qu'elle avait en <div>. */
+.an-ligne{
+  display:grid;grid-template-columns:minmax(0,11em) 1fr auto;gap:11px;align-items:center;
+  width:100%;text-align:left;padding:2px 4px;border-radius:7px;
+  transition:background .15s;
+}
+.an-ligne:hover{background:rgba(242,237,228,.05)}
+.an-ligne[aria-expanded="true"]{background:rgba(229,196,107,.09)}
+.an-ligne:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+
+/* La liste dépliée. Deux colonnes dès qu'elle est large : une liste d'une
+   seule colonne pour vingt jeux ferait défiler la carte entière. */
+.an-jeux{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+  gap:2px 14px;margin:4px 0 8px;padding:9px 10px;
+  border-radius:9px;background:rgba(10,8,14,.4);
+  border:1px solid var(--line);
+  animation:rise .16s cubic-bezier(.2,.7,.3,1);
+}
+.an-jeu{display:flex;align-items:baseline;gap:8px;font-size:12px;min-width:0}
+.an-jeu b{
+  font-weight:400;color:var(--text);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.an-jeu i{font-style:normal;font-family:var(--mono);font-size:11px;flex:none}
+.an-nom{
+  font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);
+}
+.an-piste{display:block;height:9px;border-radius:99px;background:var(--bg3);overflow:hidden}
+.an-piste i{display:block;height:100%;border-radius:99px;transition:width .3s cubic-bezier(.2,.7,.3,1)}
+.an-val{
+  font-family:var(--mono);font-size:11.5px;color:var(--text);
+  display:flex;align-items:baseline;gap:6px;
+}
+/* l'effectif derrière la moyenne : toujours visible, jamais au même niveau
+   qu'elle — c'est une précision, pas une valeur */
+.an-val em{font-style:normal;color:var(--muted);font-size:9.5px}
+.an-val em::before{content:'n='}
+.an-ligne:hover .an-nom,.an-ligne[aria-expanded="true"] .an-nom{color:var(--gold)}
+
+@media (max-width:560px){
+  .an-grille2{grid-template-columns:1fr}
+  .an-ligne{grid-template-columns:minmax(0,7.5em) 1fr auto;gap:8px}
+  .an-carte{padding:14px}
+}
 
 /* ---------- barre d'outils ---------- */
 /* La barre d'outils se pose sous l'en-tête et y reste : changer la recherche
@@ -273,46 +445,6 @@ input,textarea{caret-color:var(--gold)}
   background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px;
   background-size:5px 5px,5px 5px;background-repeat:no-repeat;
 }
-.select-toggle{
-  height:38px;padding:0 15px;border-radius:9px;white-space:nowrap;
-  border:1px solid var(--line);color:var(--muted);
-  font-family:var(--mono);font-size:12px;letter-spacing:.03em;
-  transition:background .15s,border-color .15s,color .15s;
-}
-.select-toggle:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
-.select-toggle.actif{color:var(--gold);border-color:rgba(229,196,107,.45);background:rgba(229,196,107,.1)}
-
-/* ---------- sélection multiple ----------
-   Prend la place des outils le temps de choisir des jeux, même position
-   collante qu'eux — un seul bandeau à la fois sous l'en-tête. */
-.selection-bar{
-  display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px 0;
-  position:sticky;top:var(--h-top);z-index:15;
-  background:rgba(23,19,31,.86);
-  backdrop-filter:blur(14px);
-  font-size:13.5px;
-}
-.selection-bar b{font-family:var(--mono);font-weight:500;color:var(--text)}
-.selection-bar .spacer{flex:1 1 auto}
-.lien-select{color:var(--gold);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
-.lien-select:hover{color:var(--text)}
-.selection-bar .sel{height:36px}
-.selection-bar .ghost{height:36px;padding:0 14px;font-size:13px}
-
-/* Le rond de sélection remplace la pastille de note (même coin) tant
-   qu'on choisit des jeux : pas la peine des deux à la fois, et ça évite
-   de disputer une place à la promo, dans le coin opposé. */
-.tile.selectionnable{cursor:pointer}
-.tile.selectionnable::before{
-  content:'';position:absolute;top:8px;left:8px;z-index:5;
-  width:23px;height:23px;border-radius:50%;
-  border:2px solid rgba(242,237,228,.65);background:rgba(10,8,14,.75);
-  display:grid;place-items:center;
-  font-family:var(--mono);font-weight:800;font-size:13px;color:#1A1206;
-  transition:background .15s,border-color .15s;
-}
-.tile.selectionne::before{content:'✓';background:var(--gold);border-color:var(--gold)}
-
 /* ---------- jaquettes ---------- */
 .cov{display:block;background:var(--bg3);border-radius:5px;object-fit:cover;aspect-ratio:var(--cov-ratio)}
 /* le temps que la jaquette arrive : un reflet lent traverse la case, pour
@@ -833,6 +965,19 @@ input,textarea{caret-color:var(--gold)}
 }
 .fpick small{display:block;margin-top:5px;color:var(--muted);font-size:12px;transition:color .15s}
 .fpick:hover small{color:var(--gold)}
+/* Le rappel qui prend la place de la fiche tant qu'aucune n'est retenue.
+   Volontairement discret : c'est une consigne, pas une erreur — le rouge
+   est reserve a ce qui a deja ete refuse. */
+.fpick-vide{
+  grid-column:1/-1;margin:0;display:block;width:100%;text-align:left;
+  padding:10px 12px;border-radius:11px;
+  background:var(--bg3);border:1px dashed var(--line-strong);
+  color:var(--muted);font-size:12.5px;line-height:1.45;cursor:pointer;
+  transition:border-color .15s,color .15s;
+}
+.fpick-vide b{display:block;color:var(--text);font-weight:500;margin-bottom:2px}
+.fpick-vide:hover{border-color:var(--gold);color:var(--text)}
+.fpick-vide:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 /* ---------- « jeu en cours » / « wishlist » ----------
    Une case à cocher, pas un champ : elle annule la règle .fld input
@@ -905,6 +1050,32 @@ input,textarea{caret-color:var(--gold)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .toast.bad{border-color:rgba(180,41,92,.55);color:#F5B9C6}
 
+/* ---------- rattrapage automatique des fiches IGDB ----------
+   En bas a gauche, hors du chemin du toast qui, lui, est centre : les deux
+   peuvent s'afficher en meme temps et ne doivent pas se recouvrir. Discret
+   a dessein -- c'est une tache de fond que personne n'a demandee, elle
+   informe sans reclamer l'ecran. */
+.rattrapage{
+  position:fixed;left:18px;bottom:18px;z-index:88;
+  display:flex;align-items:center;gap:12px;
+  max-width:min(340px,calc(100vw - 36px));
+  padding:10px 14px;
+  background:var(--bg3);border:1px solid var(--line-strong);border-radius:11px;
+  font-size:12.5px;color:var(--muted);box-shadow:0 12px 34px rgba(0,0,0,.55);
+  animation:rattrapage-entre .25s ease-out;
+}
+@keyframes rattrapage-entre{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rattrapage-txt{flex:1;min-width:0}
+.rattrapage-x{
+  flex:0 0 auto;background:none;border:none;padding:0;
+  color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;
+}
+.rattrapage-x:hover{color:var(--gold)}
+.rattrapage-x:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:3px}
+@media (max-width:560px){
+  .rattrapage{left:12px;right:12px;bottom:12px;max-width:none}
+}
+
 /* ---------- recherche d'un journal ---------- */
 #recherche{z-index:65}
 .recherche-sheet{max-width:420px}
@@ -924,6 +1095,27 @@ input,textarea{caret-color:var(--gold)}
 }
 .rsearch-item:hover{background:var(--bg3)}
 .rsearch-item.on{background:rgba(229,196,107,.09)}
+
+/* ---------- la banniere de quelqu'un, en fond de sa ligne ----------
+   Elle sert a reconnaitre un journal, pas a se faire regarder : posee dans
+   une couche a part, en pseudo-element, pour pouvoir la faire disparaitre
+   sous un degrade vers la gauche. Le texte se lit sur du fond plein, la
+   banniere ne survit qu'a droite -- la ou il n'y a rien a lire. */
+.rsearch-orne{position:relative;isolation:isolate;overflow:hidden}
+.rsearch-orne::before{
+  content:'';position:absolute;inset:0;z-index:-1;
+  background-image:var(--banniere);
+  background-size:cover;background-position:center;
+  opacity:.2;
+  /* le degrade est un masque, pas un calque : superposer un aplat aurait
+     teinte la banniere au lieu de l'effacer */
+  -webkit-mask-image:linear-gradient(to right,transparent 10%,#000 100%);
+  mask-image:linear-gradient(to right,transparent 10%,#000 100%);
+}
+.rsearch-orne:hover::before{opacity:.3}
+@media (prefers-reduced-motion:no-preference){
+  .rsearch-orne::before{transition:opacity .15s}
+}
 .rsearch-avatar{
   flex:0 0 auto;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
   font-family:var(--display);font-weight:700;font-size:13.5px;color:#fff;
@@ -943,6 +1135,15 @@ input,textarea{caret-color:var(--gold)}
 .jaq-sheet{max-width:600px}
 .jaq-in{padding:6px 28px 26px}
 .jaq-info{font-size:13px;color:var(--muted);margin:0 0 16px}
+/* reformuler la recherche : le titre du classeur ne trouve pas toujours la
+   bonne fiche chez IGDB (voir jaqHTML) */
+.jaq-chercher{display:flex;gap:9px;margin:0 0 16px}
+.jaq-chercher input{
+  flex:1;min-width:0;height:40px;padding:0 12px;
+  background:var(--bg3);border:1px solid var(--line);border-radius:9px;
+  outline:none;font-size:14px;font-family:var(--body);transition:border-color .15s;
+}
+.jaq-chercher input:focus{border-color:var(--gold)}
 .jaq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:14px}
 /* flex-start explicite : la grille étire les cases à la hauteur de la plus
    haute, et un <button> recentre son contenu verticalement tout seul. Un
@@ -1007,7 +1208,131 @@ input,textarea{caret-color:var(--gold)}
 .igdb-in .fgrid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
 .igdb-info{font-size:13.5px;line-height:1.6;color:var(--muted);margin:0 0 18px}
 .igdb-info b{color:var(--text);font-weight:700}
+
+/* ---------- export du journal ---------- */
+.export-sheet{max-width:560px}
+.export-in{padding:6px 28px 28px;display:flex;flex-direction:column;gap:20px}
+
+/* deux boutons plutôt qu'un menu déroulant : un seul choix binaire, pas
+   besoin d'ouvrir quoi que ce soit pour le voir ou le changer */
+.export-format{display:inline-flex;align-self:flex-start;padding:3px;gap:3px;background:var(--bg);border:1px solid var(--line);border-radius:11px}
+.export-format-btn{
+  padding:0 24px;height:36px;border-radius:8px;font-family:var(--mono);font-size:12.5px;
+  letter-spacing:.04em;color:var(--muted);transition:background .15s,color .15s;
+}
+.export-format-btn:hover{color:var(--text)}
+.export-format-btn.on{background:var(--bg3);color:var(--gold)}
+
+/* catégories / données : deux blocs nettement séparés du reste de la
+   fenêtre, plutôt que des libellés flottant directement dans le formulaire */
+.export-section{background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:15px 16px 16px}
+.export-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px}
+.export-section-title{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.export-hint{font-size:12px;color:var(--muted)}
+.export-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:9px}
+.export-grid .fld.fcheck{height:36px;padding:0 12px}
+.export-grid .fld.fcheck span{font-size:13px}
+
+.export-info{margin:0;font-size:12.5px;color:var(--muted);text-align:center}
+.export-info b{color:var(--gold);font-weight:600}
 .igdb-note{font-size:12.5px;line-height:1.6;color:var(--muted);opacity:.8;margin:16px 0 0}
+
+/* ---------- voir plus d'informations ---------- */
+/* le bouton vit dans le corps de la fiche, sous les liens : discret, pas
+   un second appel à l'action à côté de « Modifier » dans la barre du haut */
+.detail-btn{
+  display:block;width:100%;margin-top:22px;height:38px;border-radius:9px;
+  border:1px solid var(--line);color:var(--muted);font-size:13px;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.detail-btn:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
+
+.detail-sheet{max-width:680px}
+.detail-in{padding:6px 28px 28px;display:flex;flex-direction:column;gap:20px}
+.detail-etat{margin:8px 0;font-size:13.5px;color:var(--muted);text-align:center}
+
+.detail-media{position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:var(--bg)}
+.detail-media iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+.detail-desc{margin:0;font-size:13.5px;line-height:1.65;color:var(--muted)}
+
+.detail-faits{display:flex;flex-wrap:wrap;gap:18px 26px}
+.detail-fait u{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;margin-bottom:3px;
+}
+.detail-fait b{font-size:14px;font-weight:500;line-height:1.4;max-width:280px;display:block}
+
+.detail-temps-grid u{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;margin-bottom:12px;
+}
+.detail-source{opacity:.7;text-transform:none;letter-spacing:0}
+.detail-temps-row{display:flex;flex-wrap:wrap;gap:10px}
+.detail-temps{
+  flex:1 1 120px;background:var(--bg);border:1px solid var(--line);border-radius:11px;
+  padding:12px 14px;text-align:center;
+}
+.detail-temps b{display:block;font-family:var(--mono);font-size:18px;font-variant-numeric:tabular-nums;color:var(--gold)}
+.detail-temps span{display:block;margin-top:3px;font-size:11.5px;color:var(--muted)}
+
+.detail-galerie{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin:0 -28px;padding-left:28px;padding-right:28px}
+.detail-galerie img{
+  flex:0 0 auto;height:120px;width:auto;border-radius:10px;object-fit:cover;background:var(--bg);
+  cursor:zoom-in;border:1px solid transparent;transition:border-color .15s,transform .15s;
+}
+.detail-galerie img:hover{border-color:var(--gold);transform:translateY(-2px)}
+
+/* ---------- une capture en grand ----------
+   Au-dessus de la fiche détaillée, qui est elle-même au-dessus du reste :
+   c'est la dernière fenêtre qu'on ouvre, elle doit rester la plus haute.
+   Le fond est plus opaque qu'ailleurs — on vient regarder une image. */
+#detail{z-index:79}
+#zoom{z-index:80;background:rgba(9,7,13,.95)}
+.zoom-boite{position:relative;display:flex;align-items:center;justify-content:center;max-width:100%}
+.zoom-boite img{
+  max-width:min(1280px,94vw);max-height:86vh;width:auto;height:auto;
+  border-radius:12px;box-shadow:0 30px 90px rgba(0,0,0,.7);
+}
+/* les commandes se posent sur l'image, jamais autour : en négatif elles
+   sortiraient de l'écran dès que l'image occupe toute la largeur */
+.zoom-boite .sbtn{position:absolute;background:rgba(9,7,13,.72);border-color:transparent}
+.zoom-boite .sbtn:hover{background:var(--bg3);border-color:var(--line-strong)}
+.zoom-x{top:10px;right:10px}
+.zoom-prev,.zoom-next{top:50%;transform:translateY(-50%)}
+.zoom-prev{left:10px}
+.zoom-next{right:10px}
+.zoom-rang{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  padding:4px 12px;border-radius:99px;background:rgba(9,7,13,.72);
+  font-family:var(--mono);font-size:11.5px;color:var(--muted);
+}
+
+/* ---------- les barres de défilement des fenêtres ----------
+   Celle du navigateur, large et claire, tranche avec le fond sombre — et
+   la fiche détaillée en montre deux d'un coup (la fenêtre en hauteur, la
+   bande de captures en largeur). Fine, sans flèches, de la couleur des
+   bordures : elle se voit quand on la cherche et se tait le reste du
+   temps. La bordure transparente sert de marge — background-clip la
+   retire du fond, ce qui donne le rail étroit sans rogner la zone
+   cliquable. */
+.sheet,.detail-galerie,.igdb-liste,.ac{
+  scrollbar-width:thin;
+  scrollbar-color:var(--line-strong) transparent;
+}
+.sheet::-webkit-scrollbar,.detail-galerie::-webkit-scrollbar,
+.igdb-liste::-webkit-scrollbar,.ac::-webkit-scrollbar{width:11px;height:11px}
+.sheet::-webkit-scrollbar-track,.detail-galerie::-webkit-scrollbar-track,
+.igdb-liste::-webkit-scrollbar-track,.ac::-webkit-scrollbar-track{background:transparent}
+.sheet::-webkit-scrollbar-thumb,.detail-galerie::-webkit-scrollbar-thumb,
+.igdb-liste::-webkit-scrollbar-thumb,.ac::-webkit-scrollbar-thumb{
+  background:var(--line-strong);border-radius:99px;
+  border:3px solid transparent;background-clip:content-box;
+}
+.sheet::-webkit-scrollbar-thumb:hover,.detail-galerie::-webkit-scrollbar-thumb:hover,
+.igdb-liste::-webkit-scrollbar-thumb:hover,.ac::-webkit-scrollbar-thumb:hover{
+  background:var(--muted);background-clip:content-box;
+}
 
 /* la jauge d'avancement, commune à l'analyse et à l'écriture */
 .igdb-jauge{
@@ -1042,6 +1367,14 @@ input,textarea{caret-color:var(--gold)}
   flex:0 0 auto;width:16px;height:16px;margin:3px 0 0;
   accent-color:var(--gold);cursor:pointer;
 }
+/* « Changer de jeu » : proposé uniquement quand le rapprochement n'est pas
+   sûr, donc discret — c'est une exception, pas l'usage courant */
+.igdb-fiche-btn{
+  flex:0 0 auto;align-self:center;height:28px;padding:0 11px;border-radius:8px;
+  border:1px solid var(--line);color:var(--muted);font-size:12px;white-space:nowrap;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.igdb-fiche-btn:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg2)}
 .igdb-corps{flex:1;min-width:0;display:block}
 .igdb-nom{display:block;font-size:14px;line-height:1.3;font-weight:700}
 .igdb-nom em{
@@ -1078,6 +1411,12 @@ input,textarea{caret-color:var(--gold)}
   text-transform:uppercase;color:var(--muted);
 }
 .igdb-repli summary:hover{color:var(--text)}
+/* le décompte par motif, avant la liste nom par nom : c'est lui qui dit
+   s'il s'agit d'un problème unique ou de trente cas distincts */
+.igdb-motifs{margin:10px 0 4px;padding:10px 12px;list-style:none;
+  background:var(--bg);border:1px solid var(--line);border-radius:9px}
+.igdb-motifs li{font-size:12.5px;color:var(--muted);line-height:1.7}
+.igdb-motifs b{color:var(--gold);font-family:var(--mono);font-size:12px}
 .igdb-repli ul{margin:12px 0 0;padding-left:18px;color:var(--text);font-size:13px;line-height:1.7}
 .igdb-repli i{font-style:normal;color:var(--muted)}
 
@@ -1171,6 +1510,12 @@ input,textarea{caret-color:var(--gold)}
   .brand{padding-bottom:10px}
   .tabs{margin:0;padding-bottom:10px;padding-right:44px}
   .cog-wrap{position:absolute;top:8px;right:0}
+  /* En colonne, il n'y a plus ni « droite » ni marge d'où sortir : le
+     bouton se range sous les onglets, en pleine largeur, et garde son
+     libellé — l'écourter en icône seule le rendrait indevinable. */
+  .entete-action{
+    justify-content:center;height:34px;margin:0 0 10px;font-size:12px;
+  }
   .stats{grid-template-columns:repeat(2,1fr)}
   .stat{padding:14px 8px 12px}
   .stat:nth-child(2n){border-right:none}
@@ -1196,6 +1541,14 @@ input,textarea{caret-color:var(--gold)}
   .bilan-actions{justify-content:stretch}
   .bilan-actions .cta.auto,.bilan-actions .ghost{flex:1}
   .igdb-in{padding:2px 18px 22px}
+  .export-in{padding:2px 18px 22px}
+  .detail-in{padding:2px 18px 22px}
+  .detail-galerie{margin:0 -18px;padding-left:18px;padding-right:18px}
+  /* la capture en grand reste centrée : la règle .sheet-back ci-dessus
+     colle les fenêtres en bas de l'écran, ce qui n'a de sens que pour
+     celles qui ont une barre d'outils à portée de pouce */
+  #zoom{padding:12px;align-items:center}
+  .zoom-boite img{max-height:80vh}
   /* sur mobile tout s'empile, comme le reste des formulaires : la règle
      .fgrid de ce bloc ne suffit pas, .igdb-in .fgrid est plus spécifique */
   .igdb-in .fgrid{grid-template-columns:1fr}

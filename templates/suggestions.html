@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suggestions — Abyss</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style_abyss.css">
+<style>
+  /* cette barre-ci porte un retour à gauche en plus du compte à droite */
+  .barre{justify-content:space-between}
+
+  /* ---------- en-tête ----------
+     Le titre reprend celui d'Abyss en plus petit : on est dans une page du
+     hub, pas dans un outil à part. */
+  .sug-entete{margin-bottom:30px}
+  .sug-titre{
+    font-family:"Eczar",Georgia,serif;font-weight:600;
+    font-size:clamp(34px,6vw,52px);line-height:1.05;letter-spacing:.06em;
+    text-transform:uppercase;margin:0;
+    background:linear-gradient(180deg,#EEF7FC 0%,#89B4CE 58%,#2E4E66 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sug-sous{margin:12px 0 0;max-width:60ch;color:var(--brume);font-size:14px;line-height:1.55}
+  .sug-sous code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+    padding:1px 6px;border-radius:5px;background:rgba(3,8,15,.7);color:#9FC4DA;
+  }
+
+  /* ---------- filtres ---------- */
+  .sug-filtres{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+  .sug-filtre{
+    font:inherit;font-size:13px;padding:7px 14px;border-radius:999px;
+    color:var(--brume);border:1px solid rgba(150,195,220,.16);
+    background:rgba(3,8,15,.6);cursor:pointer;
+    transition:border-color .2s ease,color .2s ease,background .2s ease;
+  }
+  .sug-filtre:hover{color:var(--os)}
+  .sug-filtre.actif{
+    color:var(--os);border-color:rgba(120,200,230,.55);background:rgba(120,200,230,.12);
+  }
+  .sug-filtre b{font-weight:500;opacity:.6;margin-left:5px}
+  .sug-filtre:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+
+  /* ---------- une section ---------- */
+  .sug-section{margin-bottom:34px}
+  .sug-section[hidden]{display:none}
+  .sug-section-tete{
+    display:flex;align-items:baseline;gap:12px;
+    padding-bottom:10px;margin-bottom:14px;
+    border-bottom:1px solid transparent;
+    border-image:linear-gradient(90deg,rgba(120,200,220,.34),rgba(120,200,220,.02)) 1;
+  }
+  .sug-section-tete h2{
+    font-family:"Eczar",Georgia,serif;font-size:21px;font-weight:600;margin:0;
+  }
+  .sug-compte{font-size:12.5px;color:var(--brume);margin-left:auto}
+
+  /* ---------- une ligne ----------
+     Une carte par ligne du fichier. Le bouton n'apparaît qu'au survol sur
+     grand écran : la liste se parcourt d'abord, on n'agit qu'ensuite — mais
+     il reste toujours visible au clavier et au toucher, où il n'y a pas de
+     survol pour le faire venir. */
+  .sug-ligne{
+    position:relative;display:flex;align-items:flex-start;gap:14px;
+    padding:14px 16px;margin-bottom:8px;border-radius:13px;
+    border:1px solid rgba(150,195,220,.14);
+    background:linear-gradient(170deg,rgba(19,34,56,.55),rgba(8,15,26,.55));
+    transition:border-color .2s ease,transform .15s ease,background .2s ease;
+  }
+  .sug-ligne:hover{
+    border-color:rgba(150,195,220,.3);
+    background:linear-gradient(170deg,rgba(23,41,66,.7),rgba(10,18,31,.7));
+  }
+  .sug-ligne.part{opacity:0;transform:translateX(26px)}
+  @media (prefers-reduced-motion:no-preference){
+    .sug-ligne.part{transition:opacity .28s ease,transform .28s ease}
+  }
+
+  /* la pastille : ronde pour une envie, carrée pour un bug — reconnaissable
+     sans lire, et sans dépendre de la seule couleur */
+  .sug-pion{
+    flex:none;width:9px;height:9px;margin-top:7px;border-radius:50%;
+    background:var(--plancton);box-shadow:0 0 9px var(--plancton);
+  }
+  .sug-ligne.bug .sug-pion{
+    border-radius:2px;background:#E8788C;box-shadow:0 0 9px rgba(232,120,140,.8);
+  }
+
+  .sug-corps{flex:1;min-width:0}
+  .sug-texte{margin:0;font-size:14.5px;line-height:1.55;word-break:break-word}
+  .sug-meta{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    margin-top:7px;font-size:11.5px;color:var(--brume);
+  }
+  .sug-auteur{color:#9FC4DA}
+  .sug-etiq{
+    padding:1px 8px;border-radius:999px;
+    border:1px solid rgba(150,195,220,.2);
+  }
+  .sug-ligne.bug .sug-etiq{border-color:rgba(232,120,140,.4);color:#E8A9B6}
+  .sug-main{opacity:.55}       /* écrite à la main : pas de compte derrière */
+
+  .sug-boutons{display:flex;gap:6px;flex:none}
+  .sug-fait,.sug-copier{
+    font:inherit;font-size:12.5px;padding:6px 13px;border-radius:999px;
+    color:var(--brume);border:1px solid rgba(150,195,220,.2);
+    background:rgba(3,8,15,.6);cursor:pointer;white-space:nowrap;
+    opacity:0;transition:opacity .18s ease,color .2s ease,border-color .2s ease,background .2s ease;
+  }
+  .sug-ligne:hover .sug-fait,.sug-ligne:hover .sug-copier,
+  .sug-fait:focus-visible,.sug-copier:focus-visible{opacity:1}
+  .sug-fait:hover{
+    color:#8FE0B0;border-color:rgba(143,224,176,.5);background:rgba(143,224,176,.1);
+  }
+  .sug-copier:hover{
+    color:var(--os);border-color:rgba(120,200,230,.55);background:rgba(120,200,230,.1);
+  }
+  /* le retour du copier : la couleur suffit, le mot change déjà */
+  .sug-copier.fait{color:#8FE0B0;border-color:rgba(143,224,176,.5)}
+  .sug-fait:focus-visible,.sug-copier:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  .sug-fait[disabled]{cursor:progress;opacity:1}
+  /* Sans survol, les boutons ne viendraient jamais : au toucher ils restent là. */
+  @media (hover:none){ .sug-fait,.sug-copier{opacity:1} }
+
+  /* ---------- états ---------- */
+  .sug-etat{
+    padding:44px 20px;text-align:center;color:var(--brume);font-size:14px;
+    border:1px dashed rgba(150,195,220,.18);border-radius:14px;
+  }
+  .sug-etat b{display:block;font-size:16px;color:var(--os);margin-bottom:6px}
+  #gate{max-width:46ch}
+</style>
+</head>
+<body>
+<canvas id="neige" aria-hidden="true"></canvas>
+
+<div class="enveloppe">
+
+  <div class="barre">
+    <a class="back" href="/abyss" aria-label="Retour à Abyss">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <div class="compte" id="compte"><!-- rempli par dessineCompte() --></div>
+  </div>
+
+  <main id="corps" hidden>
+    <header class="sug-entete">
+      <h1 class="sug-titre">Suggestions</h1>
+    </header>
+
+    <div class="sug-filtres" id="filtres"></div>
+    <div id="listes"></div>
+  </main>
+
+  <section class="carte-profil" id="gate" hidden>
+    <h2>Rien à voir ici</h2>
+    <p class="explication">Cette page est réservée à l'administration du site.</p>
+    <p><a class="lien" href="/abyss">Retour à Abyss</a></p>
+  </section>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const el = (id) => document.getElementById(id);
+const echappe = (s) => String(s === null || s === undefined ? "" : s)
+  .replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;",
+                                 '"': "&quot;", "'": "&#39;" }[c]));
+
+let MOI = { connecte: false, utilisateur: null };
+let SECTIONS = [];
+let FILTRE = "tout";          // 'tout', 'bug', 'suggestion', ou un projet
+
+async function api(chemin, methode, charge) {
+  const options = { method: methode || "GET", credentials: "same-origin" };
+  if (charge !== undefined) {
+    options.headers = { "Content-Type": "application/json" };
+    options.body = JSON.stringify(charge);
+  }
+  const r = await fetch(chemin, options);
+  let data = null;
+  try { data = await r.json(); } catch (e) { /* réponse illisible */ }
+  if (!r.ok || !data || data.ok === false) {
+    throw new Error((data && data.message) || "Le serveur n'a pas répondu.");
+  }
+  return data;
+}
+
+/* ---------- toast ---------- */
+let minuteurToast = null;
+function toast(message, mauvais) {
+  const t = el("toast");
+  t.textContent = message;
+  t.className = "toast montre" + (mauvais ? " mauvais" : "");
+  t.hidden = false;
+  clearTimeout(minuteurToast);
+  minuteurToast = setTimeout(() => { t.className = "toast"; t.hidden = true; }, 3600);
+}
+
+/* ---------- menu du compte, comme sur les autres pages ---------- */
+function dessineCompte() {
+  if (!MOI.connecte) { el("compte").innerHTML = ""; return; }
+  const u = MOI.utilisateur;
+  const vignette = u.avatar
+    ? `<img class="avatar-mini" src="${echappe(u.avatar)}" alt="">`
+    : '<span class="pastille"></span>';
+  el("compte").innerHTML = `
+    <div class="enveloppe-menu">
+      <button class="bouton pseudo" id="btnMenu" aria-expanded="false" aria-haspopup="true">
+        ${vignette}${echappe(u.pseudo)}
+      </button>
+      <div class="menu" id="menuCompte" hidden>
+        <a class="entree" href="/abyss/profil">Mon profil</a>
+        ${u.admin ? '<a class="entree" href="/abyss/suggestions">Suggestions</a>' : ""}
+        <hr>
+        <button class="entree" id="mnSortie">Se déconnecter</button>
+      </div>
+    </div>`;
+  el("btnMenu").addEventListener("click", (e) => { e.stopPropagation(); basculeMenu(); });
+  el("mnSortie").addEventListener("click", sortir);
+}
+function basculeMenu() {
+  const m = el("menuCompte");
+  m.hidden = !m.hidden;
+  el("btnMenu").setAttribute("aria-expanded", String(!m.hidden));
+}
+let SOURIS_DEHORS = false;
+document.addEventListener("mousedown", (e) => {
+  SOURIS_DEHORS = !e.target.closest(".enveloppe-menu");
+});
+document.addEventListener("click", (e) => {
+  const m = el("menuCompte");
+  if (m && !m.hidden && SOURIS_DEHORS && !e.target.closest(".enveloppe-menu")) {
+    m.hidden = true;
+    el("btnMenu").setAttribute("aria-expanded", "false");
+  }
+});
+async function sortir() {
+  try { await api("/api/deconnexion", "POST", {}); } catch (e) { /* on part quand même */ }
+  location.href = "/abyss";
+}
+
+/* =========================================================
+   La liste
+   ========================================================= */
+function dateCourte(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleDateString("fr-FR",
+    { day: "numeric", month: "short", year: "numeric" });
+}
+
+/* Le filtre s'applique à une ligne, jamais à une section : masquer une
+   section entière ferait disparaître son titre et on ne saurait plus d'où
+   viennent les lignes restantes. */
+function retenue(ligne, section) {
+  if (FILTRE === "tout") return true;
+  if (FILTRE === "bug" || FILTRE === "suggestion") return ligne.genre === FILTRE;
+  return section.projet === FILTRE;
+}
+
+function compte() {
+  let total = 0, bugs = 0;
+  SECTIONS.forEach((s) => s.lignes.forEach((l) => {
+    total++;
+    if (l.genre === "bug") bugs++;
+  }));
+  return { total, bugs, idees: total - bugs };
+}
+
+function dessineFiltres() {
+  const n = compte();
+  const boutons = [
+    { cle: "tout", nom: "Tout", n: n.total },
+    { cle: "suggestion", nom: "Idées", n: n.idees },
+    { cle: "bug", nom: "Bugs", n: n.bugs },
+  ];
+  SECTIONS.forEach((s) => {
+    if (s.projet) boutons.push({ cle: s.projet, nom: s.titre, n: s.lignes.length });
+  });
+  el("filtres").innerHTML = boutons.map((b) => `
+    <button type="button" class="sug-filtre${b.cle === FILTRE ? " actif" : ""}"
+            data-cle="${echappe(b.cle)}">${echappe(b.nom)}<b>${b.n}</b></button>`).join("");
+  el("filtres").querySelectorAll(".sug-filtre").forEach((b) => {
+    b.addEventListener("click", () => { FILTRE = b.dataset.cle; dessine(); });
+  });
+}
+
+function dessine() {
+  dessineFiltres();
+  const zone = el("listes");
+  const vides = SECTIONS.every((s) => !s.lignes.length);
+  if (vides) {
+    zone.innerHTML = `<p class="sug-etat"><b>Rien en attente.</b>
+      Tout ce qui a été proposé est fait — ou le fichier est vide.</p>`;
+    return;
+  }
+
+  let rendues = 0;
+  zone.innerHTML = SECTIONS.map((s, si) => {
+    const lignes = s.lignes.filter((l) => retenue(l, s));
+    rendues += lignes.length;
+    if (!lignes.length) return "";
+    return `
+      <section class="sug-section">
+        <div class="sug-section-tete">
+          <h2>${echappe(s.titre)}</h2>
+          <span class="sug-compte">${lignes.length} ligne${lignes.length > 1 ? "s" : ""}</span>
+        </div>
+        ${lignes.map((l) => `
+          <article class="sug-ligne${l.genre === "bug" ? " bug" : ""}"
+                   data-s="${si}" data-texte="${echappe(l.texte)}">
+            <span class="sug-pion" aria-hidden="true"></span>
+            <div class="sug-corps">
+              <p class="sug-texte">${echappe(l.message)}</p>
+              <div class="sug-meta">
+                <span class="sug-etiq">${l.genre === "bug" ? "Bug" : "Idée"}</span>
+                ${l.pseudo ? `<span class="sug-auteur">${echappe(l.pseudo)}</span>` : ""}
+                ${l.creeLe ? `<span>${echappe(dateCourte(l.creeLe))}</span>` : ""}
+                ${l.duSite ? "" : '<span class="sug-main">écrite à la main</span>'}
+              </div>
+            </div>
+            <div class="sug-boutons">
+              <button type="button" class="sug-copier">Copier</button>
+              <button type="button" class="sug-fait">Résolu</button>
+            </div>
+          </article>`).join("")}
+      </section>`;
+  }).join("");
+
+  if (!rendues) {
+    zone.innerHTML = '<p class="sug-etat"><b>Rien sous ce filtre.</b>Choisis-en un autre.</p>';
+    return;
+  }
+  zone.querySelectorAll(".sug-fait").forEach((b) => {
+    b.addEventListener("click", () => resoudre(b));
+  });
+  zone.querySelectorAll(".sug-copier").forEach((b) => {
+    b.addEventListener("click", () => copier(b));
+  });
+}
+
+/* Copier le message seul, pas la ligne entière du fichier : « Jokrem - »
+   devant, c'est du bruit dès qu'on colle ailleurs. Le texte copié est celui
+   qu'on lit dans la carte, sans surprise.
+
+   navigator.clipboard demande un contexte sécurisé — https ou localhost.
+   Les deux sont vrais ici, mais un navigateur peut aussi refuser la
+   permission : le repli par <textarea> couvre ce cas plutôt que de laisser
+   un bouton qui ne fait rien sans rien dire. */
+async function copier(bouton) {
+  const carte = bouton.closest(".sug-ligne");
+  const texte = carte.querySelector(".sug-texte").textContent;
+  let pose = false;
+  try {
+    await navigator.clipboard.writeText(texte);
+    pose = true;
+  } catch (e) {
+    const zone = document.createElement("textarea");
+    zone.value = texte;
+    /* hors écran plutôt que hidden : un champ vraiment invisible ne peut
+       pas être sélectionné, et la copie ne prendrait rien */
+    zone.setAttribute("style", "position:fixed;top:-1000px;opacity:0");
+    document.body.appendChild(zone);
+    zone.select();
+    try { pose = document.execCommand("copy"); } catch (e2) { pose = false; }
+    zone.remove();
+  }
+  if (!pose) { toast("Copie refusée par le navigateur.", true); return; }
+  bouton.textContent = "Copié";
+  bouton.classList.add("fait");
+  clearTimeout(bouton._minuteur);
+  bouton._minuteur = setTimeout(() => {
+    bouton.textContent = "Copier";
+    bouton.classList.remove("fait");
+  }, 1600);
+}
+
+/* La ligne s'en va avant la réponse du serveur ? Non : on attend, et on ne
+   la retire qu'une fois le fichier réellement réécrit. Une ligne qui
+   disparaît puis revient parce que l'écriture a échoué serait pire que
+   l'attente d'une demi-seconde. */
+async function resoudre(bouton) {
+  const carte = bouton.closest(".sug-ligne");
+  const section = SECTIONS[+carte.dataset.s];
+  const texte = carte.dataset.texte;
+  bouton.disabled = true;
+  bouton.textContent = "…";
+  try {
+    await api("/api/changement/resolu", "POST",
+              { projet: section.projet, texte: texte });
+  } catch (err) {
+    bouton.disabled = false;
+    bouton.textContent = "Résolu";
+    toast(err.message, true);
+    return;
+  }
+  section.lignes = section.lignes.filter((l) => l.texte !== texte);
+  carte.classList.add("part");
+  /* le temps de l'animation, puis on redessine : les compteurs des filtres
+     doivent suivre, et eux ne s'animent pas */
+  setTimeout(() => { dessine(); }, 280);
+  toast("Réglé.");
+}
+
+(async function () {
+  let data;
+  try { data = await api("/api/moi"); }
+  catch (e) { el("gate").hidden = false; return; }
+
+  MOI = { connecte: !!data.connecte, utilisateur: data.utilisateur };
+  dessineCompte();
+  if (!MOI.connecte || !MOI.utilisateur.admin) { el("gate").hidden = false; return; }
+
+  try {
+    const d = await api("/api/changements");
+    SECTIONS = d.sections || [];
+  } catch (e) {
+    el("gate").hidden = false;
+    return;
+  }
+  dessine();
+  el("corps").hidden = false;
+})();
+
+
+</script>
+<script src="/static/neige.js" defer></script>
+</body>
+</html>

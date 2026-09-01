@@ -1,6 +1,7 @@
 static/Cards/
 static/CardsCropped/
 static/Cover/
+static/Avatars
 donnees/
 __pycache__/
 changements.txt

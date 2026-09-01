@@ -45,6 +45,12 @@ from pathlib import Path
 from flask import Blueprint, g, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
+# Uniquement pour construire l'adresse d'un artwork de banniere. jaquettes
+# n'importe rien d'ici, donc pas de cycle -- et redefinir l'adresse de base
+# d'IGDB dans un second fichier serait la garantie qu'un jour les deux ne
+# diront plus la meme chose.
+from jaquettes import IGDB_IMG
+
 # --------------------------------------------------------------------------
 #   Reglages
 # --------------------------------------------------------------------------
@@ -56,6 +62,22 @@ CHEMIN = Path(os.environ.get(
 DOSSIER_AVATARS = Path(__file__).parent.resolve() / "static" / "Avatars"
 AVATAR_MAXI = 2 * 1024 * 1024  # 2 Mo decodes ; MAX_CONTENT_LENGTH (app.py)
                                 # plafonne deja le corps entier a 4 Mo
+
+# La banniere du profil, meme principe que l'avatar.
+DOSSIER_BANNIERES = Path(__file__).parent.resolve() / "static" / "Bannieres"
+BANNIERE_MAXI = 3 * 1024 * 1024
+
+# Format conseille a l'envoi. Large et court : la banniere est un bandeau,
+# pas une photo. 1500x500 couvre un ecran courant sans exiger une image
+# enorme, et c'est le rapport 3:1 qu'utilise le CSS -- une image d'un autre
+# rapport n'est pas refusee, elle sera recadree a l'affichage.
+BANNIERE_LARGEUR, BANNIERE_HAUTEUR = 1500, 500
+
+# Un identifiant d'image IGDB : que des minuscules et des chiffres. Ce
+# motif est ce qui empeche une banniere « igdb: » de designer autre chose
+# qu'une image d'IGDB -- la valeur finit dans une adresse, et une valeur
+# non filtree y ferait entrer ce qu'on veut.
+MOTIF_IMAGE_IGDB = re.compile(r"^[a-z0-9]{2,40}$")
 
 # Combien de comptes peuvent naitre par tranche de 24 h. Fenetre glissante et
 # non remise a zero a minuit : aucun fuseau horaire a gerer, et pas d'heure
@@ -236,7 +258,85 @@ ALTER TABLE utilisateur ADD COLUMN avatar TEXT;
 ALTER TABLE utilisateur ADD COLUMN avatar_maj_le TEXT;
 """
 
-MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR]
+# Migration 5 : la fiche detaillee d'un jeu. id_igdb rattache le jeu a une
+# fiche precise -- il n'existait aucun lien stable jusqu'ici, seulement une
+# recherche par nom refaite a chaque fois. plateforme/developpeur/genres en
+# decoulent, ecrits une fois pour toutes quand le rattachement se fait ;
+# description, captures et note critique ne sont eux jamais stockes (voir
+# jaquettes.detail_complet), donc n'ont pas de colonne.
+DETAIL_JEU = """
+ALTER TABLE jeu ADD COLUMN id_igdb INTEGER;
+ALTER TABLE jeu ADD COLUMN plateforme TEXT;
+ALTER TABLE jeu ADD COLUMN developpeur TEXT;
+ALTER TABLE jeu ADD COLUMN genres TEXT;
+"""
+
+# Migration 6 : le rattrapage automatique. Les classeurs remplis avant la
+# migration 5 n'ont ni id_igdb ni plateforme/developpeur/genres, et on ne
+# peut pas demander a chacun d'aller lancer la mise a jour a la main. La
+# page le fait donc d'elle-meme, une fois, a la premiere connexion qui
+# suit -- et cette colonne est ce qui garantit le « une fois » : la date
+# du passage, ou NULL tant qu'il n'a pas eu lieu.
+#
+# Une date plutot qu'un booleen : le jour ou une nouvelle donnee justifiera
+# un second rattrapage, il suffira de comparer cette date a celle de la
+# livraison au lieu d'inventer une deuxieme colonne.
+RATTRAPAGE = """
+ALTER TABLE page ADD COLUMN igdb_rattrape_le TEXT;
+"""
+
+# Migration 7 : les suggestions et les rapports de bug, et le compte qui
+# peut les lire. La table double le fichier changements.txt plutot que de
+# le remplacer : le fichier reste ce qu'on lit pour travailler, la table
+# est ce qui permet de les relire depuis le profil, de savoir qui a ecrit
+# quoi et quand, et de marquer ce qui est traite. Un fichier texte ne sait
+# rien faire de tout ca.
+#
+# `pseudo` est fige a l'ecriture et non relu depuis le compte : une
+# suggestion doit rester attribuable meme si le compte disparait, et c'est
+# ce meme pseudo qui part dans changements.txt.
+SUGGESTIONS = """
+ALTER TABLE utilisateur ADD COLUMN admin INTEGER NOT NULL DEFAULT 0;
+
+CREATE TABLE suggestion(
+  id             INTEGER PRIMARY KEY,
+  utilisateur_id INTEGER REFERENCES utilisateur(id) ON DELETE SET NULL,
+  pseudo         TEXT NOT NULL,          -- fige : le compte peut disparaitre
+  projet         TEXT NOT NULL,          -- la section de changements.txt
+  genre          TEXT NOT NULL,          -- 'suggestion' ou 'bug'
+  message        TEXT NOT NULL,
+  cree_le        TEXT NOT NULL,
+  traite_le      TEXT                    -- NULL tant que ce n'est pas fait
+);
+CREATE INDEX idx_suggestion ON suggestion(traite_le, cree_le);
+
+UPDATE utilisateur SET admin = 1 WHERE pseudo_norm = 'jokrem';
+"""
+
+# Migration 8 : la banniere du profil. Deux origines possibles, d'ou le
+# prefixe stocke dans la colonne :
+#   'fichier:webp'  -- une image envoyee, posee sous static/Bannieres/
+#   'igdb:co1x2y'   -- un artwork d'IGDB, servi par IGDB, jamais copie chez
+#                      nous : c'est une adresse, pas un fichier.
+# Le second cas est la raison d'etre du prefixe. Sans lui il faudrait
+# telecharger l'artwork pour l'afficher, alors qu'IGDB le sert deja tres
+# bien -- et personne n'a envie d'heberger 500 images qu'il n'a pas prises.
+BANNIERE = """
+ALTER TABLE utilisateur ADD COLUMN banniere TEXT;
+ALTER TABLE utilisateur ADD COLUMN banniere_maj_le TEXT;
+"""
+
+# Migration 9 : l'onglet sur lequel un classeur s'ouvre. Colonne de `page`
+# et non de `utilisateur` : c'est une propriete du classeur, pas de la
+# personne -- le jour ou un compte aura deux pages, chacune gardera la
+# sienne. NULL = pas de choix, on retombe sur l'annee la plus recente,
+# comme avant.
+ONGLET_DEFAUT = """
+ALTER TABLE page ADD COLUMN onglet_defaut TEXT;
+"""
+
+MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
+              SUGGESTIONS, BANNIERE, ONGLET_DEFAUT]
 
 _local = threading.local()
 
@@ -350,6 +450,34 @@ def par_pseudo(pseudo):
                         (normalise(pseudo),)).fetchone()
 
 
+def par_email(email):
+    """Le compte portant cette adresse, ou None. Insensible a la casse.
+
+    None aussi quand PLUSIEURS comptes portent la meme adresse : rien
+    n'interdit deux inscriptions avec le meme e-mail (la colonne n'est pas
+    UNIQUE, et l'imposer casserait les comptes existants). Dans ce cas
+    l'adresse ne designe plus un compte, elle en designe deux -- se
+    connecter avec elle reviendrait a tirer au sort. Le pseudo, lui, reste
+    toujours sans ambiguite.
+    """
+    valeur = (email or "").strip().lower()
+    if not valeur:
+        return None
+    lignes = cx().execute("SELECT * FROM utilisateur WHERE lower(email) = ?",
+                          (valeur,)).fetchall()
+    return lignes[0] if len(lignes) == 1 else None
+
+
+def par_identifiant(valeur):
+    """Le compte, qu'on ait donne son pseudo ou son e-mail.
+
+    L'arobase tranche sans ambiguite possible : MOTIF_PSEUDO n'accepte que
+    lettres, chiffres, tiret et souligne, donc un pseudo n'en contient
+    jamais. Pas besoin d'essayer les deux ni de choisir un gagnant.
+    """
+    return par_email(valeur) if "@" in (valeur or "") else par_pseudo(valeur)
+
+
 def cree_compte(pseudo, mdp, email=None) -> int:
     pseudo = verifie_pseudo(pseudo)
     verifie_mdp(mdp)
@@ -367,14 +495,15 @@ def cree_compte(pseudo, mdp, email=None) -> int:
     return cur.lastrowid
 
 
-# Empreinte d'un mot de passe bidon, verifiee quand le pseudo n'existe pas :
+# Empreinte d'un mot de passe bidon, verifiee quand le compte n'existe pas :
 # sans elle, le temps de reponse dirait quels comptes existent.
 _LEURRE = None
 
 
-def identifiants_bons(pseudo, mdp):
+def identifiants_bons(identifiant, mdp):
+    """Le compte si le couple est bon. `identifiant` : pseudo ou e-mail."""
     global _LEURRE
-    u = par_pseudo(pseudo)
+    u = par_identifiant(identifiant)
     if u is None:
         if _LEURRE is None:
             _LEURRE = generate_password_hash(secrets.token_urlsafe(16))
@@ -435,12 +564,19 @@ def ferme_toutes(uid) -> None:
 # --------------------------------------------------------------------------
 #   Reinitialisation du mot de passe
 # --------------------------------------------------------------------------
-def demande_reinitialisation(pseudo) -> None:
-    """Envoie un lien si le compte existe et a un e-mail. Silencieuse sinon :
-    la route qui l'appelle repond toujours pareil, pour ne jamais laisser
-    deviner si un pseudo existe ou a un e-mail associe.
+def demande_reinitialisation(identifiant) -> None:
+    """Envoie un lien si le compte existe et a un e-mail. Silencieuse sinon.
+
+    `identifiant` est l'adresse e-mail -- c'est ce que demande la page --
+    mais un pseudo marche aussi : quelqu'un qui se souvient de l'un et pas
+    de l'autre ne doit pas rester bloque devant un champ trop strict.
+
+    Silencieuse est le mot important. La route qui l'appelle repond
+    exactement pareil dans tous les cas, y compris quand l'envoi echoue :
+    un message different pour « adresse inconnue » laisserait n'importe qui
+    tester des adresses pour savoir lesquelles ont un compte ici.
     """
-    u = par_pseudo(pseudo)
+    u = par_identifiant(identifiant)
     if u is None or not u["email"]:
         return
     jeton = secrets.token_urlsafe(32)
@@ -459,7 +595,15 @@ def demande_reinitialisation(pseudo) -> None:
         "Si ce n'est pas toi qui as fait cette demande, ignore ce message : "
         "rien ne change a ton compte.\n"
     )
-    envoie_mail(u["email"], "Reinitialiser ton mot de passe Abyss", corps)
+    try:
+        envoie_mail(u["email"], "Reinitialiser ton mot de passe Abyss", corps)
+    except Exception as err:               # noqa: BLE001 - SMTP casse de mille facons
+        # Laisser remonter donnait un 500 -- mais SEULEMENT pour un compte
+        # qui existe et a un e-mail. La difference entre 500 et 200 disait
+        # donc exactement ce que le message uniforme s'applique a taire.
+        # Le souci part dans le journal, ou il sert a quelque chose.
+        print(f"envoi du lien de reinitialisation impossible : "
+              f"{type(err).__name__}: {err}", flush=True)
 
 
 def reinitialisation_valide(jeton):
@@ -562,6 +706,93 @@ def supprime_avatar(u) -> None:
     with c:
         c.execute("UPDATE utilisateur SET avatar = NULL, avatar_maj_le = NULL WHERE id = ?",
                   (u["id"],))
+
+
+# --------------------------------------------------------------------------
+#   Banniere
+# --------------------------------------------------------------------------
+def url_banniere(u):
+    """L'adresse de la banniere, ou None. Deux origines, une seule adresse.
+
+    Un artwork d'IGDB n'est pas copie chez nous : on renvoie l'adresse
+    d'IGDB, qui le sert deja. C'est tout l'interet du prefixe 'igdb:' --
+    choisir une banniere ne coute alors ni octet sur le disque, ni attente
+    a la personne qui la choisit.
+    """
+    valeur = u["banniere"] if "banniere" in u.keys() else None
+    if not valeur:
+        return None
+    origine, _, reste = valeur.partition(":")
+    if origine == "igdb":
+        # l'artwork est deja filtre a l'ecriture ; on revalide quand meme,
+        # parce qu'une base modifiee a la main ne doit pas pouvoir injecter
+        # une adresse dans la page
+        if not MOTIF_IMAGE_IGDB.match(reste):
+            return None
+        return f"{IGDB_IMG}/t_1080p/{reste}.jpg"
+    if origine == "fichier":
+        v = (u["banniere_maj_le"] or "").replace(":", "").replace("+", "")
+        return f"/static/Bannieres/{u['id']}.{reste}?v={v}"
+    return None
+
+
+def _oublie_banniere_fichier(uid) -> None:
+    for ext in ("jpg", "png", "gif", "webp"):
+        (DOSSIER_BANNIERES / f"{uid}.{ext}").unlink(missing_ok=True)
+
+
+def _pose_banniere(u, valeur) -> None:
+    c = cx()
+    with c:
+        c.execute("UPDATE utilisateur SET banniere = ?, banniere_maj_le = ? WHERE id = ?",
+                  (valeur, maintenant(), u["id"]))
+
+
+def enregistre_banniere(u, data_url) -> str:
+    """Une image envoyee par la personne. Meme lecture que l'avatar : le
+    format se devine aux premiers octets, jamais a ce que le navigateur
+    annonce.
+    """
+    m = re.match(r"^data:image/[\w.+-]+;base64,(.+)$", data_url or "", re.S)
+    if not m:
+        raise Refus("banniere", "Image illisible.")
+    try:
+        donnees = base64.b64decode(m.group(1), validate=True)
+    except (binascii.Error, ValueError):
+        raise Refus("banniere", "Image illisible.")
+    if len(donnees) > BANNIERE_MAXI:
+        raise Refus("banniere", f"Image trop lourde ({BANNIERE_MAXI // (1024 * 1024)} Mo maximum).")
+    ext = _signature_image(donnees)
+    if ext is None:
+        raise Refus("banniere", "Format d'image non reconnu (jpg, png, gif ou webp).")
+    DOSSIER_BANNIERES.mkdir(parents=True, exist_ok=True)
+    _oublie_banniere_fichier(u["id"])
+    (DOSSIER_BANNIERES / f"{u['id']}.{ext}").write_bytes(donnees)
+    _pose_banniere(u, f"fichier:{ext}")
+    return ext
+
+
+def enregistre_banniere_igdb(u, image_id) -> str:
+    """Un artwork d'IGDB, garde comme une simple reference.
+
+    Le fichier eventuellement pose par un envoi precedent s'en va : la
+    banniere est unique, et un fichier que plus rien ne designe ne ferait
+    qu'occuper le disque.
+    """
+    image_id = str(image_id or "").strip()
+    if not MOTIF_IMAGE_IGDB.match(image_id):
+        raise Refus("banniere", "Artwork inconnu.")
+    _oublie_banniere_fichier(u["id"])
+    _pose_banniere(u, f"igdb:{image_id}")
+    return image_id
+
+
+def supprime_banniere(u) -> None:
+    _oublie_banniere_fichier(u["id"])
+    c = cx()
+    with c:
+        c.execute("UPDATE utilisateur SET banniere = NULL, banniere_maj_le = NULL"
+                  " WHERE id = ?", (u["id"],))
 
 
 # --------------------------------------------------------------------------
@@ -676,7 +907,8 @@ def etat(u) -> dict:
         "ok": True,
         "connecte": u is not None,
         "utilisateur": None if u is None else
-            {"pseudo": u["pseudo"], "email": u["email"], "avatar": url_avatar(u)},
+            {"pseudo": u["pseudo"], "email": u["email"], "avatar": url_avatar(u),
+             "banniere": url_banniere(u), "admin": bool(u["admin"])},
         "masques": [] if u is None else masques(u["id"]),
         # accompagne les deux cas : la page doit savoir, avant d'afficher le
         # formulaire, s'il reste des places
@@ -758,7 +990,8 @@ def connexion():
         note_essai(cle_compte)
         # Un seul message pour les deux cas : dire « ce compte n'existe pas »
         # reviendrait a publier la liste des comptes.
-        return echec("identifiants", "Pseudo ou mot de passe incorrect.", 401)
+        return echec("identifiants",
+                     "Identifiant ou mot de passe incorrect.", 401)
 
     oublie_essais(cle_ip)
     oublie_essais(cle_compte)
@@ -830,6 +1063,34 @@ def retirer_avatar():
     return reponse(etat(par_pseudo(u["pseudo"])))
 
 
+@blueprint_comptes.post("/banniere")
+def poser_banniere():
+    """Une banniere, d'une origine ou de l'autre.
+
+    Un seul point d'entree pour les deux : c'est la meme decision cote
+    utilisateur (« voila ma banniere »), et deux routes obligeraient la
+    page a savoir laquelle appeler avant de savoir ce qui a ete choisi.
+    """
+    u = actuel()
+    if u is None:
+        return echec("connexion", "Il faut etre connecte.", 401)
+    d = corps()
+    if d.get("igdb"):
+        enregistre_banniere_igdb(u, d.get("igdb"))
+    else:
+        enregistre_banniere(u, d.get("image"))
+    return reponse(etat(par_pseudo(u["pseudo"])))
+
+
+@blueprint_comptes.delete("/banniere")
+def retirer_banniere():
+    u = actuel()
+    if u is None:
+        return echec("connexion", "Il faut etre connecte.", 401)
+    supprime_banniere(u)
+    return reponse(etat(par_pseudo(u["pseudo"])))
+
+
 @blueprint_comptes.post("/mot-de-passe")
 def mot_de_passe():
     u = actuel()
@@ -851,18 +1112,22 @@ def mot_de_passe():
 
 @blueprint_comptes.post("/mot-de-passe-oublie")
 def mot_de_passe_oublie():
-    pseudo = corps().get("pseudo", "")
+    # `identifiant` depuis que la page demande une adresse ; `pseudo` reste
+    # accepte pour ne pas casser un onglet ouvert avant la mise a jour.
+    d = corps()
+    identifiant = d.get("identifiant") or d.get("pseudo") or ""
     cle_ip = "oubli:" + (request.remote_addr or "?")
-    cle_compte = "oubli:@" + normalise(pseudo)
+    cle_compte = "oubli:@" + normalise(identifiant)
     if trop_d_essais(cle_ip) or trop_d_essais(cle_compte):
         return echec("debit", "Trop d'essais. Reviens dans un quart d'heure.", 429)
     note_essai(cle_ip)
     note_essai(cle_compte)
-    demande_reinitialisation(pseudo)
-    # Le meme message dans tous les cas : pseudo inconnu, sans e-mail, ou
-    # lien parti pour de vrai. Rien ici ne doit dire lequel.
+    demande_reinitialisation(identifiant)
+    # Le meme message dans tous les cas : adresse inconnue, compte sans
+    # e-mail, ou lien reellement parti. Rien ici ne doit dire lequel --
+    # sinon la page devient un testeur d'adresses.
     return reponse({"ok": True, "message":
-        "Si ce pseudo existe et a un e-mail associe, un lien vient de lui etre envoye."})
+        "Si un compte correspond, un lien vient de partir sur son adresse e-mail."})
 
 
 @blueprint_comptes.post("/mot-de-passe-oublie/confirmer")
