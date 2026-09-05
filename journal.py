@@ -29,6 +29,8 @@ d'occurrences dans jeux-videos.html.
 
 from __future__ import annotations
 
+import re
+
 from flask import Blueprint, request
 
 import comptes
@@ -87,6 +89,9 @@ def en_json(l) -> dict:
         "plateforme": l["plateforme"],
         "developpeur": l["developpeur"],
         "genres": l["genres"],
+        # le theme part avec le reste : la mise a jour groupee compare ce
+        # champ pour savoir quels jeux d'avant lui manquent encore
+        "themes": l["themes"],
     }
 
 
@@ -148,6 +153,114 @@ def annee_de(periode):
     """'2026' -> 2026. 'En cours' -> None. La periode reste la seule verite."""
     p = (periode or "").strip()
     return int(p) if p.isdigit() and len(p) == 4 else None
+
+
+# --------------------------------------------------------------------------
+#   La forme d'une periode
+# --------------------------------------------------------------------------
+# Un onglet nomme librement, c'etait « Avant 2025 » a cote de « A long long
+# time ago » et de « oui » : trois facons de dire une epoque, dont deux que
+# rien ne sait relire. Une periode s'ecrit donc desormais d'une de ces
+# quatre facons, et d'aucune autre :
+#
+#     2019                  une annee
+#     Avant 2019            tout ce qui precede
+#     Apres 2019            tout ce qui suit
+#     Entre 2015 et 2019    un intervalle, la seconde annee apres la premiere
+#
+# La page ne les fait pas taper : elle les fait choisir (voir le
+# constructeur d'onglet dans jeux-videos.html). Ces motifs sont la pour que
+# le serveur ne depende pas d'elle -- une ecriture directe sur l'API doit
+# obeir aux memes regles.
+MOTIF_ANNEE = re.compile(r"^\d{4}$")
+MOTIF_AVANT = re.compile(r"^Avant (\d{4})$")
+MOTIF_APRES = re.compile(r"^Après (\d{4})$")
+MOTIF_ENTRE = re.compile(r"^Entre (\d{4}) et (\d{4})$")
+
+ANNEE_MINI, ANNEE_MAXI = 1950, 2200
+
+
+def _annee_sensee(*annees):
+    return all(ANNEE_MINI <= int(a) <= ANNEE_MAXI for a in annees)
+
+
+def periode_valide(periode) -> bool:
+    """Vrai si la periode suit une des quatre formes. Les statuts aussi :
+    « En cours » et « Wishlist » sont des tiroirs fixes, pas des epoques."""
+    p = (periode or "").strip()
+    if p in STATUTS:
+        return True
+    if MOTIF_ANNEE.match(p):
+        return _annee_sensee(p)
+    for motif in (MOTIF_AVANT, MOTIF_APRES):
+        m = motif.match(p)
+        if m:
+            return _annee_sensee(m.group(1))
+    m = MOTIF_ENTRE.match(p)
+    if m:
+        # « Entre 2019 et 2015 » se lit mal et trie mal : l'ordre fait
+        # partie de la forme, pas de la presentation.
+        return _annee_sensee(*m.groups()) and int(m.group(2)) > int(m.group(1))
+    return False
+
+
+def cle_chrono(periode):
+    """De quoi ranger les onglets dans l'ordre du temps, ou None.
+
+    Un couple (annee, rang) :
+
+        Avant 2000            (-1, 2000)     tout ce qui precede, donc en tete
+        Entre 2015 et 2019    (2015, 1)      range a son annee de depart
+        2019                  (2019, 0)      l'annee elle-meme
+        Apres 2019            (2020, 2)      la premiere annee qu'il couvre
+
+    Le second nombre departage deux onglets qui commencent la meme annee :
+    l'annee seule d'abord (c'est la plus precise), l'intervalle ensuite,
+    l'ouvert en dernier. « 2020 » se lit donc avant « Apres 2019 », qui le
+    contient.
+
+    Les « Avant » partagent tous -1 et se departagent par leur annee : deux
+    fourre-tout se suivent, du plus etroit au plus large.
+
+    None pour ce que la regle ne sait pas relire -- un onglet d'avant elle
+    n'a pas de place dans une frise.
+    """
+    p = (periode or "").strip()
+    m = MOTIF_AVANT.match(p)
+    if m:
+        return (-1, int(m.group(1)))
+    m = MOTIF_ENTRE.match(p)
+    if m and int(m.group(2)) > int(m.group(1)):
+        return (int(m.group(1)), 1)
+    m = MOTIF_APRES.match(p)
+    if m:
+        return (int(m.group(1)) + 1, 2)
+    if MOTIF_ANNEE.match(p):
+        return (int(p), 0)
+    return None
+
+
+def periodes_existantes(page_id) -> set:
+    """Les periodes deja presentes dans ce journal.
+
+    Sert a laisser vivre ce qui a ete cree avant la regle : « A long long
+    time ago » ne se cree plus, mais un jeu qui y est deja doit pouvoir
+    etre modifie sans qu'on l'oblige a demenager. Ce qui existe reste,
+    ce qui nait obeit.
+    """
+    return {l["periode"] for l in cx().execute(
+        "SELECT DISTINCT periode FROM jeu WHERE page_id = ?", (page_id,)).fetchall()}
+
+
+def verifie_periode(page_id, periode) -> str:
+    """La periode nettoyee, ou un Refus. Voir periodes_existantes."""
+    p = (periode or "").strip()[:60]
+    if not p:
+        raise Refus("periode", "Il faut dire dans quel onglet ranger le jeu.")
+    if periode_valide(p) or p in periodes_existantes(page_id):
+        return p
+    raise Refus("periode", "Un onglet s'écrit « 2019 », « Avant 2019 »,"
+                           " « Après 2019 » ou « Entre 2015 et 2019 ».")
 
 
 # --------------------------------------------------------------------------
@@ -219,9 +332,15 @@ def nb_jeux(page_id) -> int:
 def periodes_de(page_id) -> list:
     """Les onglets, dans l'ordre ou la page les affiche.
 
-    Les annees d'abord et croissantes, puis les autres periodes, puis les
-    deux statuts a la fin : c'est l'ordre qu'avaient les onglets du classeur,
-    et la page s'en sert tel quel pour dessiner ses pastilles.
+    Dans l'ordre du temps, puis les onglets que la regle ne sait pas relire,
+    puis les deux statuts a la fin. La page s'en sert tel quel pour dessiner
+    ses pastilles et remplir son menu : l'ordre se decide ici, une fois, et
+    non a deux endroits qui finiraient par ne plus dire la meme chose.
+
+    Chronologique et non alphabetique : « Avant 2000 », « Entre 2015 et
+    2019 » et « Apres 2019 » se rangeaient jusqu'ici entre eux par leur
+    premiere lettre, ce qui donnait un menu ou l'on ne trouvait rien. Voir
+    cle_chrono.
 
     « En cours » et « Wishlist » sont toujours la, meme sans jeu dedans :
     ce sont des tiroirs fixes du journal, pas des periodes qui apparaissent
@@ -233,11 +352,15 @@ def periodes_de(page_id) -> list:
     """
     vues = [l["periode"] for l in cx().execute(
         "SELECT DISTINCT periode FROM jeu WHERE page_id = ?", (page_id,)).fetchall()]
-    annees = sorted([p for p in vues if annee_de(p) is not None], key=lambda p: int(p))
-    if not annees:
-        annees = [maintenant()[:4]]
-    autres = sorted(p for p in vues if p not in annees and p not in STATUTS)
-    return annees + autres + list(STATUTS)
+    datees = sorted([p for p in vues if p not in STATUTS and cle_chrono(p) is not None],
+                    key=cle_chrono)
+    if not datees:
+        datees = [maintenant()[:4]]
+    # ce que la regle ne sait pas relire n'a pas de place dans le temps : a
+    # la fin, dans l'ordre alphabetique, en attendant d'etre renomme
+    vieux = sorted(p for p in vues
+                   if p not in STATUTS and p not in datees and cle_chrono(p) is None)
+    return datees + vieux + list(STATUTS)
 
 
 def contenu(page, u) -> dict:
@@ -322,7 +445,7 @@ def rang_suivant(page_id, periode) -> int:
 
 
 def enrichit_igdb(v: dict) -> None:
-    """Complete v avec plateforme/developpeur/genres, si v porte un id_igdb.
+    """Complete v avec plateforme/developpeur/genres/themes, si v porte un id_igdb.
 
     Un seul appel IGDB de plus, uniquement quand le jeu vient d'etre
     rattache a une fiche precise (choix d'une jaquette, ou frappe d'un nom
@@ -341,6 +464,7 @@ def enrichit_igdb(v: dict) -> None:
     v["plateforme"] = detail.get("plateforme")
     v["developpeur"] = detail.get("developpeur")
     v["genres"] = detail.get("genres")
+    v["themes"] = detail.get("themes")
 
 
 def suit_jaquette(jeu, v: dict) -> None:
@@ -361,16 +485,44 @@ def suit_jaquette(jeu, v: dict) -> None:
     jaquettes.renomme_jaquette(avant, apres)
 
 
+def sans_mois(periode, v) -> None:
+    """Efface le mois quand la periode n'est pas une annee pleine.
+
+    Un mois ne veut dire quelque chose que dans une annee : « mars » de
+    « Avant 2019 » ne designe rien, et « mars » de « En cours » encore
+    moins. La regle vit ici et pas seulement dans le formulaire -- c'est
+    l'ecriture qui doit la tenir, sinon un appel direct a l'API la
+    contournerait, et un jeu deplace de « 2019 » vers « Avant 2019 »
+    garderait un mois orphelin.
+
+    On ecrit None plutot que de retirer la cle : le mois d'avant doit
+    partir, pas rester tel quel.
+    """
+    if annee_de(periode) is None:
+        v["mois"] = None
+
+
+def peut_toucher_au_mois(periode, v) -> bool:
+    """Cette ecriture-la parle-t-elle de la periode ou du mois ?
+
+    La mise a jour groupee IGDB repasse sur chaque jeu pour n'y ecrire
+    qu'une date de sortie et un prix. Elle ne dit rien de l'onglet, et
+    n'a donc rien a effacer : sans ce garde-fou, un rafraichissement de
+    routine viderait au passage le mois de tous les jeux ranges ailleurs
+    que dans une annee. On ne nettoie que ce qu'on est en train d'ecrire.
+    """
+    return periode is not None or "mois" in v
+
+
 def ajoute(page, periode, values, avis):
     if cx().execute("SELECT COUNT(*) FROM jeu WHERE page_id = ?",
                     (page["id"],)).fetchone()[0] >= JEUX_MAXI:
         raise Refus("plein", "Ce journal a atteint sa limite de jeux.", 409)
-    periode = (periode or "").strip()[:60]
-    if not periode:
-        raise Refus("periode", "Il faut dire dans quel onglet ranger le jeu.")
+    periode = verifie_periode(page["id"], periode)
     v = valeurs_propres(values)
     if "nom" not in v:
         raise Refus("nom", "Il faut au moins un nom de jeu.")
+    sans_mois(periode, v)
     enrichit_igdb(v)
     colonnes = ["page_id", "periode", "annee", "avis", "rang", "cree_le", "maj_le"]
     donnees = [page["id"], periode, annee_de(periode), (avis or "")[:AVIS_MAXI],
@@ -394,13 +546,13 @@ def modifie(jeu, page, periode, values, avis):
     v = valeurs_propres(values)
     enrichit_igdb(v)
     if periode is not None:
-        periode = str(periode).strip()[:60]
-        if not periode:
-            raise Refus("periode", "Il faut dire dans quel onglet ranger le jeu.")
+        periode = verifie_periode(page["id"], periode)
         if periode != jeu["periode"]:
             v["periode"] = periode
             v["annee"] = annee_de(periode)
             v["rang"] = rang_suivant(page["id"], periode)
+    if peut_toucher_au_mois(periode, v):
+        sans_mois(periode if periode is not None else jeu["periode"], v)
     if avis is not None:
         v["avis"] = avis[:AVIS_MAXI]
     if not v:
@@ -574,7 +726,8 @@ def detail(jeu_id):
     """La fiche detaillee d'un jeu : consultable comme le jeu lui-meme,
     depuis n'importe quel journal public.
 
-    plateforme/developpeur/genres viennent de la base (voir enrichit_igdb).
+    plateforme/developpeur/genres/themes viennent de la base (voir
+    enrichit_igdb).
     Le reste -- description, captures, bande-annonce, note critique, temps
     pour finir -- est redemande a IGDB et HowLongToBeat a chaque ouverture,
     jamais stocke (voir jaquettes.detail_complet et jaquettes.temps_hltb).
@@ -602,7 +755,57 @@ def detail(jeu_id):
         "plateforme": jeu["plateforme"],
         "developpeur": jeu["developpeur"],
         "genres": jeu["genres"],
+        "themes": jeu["themes"],
     }, **(complet or {}), hltb=temps))
+
+
+@blueprint_journal.put("/periode")
+def renomme_periode():
+    """Renomme un onglet, et avec lui tous les jeux qui y sont ranges.
+
+    C'est la sortie de secours des journaux d'avant la regle : « A long
+    long time ago » ne peut plus etre cree, mais il existe, et il faut bien
+    pouvoir le tourner en « Avant 2000 » sans rouvrir trois cents jeux un
+    par un.
+
+    Renommer vers un onglet qui existe deja les fusionne, et c'est voulu :
+    « oui » et « 2019 » finissent souvent par designer la meme annee. Les
+    jeux deplaces se rangent alors a la suite de ceux qui y etaient, d'ou le
+    decalage des rangs -- deux jeux au meme rang, c'est un ordre d'affichage
+    qui depend du hasard.
+
+    Le nom d'arrivee, lui, doit etre valide sans exception : cette route
+    existe precisement pour sortir des noms qui ne le sont pas.
+    """
+    u, page = ma_page_ou_refus()
+    d = corps()
+    avant = str(d.get("avant") or "").strip()
+    apres = str(d.get("apres") or "").strip()[:60]
+    if avant in STATUTS or apres in STATUTS:
+        raise Refus("periode", "« En cours » et « Wishlist » ne se renomment pas.")
+    if not avant or avant not in periodes_existantes(page["id"]):
+        raise Refus("periode", "Cet onglet n'existe pas.", 404)
+    if not periode_valide(apres):
+        raise Refus("periode", "Un onglet s'écrit « 2019 », « Avant 2019 »,"
+                               " « Après 2019 » ou « Entre 2015 et 2019 ».")
+    if apres == avant:
+        return reponse(contenu(page, u))
+
+    annee = annee_de(apres)
+    c = cx()
+    with c:
+        decalage = rang_suivant(page["id"], apres)
+        c.execute(
+            "UPDATE jeu SET periode = ?, annee = ?, rang = rang + ?, maj_le = ?,"
+            "               mois = CASE WHEN ? IS NULL THEN NULL ELSE mois END"
+            " WHERE page_id = ? AND periode = ?",
+            (apres, annee, decalage, maintenant(), annee, page["id"], avant))
+        # l'onglet d'ouverture suivait ce nom-la : il suit le nouveau, sans
+        # quoi le classeur s'ouvrirait sur un onglet qui n'existe plus
+        if page["onglet_defaut"] == avant:
+            c.execute("UPDATE page SET onglet_defaut = ? WHERE id = ?",
+                      (apres, page["id"]))
+    return reponse(contenu(page_de(u["pseudo"]) or page, u))
 
 
 @blueprint_journal.delete("/jeu/<int:jeu_id>")
@@ -638,5 +841,3 @@ def lot():
         except (TypeError, ValueError):
             echecs.append({"i": i, "jeu": None, "error": "identifiant illisible"})
     return reponse(dict(contenu(page, u), fait={"echecs": echecs}))
-
-

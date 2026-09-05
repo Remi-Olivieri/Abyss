@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yu-Gi-Quiz! - Invité</title>
+    <link rel="stylesheet" href="/static/style_yugiquiz.css">
+</head>
+<body>
+    
+    <header>
+        <a class="back" href="/abyss" title="Retour à Abyss" aria-label="Retour à Abyss">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <h1>
+            <span class="title-main">Yu-Gi-Quiz!</span>
+            <span class="title-sub">Invité</span>
+        </h1>
+    </header>
+    
+    <div class="container">
+        <div class="login-card">
+            <div class="card-border-glow"></div>
+            <div class="card-content">
+                <div class="icon-container">
+                    <div class="millennium-symbol">
+                        <div class="eye-center"></div>
+                    </div>
+                </div>
+                
+                <p class="input-label" style="text-align:center;margin:0 0 1.2rem">
+                    Tu joues en invité. <a href="/abyss">Connecte-toi à Abyss</a>
+                    et tu arriveras directement sous ton pseudo, sans passer par ici.
+                </p>
+
+                <div class="input-wrapper">
+                    <label for="username-input" class="input-label">Pseudo du Duelliste</label>
+                    <!-- name="pseudo-invite" et pas "username" : cette page
+                         est sur la meme adresse que le formulaire de connexion
+                         d'Abyss, et un champ qui s'annonce comme un identifiant
+                         se fait remplir avec celui du compte. Il n'y a pas de
+                         champ masque ici, donc rien de plus a faire -- le
+                         gestionnaire ne propose un identifiant que s'il a un
+                         mot de passe a poser avec. -->
+                    <input 
+                        type="text" 
+                        maxlength="20" 
+                        id="username-input" 
+                        name="pseudo-invite"
+                        class="user-input" 
+                        placeholder="Entrez votre pseudo"
+                        autocomplete="off"
+                    >
+                    <div class="input-border"></div>
+                </div>
+
+                <p id="souci" class="response" style="display:none"></p>
+
+                <button id="button" onclick="connexion()" class="button">
+                    <span class="button-text">Commencer le Duel</span>
+                    <div class="button-glow"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* Le pseudo part en JSON, et le serveur repond en JSON : c'est ce
+           qui empeche un formulaire d'un autre site de le poser a notre
+           place (voir comptes.exige_json, meme parade). */
+        async function connexion() {
+            const champ = document.getElementById('username-input');
+            const souci = document.getElementById('souci');
+            const pseudo = champ.value.trim();
+
+            if (!pseudo) {
+                champ.classList.add('shake');
+                setTimeout(() => champ.classList.remove('shake'), 500);
+                return;
+            }
+
+            souci.style.display = 'none';
+            let data = null;
+            try {
+                const r = await fetch('/api/yugiquiz/connexion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pseudo }),
+                });
+                data = await r.json();
+            } catch (e) { /* reseau : traite comme un refus muet */ }
+
+            if (!data || !data.ok) {
+                souci.textContent = (data && data.message) || "Le serveur n'a pas répondu.";
+                souci.style.display = 'block';
+                champ.classList.add('shake');
+                setTimeout(() => champ.classList.remove('shake'), 500);
+                return;
+            }
+
+            document.querySelector('.login-card').classList.add('fade-out');
+            setTimeout(() => { window.location.href = '/yugiquiz'; }, 500);
+        }
+
+        document.getElementById('username-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { connexion(); }
+        });
+    </script>
+</body>
+</html>

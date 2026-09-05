@@ -975,6 +975,19 @@ _DETAIL = {}
 DUREE_DETAIL = 3600
 
 
+def _colonne(noms):
+    """Plusieurs noms dans une seule colonne, separes par des virgules.
+
+    La virgule d'un nom est retiree : c'est elle qui separe, et le theme
+    « 4X (explore, expand, exploit, and exterminate) » se relisait en quatre
+    themes dont trois n'existent pas. Aucun autre libelle d'IGDB n'en porte
+    aujourd'hui, mais c'est le genre de chose qu'on ne voit qu'une fois la
+    donnee ecrite partout.
+    """
+    propres = [n.replace(",", "") for n in noms if n]
+    return ", ".join(propres) or None
+
+
 def detail_complet(id_igdb):
     """Tout ce qu'IGDB sait d'une fiche precise, au-dela du strict necessaire
     pour choisir une jaquette. Renvoie (detail, souci).
@@ -1319,6 +1332,35 @@ def blueprint_jaquettes(dossier, url_publique="/static/Cover/"):
                 for fiche in fiches
             ])
         return _protege("suggestions", travail)
+
+    @bp.route("/api/jeu/detail", methods=["POST"])
+    def detail_libre():
+        """Tout ce qu'on sait d'un jeu qu'on n'a pas dans son classeur.
+
+        Le pendant de /api/journal/jeu/<id>/detail, pour la recherche de
+        jeux : la meme fenetre s'ouvre et c'est la meme fonction de la page
+        qui la peint, d'ou la meme forme de reponse -- `ok` et `message`,
+        et non les `etat`/`raison` du reste de ce module.
+
+        La difference tient a ce qui designe le jeu. La-bas un jeu du
+        classeur, dont la plateforme et le developpeur sont deja en base ;
+        ici une fiche IGDB choisie dans la recherche, ou tout vient d'IGDB
+        et ou il n'y a rien sur quoi retomber s'il ne repond pas.
+
+        Le nom sert a HowLongToBeat, qui ne connait pas les identifiants
+        IGDB et ne sait chercher que par titre. Sans lui, la fiche s'affiche
+        quand meme -- sans les temps pour finir.
+        """
+        def travail():
+            donnees = request.get_json(silent=True) or {}
+            nom = str(donnees.get("nom") or "").strip()
+            complet, souci = detail_complet(donnees.get("id"))
+            temps, _souci_hltb = temps_hltb(nom) if nom else (None, None)
+            if not complet and not temps:
+                return jsonify(ok=False,
+                               message=souci or "aucune information trouvée")
+            return jsonify(dict({"ok": True}, **(complet or {}), hltb=temps))
+        return _protege("detail", travail)
 
     @bp.route("/api/jeu/prix", methods=["POST"])
     def prix():

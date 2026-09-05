@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitoring - Abyss</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style_abyss.css">
+<style>
+  /* cette barre-ci porte un retour à gauche en plus du compte à droite */
+  .barre{justify-content:space-between}
+
+  .mon-entete{margin-bottom:26px}
+  .mon-titre{
+    font-family:"Eczar",Georgia,serif;font-weight:600;
+    font-size:clamp(34px,6vw,52px);line-height:1.05;letter-spacing:.06em;
+    text-transform:uppercase;margin:0;
+    background:linear-gradient(180deg,#EEF7FC 0%,#89B4CE 58%,#2E4E66 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .mon-sous{margin:10px 0 0;color:var(--brume);font-size:13.5px}
+
+  /* ---------- les chiffres de tête ----------
+     Un nombre seul, en grand : c'est la réponse à « combien », et un
+     graphique pour quatre valeurs sans rapport entre elles ne dirait rien
+     de plus qu'elles. */
+  .mon-tuiles{
+    display:grid;gap:12px;margin-bottom:30px;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  }
+  .mon-tuile{
+    padding:16px 18px;border-radius:14px;
+    border:1px solid rgba(150,195,220,.14);
+    background:linear-gradient(170deg,rgba(19,34,56,.55),rgba(8,15,26,.55));
+  }
+  .mon-tuile u{
+    display:flex;align-items:center;gap:7px;
+    font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--brume);text-decoration:none;
+  }
+  .mon-tuile b{
+    display:block;margin:9px 0 2px;
+    font-family:"Eczar",Georgia,serif;font-weight:600;font-size:34px;line-height:1;
+    color:var(--os);font-variant-numeric:tabular-nums;
+  }
+  .mon-tuile i{font-style:normal;font-size:12px;color:var(--brume)}
+  /* le point qui bat : « en ce moment » est la seule tuile qui bouge */
+  .vivant{
+    width:7px;height:7px;border-radius:50%;flex:none;
+    background:var(--algue);box-shadow:0 0 8px var(--algue);
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .vivant{animation:battement 2.4s ease-in-out infinite}
+  }
+  @keyframes battement{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ---------- une carte ---------- */
+  .mon-carte{
+    padding:20px 22px 22px;margin-bottom:22px;border-radius:16px;
+    border:1px solid rgba(150,195,220,.14);
+    background:linear-gradient(170deg,rgba(19,34,56,.5),rgba(8,15,26,.5));
+  }
+  .mon-carte > h2{
+    font-family:"Eczar",Georgia,serif;font-size:19px;font-weight:600;margin:0 0 3px;
+  }
+  .mon-carte > p{margin:0 0 18px;color:var(--brume);font-size:12.5px}
+  .mon-vide{color:var(--brume);font-size:13.5px;margin:0}
+
+  /* ---------- la courbe des jours ----------
+     Des barres et non une ligne : un jour est une case, pas un point sur un
+     continuum, et relier deux jours donnerait à croire qu'on sait ce qui
+     s'est passé entre les deux. Une seule série, donc une seule teinte et
+     pas de légende — le titre dit ce qu'on regarde. */
+  .jours{display:flex;align-items:flex-end;gap:2px;height:150px}
+  .jour{
+    flex:1;min-width:0;height:100%;position:relative;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    background:none;border:0;padding:0;cursor:default;
+  }
+  .jour i{
+    display:block;width:100%;border-radius:4px 4px 0 0;
+    background:var(--plancton);
+    transition:filter .15s;
+  }
+  /* un jour sans personne garde un trait : une case vide et une case absente
+     ne se distinguent pas, et l'une des deux serait un mensonge */
+  .jour.creux i{background:rgba(150,195,220,.16);border-radius:3px}
+  .jour:hover i{filter:brightness(1.25)}
+  .jour.pointe i{box-shadow:0 0 14px -3px var(--plancton)}
+  .jours-axe{
+    display:flex;gap:2px;margin-top:8px;
+    font-size:10px;color:var(--brume);font-variant-numeric:tabular-nums;
+  }
+  .jours-axe span{flex:1;min-width:0;text-align:center;overflow:hidden}
+  /* toutes les dates ne tiennent pas : une sur trois, plus la dernière */
+  .jours-axe span.pale{opacity:0}
+
+  /* ---------- les pages ----------
+     Barres horizontales : les libellés sont des mots, et un mot se lit à
+     l'horizontale. Une seule mesure par ligne (les visiteurs) ; les vues
+     sont au bout, en chiffre, pour ne pas mettre deux échelles côte à côte. */
+  .pages{display:flex;flex-direction:column;gap:9px}
+  .page-l{display:grid;grid-template-columns:minmax(0,13em) 1fr auto;gap:12px;align-items:center}
+  .page-nom{
+    font-size:13px;color:var(--os);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .page-piste{height:9px;border-radius:99px;background:rgba(150,195,220,.1);overflow:hidden}
+  .page-piste i{
+    display:block;height:100%;border-radius:99px;background:var(--plancton);
+    transition:width .3s cubic-bezier(.2,.7,.3,1);
+  }
+  .page-val{
+    font-size:12px;color:var(--brume);white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .page-val b{color:var(--os);font-weight:500}
+
+  /* ---------- qui est là ---------- */
+  .qui{display:flex;flex-wrap:wrap;gap:8px}
+  .qui span{
+    padding:5px 12px;border-radius:999px;font-size:13px;color:var(--os);
+    border:1px solid rgba(63,217,164,.35);background:rgba(63,217,164,.1);
+  }
+  .qui span.anonyme{
+    color:var(--brume);border-color:rgba(150,195,220,.2);background:rgba(3,8,15,.5);
+  }
+
+  /* ---------- infobulle ----------
+     Une barre est trop étroite pour porter son chiffre : il vient au
+     survol, avec la date, plutôt que d'écrire quinze nombres illisibles. */
+  .bulle{
+    position:fixed;z-index:50;pointer-events:none;
+    padding:7px 11px;border-radius:9px;
+    background:#0C1523;border:1px solid rgba(150,195,220,.24);
+    box-shadow:0 14px 34px rgba(0,0,0,.6);
+    font-size:12px;line-height:1.5;color:var(--os);white-space:nowrap;
+    opacity:0;transition:opacity .12s;
+  }
+  .bulle.montre{opacity:1}
+  .bulle u{display:block;text-decoration:none;color:var(--brume);font-size:10.5px}
+
+  .mon-etat{
+    padding:44px 20px;text-align:center;color:var(--brume);font-size:14px;
+    border:1px dashed rgba(150,195,220,.18);border-radius:14px;
+  }
+  #gate{max-width:46ch}
+  /* ---------- le téléphone ----------
+     Deux tuiles par rangée plutôt qu'une seule colonne de quatre : ce sont
+     quatre chiffres qu'on compare, et les empiler obligeait à faire défiler
+     entre deux lectures de la même question. */
+  @media (max-width:620px){
+    .mon-entete{margin-bottom:20px}
+    .mon-sous{font-size:13px}
+    .mon-tuiles{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px}
+    .mon-tuile{padding:13px 14px}
+    .mon-tuile u{font-size:9.5px;letter-spacing:.12em}
+    .mon-tuile b{font-size:26px;margin:7px 0 2px}
+    .mon-tuile i{font-size:11.5px}
+    .mon-carte{padding:16px 14px 18px;border-radius:14px}
+    .jours{height:118px}
+    /* Le nom de la page passe au-dessus de sa barre : treize em de libellé,
+       une piste et un chiffre ne tiennent pas côte à côte sur 360 px, et le
+       libellé se retrouvait coupé au deuxième mot. */
+    .page-l{grid-template-columns:1fr auto;gap:3px 10px}
+    .page-nom{grid-column:1/-1}
+    .qui span{font-size:12.5px}
+  }
+
+</style>
+</head>
+<body>
+<canvas id="neige" aria-hidden="true"></canvas>
+
+<div class="enveloppe">
+
+  <div class="barre">
+    <a class="back" href="/abyss" aria-label="Retour à Abyss">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <div class="compte" id="compte"><!-- rempli par static/compte.js --></div>
+  </div>
+
+  <main id="corps" hidden>
+    <header class="mon-entete">
+      <h1 class="mon-titre">Monitoring</h1>
+      <p class="mon-sous" id="sous"></p>
+    </header>
+
+    <div class="mon-tuiles" id="tuiles"></div>
+
+    <section class="mon-carte">
+      <h2>Visiteurs par jour</h2>
+      <p id="joursSous"></p>
+      <div class="jours" id="jours"></div>
+      <div class="jours-axe" id="joursAxe"></div>
+    </section>
+
+    <section class="mon-carte">
+      <h2>Qui est là en ce moment</h2>
+      <p id="quiSous"></p>
+      <div class="qui" id="qui"></div>
+    </section>
+
+    <section class="mon-carte">
+      <h2>Pages</h2>
+      <p id="pagesSous"></p>
+      <div class="pages" id="pages"></div>
+    </section>
+
+    <section class="mon-carte">
+      <h2>Ce que le site contient</h2>
+      <p>Compté en base, pas dans les visites.</p>
+      <div class="pages" id="contenu"></div>
+    </section>
+  </main>
+
+  <section class="carte-profil" id="gate" hidden>
+    <h2>Rien à voir ici</h2>
+    <p class="explication">Cette page est réservée à l'administration du site.</p>
+    <p><a class="lien" href="/abyss">Retour à Abyss</a></p>
+  </section>
+</div>
+
+<div class="bulle" id="bulle" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
+     Chargé avant le script de la page, qui l'appelle dès la réponse de
+     /api/moi — un defer arriverait peut-être trop tard. -->
+<script src="/static/compte.js"></script>
+<script>
+const el = (id) => document.getElementById(id);
+const echappe = (s) => String(s === null || s === undefined ? "" : s)
+  .replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;",
+                                 '"': "&quot;", "'": "&#39;" }[c]));
+
+let MOI = { connecte: false, utilisateur: null };
+let DATA = null;
+
+/* La page se relit toute seule : « en ce moment » vieillit vite, et un
+   chiffre de présence qu'il faut rafraîchir à la main ne vaut pas mieux
+   qu'une capture d'écran. Trente secondes — la fenêtre de présence en fait
+   cinq minutes, on ne rate donc jamais personne. */
+const CADENCE = 30000;
+
+async function api(chemin, methode, charge) {
+  const options = { method: methode || "GET", credentials: "same-origin" };
+  if (charge !== undefined) {
+    options.headers = { "Content-Type": "application/json" };
+    options.body = JSON.stringify(charge);
+  }
+  const r = await fetch(chemin, options);
+  let data = null;
+  try { data = await r.json(); } catch (e) { /* réponse illisible */ }
+  if (!r.ok || !data || data.ok === false) {
+    throw new Error((data && data.message) || "Le serveur n'a pas répondu.");
+  }
+  return data;
+}
+
+let minuteurToast = null;
+function toast(message, mauvais) {
+  const t = el("toast");
+  t.textContent = message;
+  t.className = "toast montre" + (mauvais ? " mauvais" : "");
+  t.hidden = false;
+  clearTimeout(minuteurToast);
+  minuteurToast = setTimeout(() => { t.className = "toast"; t.hidden = true; }, 3600);
+}
+
+const pluriel = (n, mot, suffixe) => `${n} ${mot}${n > 1 ? (suffixe || "s") : ""}`;
+
+function dateCourte(iso) {
+  const d = new Date(iso + "T12:00:00Z");
+  return isNaN(d) ? iso : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+/* ---------- l'infobulle ----------
+   Elle suit le pointeur et lit ce que la barre porte dans data-bulle. Une
+   seule pour tout le tableau de bord : deux fenêtres flottantes qui se
+   suivent seraient deux fois plus de code pour le même service. */
+function brancheBulle() {
+  const bulle = el("bulle");
+  document.addEventListener("mousemove", (e) => {
+    const cible = e.target.closest("[data-bulle]");
+    if (!cible) { bulle.classList.remove("montre"); bulle.hidden = true; return; }
+    bulle.hidden = false;
+    bulle.innerHTML = cible.dataset.bulle;
+    /* posée après avoir été remplie : sa largeur n'est connue qu'ensuite,
+       et sans elle on ne peut pas l'empêcher de déborder à droite */
+    const l = Math.min(e.clientX + 14, innerWidth - bulle.offsetWidth - 8);
+    bulle.style.left = Math.max(8, l) + "px";
+    bulle.style.top = Math.max(8, e.clientY - bulle.offsetHeight - 12) + "px";
+    bulle.classList.add("montre");
+  });
+}
+
+/* ---------- les chiffres de tête ---------- */
+function dessineTuiles() {
+  const m = DATA.maintenant, a = DATA.aujourdhui, c = DATA.comptes;
+  const tuiles = [
+    { u: `<span class="vivant" aria-hidden="true"></span>En ce moment`,
+      b: m.visiteurs,
+      i: `sur les ${m.minutes} dernières minutes` },
+    { u: "Aujourd'hui",
+      b: a.visiteurs,
+      i: `${pluriel(a.vues, "page vue")}` },
+    { u: "Comptes",
+      b: c.total,
+      i: c.mois ? `dont ${c.mois} ce mois-ci` : "aucun ce mois-ci" },
+    { u: "Sessions ouvertes",
+      b: c.sessions,
+      i: "comptes encore connectés" },
+  ];
+  el("tuiles").innerHTML = tuiles.map((t) => `
+    <div class="mon-tuile">
+      <u>${t.u}</u>
+      <b>${t.b}</b>
+      <i>${echappe(t.i)}</i>
+    </div>`).join("");
+}
+
+/* ---------- les jours ----------
+   La hauteur se mesure sur le plus haut jour de la fenêtre, jamais sur zéro
+   ni sur un maximum inventé : c'est ce qui rend deux barres comparables
+   entre elles. Un jour à zéro garde un trait de 2 px — une case vide et une
+   case absente ne se distingueraient pas autrement. */
+function dessineJours() {
+  const jours = DATA.jours;
+  const haut = Math.max(1, ...jours.map((j) => j.visiteurs));
+  el("joursSous").textContent =
+    `${jours.length} derniers jours · au plus fort, ${pluriel(haut, "visiteur")} en un jour`;
+
+  el("jours").innerHTML = jours.map((j) => {
+    const creux = !j.visiteurs;
+    const h = creux ? 2 : Math.max(4, Math.round((j.visiteurs / haut) * 100)) + "%";
+    const bulle = `<u>${echappe(dateCourte(j.jour))}</u>` +
+      `${pluriel(j.visiteurs, "visiteur")} · ${pluriel(j.vues, "page vue")}`;
+    return `<div class="jour${creux ? " creux" : ""}${
+      j.visiteurs === haut && !creux ? " pointe" : ""}"
+      data-bulle="${echappe(bulle)}" role="img"
+      aria-label="${echappe(dateCourte(j.jour))} : ${echappe(pluriel(j.visiteurs, "visiteur"))}"
+      ><i style="height:${creux ? "2px" : h}"></i></div>`;
+  }).join("");
+
+  /* Une date sur trois, plus la dernière : quinze dates côte à côte se
+     chevauchent et ne se lisent plus. Les autres gardent leur place pour que
+     les colonnes restent alignées sur les barres. */
+  el("joursAxe").innerHTML = jours.map((j, i) => {
+    const montre = i === jours.length - 1 || (jours.length - 1 - i) % 3 === 0;
+    return `<span class="${montre ? "" : "pale"}">${echappe(dateCourte(j.jour))}</span>`;
+  }).join("");
+}
+
+/* ---------- qui est là ---------- */
+function dessineQui() {
+  const m = DATA.maintenant;
+  const anonymes = Math.max(0, m.visiteurs - m.connectes.length);
+  el("quiSous").textContent = m.visiteurs
+    ? `${pluriel(m.visiteurs, "visiteur")} sur les ${m.minutes} dernières minutes.`
+    : "";
+  if (!m.visiteurs) {
+    el("qui").innerHTML = '<p class="mon-vide">Personne pour l\'instant.</p>';
+    return;
+  }
+  el("qui").innerHTML =
+    m.connectes.map((p) => `<span>${echappe(p)}</span>`).join("") +
+    (anonymes ? `<span class="anonyme">${pluriel(anonymes, "visiteur")} sans compte</span>` : "") +
+    (m.pages.length
+      ? `<span class="anonyme">${m.pages.map((p) =>
+          `${echappe(p.nom)} (${p.visiteurs})`).join(" · ")}</span>`
+      : "");
+}
+
+/* ---------- barres horizontales ----------
+   Le même dessin sert aux pages et au contenu : une ligne, une piste, un
+   chiffre au bout. Une seule mesure porte la barre ; la seconde reste en
+   texte, parce que deux échelles sur une même ligne ne se comparent pas. */
+function barres(hote, lignes, vide) {
+  if (!lignes.length) { el(hote).innerHTML = `<p class="mon-vide">${echappe(vide)}</p>`; return; }
+  const haut = Math.max(1, ...lignes.map((l) => l.valeur));
+  el(hote).innerHTML = lignes.map((l) => `
+    <div class="page-l"${l.bulle ? ` data-bulle="${echappe(l.bulle)}"` : ""}>
+      <span class="page-nom">${echappe(l.nom)}</span>
+      <span class="page-piste"><i style="width:${Math.max(2, (l.valeur / haut) * 100)}%"></i></span>
+      <span class="page-val"><b>${l.valeur}</b>${l.suite ? " " + echappe(l.suite) : ""}</span>
+    </div>`).join("");
+}
+
+function dessinePages() {
+  el("pagesSous").textContent =
+    `Visiteurs distincts sur les ${DATA.jours.length} derniers jours.`;
+  barres("pages", DATA.pages.map((p) => ({
+    nom: p.nom, valeur: p.visiteurs, suite: `· ${p.vues} vues`,
+    bulle: `<u>${echappe(p.chemin)}</u>${pluriel(p.visiteurs, "visiteur")} · ${
+      pluriel(p.vues, "page vue")}`,
+  })), "Aucune visite enregistrée pour l'instant.");
+}
+
+function dessineContenu() {
+  const c = DATA.contenu;
+  barres("contenu", [
+    { nom: "Journaux de jeu", valeur: c.journaux, suite: `· ${c.publics} publics` },
+    { nom: "Jeux enregistrés", valeur: c.jeux },
+    { nom: "Suggestions en attente", valeur: c.suggestions },
+  ].filter((l) => l.valeur > 0), "Le site est encore vide.");
+}
+
+function dessine() {
+  el("sous").textContent =
+    `Mis à jour à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
+  dessineTuiles();
+  dessineJours();
+  dessineQui();
+  dessinePages();
+  dessineContenu();
+}
+
+/* Un rafraîchissement qui échoue ne vide pas la page : on garde ce qui est
+   affiché, on le dit une fois, et on retente au tour suivant. Un tableau de
+   bord qui se blanchit à la première coupure est pire qu'un tableau de bord
+   un peu périmé. */
+let PLAINTE = false;
+async function relis(silencieux) {
+  try {
+    DATA = await api("/api/monitoring");
+    PLAINTE = false;
+    dessine();
+  } catch (err) {
+    if (!DATA) throw err;
+    if (!PLAINTE && !silencieux) { toast(err.message, true); PLAINTE = true; }
+  }
+}
+
+(async function () {
+  let data;
+  try { data = await api("/api/moi"); }
+  catch (e) { el("gate").hidden = false; return; }
+
+  MOI = { connecte: !!data.connecte, utilisateur: data.utilisateur };
+  Compte.dessine(MOI);
+  if (!MOI.connecte || !MOI.utilisateur.admin) { el("gate").hidden = false; return; }
+
+  try { await relis(); }
+  catch (e) { el("gate").hidden = false; return; }
+
+  brancheBulle();
+  el("corps").hidden = false;
+  setInterval(() => relis(true), CADENCE);
+})();
+</script>
+<script src="/static/neige.js" defer></script>
+</body>
+</html>

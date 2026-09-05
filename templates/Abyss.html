@@ -140,6 +140,7 @@
           <option value="abyss">Abyss</option>
           <option value="jeux-videos">Archive Jeux Vidéos</option>
           <option value="collection">Collection Yu-Gi-Oh!</option>
+          <option value="quiz">Mini-Jeux / Quiz</option>
         </select>
       </label>
       <label class="champ">
@@ -156,6 +157,10 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
+     Chargé avant le script de la page, qui l'appelle dès la réponse de
+     /api/moi — un defer arriverait peut-être trop tard. -->
+<script src="/static/compte.js"></script>
 <script>
 /* =========================================================
    LA SEULE PARTIE À MODIFIER
@@ -197,13 +202,19 @@ const PROJETS = [
         externe: true          // s'ouvre dans un nouvel onglet
     },
     {
+        /* Une seule tuile pour tous les quiz du site. Yu-Gi-Quiz avait la
+           sienne et pointait droit sur son serveur ; il vit maintenant dans
+           cette page-ci, à côté des mini-jeux de jaquettes, chacun sous sa
+           catégorie. Une porte pour les jeux, pas une par jeu. */
         id: "quiz",
-        nom: "Yu-Gi-Quiz!",
-        texte: "Devinez les noms des cartes avec juste les artworks.",
-        url: `http://${HOTE}:5000`,
+        nom: "Mini-Jeux / Quiz",
+        texte: "Deviner un jeu à sa jaquette, une carte à son artwork.",
+        url: "/quiz",
+        /* Le bleu et le losange interrogatif étaient ceux de Yu-Gi-Quiz.
+           Cette tuile-ci a pris sa place et son rôle : elle en garde le
+           visuel, pour qu'on la retrouve là où on la cherchait. */
         accent: "var(--plancton)",
-        embleme: "question",
-        externe: true          // autre serveur, autre port
+        embleme: "question"
     }
 ];
 
@@ -274,8 +285,13 @@ function poseEtat(data) {
 /* =========================================================
    Rendu
    ========================================================= */
+/* `admin: true` sur un projet le réserve à l'administration : un projet en
+   chantier n'a pas à s'afficher chez les autres tant qu'il n'est pas prêt.
+   Ce n'est pas une protection — c'est l'API du projet qui refuse — juste de
+   quoi ne pas mettre une porte fermée sous les yeux de tout le monde. */
 function visibles() {
-  return PROJETS.filter((p) => MOI.masques.indexOf(p.id) < 0);
+  const admin = MOI.connecte && MOI.utilisateur && MOI.utilisateur.admin;
+  return PROJETS.filter((p) => (!p.admin || admin) && MOI.masques.indexOf(p.id) < 0);
 }
 
 function dessineGrille() {
@@ -331,6 +347,7 @@ function dessineCompte() {
              l'API qu'ouvre la page répond 404 à tous les autres -->
         ${MOI.utilisateur.admin
           ? '<a class="entree" href="/abyss/suggestions">Suggestions</a>'
+          + '<a class="entree" href="/abyss/monitoring">Monitoring</a>'
           : ""}
         <hr>
         <button class="entree" id="mnSortie">Se déconnecter</button>
@@ -419,6 +436,24 @@ function suggestionDepuisURL() {
   el("sProjet").value = projet;
   el("btnSugg").click();
 }
+/* Arriver avec ?connexion ouvre directement la fenetre de connexion.
+   Les pages qui exigent un compte renvoient ici pour ca et rien d'autre :
+   deposer le visiteur sur le hub a charge de retrouver le bouton, c'etait
+   un clic de plus pour la seule chose qu'il venait faire.
+
+   Deja connecte : on ne montre rien. Il n'a rien demande d'autre que
+   d'arriver, et une fenetre de connexion par-dessus une session ouverte
+   n'aurait aucun sens.
+
+   L'adresse est nettoyee dans les deux cas, comme pour ?suggestion : un
+   rafraichissement ne doit pas rouvrir la fenetre, et le lien qu'on
+   partagerait ne doit pas trainer un formulaire ouvert. */
+function connexionDepuisURL() {
+  if (!new URLSearchParams(location.search).has("connexion")) return;
+  history.replaceState(null, "", location.pathname);
+  if (!MOI.connecte) ouvreAuth("connexion");
+}
+
 el("formSugg").addEventListener("submit", async (e) => {
   e.preventDefault();
   const bouton = el("sGo");
@@ -670,8 +705,9 @@ function toast(message, mauvais) {
     /* API injoignable : le hub reste une grille de liens, comme avant les
        comptes. Mieux vaut un site amputé de sa connexion qu'une page vide. */
   }
-  /* après poseEtat : le formulaire demande d'être connecté, et on ne le
-     sait qu'une fois /api/moi revenu */
+  /* après poseEtat : les deux regardent MOI.connecte, et on ne le sait
+     qu'une fois /api/moi revenu */
+  connexionDepuisURL();
   suggestionDepuisURL();
 })();
 

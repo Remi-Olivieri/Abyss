@@ -43,6 +43,16 @@
   }
   .sug-filtre b{font-weight:500;opacity:.6;margin-left:5px}
   .sug-filtre:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  /* les trois filtres d'importance portent leur couleur même éteints : sinon
+     rien ne dirait qu'ils forment un groupe à part des projets */
+  .sug-filtre i{
+    display:inline-block;width:7px;height:7px;border-radius:50%;
+    margin-right:7px;vertical-align:middle;position:relative;top:-1px;
+    background:var(--n);box-shadow:0 0 8px -1px var(--n);
+  }
+  .sug-filtre.niveau.actif{
+    color:var(--n);border-color:var(--n-bord);background:var(--n-fond);
+  }
 
   /* ---------- une section ---------- */
   .sug-section{margin-bottom:34px}
@@ -68,7 +78,8 @@
     padding:14px 16px;margin-bottom:8px;border-radius:13px;
     border:1px solid rgba(150,195,220,.14);
     background:linear-gradient(170deg,rgba(19,34,56,.55),rgba(8,15,26,.55));
-    transition:border-color .2s ease,transform .15s ease,background .2s ease;
+    transition:border-color .2s ease,transform .15s ease,background .2s ease,
+               box-shadow .2s ease;
   }
   .sug-ligne:hover{
     border-color:rgba(150,195,220,.3);
@@ -88,6 +99,70 @@
   .sug-ligne.bug .sug-pion{
     border-radius:2px;background:#E8788C;box-shadow:0 0 9px rgba(232,120,140,.8);
   }
+
+  /* ---------- l'importance ----------
+     Trois niveaux et l'absence de niveau — une ligne que personne n'a
+     encore jugée n'est pas « peu pressante », elle n'a rien reçu du tout,
+     et elle garde donc exactement l'allure d'avant.
+
+     Une ligne classée le dit trois fois : une barre allumée à gauche, sa
+     pastille repeinte, et le mot en clair dans la méta. La couleur seule
+     ne dirait rien à qui ne la distingue pas — et un rouge et un vert de
+     même clarté, c'est précisément la paire qui se confond le plus. */
+  .sug-ligne.p1,.sug-filtre.p1{--n:#FF8A8A;--n-bord:rgba(255,138,138,.45);--n-fond:rgba(232,106,106,.13)}
+  .sug-ligne.p2,.sug-filtre.p2{--n:#F2B25C;--n-bord:rgba(242,178,92,.45);--n-fond:rgba(232,163,74,.13)}
+  .sug-ligne.p3,.sug-filtre.p3{--n:#4FE0AF;--n-bord:rgba(79,224,175,.42);--n-fond:rgba(63,217,164,.11)}
+
+  .sug-ligne.p1,.sug-ligne.p2,.sug-ligne.p3{
+    border-color:var(--n-bord);
+    background:
+      linear-gradient(100deg,var(--n-fond),rgba(8,15,26,.55) 46%),
+      linear-gradient(170deg,rgba(19,34,56,.55),rgba(8,15,26,.55));
+  }
+  .sug-ligne.p1:hover,.sug-ligne.p2:hover,.sug-ligne.p3:hover{
+    border-color:var(--n);
+    box-shadow:0 0 26px -12px var(--n);
+  }
+  /* la barre : posée sur le bord de la carte, pas à côté — elle doit se
+     lire comme la tranche allumée de la ligne, pas comme un objet de plus */
+  .sug-ligne.p1::before,.sug-ligne.p2::before,.sug-ligne.p3::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    border-radius:13px 0 0 13px;
+    background:linear-gradient(180deg,var(--n),var(--n-bord));
+    box-shadow:0 0 14px -1px var(--n);
+  }
+  .sug-ligne.p1 .sug-pion,.sug-ligne.p2 .sug-pion,.sug-ligne.p3 .sug-pion{
+    background:var(--n);box-shadow:0 0 10px var(--n);
+  }
+  .sug-prio{
+    padding:1px 8px;border-radius:999px;font-weight:500;
+    color:var(--n);border:1px solid var(--n-bord);background:var(--n-fond);
+  }
+
+  /* le sélecteur : trois pastilles chiffrées, au même endroit et sous la
+     même règle que Copier et Résolu — on parcourt d'abord, on classe
+     ensuite. L'état, lui, reste lisible sans survol grâce à la barre. */
+  .sug-niveaux{display:flex;gap:4px;align-items:center}
+  .sug-niv{
+    font:inherit;font-size:11.5px;line-height:1;width:23px;height:23px;
+    padding:0;border-radius:50%;cursor:pointer;
+    color:var(--brume);border:1px solid rgba(150,195,220,.2);
+    background:rgba(3,8,15,.6);
+    opacity:0;transition:opacity .18s ease,color .2s ease,border-color .2s ease,
+                         background .2s ease,box-shadow .2s ease;
+  }
+  .sug-niv.n1{--n:#FF8A8A}
+  .sug-niv.n2{--n:#F2B25C}
+  .sug-niv.n3{--n:#4FE0AF}
+  .sug-ligne:hover .sug-niv,.sug-niv:focus-visible{opacity:1}
+  .sug-niv:hover{color:var(--n);border-color:var(--n);box-shadow:0 0 12px -3px var(--n)}
+  .sug-niv[aria-pressed="true"]{
+    color:#04101A;font-weight:600;
+    background:var(--n);border-color:var(--n);box-shadow:0 0 14px -3px var(--n);
+  }
+  .sug-niv:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  .sug-niv[disabled]{cursor:progress}
+  @media (hover:none){ .sug-niv{opacity:1} }
 
   .sug-corps{flex:1;min-width:0}
   .sug-texte{margin:0;font-size:14.5px;line-height:1.55;word-break:break-word}
@@ -124,6 +199,12 @@
   .sug-fait[disabled]{cursor:progress;opacity:1}
   /* Sans survol, les boutons ne viendraient jamais : au toucher ils restent là. */
   @media (hover:none){ .sug-fait,.sug-copier{opacity:1} }
+  /* Cinq boutons sur une ligne de téléphone, c'est trois de trop : ils
+     passent dessous, alignés sur le texte plutôt que sur la pastille. */
+  @media (max-width:640px){
+    .sug-ligne{flex-wrap:wrap}
+    .sug-boutons{width:100%;margin-left:23px;margin-top:10px}
+  }
 
   /* ---------- états ---------- */
   .sug-etat{
@@ -174,7 +255,19 @@ const echappe = (s) => String(s === null || s === undefined ? "" : s)
 
 let MOI = { connecte: false, utilisateur: null };
 let SECTIONS = [];
-let FILTRE = "tout";          // 'tout', 'bug', 'suggestion', ou un projet
+let FILTRE = "tout";          // 'tout', 'bug', 'suggestion', 'p1'..'p3', ou un projet
+
+/* Les trois niveaux d'importance. 0 n'y est pas : ce n'est pas un quatrième
+   niveau mais l'absence de tri, et il n'a donc ni couleur ni nom. */
+const NIVEAUX = [
+  { n: 1, nom: "Urgent",    titre: "Urgent — à faire d'abord" },
+  { n: 2, nom: "Important", titre: "Important — mais ça peut attendre l'urgent" },
+  { n: 3, nom: "Plus tard", titre: "Plus tard — quand le reste sera fait" },
+];
+const niveauDe = (l) => NIVEAUX.find((v) => v.n === l.priorite) || null;
+/* Les non classées ferment la marche : elles n'ont pas été jugées moins
+   pressantes, on ne sait juste pas encore. */
+const rang = (l) => (niveauDe(l) ? l.priorite : 9);
 
 async function api(chemin, methode, charge) {
   const options = { method: methode || "GET", credentials: "same-origin" };
@@ -261,16 +354,22 @@ function dateCourte(iso) {
 function retenue(ligne, section) {
   if (FILTRE === "tout") return true;
   if (FILTRE === "bug" || FILTRE === "suggestion") return ligne.genre === FILTRE;
+  /* « p1 » en entier, pas seulement son premier caractère : le jour où un
+     projet s'appellera « photos », le filtre par projet ne doit pas se
+     faire prendre pour un filtre d'importance. */
+  if (/^p[123]$/.test(FILTRE)) return ligne.priorite === +FILTRE[1];
   return section.projet === FILTRE;
 }
 
 function compte() {
-  let total = 0, bugs = 0;
+  const n = { total: 0, bugs: 0, 1: 0, 2: 0, 3: 0 };
   SECTIONS.forEach((s) => s.lignes.forEach((l) => {
-    total++;
-    if (l.genre === "bug") bugs++;
+    n.total++;
+    if (l.genre === "bug") n.bugs++;
+    if (niveauDe(l)) n[l.priorite]++;
   }));
-  return { total, bugs, idees: total - bugs };
+  n.idees = n.total - n.bugs;
+  return n;
 }
 
 function dessineFiltres() {
@@ -280,12 +379,17 @@ function dessineFiltres() {
     { cle: "suggestion", nom: "Idées", n: n.idees },
     { cle: "bug", nom: "Bugs", n: n.bugs },
   ];
+  /* Un niveau sans aucune ligne n'a pas de bouton : un filtre qui ne peut
+     que vider la page n'apprend rien, et la rangée est déjà longue. */
+  NIVEAUX.forEach((v) => {
+    if (n[v.n] || FILTRE === "p" + v.n) boutons.push({ cle: "p" + v.n, nom: v.nom, n: n[v.n], niveau: v.n });
+  });
   SECTIONS.forEach((s) => {
     if (s.projet) boutons.push({ cle: s.projet, nom: s.titre, n: s.lignes.length });
   });
   el("filtres").innerHTML = boutons.map((b) => `
-    <button type="button" class="sug-filtre${b.cle === FILTRE ? " actif" : ""}"
-            data-cle="${echappe(b.cle)}">${echappe(b.nom)}<b>${b.n}</b></button>`).join("");
+    <button type="button" class="sug-filtre${b.niveau ? " niveau p" + b.niveau : ""}${b.cle === FILTRE ? " actif" : ""}"
+            data-cle="${echappe(b.cle)}">${b.niveau ? "<i></i>" : ""}${echappe(b.nom)}<b>${b.n}</b></button>`).join("");
   el("filtres").querySelectorAll(".sug-filtre").forEach((b) => {
     b.addEventListener("click", () => { FILTRE = b.dataset.cle; dessine(); });
   });
@@ -303,7 +407,13 @@ function dessine() {
 
   let rendues = 0;
   zone.innerHTML = SECTIONS.map((s, si) => {
-    const lignes = s.lignes.filter((l) => retenue(l, s));
+    /* L'urgent remonte, dans chaque section séparément — classer une ligne
+       n'a d'intérêt que si la page s'en sert pour dire par quoi commencer.
+       Le fichier, lui, garde l'ordre d'arrivée : c'est un affichage, pas
+       une réécriture. À niveau égal l'ordre du fichier tient (le tri de
+       JavaScript est stable). */
+    const lignes = s.lignes.filter((l) => retenue(l, s))
+                           .sort((a, b) => rang(a) - rang(b));
     rendues += lignes.length;
     if (!lignes.length) return "";
     return `
@@ -312,13 +422,16 @@ function dessine() {
           <h2>${echappe(s.titre)}</h2>
           <span class="sug-compte">${lignes.length} ligne${lignes.length > 1 ? "s" : ""}</span>
         </div>
-        ${lignes.map((l) => `
-          <article class="sug-ligne${l.genre === "bug" ? " bug" : ""}"
+        ${lignes.map((l) => {
+          const v = niveauDe(l);
+          return `
+          <article class="sug-ligne${l.genre === "bug" ? " bug" : ""}${v ? " p" + v.n : ""}"
                    data-s="${si}" data-texte="${echappe(l.texte)}">
             <span class="sug-pion" aria-hidden="true"></span>
             <div class="sug-corps">
               <p class="sug-texte">${echappe(l.message)}</p>
               <div class="sug-meta">
+                ${v ? `<span class="sug-prio">${echappe(v.nom)}</span>` : ""}
                 <span class="sug-etiq">${l.genre === "bug" ? "Bug" : "Idée"}</span>
                 ${l.pseudo ? `<span class="sug-auteur">${echappe(l.pseudo)}</span>` : ""}
                 ${l.creeLe ? `<span>${echappe(dateCourte(l.creeLe))}</span>` : ""}
@@ -326,10 +439,17 @@ function dessine() {
               </div>
             </div>
             <div class="sug-boutons">
+              <div class="sug-niveaux" role="group" aria-label="Importance">
+                ${NIVEAUX.map((x) => `
+                  <button type="button" class="sug-niv n${x.n}" data-n="${x.n}"
+                          aria-pressed="${l.priorite === x.n}"
+                          title="${echappe(x.titre)}${l.priorite === x.n ? " (cliquer pour retirer)" : ""}"
+                          aria-label="${echappe(x.nom)}">${x.n}</button>`).join("")}
+              </div>
               <button type="button" class="sug-copier">Copier</button>
               <button type="button" class="sug-fait">Résolu</button>
             </div>
-          </article>`).join("")}
+          </article>`; }).join("")}
       </section>`;
   }).join("");
 
@@ -342,6 +462,9 @@ function dessine() {
   });
   zone.querySelectorAll(".sug-copier").forEach((b) => {
     b.addEventListener("click", () => copier(b));
+  });
+  zone.querySelectorAll(".sug-niv").forEach((b) => {
+    b.addEventListener("click", () => classer(b));
   });
 }
 
@@ -379,6 +502,39 @@ async function copier(bouton) {
     bouton.textContent = "Copier";
     bouton.classList.remove("fait");
   }, 1600);
+}
+
+/* Classer une ligne. Cliquer le niveau qu'elle porte déjà la déclasse :
+   c'est le seul geste possible pour revenir en arrière, et il tombe sous le
+   doigt qui vient de se tromper.
+
+   Comme pour « Résolu », on attend le serveur : c'est le fichier qui décide,
+   et une couleur posée puis reprise parce que l'écriture a échoué serait
+   pire que la demi-seconde d'attente. Le texte de la ligne change avec son
+   niveau (la marque [!n] en fait partie) — d'où le renvoi du serveur, qui
+   évite de recharger toute la page pour retrouver comment la désigner. */
+async function classer(bouton) {
+  const carte = bouton.closest(".sug-ligne");
+  const section = SECTIONS[+carte.dataset.s];
+  const texte = carte.dataset.texte;
+  const ligne = section.lignes.find((l) => l.texte === texte);
+  if (!ligne) return;
+  const voulu = +bouton.dataset.n === ligne.priorite ? 0 : +bouton.dataset.n;
+
+  const boutons = carte.querySelectorAll(".sug-niv");
+  boutons.forEach((b) => { b.disabled = true; });
+  let reponse;
+  try {
+    reponse = await api("/api/changement/priorite", "POST",
+                        { projet: section.projet, texte: texte, priorite: voulu });
+  } catch (err) {
+    boutons.forEach((b) => { b.disabled = false; });
+    toast(err.message, true);
+    return;
+  }
+  ligne.priorite = voulu;
+  ligne.texte = reponse.texte;
+  dessine();
 }
 
 /* La ligne s'en va avant la réponse du serveur ? Non : on attend, et on ne

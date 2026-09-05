@@ -185,20 +185,36 @@ const short = (cl, i) => {
    avec le quiz) — un ancien chemin mémorisé doit lui aussi être jeté.
    abyss-3 : l'ancienne config gardait l'adresse ET le jeton du Sheet dans
    classeur-cfg. Le jeton ne doit plus traîner là : on ne conserve que le
-   dossier d'images, et le cache change de clé (une par source). */
-const VERSION_CHEMINS = 'abyss-4';
+   dossier d'images, et le cache change de clé (une par source).
+   abyss-5 : le classeur a quitté Google Sheets pour la base d'Abyss. Les
+   jetons n'ouvrent plus rien et n'ont plus à dormir ici ; les caches, dont
+   la clé était l'adresse du script, parlent d'un format qui n'existe plus
+   (une carte y finissait par sa ligne et sa colonne de feuille) — on les
+   jette tous, y compris ceux qui portaient l'ancienne clé par source. */
+const VERSION_CHEMINS = 'abyss-5';
 try {
   if (localStorage.getItem('classeur-chemins') !== VERSION_CHEMINS){
-    ['classeur-img', 'classeur-ext', 'classeur-data', 'classeur-cfg']
+    ['classeur-img', 'classeur-ext', 'classeur-data', 'classeur-cfg',
+     'classeur-jetons', 'classeur-source']
       .forEach(k => localStorage.removeItem(k));
+    /* les caches par source : leur clé porte l'adresse, on les balaie */
+    for (let k = localStorage.length - 1; k >= 0; k--){
+      const c = localStorage.key(k);
+      if (c && c.indexOf('classeur-data:') === 0) localStorage.removeItem(c);
+    }
     localStorage.setItem('classeur-chemins', VERSION_CHEMINS);
   }
 } catch(e){}
 
-/* ---------------- sources et jetons ---------------- */
+/* ---------------- sources et session ---------------- */
 let SRC = 0;              // index dans SOURCES
-let CAN_WRITE = false;    // le script a confirmé que ce jeton peut écrire
+let CAN_WRITE = false;    // le serveur a confirmé que ce classeur est le mien
+/* qui je suis, rempli par l'annuaire : { connecte, pseudo } */
+let MOI = { connecte: false, pseudo: null };
 const source = () => SOURCES[SRC] || null;
+/* le classeur affiché est-il le mien ? sert au titre et aux invitations */
+const estLeMien = () => !!MOI.pseudo && !!source()
+  && norm(source().nom) === norm(MOI.pseudo);
 
 /* Le classeur ouvert la dernière fois : on retient l'adresse, pas le rang,
    pour que réordonner SOURCES ne rouvre pas le classeur de quelqu'un d'autre. */
@@ -883,7 +899,7 @@ function grandeCarteHTML(card){
   if (!owned) cls.push('absente');
   if (rc){ cls.push('r-' + rc); if (brille(rc)) cls.push('brille'); }
   return '<div class="' + cls.join(' ') + '" style="--c:' + couleurSure(T().color) + ';--d:.35s">'
-    + imgHTML(idDe(card), 'bigart')
+    + imgHTML(card, 'bigart', true)
     + '<div class="bigfb"><span>' + esc(card[0]) + '</span></div>'
     + (owned ? FOIL : '')
     + (owned ? '<span class="bigrar">' + esc(card[1]) + '</span>'
@@ -899,15 +915,13 @@ function majGrandeCarte(){
   const owned = !!card[1];
   big.classList.toggle('absente', !owned);
   /* l'illustration correspond peut-être encore à la carte précédente : on la
-     remplace si l'id ne correspond plus (navigation entre cartes) */
-  const newId = idDe(card);
-  const newIdStr = newId == null ? '' : String(newId);
-  const oldArt = big.querySelector('.bigart');
-  const oldIdStr = oldArt ? oldArt.dataset.id : '';
-  if (oldIdStr !== newIdStr){
-    if (oldArt) oldArt.remove();
+     remplace si le fichier ne correspond plus (navigation entre cartes) */
+  const neuf = fichierArt(card);
+  const vieilleArt = big.querySelector('.bigart');
+  if ((vieilleArt ? vieilleArt.dataset.art : '') !== neuf){
+    if (vieilleArt) vieilleArt.remove();
     big.classList.remove('art');
-    const html = imgHTML(newId, 'bigart');
+    const html = imgHTML(card, 'bigart', true);
     if (html) big.insertAdjacentHTML('afterbegin', html);
   }
   /* la rareté vient peut-être de changer dans le panneau : on refait le vernis */

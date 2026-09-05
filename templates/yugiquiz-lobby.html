@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abyss:DUEL - Lobby</title>
-    <link rel="stylesheet" href="static/style_yugiquiz.css">
+    <title>Yu-Gi-Quiz! - Lobby</title>
+    <link rel="stylesheet" href="/static/style_yugiquiz.css">
 </head>
 <body>
 
     <header>
-        <a class="back" href="http://localhost:8000/" title="Retour à Abyss" aria-label="Retour à Abyss">
+        <a class="back" href="/quiz" title="Retour aux mini-jeux" aria-label="Retour aux mini-jeux">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
         </a>
         <h1>
-            <span class="title-main">Abyss:DUEL</span>
+            <span class="title-main">Yu-Gi-Quiz!</span>
         </h1>
         <p id="pseudo" class="user-name-lobby"></p>
     </header>
@@ -71,13 +71,32 @@
                 <span>Créer une salle</span>
             </div>
             <div class="panel-body" style="padding: .85rem 1.1rem; display: flex; flex-direction: column; gap: .75rem;">
+                <!-- autocomplete="new-password" sur les deux champs masqués de
+                     cette page, et ce n'est pas décoratif : depuis que le quiz
+                     vit sur la même adresse que le reste d'Abyss, le
+                     gestionnaire de mots de passe du navigateur y reconnaît
+                     « son » site. Il voyait un champ masqué, prenait le champ
+                     texte juste au-dessus pour l'identifiant, et remplissait
+                     « Nom de la salle » avec le pseudo du compte et le mot de
+                     passe avec celui d'Abyss — le mot de passe du site posé
+                     dans une salle de quiz, un clic avant d'être envoyé à
+                     d'autres joueurs.
+
+                     Ni "off" ni le nom du champ n'y changent quoi que ce soit :
+                     Chrome les ignore délibérément sur un champ de mot de
+                     passe, justement pour que personne ne puisse désactiver
+                     son gestionnaire. "new-password" est le seul mot qu'il
+                     écoute — il dit « on en compose un ici », donc rien à
+                     rappeler. Il est vrai pour la création d'une salle, et
+                     c'est aussi ce qu'il faut écrire pour la rejoindre : le
+                     mot de passe d'une salle n'est l'identifiant de personne. -->
                 <div>
                     <label class="input-label" style="display:block; margin-bottom:.5rem;">Nom de la salle</label>
-                    <input type="text" maxlength="24" id="room-name-input" class="create-input" placeholder="Nom de la salle..." autocomplete="off">
+                    <input type="text" maxlength="24" id="room-name-input" class="create-input" placeholder="Nom de la salle..." autocomplete="off" name="nom-de-salle">
                 </div>
                 <div>
                     <label class="input-label" style="display:block; margin-bottom:.5rem;">Mot de passe <span style="opacity:.5; font-size:.85em;">(optionnel)</span></label>
-                    <input type="password" maxlength="24" id="room-password-input" class="create-input" placeholder="Mot de passe..." autocomplete="off">
+                    <input type="password" maxlength="24" id="room-password-input" class="create-input" placeholder="Mot de passe..." autocomplete="new-password" name="mdp-de-salle">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: .75rem;">
                     <div>
@@ -122,7 +141,8 @@
             <div class="leave-dialog">
                 <div class="leave-dialog-title">Salle privée</div>
                 <p class="leave-dialog-sub">Entrez le mot de passe</p>
-                <input type="password" maxlength="24" id="password-input" class="create-input" placeholder="Mot de passe..." autocomplete="off" style="margin-bottom: .75rem;">
+                <!-- voir le panneau « Créer une salle » : même raison -->
+                <input type="password" maxlength="24" id="password-input" class="create-input" placeholder="Mot de passe..." autocomplete="new-password" name="mdp-de-salle" style="margin-bottom: .75rem;">
                 <div class="leave-dialog-btns">
                     <button class="leave-confirm-btn" onclick="submitPassword()">Rejoindre</button>
                     <button class="leave-cancel-btn" onclick="closePasswordDialog()">Annuler</button>
@@ -137,6 +157,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
     <script>
         const socket = io();
+
+        /* Noms de salles et pseudos arrivent des autres joueurs, et finissent
+           dans de l'innerHTML : sans ce passage, une salle nommee avec une
+           balise <script> s'executerait chez tous ceux qui ouvrent le salon.
+           Le quiz vit desormais sur la meme origine que le reste d'Abyss --
+           un script injecte ici parlerait donc a /api/ au nom de qui le
+           lit. (Les identifiants de salle, eux, sont fabriques par le
+           serveur : rien a en echapper.) */
+        const esc = (t) => String(t === null || t === undefined ? '' : t)
+            .replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                                           '"': '&quot;', "'": '&#39;' }[c]));
+
         let myPseudo = '';
         let currentRoom = null;
         let isReady = false;
@@ -146,19 +178,19 @@
         const DIFFICULTY_LABELS = { '1': 'Facile', '2': 'Normal', '3': 'Difficile', '4': 'Toutes les cartes' };
 
         socket.on('connect', () => {
-            fetch('/check_session')
+            fetch('/api/yugiquiz/moi')
                 .then(r => r.json())
                 .then(data => {
-                    if (!data.pseudo) { window.location.href = '/connexion'; return; }
+                    if (!data.pseudo) { window.location.href = '/yugiquiz/connexion'; return; }
                     myPseudo = data.pseudo;
                     document.getElementById('pseudo').textContent = myPseudo;
 
-                    fetch('/my_room')
+                    fetch('/api/yugiquiz/ma-salle')
                         .then(r => r.json())
                         .then(roomData => {
                             if (roomData.room_id) {
                                 if (roomData.status === 'in_game') {
-                                    window.location.href = `/jeu/${roomData.room_id}`;
+                                    window.location.href = `/yugiquiz/jeu/${roomData.room_id}`;
                                 } else {
                                     socket.emit('lobbyJoin');
                                     socket.once('roomsList', () => {
@@ -170,9 +202,9 @@
                             }
                         });
                 })
-                .catch(() => window.location.href = '/connexion');
+                .catch(() => window.location.href = '/yugiquiz/connexion');
 
-            fetch('/card_pools_info')
+            fetch('/api/yugiquiz/viviers')
                 .then(r => r.json())
                 .then(pools => {
                     const labels = { '1': 'Facile', '2': 'Normal', '3': 'Difficile', '4': 'Toutes les cartes' };
@@ -268,7 +300,7 @@
 
             list.innerHTML = players.map(p => `
                 <div class="player-ready-item">
-                    <span class="player-ready-name">${p.pseudo}</span>
+                    <span class="player-ready-name">${esc(p.pseudo)}</span>
                     <span class="ready-badge ${p.ready ? 'ready' : 'not-ready'}">${p.ready ? 'Prêt' : 'En attente'}</span>
                 </div>
             `).join('');
@@ -320,7 +352,7 @@
             list.innerHTML = rooms.map(r => `
                 <div class="room-item" onclick="joinRoom('${r.id}', ${r.private})">
                     <div class="room-info">
-                        <span class="room-name">${r.private ? '🔒 ' : ''}${r.name}</span>
+                        <span class="room-name">${r.private ? '🔒 ' : ''}${esc(r.name)}</span>
                         <span class="room-meta">${r.players} joueur(s) <br> ${r.time}s · ${r.score_to_win} pts · ${DIFFICULTY_LABELS[r.difficulty] || 'Normal'}</span>
                     </div>
                     <span class="room-status ${r.status === 'in_game' ? 'in-game' : 'waiting'}">${r.status === 'in_game' ? 'En jeu' : 'En attente'}</span>
@@ -376,7 +408,7 @@
         });
 
         socket.on('gameStart', data => {
-            window.location.href = `/jeu/${data.roomId}`;
+            window.location.href = `/yugiquiz/jeu/${data.roomId}`;
         });
 
         socket.on('error', data => {
@@ -390,7 +422,7 @@
         });
 
         socket.on('kicked', () => {
-            window.location.href = '/lobby';
+            window.location.href = '/yugiquiz';
         });
 
         /* fermeture explicite : en transport polling, une page quittee sans

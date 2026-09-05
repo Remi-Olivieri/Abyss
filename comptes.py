@@ -335,8 +335,80 @@ ONGLET_DEFAUT = """
 ALTER TABLE page ADD COLUMN onglet_defaut TEXT;
 """
 
+# L'importance d'une suggestion. 0 n'est pas un niveau mais son absence :
+# une ligne que personne n'a encore jugee n'est pas la moins pressante.
+PRIORITE = """
+ALTER TABLE suggestion ADD COLUMN priorite INTEGER NOT NULL DEFAULT 0;
+"""
+
+# La derniere fois que l'administration a ouvert la liste : ce qui est
+# arrive depuis se signale tout seul.
+SUGGESTIONS_VUES = """
+ALTER TABLE utilisateur ADD COLUMN suggestions_vues_le TEXT;
+"""
+
+# Les visites, et les reglages du site. Voir monitoring.py.
+MONITORING = """
+CREATE TABLE reglage(
+  cle    TEXT PRIMARY KEY,
+  valeur TEXT NOT NULL
+);
+INSERT INTO reglage(cle, valeur) VALUES('sel_visites', hex(randomblob(32)));
+
+CREATE TABLE visite(
+  jour           TEXT NOT NULL,          -- 'AAAA-MM-JJ', UTC
+  visiteur       TEXT NOT NULL,          -- empreinte anonyme, tournante
+  chemin         TEXT NOT NULL,          -- la regle de route, pas l'URL exacte
+  utilisateur_id INTEGER REFERENCES utilisateur(id) ON DELETE SET NULL,
+  vues           INTEGER NOT NULL DEFAULT 1,
+  premier_le     TEXT NOT NULL,
+  dernier_le     TEXT NOT NULL,
+  PRIMARY KEY (jour, visiteur, chemin)
+);
+CREATE INDEX idx_visite_dernier ON visite(dernier_le);
+CREATE INDEX idx_visite_jour ON visite(jour);
+"""
+
+# Le vivier choisi pour les mini-jeux : son journal, ou tous les publics.
+QUIZ_SOURCE = """
+ALTER TABLE utilisateur ADD COLUMN quiz_source TEXT;
+"""
+
+# Le theme IGDB d'un jeu, a cote du genre : « Horreur », « Humour ».
+THEMES_JEU = """
+ALTER TABLE jeu ADD COLUMN themes TEXT;
+"""
+
+# Le classeur Yu-Gi-Oh : familles et cartes. Voir collection.py.
+CLASSEUR = """
+CREATE TABLE famille(
+  id       INTEGER PRIMARY KEY,
+  page_id  INTEGER NOT NULL REFERENCES page(id) ON DELETE CASCADE,
+  cle      TEXT NOT NULL,               -- 'fusion' : l'identifiant stable
+  label    TEXT NOT NULL,               -- « Fusion » : ce qui s'affiche
+  couleur  TEXT NOT NULL,               -- la teinte de l'onglet
+  rang     INTEGER NOT NULL DEFAULT 0,  -- l'ordre des onglets
+  UNIQUE (page_id, cle)
+);
+
+CREATE TABLE carte(
+  id         INTEGER PRIMARY KEY,       -- remplace « feuille + ligne + colonne »
+  page_id    INTEGER NOT NULL REFERENCES page(id) ON DELETE CASCADE,
+  famille_id INTEGER NOT NULL REFERENCES famille(id) ON DELETE CASCADE,
+  classeur   INTEGER NOT NULL DEFAULT 1,   -- le tome, quand un onglet deborde
+  rang       INTEGER NOT NULL,             -- la place dans le classeur, de 0 a n
+  nom        TEXT NOT NULL,
+  rarete     TEXT,                         -- 'C', 'SR'... NULL = pochette vide
+  etat       INTEGER,                      -- 3 bon, 2 moyen, 1 mauvais
+  maj_le     TEXT
+);
+CREATE INDEX idx_carte_page ON carte(page_id, famille_id, classeur, rang);
+"""
+
 MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
-              SUGGESTIONS, BANNIERE, ONGLET_DEFAUT]
+              SUGGESTIONS, BANNIERE, ONGLET_DEFAUT, PRIORITE,
+              SUGGESTIONS_VUES, MONITORING, QUIZ_SOURCE, THEMES_JEU,
+              CLASSEUR]
 
 _local = threading.local()
 
@@ -851,6 +923,31 @@ def enregistre_masques(uid, projets) -> list:
     return gardes
 
 
+# Le vivier des mini-jeux : les journaux publics, ou le sien. Une valeur
+# inconnue retombe sur « tous » plutot que d'etre refusee -- c'est un
+# reglage d'affichage, pas une autorisation.
+SOURCES_QUIZ = ("tous", "moi")
+
+
+def quiz_source(u) -> str:
+    if u is None:
+        return "tous"
+    return u["quiz_source"] if u["quiz_source"] in SOURCES_QUIZ else "tous"
+
+
+def enregistre_quiz_source(uid, valeur) -> str:
+    """Range le reglage, et rend celui qui vaut desormais.
+
+    Une valeur inconnue retombe sur « tous » au lieu d'etre refusee : c'est un
+    choix cosmetique entre deux possibilites, pas une donnee a valider.
+    """
+    valeur = valeur if valeur in SOURCES_QUIZ else "tous"
+    c = cx()
+    with c:
+        c.execute("UPDATE utilisateur SET quiz_source = ? WHERE id = ?", (valeur, uid))
+    return valeur
+
+
 # --------------------------------------------------------------------------
 #   Limitation de debit
 # --------------------------------------------------------------------------
@@ -901,6 +998,35 @@ def actuel():
     return g.utilisateur
 
 
+def suggestions_neuves(u) -> int:
+    """Combien de suggestions sont arrivees depuis la derniere ouverture de
+    la page qui les liste. 0 pour qui n'est pas administrateur.
+
+    Les siennes ne comptent pas : une pastille sert a dire qu'il s'est passe
+    quelque chose sans nous, et personne n'a besoin d'etre prevenu de ce
+    qu'il vient d'ecrire lui-meme.
+
+    Les lignes tapees a la main dans changements.txt n'ont ni date ni ligne
+    en base : elles n'apparaissent donc jamais ici. C'est voulu -- on sait
+    deja qu'elles sont la, on vient de les ecrire.
+
+    Ce qui est resolu quitte la table en meme temps que le fichier (voir
+    suggestions.resolu) : le compte ne peut donc pas parler de lignes qui
+    n'existent plus.
+    """
+    if u is None or not u["admin"]:
+        return 0
+    vues = u["suggestions_vues_le"]
+    try:
+        return cx().execute(
+            "SELECT COUNT(*) FROM suggestion"
+            " WHERE (utilisateur_id IS NULL OR utilisateur_id <> ?)"
+            "   AND (? IS NULL OR cree_le > ?)",
+            (u["id"], vues, vues)).fetchone()[0]
+    except Exception:                     # noqa: BLE001 - la table peut manquer
+        return 0
+
+
 def etat(u) -> dict:
     """Tout ce que la page doit savoir. Jamais l'empreinte du mot de passe."""
     return {
@@ -908,13 +1034,19 @@ def etat(u) -> dict:
         "connecte": u is not None,
         "utilisateur": None if u is None else
             {"pseudo": u["pseudo"], "email": u["email"], "avatar": url_avatar(u),
-             "banniere": url_banniere(u), "admin": bool(u["admin"])},
+             "banniere": url_banniere(u), "admin": bool(u["admin"]),
+             # dans `utilisateur` et non a cote : c'est ce que les pages
+             # promenent partout, et la pastille suit le bouton de compte
+             # jusque dans son menu
+             "suggestionsNeuves": suggestions_neuves(u)},
         "masques": [] if u is None else masques(u["id"]),
+        # le reglage du Quiz voyage avec le reste : la page des mini-jeux le
+        # lit dans la reponse qu'elle demande deja, sans un second appel
+        "quizSource": quiz_source(u),
         # accompagne les deux cas : la page doit savoir, avant d'afficher le
         # formulaire, s'il reste des places
         "inscriptions": etat_inscriptions(),
     }
-
 
 def avec_cookie(r, jeton, memoriser):
     r.set_cookie(COOKIE, jeton,

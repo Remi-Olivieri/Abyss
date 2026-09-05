@@ -156,6 +156,27 @@ input,textarea{
 .bouton:focus-visible{outline:2px solid var(--plancton);outline-offset:3px}
 .bouton:active{transform:translateY(1px)}
 
+/* ---------- Le bouton de compte ----------
+   Un seul dessin pour toutes les pages : le medaillon, le pseudo, le
+   chevron. Le HTML est fabrique par static/compte.js, qui explique
+   pourquoi il ne vit plus dans chaque page.
+
+   Le medaillon touche presque le bord arrondi -- d'ou le padding gauche
+   reduit -- et sa hauteur fixe celle du bouton. min-height le maintient
+   quand meme : sans lui, un pseudo sans photo donnerait un bouton plus
+   plat que le voisin, et c'est precisement le genre d'ecart qu'on cherche
+   a faire disparaitre ici. */
+.bouton.pseudo{
+  gap:9px;
+  padding:5px 14px 5px 5px;
+  min-height:38px;
+  max-width:min(46vw,260px);
+}
+/* Un pseudo long tient sur une ligne et se coupe : sans ca il pousse le
+   chevron hors de la barre, et sur telephone il passe carrement dessous. */
+.pseudo-nom{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
+}
 .pastille{
   width:7px;height:7px;border-radius:50%;
   background:var(--algue);
@@ -163,10 +184,54 @@ input,textarea{
   flex:none;
 }
 .avatar-mini{
-  width:19px;height:19px;border-radius:50%;object-fit:cover;flex:none;
+  width:27px;height:27px;border-radius:50%;object-fit:cover;flex:none;
   border:1px solid rgba(150,195,220,.3);
+  background:rgba(3,8,15,.6);
+}
+/* Pas de photo : l'initiale sur une teinte tiree du pseudo -- la meme
+   regle que les avatars du journal, pour qu'une personne garde sa couleur
+   d'un bout a l'autre du site. Un medaillon plein plutot qu'un rond vide :
+   la place occupee doit etre la meme avec ou sans photo. */
+.avatar-lettre{
+  display:grid;place-items:center;
+  font-family:"Eczar",Georgia,serif;font-weight:600;font-size:13px;
+  line-height:1;color:#F2F8FC;letter-spacing:.02em;
+  background:hsl(var(--h,205) 46% 32%);
+  border-color:hsl(var(--h,205) 46% 46%);
 }
 .chevron{color:var(--brume);font-size:11px;flex:none}
+
+/* Lu par les lecteurs d'ecran, invisible a l'oeil. Pas display:none, qui
+   les ferait taire aussi. */
+.lecture-seule{
+  position:absolute;width:1px;height:1px;margin:-1px;padding:0;
+  overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0;
+}
+
+/* ---------- la pastille de notification ----------
+   Un compte en rouge, pose sur le bord de ce qui y mene. Elle ne dit pas ce
+   qui est arrive, seulement qu'il s'est passe quelque chose sans nous --
+   c'est la page qui le dira.
+
+   L'anneau sombre est ce qui la detache : sans lui, un chiffre rouge sur un
+   bouton sombre se lit comme une partie du bouton. Il reprend le fond de la
+   page, si bien que la pastille semble decoupee dedans.
+
+   Le zero ne s'affiche jamais : une pastille qui annonce « rien » est du
+   bruit, et la page ne pose l'element que s'il y a quelque chose a dire. */
+.neuf{
+  min-width:19px;height:19px;padding:0 5px;border-radius:999px;
+  display:inline-grid;place-items:center;flex:none;
+  font-size:11px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;
+  color:#2B0A0E;background:var(--rouge);
+  box-shadow:0 0 0 2px var(--abysse), 0 0 12px -3px var(--rouge);
+}
+/* Sur un bouton : dans le coin, comme toute notification. Le bouton porte
+   la position, la pastille deborde volontairement de son arrondi. */
+.a-neuf{position:relative}
+.a-neuf .neuf{position:absolute;top:-7px;right:-7px}
+/* Dans le menu du compte : au bout de la ligne, la ou il y a la place. */
+.entree .neuf{float:right;margin-left:8px}
 
 /* ---------- Menu deroulant ---------- */
 .menu{
@@ -205,6 +270,9 @@ input,textarea{
 }
 .entree:hover,.entree:focus-visible{background:rgba(120,190,225,.12)}
 .entree:focus-visible{outline:2px solid var(--plancton);outline-offset:-2px}
+/* L'entree de la page ou l'on est deja : gardee, pour que le menu ne
+   change pas de forme d'une page a l'autre, mais eteinte. */
+.entree[aria-current="page"]{color:var(--brume)}
 
 /* ---------- En-tête ---------- */
 .entete{
@@ -392,6 +460,10 @@ input,textarea{
   font-size:13px;
   color:var(--brume);
 }
+/* Une croix qui ferme est rouge, ici comme partout ailleurs sur le site :
+   c'est le seul bouton d'une fenetre qui annule ce qu'on y faisait, et il
+   se reconnait avant d'etre lu. Retenue au repos -- c'est une sortie, pas
+   un danger -- et franche au survol, quand la main est deja dessus. */
 .fermer{
   position:absolute;
   top:14px;
@@ -399,13 +471,13 @@ input,textarea{
   width:32px;
   height:32px;
   font-size:13px;
-  color:var(--brume);
+  color:var(--rouge);
   background:transparent;
-  border:1px solid rgba(150,195,220,.14);
+  border:1px solid rgba(232,106,106,.24);
   border-radius:9px;
   cursor:pointer;
 }
-.fermer:hover{color:var(--os);border-color:rgba(150,195,220,.35)}
+.fermer:hover{color:#F6A9A9;border-color:rgba(232,106,106,.55);background:rgba(232,106,106,.12)}
 .fermer:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
 
 .onglets{

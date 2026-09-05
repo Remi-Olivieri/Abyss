@@ -723,7 +723,6 @@ body:has(#loading-message:not([style*="display: none"]):not([style*="display:non
   overflow: hidden;
   border: 1px solid rgba(201,168,76,.12);
 }
-
 .timer {
   height: 100%;
   width: 100%;
@@ -1056,7 +1055,6 @@ body {
     padding: 1.5rem;
     flex: 1;
 }
-
 .lobby-panel {
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);

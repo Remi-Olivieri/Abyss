@@ -2,9 +2,12 @@ static/Cards/
 static/CardsCropped/
 static/Cover/
 static/Avatars
+recuperation/
 donnees/
 __pycache__/
+venv/
 changements.txt
 tests.py
 *.pyc
+igdb.json
 .igdb-jeton.json

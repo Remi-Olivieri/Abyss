@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abyss:DUEL</title>
+    <title>Yu-Gi-Quiz!</title>
     <link rel="stylesheet" href="/static/style_yugiquiz.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
     <header>
         <div class="header-content">
             <h1>
-                <span class="title-main" id="title-leave" title="Retour au lobby">Abyss:DUEL</span>
+                <span class="title-main" id="title-leave" title="Retour au lobby">Yu-Gi-Quiz!</span>
             </h1>
             </h1>
         </div>
@@ -87,7 +87,7 @@
             <div class="leave-dialog-title">Fin de partie !</div>
             <p class="leave-dialog-sub" id="gameover-msg"></p>
             <div class="leave-dialog-btns">
-                <button class="leave-confirm-btn" onclick="window.location.href='/lobby'">Retour au lobby</button>
+                <button class="leave-confirm-btn" onclick="window.location.href='/yugiquiz'">Retour au lobby</button>
             </div>
         </div>
     </div>
@@ -96,16 +96,32 @@
     <script>
         var ROOM_ID = "{{ room_id }}";
 
-        var nextImage;
+        /* Clic droit sur l'artwork : bloque. « Rechercher cette image » donne
+           le nom de la carte, c'est-a-dire tout le jeu. Un garde-fou et pas
+           une serrure -- l'image reste a portee d'un onglet reseau -- mais
+           c'est le geste qui gache une manche sans meme vouloir tricher. */
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.closest('#card-container img')) e.preventDefault();
+        });
+
         var pseudo;
         var player_scores = {};
         const socket = io();
 
+        /* Le nom de la carte n'est plus connu d'ici : il arrive dans
+           mancheFinie, une fois les reponses closes. La page recevait avant
+           celui de la carte en cours ET de la suivante des le debut du tour,
+           et decidait elle-meme si la reponse etait bonne -- il n'y avait
+           donc rien a deviner, et rien a gagner honnetement. Elle ne connait
+           desormais que des jetons opaques (voir jeton_pour cote serveur) :
+           meme l'URL de l'image ne dit plus quelle carte c'est. */
+        let jetonCourant = '';
+        let jetonSuivant = '';
+        let aRepondu = false;     // reponse envoyee pour la manche en cours
+        let mancheRevelee = false;
+
         let answerLocked = false;
-        let answerShown = false;
         let timeleft = 0;
-        let currentCorrectName = '';
-        let nextCorrectName = '';
 
         let timerCompte = null;   // reference du decompte en cours
         let precharge = null;     // garde l'image suivante en vie le temps du fetch
@@ -115,57 +131,68 @@
 
         const DIFFICULTY_LABELS = { '1': 'Facile', '2': 'Normal', '3': 'Difficile', '4': 'Toutes les cartes' };
 
-        function getCard(bool) {
-            fetch('/get_card/' + ROOM_ID)
-            .then(response => response.json())
-            .then(data => {
-                nextImage = data.next_image_name;
-                nextCorrectName = data.next_correct_name;
-                /* la carte suivante est deja connue : on la telecharge maintenant
-                   pour que next() n'attende pas le reseau au changement de carte */
-                if (nextImage) {
-                    precharge = new Image();
-                    precharge.src = "/static/CardsCropped/" + encodeURIComponent(nextImage);
-                }
-                GAME_TIME = data.time || 15;
-                SCORE_TO_WIN = data.score_to_win || 30;
-                if (bool) {
-                    document.getElementById('card').src = "/static/Cards/" + encodeURIComponent(data.image_name);
-                    currentCorrectName = data.correct_name;
-                }
+        const urlImage = (jeton) => `/api/yugiquiz/image/${ROOM_ID}/${jeton}`;
+
+        /* Va chercher le jeton de la carte suivante et la precharge, pour que
+           le changement de carte n'attende pas le reseau. */
+        function chargeSuite() {
+            return fetch('/api/yugiquiz/carte/' + ROOM_ID)
+                .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                .then(data => {
+                    jetonCourant = data.jeton;
+                    jetonSuivant = data.jeton_suivant;
+                    GAME_TIME = data.time || 15;
+                    SCORE_TO_WIN = data.score_to_win || 30;
+                    if (jetonSuivant) {
+                        precharge = new Image();
+                        precharge.src = urlImage(jetonSuivant);
+                    }
+                })
+                .catch(() => {});
+        }
+
+        /* Envoie ce qui est dans le champ, une fois pour la manche. Le serveur
+           corrige et ne repond rien : dire ici si c'est juste reviendrait a le
+           dire pendant que les autres cherchent encore. */
+        function envoieReponse() {
+            if (aRepondu || mancheRevelee) return;
+            aRepondu = true;
+            socket.emit('userAnswer', {
+                answer: document.getElementById('user_answer').value,
+                roomId: ROOM_ID
             });
         }
 
-        function showAnswer() {
-            if (answerShown) return;
-            answerShown = true;
+        /* Fin de manche, annoncee par le serveur : c'est le seul moment ou le
+           nom de la carte arrive, avec les reponses de chacun. */
+        function reveleManche(data) {
+            if (mancheRevelee) return;
+            mancheRevelee = true;
 
             stopCompte();
-            unlockAnswer();
+            verrouilleChamp();
 
             const cardEl = document.getElementById('card');
-            const currentFilename = cardEl.src.split('/').pop();
             cardEl.style.width = 'auto';
             cardEl.style.height = '70vh';
-            cardEl.src = "/static/Cards/" + cardEl.src.split('/').pop();
-
-            document.getElementById('card').classList.remove('zoomed');
+            if (jetonCourant) cardEl.src = urlImage(jetonCourant) + '/pleine';
+            cardEl.classList.remove('zoomed');
             document.querySelector('.card__glare').classList.remove('zoomed');
 
             document.getElementById('suggestions').innerHTML = '';
-            const userAnswer = document.getElementById('user_answer').value;
-
-            document.getElementById('image_name').textContent = currentCorrectName;
+            document.getElementById('image_name').textContent = data.correct_name || '';
             document.getElementById('image_name').style.display = "block";
             document.getElementById('timer').style.display = "none";
             document.getElementById('user_answer').style.display = "none";
             document.getElementById('user_answer').value = "";
 
-            socket.emit('userAnswer', { answer: userAnswer, correct: currentCorrectName, roomId: ROOM_ID });
+            (data.resultats || []).forEach(afficheReponse);
+            if (data.scores) majScores(data.scores);
         }
 
         function next() {
-            answerShown = false;
+            mancheRevelee = false;
+            aRepondu = false;
             unlockAnswer();
 
             document.querySelectorAll('#players li.answer-locked, #players li.answer-correct, #players li.answer-wrong')
@@ -173,14 +200,13 @@
             document.querySelectorAll('#players .player-response').forEach(el => el.remove());
             document.getElementById('image_name').style.display = "none";
 
-            currentCorrectName = nextCorrectName;
-
             const cardEl = document.getElementById('card');
             cardEl.style.width = '40vh';
             cardEl.style.height = '40vh';
-            cardEl.src = "/static/CardsCropped/" + encodeURIComponent(nextImage);
+            jetonCourant = jetonSuivant;
+            if (jetonCourant) cardEl.src = urlImage(jetonCourant);
 
-            getCard(false);
+            chargeSuite();
             autoSubmit();
             document.getElementById('user_answer').focus();
         }
@@ -208,25 +234,29 @@
             /* si le serveur envoie nouvelle_image avant la fin du decompte,
                next() rappelle autoSubmit() : sans ce stop on empilait un 2e
                interval qui decrementait le meme timeleft, d'ou un chrono a
-               double vitesse et un showAnswer() tire deux fois */
+               double vitesse */
             stopCompte();
             timeleft = Math.round(remaining);
+            /* le decompte n'a plus qu'un role : rendre sa copie a zero. Ce
+               n'est plus lui qui decide de la fin de la manche -- c'est le
+               serveur, par mancheFinie, sans quoi deux pages mal synchronisees
+               n'auraient pas joue la meme partie. */
             timerCompte = setInterval(function(){
-                if(timeleft <= 1){
-                    stopCompte();
-                    showAnswer();
-                    getCard(false);
-                }
                 timeleft -= 1;
+                if (timeleft <= 0) {
+                    stopCompte();
+                    envoieReponse();
+                    verrouilleChamp();
+                }
             }, 1000);
         }
 
         function startFirstCard() {
-            fetch('/check_session')
+            fetch('/api/yugiquiz/moi')
             .then(r => r.json())
             .then(data => {
                 pseudo = data.pseudo;
-                if (!pseudo) { window.location.href = '/connexion'; return; }
+                if (!pseudo) { window.location.href = '/yugiquiz/connexion'; return; }
                 document.getElementById('pseudo').textContent = pseudo;
 
                 socket.emit('checkScores', { roomId: ROOM_ID });
@@ -236,34 +266,44 @@
                 document.getElementById('loading-message').style.display = 'none';
 
                 Promise.all([
-                    fetch('/get_card/' + ROOM_ID).then(r => r.json()),
-                    fetch('/r_time/' + ROOM_ID).then(r => r.json())
+                    fetch('/api/yugiquiz/carte/' + ROOM_ID).then(r => r.json()),
+                    fetch('/api/yugiquiz/temps/' + ROOM_ID).then(r => r.json())
                 ]).then(([cardData, timeData]) => {
-                    nextImage = cardData.next_image_name;
-                    nextCorrectName = cardData.next_correct_name;
-                    currentCorrectName = cardData.correct_name;
+                    jetonCourant = cardData.jeton;
+                    jetonSuivant = cardData.jeton_suivant;
                     GAME_TIME = cardData.time;
                     SCORE_TO_WIN = cardData.score_to_win;
+                    if (jetonSuivant) {
+                        precharge = new Image();
+                        precharge.src = urlImage(jetonSuivant);
+                    }
 
                     const cardEl = document.getElementById('card');
                     cardEl.style.width = '40vh';
                     cardEl.style.height = '40vh';
-                    cardEl.src = "/static/CardsCropped/" + encodeURIComponent(cardData.image_name);
+                    if (jetonCourant) cardEl.src = urlImage(jetonCourant);
 
-                    const remaining = Math.max(0, timeData.rtime);
-                    autoSubmitWithTime(remaining);
+                    /* arriver au milieu d'une revelation : on attend la carte
+                       suivante plutot que de lancer un decompte deja fini */
+                    if (cardData.revele) return;
+                    autoSubmitWithTime(Math.max(0, timeData.rtime));
                     document.getElementById('user_answer').focus();
                 });
             })
-            .catch(() => window.location.href = '/connexion');
+            .catch(() => window.location.href = '/yugiquiz/connexion');
         }
 
-        function lockAnswer() {
+        /* Verrouiller le champ et envoyer la reponse sont deux gestes
+           distincts : le decompte qui arrive a zero fait les deux, la fin de
+           manche seulement le premier (la reponse est deja partie). C'est
+           envoieReponse qui parle au serveur -- il n'existe plus d'evenement
+           « je suis verrouille » separe, qu'on pouvait emettre sans jamais
+           repondre pour faire tomber la carte au nez des autres. */
+        function verrouilleChamp() {
             answerLocked = true;
             answerInput.classList.add('locked');
             answerInput.disabled = true;
             suggestionsList.innerHTML = '';
-            socket.emit('playerLocked', { roomId: ROOM_ID, pseudo: pseudo });
         }
 
         function unlockAnswer() {
@@ -333,6 +373,31 @@
             next();
         });
 
+        function majScores(scores) {
+            player_scores = scores || {};
+            Object.keys(player_scores).forEach(nom => {
+                const li = document.getElementById(`player-${nom}`);
+                if (li) li.querySelector('.player-score').textContent = player_scores[nom];
+            });
+        }
+
+        function afficheReponse(r) {
+            const playerLi = document.getElementById(`player-${r.pseudo}`);
+            if (!playerLi) return;
+
+            playerLi.classList.remove('answer-locked');
+            playerLi.classList.add(r.correct ? 'answer-correct' : 'answer-wrong');
+
+            const old = playerLi.querySelector('.player-response');
+            if (old) old.remove();
+
+            const responseEl = document.createElement('span');
+            responseEl.classList.add('player-response', 'visible');
+            responseEl.classList.add(r.correct ? 'correct' : 'wrong');
+            responseEl.textContent = r.answer ? `${r.answer} ${r.correct ? '✓' : '✗'}` : (r.correct ? '✓' : '✗');
+            playerLi.appendChild(responseEl);
+        }
+
         socket.on('updateScores', data => {
             player_scores = data.scores;
             socket.emit('checkPlayers', { roomId: ROOM_ID });
@@ -373,25 +438,13 @@
             });
         });
 
-        socket.on('showAnswer', data => {
-            const playerLi = document.getElementById(`player-${data.pseudo}`);
-            if (!playerLi) return;
-
-            playerLi.classList.remove('answer-locked');
-            playerLi.classList.add(data.correct ? 'answer-correct' : 'answer-wrong');
-
-            const old = playerLi.querySelector('.player-response');
-            if (old) old.remove();
-
-            const responseEl = document.createElement('span');
-            responseEl.classList.add('player-response', 'visible');
-            responseEl.classList.add(data.correct ? 'correct' : 'wrong');
-            responseEl.textContent = data.answer ? `${data.answer} ${data.correct ? '✓' : '✗'}` : (data.correct ? '✓' : '✗');
-            playerLi.appendChild(responseEl);
-        });
+        /* Le serveur diffusait une reponse par joueur, au fil de la manche
+           -- et avec elle, pour qui regardait, de quoi deviner la bonne. Il
+           n'en diffuse plus qu'une salve, a la fin, avec le nom. */
+        socket.on('mancheFinie', data => reveleManche(data));
 
         socket.on('kicked', () => {
-            window.location.href = '/lobby';
+            window.location.href = '/yugiquiz';
         });
 
         socket.on('gameOver', data => {
@@ -407,7 +460,7 @@
 
             setTimeout(() => {
                 if (!gameReady) {
-                    window.location.href = '/lobby';
+                    window.location.href = '/yugiquiz';
                 }
             }, 2000);
         });
@@ -425,17 +478,12 @@
         });
 
         socket.on('roomNotFound', () => {
-            window.location.href = '/lobby';
+            window.location.href = '/yugiquiz';
         });
 
         socket.on('playerLocked', data => {
             const li = document.getElementById(`player-${data.pseudo}`);
             if (li) li.classList.add('answer-locked');
-        });
-
-        socket.on('forceTimeout', () => {
-            timeleft = 0;
-            showAnswer();
         });
 
         /* joinGameRoom est deja emis dans socket.on('connect') : le doublon
@@ -454,7 +502,7 @@
                 suggestionsList.innerHTML = '';
                 if (q.length < 2) return;
 
-                const res = await fetch(`/autocomplete?q=${encodeURIComponent(q)}`);
+                const res = await fetch(`/api/yugiquiz/completion?q=${encodeURIComponent(q)}`);
                 const suggestions = await res.json();
 
                 suggestions.forEach((name) => {
@@ -477,7 +525,8 @@
                 suggestionsList.innerHTML = '';
                 activeIndex = -1; 
                 if (answerInput.value.trim()) {
-                    lockAnswer();
+                    envoieReponse();
+                    verrouilleChamp();
                 }
                 return;
             }
@@ -520,9 +569,9 @@
         function confirmLeave() {
             socket.emit('leaveRoom', { roomId: ROOM_ID });
             socket.once('roomLeft', () => {
-                window.location.href = '/lobby';
+                window.location.href = '/yugiquiz';
             });
-            setTimeout(() => { window.location.href = '/lobby'; }, 1000);
+            setTimeout(() => { window.location.href = '/yugiquiz'; }, 1000);
         }
 
         document.addEventListener('keydown', (e) => {

@@ -1,0 +1,760 @@
+/* =======================================================================
+   Mini-Jeux / Quiz — la feuille de cette page-ci.
+
+   Elle se pose SUR style_jeuxvideos.css, chargée juste avant : la palette,
+   la remise a zero, .top, .wrap, .cta, .sbtn, .gate et .ac viennent de la,
+   et rien n'est redefini ici. Ce n'est donc pas une seconde identite, c'est
+   la meme, avec de quoi tenir un salon de jeux plutot qu'un classeur.
+
+   Ce que cette page a en propre, et pourquoi :
+
+     - une entree en grand. Une page de jeux qui commence par une grille de
+       cartes ressemble a un menu de reglages ; il lui faut une porte ;
+     - deux familles, deux couleurs. « Jeux Videos » garde l'or du site,
+       « Yu-Gi-Oh! » prend le violet du classeur de cartes. La couleur dit a
+       quel projet un jeu appartient avant qu'on ait lu son nom ;
+     - des cartes qui ont l'air jouables : un embleme en filigrane, un
+       relief au survol, une lueur de la couleur de leur famille.
+   ======================================================================= */
+
+/* ---------- l'entree ----------
+   Le titre est en dur dans la page, pas construit en JavaScript : c'est la
+   premiere chose a l'ecran, elle ne doit pas attendre une reponse du
+   serveur pour exister. */
+.qz-hero{
+  position:relative;padding:52px 0 34px;overflow:hidden;
+  border-bottom:1px solid var(--line);
+}
+/* La lueur derriere le titre. En pseudo-element et en pointer-events:none :
+   elle deborde volontairement de la colonne, et ne doit rien intercepter. */
+.qz-hero::before{
+  content:'';position:absolute;left:50%;top:-160px;
+  width:min(760px,120vw);height:340px;transform:translateX(-50%);
+  pointer-events:none;
+  background:radial-gradient(50% 50% at 50% 50%,
+    rgba(229,196,107,.16) 0%,rgba(160,134,183,.10) 45%,transparent 72%);
+}
+.qz-hero h1{
+  position:relative;margin:0;
+  font-family:var(--display);font-weight:800;letter-spacing:-.045em;
+  font-size:clamp(38px,8vw,68px);line-height:1;
+  background:linear-gradient(168deg,#FFF6E2 0%,var(--gold) 42%,#8E7A50 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.qz-hero p{
+  position:relative;margin:14px 0 0;max-width:56ch;
+  color:var(--muted);font-size:14.5px;line-height:1.6;
+}
+
+/* ---------- une famille de jeux ----------
+   Le trait part du libelle et s'efface : il dit ou commence la famille sans
+   enfermer les cartes dans une boite de plus. */
+.qz-fam{margin-top:38px}
+.qz-fam-tete{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.qz-fam-tete h2{
+  margin:0;flex:0 0 auto;
+  font-family:var(--display);font-weight:800;font-size:15px;
+  letter-spacing:.02em;color:var(--fam,var(--gold));
+}
+.qz-fam-tete i{
+  flex:1;height:1px;min-width:20px;font-style:normal;
+  background:linear-gradient(90deg,var(--fam-trait,rgba(229,196,107,.4)),transparent);
+}
+.qz-fam-tete u{
+  flex:0 0 auto;text-decoration:none;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);
+}
+/* Chaque famille pose sa couleur une fois ; tout ce qui est dedans la lit
+   dans --fam, y compris les cartes. */
+.qz-fam.jv{--fam:var(--gold);--fam-trait:rgba(229,196,107,.4);--fam-doux:rgba(229,196,107,.09)}
+.qz-fam.ygo{--fam:#B79AD0;--fam-trait:rgba(183,154,208,.4);--fam-doux:rgba(183,154,208,.10)}
+
+/* ---------- une carte de jeu ---------- */
+.qz-menu{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(258px,1fr))}
+.qz-jeu{
+  position:relative;display:block;width:100%;text-align:left;overflow:hidden;
+  /* Yu-Gi-Quiz est une carte-lien, et l'Archive donne aux liens la couleur
+     or et le souligné du navigateur : toute la carte se retrouvait soulignée,
+     titre et texte compris. Une carte n'est pas un mot dans une phrase. */
+  text-decoration:none;color:inherit;
+  min-height:172px;padding:20px 22px 22px;border-radius:16px;
+  border:1px solid var(--line-strong);
+  background:linear-gradient(168deg,var(--bg2),var(--bg) 78%);
+  transition:border-color .18s,transform .16s,box-shadow .18s;
+}
+.qz-jeu:hover{
+  border-color:var(--fam);transform:translateY(-3px);
+  box-shadow:0 18px 40px -26px #000,0 0 42px -22px var(--fam);
+}
+.qz-jeu:focus-visible{outline:2px solid var(--fam);outline-offset:3px}
+/* L'emblème en filigrane, débordant du coin : une illustration, pas une
+   icône — elle occupe la carte sans disputer la place au texte. */
+.qz-jeu svg.qz-embleme{
+  position:absolute;right:-14px;bottom:-16px;width:104px;height:104px;
+  color:var(--fam);opacity:.13;pointer-events:none;
+  transition:opacity .18s,transform .18s;
+}
+.qz-jeu:hover svg.qz-embleme{opacity:.22;transform:scale(1.06) rotate(-4deg)}
+.qz-jeu h3{
+  position:relative;margin:0 0 7px;
+  font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.02em;
+}
+.qz-jeu p{position:relative;margin:0;color:var(--muted);font-size:13px;line-height:1.55;max-width:24ch}
+.qz-jeu u{
+  position:absolute;left:22px;bottom:18px;text-decoration:none;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--fam);
+}
+/* Le chevron des liens qui sortent du site : on doit le savoir avant de
+   cliquer, pas après. Plus aucune carte ne le porte depuis que Yu-Gi-Quiz
+   est une page d'ici — la règle reste pour le premier lien qui repartira
+   vraiment ailleurs. */
+.qz-jeu .qz-sort{
+  position:absolute;top:18px;right:20px;color:var(--muted);font-size:13px;
+  transition:color .18s,transform .18s;
+}
+.qz-jeu:hover .qz-sort{color:var(--fam);transform:translate(2px,-2px)}
+/* Ce qui n'existe pas encore : éteint, et inerte. Une carte grise qui
+   répond au clic serait pire qu'une carte absente. */
+.qz-jeu.bientot{
+  border-color:var(--line);background:none;cursor:default;pointer-events:none;
+}
+.qz-jeu.bientot h3,.qz-jeu.bientot p{opacity:.42}
+.qz-jeu.bientot u{color:var(--muted)}
+.qz-jeu.bientot svg.qz-embleme{opacity:.05}
+
+/* ---------- la navigation d'un écran à l'autre ----------
+   Une flèche pour revenir, une croix pour abandonner : deux gestes que tout
+   le monde connaît, à la même place, plutôt qu'un lien en bas de page qu'il
+   faut chercher. */
+.qz-nav{display:flex;align-items:center;gap:10px;margin-bottom:20px;min-height:32px}
+.qz-nav .sbtn{flex:0 0 auto}
+.qz-nav-titre{
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);
+}
+/* L'abandon demande confirmation en s'armant, comme la suppression d'un jeu
+   dans l'Archive : le premier clic annonce, le second exécute. Une fenêtre
+   de confirmation pour quitter une partie sans enjeu serait disproportionnée,
+   mais partir d'un clic accidentel le serait aussi. */
+.qz-abandon.arme{
+  width:auto;padding:0 12px;font-family:var(--body);font-size:12.5px;
+  color:#fff;background:#B4295C;border-color:#B4295C;
+}
+
+.qz-corps{padding:30px 0 90px}
+
+/* ---------- avec quels jeux on joue ----------
+   Deux valeurs, deux boutons cote a cote dans l'en-tete de la famille « Jeux
+   Videos ». C'est un reglage de la famille entiere, garde dans le compte, et
+   il se lit desormais en entier sans rien ouvrir : le menu deroulant d'avant
+   demandait un clic rien que pour montrer ce qu'il proposait.
+
+   La forme est celle de la barre d'onglets de l'Archive (.tab) : une piste
+   arrondie, une pastille doree a texte sombre sur l'option retenue. Deux
+   composants qui font le meme travail se ressemblent. */
+.qz-src{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.qz-src>u{
+  text-decoration:none;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+}
+/* La piste tient les deux options ensemble : sans elle, deux boutons poses
+   cote a cote se liraient comme deux actions independantes et non comme un
+   choix entre l'une OU l'autre. */
+.qz-src-piste{
+  display:flex;align-items:center;gap:3px;padding:3px;
+  border:1px solid var(--line);border-radius:99px;background:var(--bg2);
+}
+.qz-src-opt{
+  padding:6px 13px;border-radius:99px;white-space:nowrap;
+  font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.04em;
+  color:var(--muted);border:1px solid transparent;
+  transition:color .15s,background .15s,border-color .15s;
+}
+.qz-src-opt:hover{color:var(--text);background:var(--bg3)}
+.qz-src-opt[aria-pressed="true"]{
+  color:var(--bg);background:var(--gold);border-color:var(--gold);font-weight:700;
+}
+.qz-src-opt[aria-pressed="true"]:hover{filter:brightness(1.08)}
+.qz-src-opt:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* ---------- la partie ---------- */
+.qz-partie{max-width:560px;margin:0 auto}
+.qz-barre{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);
+}
+.qz-score{margin-left:auto;letter-spacing:.08em}
+.qz-score b{
+  font-family:var(--display);font-size:20px;font-weight:800;color:var(--gold);
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-left:6px;
+}
+/* les manches déjà jouées : on voit où on en est sans relire un compteur */
+.qz-jalons{display:flex;gap:5px}
+.qz-jalon{width:9px;height:9px;border-radius:50%;background:var(--bg3)}
+.qz-jalon.gagne{background:#9BE3BE;box-shadow:0 0 8px rgba(155,227,190,.6)}
+.qz-jalon.perdu{background:#E38F89;box-shadow:0 0 8px rgba(227,143,137,.5)}
+.qz-jalon.ici{box-shadow:0 0 0 2px rgba(229,196,107,.6)}
+
+/* ---------- les images d'une partie ----------
+   Le pendant tactile du blocage du clic droit (voir quiz.html) : sur
+   telephone, un appui long ouvre le meme menu -- « enregistrer l'image »,
+   « copier l'image » -- et donne la reponse de la meme facon. La selection
+   part avec, sinon l'appui long selectionne l'image au lieu de rien faire,
+   ce qui laisse une surbrillance bleue en travers de la jaquette. */
+#scene img{
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;user-select:none;
+}
+
+/* ---------- la jaquette ----------
+   Le flou est posé sur l'image, pas sur son cadre : le cadre reste net, et
+   c'est bien le contenu qu'on cherche à lire. `scale` avec — un flou
+   gaussien mange ses propres bords, et sans ce léger agrandissement on
+   verrait un liseré transparent tout autour.
+   --cov-ratio est la proportion des jaquettes de l'Archive : la même image,
+   dans le même cadre qu'ailleurs sur le site. */
+.qz-cadre{
+  position:relative;aspect-ratio:var(--cov-ratio);max-width:300px;margin:0 auto 18px;
+  border-radius:12px;overflow:hidden;
+  border:1px solid var(--line-strong);background:var(--bg3);
+  box-shadow:0 26px 60px -34px #000;
+}
+.qz-cadre img{
+  display:block;width:100%;height:100%;object-fit:cover;
+  transform:scale(1.08);
+  filter:blur(var(--flou,26px));
+  transition:filter .55s cubic-bezier(.2,.7,.3,1);
+}
+@media (prefers-reduced-motion:reduce){ .qz-cadre img{transition:none} }
+/* la réponse, posée sur la jaquette une fois la manche finie */
+.qz-verdict{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:34px 14px 14px;text-align:center;
+  background:linear-gradient(180deg,rgba(15,12,20,0),rgba(15,12,20,.94) 58%);
+}
+.qz-verdict b{
+  display:block;font-family:var(--display);font-weight:700;font-size:16px;
+  line-height:1.3;letter-spacing:-.02em;
+}
+.qz-verdict u{
+  display:block;margin-bottom:4px;text-decoration:none;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+}
+.qz-verdict.bon u{color:#9BE3BE}
+.qz-verdict.rate u{color:#E38F89}
+
+/* ---------- les propositions ---------- */
+.qz-choix{display:grid;gap:7px;grid-template-columns:1fr 1fr}
+@media (max-width:560px){ .qz-choix{grid-template-columns:1fr} }
+.qz-choix button{
+  text-align:left;font-size:13.5px;padding:11px 13px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg2);
+  transition:border-color .15s,background .15s,opacity .25s;
+}
+.qz-choix button:hover:not(:disabled){border-color:var(--gold);background:var(--bg3)}
+.qz-choix button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* une proposition ratée reste lisible et barrée : la retirer ferait sauter
+   la grille sous les doigts, et on ne saurait plus ce qu'on a essayé */
+.qz-choix button.rate{text-decoration:line-through;opacity:.38;border-color:rgba(227,143,137,.3)}
+.qz-choix button.bon{color:#0F1A14;font-weight:700;background:#9BE3BE;border-color:#9BE3BE}
+.qz-choix button.montre{border-color:#9BE3BE;background:rgba(155,227,190,.12)}
+.qz-choix button:disabled{cursor:default}
+
+/* ---------- la saisie libre ---------- */
+.qz-saisie{display:flex;gap:8px}
+.qz-saisie input{
+  height:44px;padding:0 14px;font-size:14.5px;
+  background:var(--bg2);border:1px solid var(--line);border-radius:10px;outline:none;
+  transition:border-color .15s;
+}
+.qz-saisie input:focus{border-color:var(--gold)}
+.qz-saisie input::placeholder{color:var(--muted)}
+
+/* ---------- la complétion du titre ----------
+   Reprend .ac de l'Archive, sans vignette : c'est la même liste sous le même
+   genre de champ, et elle doit se reconnaître comme telle. */
+.qz-boite{position:relative;flex:1;min-width:0}
+.qz-boite input{width:100%}
+.qz-ac{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:5;
+  max-height:246px;overflow-y:auto;overscroll-behavior:contain;padding:5px;
+  background:var(--bg2);border:1px solid var(--line-strong);border-radius:11px;
+  box-shadow:0 22px 48px rgba(0,0,0,.6);
+}
+.qz-ac button{
+  display:block;width:100%;text-align:left;font-size:13.5px;
+  padding:8px 10px;border-radius:8px;border:0;background:none;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.qz-ac button:hover,.qz-ac button.on{background:var(--bg3)}
+.qz-ac button.on{color:var(--gold)}
+
+.qz-info{margin:14px 0 0;text-align:center;font-size:12.5px;color:var(--muted);min-height:1.5em}
+.qz-info b{color:var(--gold);font-variant-numeric:tabular-nums}
+
+/* ---------- la fin ---------- */
+.qz-fin{text-align:center}
+.qz-total{
+  font-family:var(--display);font-weight:800;line-height:1;letter-spacing:-.04em;
+  font-size:clamp(48px,13vw,76px);color:var(--gold);
+  font-variant-numeric:tabular-nums;margin:0;
+}
+.qz-sur{color:var(--muted);font-size:13.5px;margin:8px 0 24px}
+/* Le tableau de fin : les cinq jaquettes en ligne, nettes cette fois. Une
+   liste de titres dirait la meme chose, mais c'est d'images qu'on vient de
+   jouer -- et une jaquette qu'on n'a pas reconnue, on la reconnaitra la
+   prochaine fois pour l'avoir vue ici en grand, pas pour avoir lu son nom.
+   Les manquees restent en gris : le tableau se lit d'un regard, sans avoir a
+   compter les pastilles. */
+.qz-partie.qz-etendu{max-width:none}
+.qz-tableau{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:26px 0;text-align:left}
+.qz-carte{min-width:0}
+.qz-carte .qz-face{border:1px solid var(--line);border-radius:12px}
+.qz-carte img{display:block;width:100%;height:100%;object-fit:cover}
+.qz-carte.rate img{filter:grayscale(1) brightness(.62)}
+/* La pastille de points, posee sur la jaquette : le score de la manche se lit
+   sur l'image de la manche, pas dans une colonne a cote. */
+.qz-carte .qz-sceau{
+  position:absolute;left:8px;bottom:8px;padding:3px 8px;border-radius:8px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+  color:#0F1A14;background:#9BE3BE;
+}
+.qz-carte.rate .qz-sceau{color:#fff;background:rgba(180,41,92,.92)}
+.qz-carte b{
+  margin-top:9px;font-size:13px;font-weight:600;line-height:1.3;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+.qz-carte i{
+  display:block;margin-top:3px;font-style:normal;font-family:var(--mono);
+  font-size:10px;letter-spacing:.06em;color:var(--muted);
+}
+.qz-carte.gagne i{color:#9BE3BE}
+@media (max-width:760px){ .qz-tableau{grid-template-columns:repeat(3,1fr);gap:12px} }
+@media (max-width:460px){ .qz-tableau{grid-template-columns:repeat(2,1fr)} }
+.qz-boutons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+/* .cta de l'Archive fait 100 % de large : ici deux boutons se partagent une
+   ligne, ils reprennent donc leur largeur naturelle */
+.qz-boutons .cta{width:auto;padding:0 26px}
+
+.qz-etat{
+  padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;
+  border:1px dashed var(--line-strong);border-radius:14px;
+}
+.qz-etat b{
+  display:block;font-family:var(--display);font-weight:700;font-size:16px;
+  color:var(--text);margin-bottom:6px;
+}
+
+/* ---------- l'en-tête ----------
+   Le même bandeau que l'Archive, en plus court : pas d'onglets, pas
+   d'engrenage. Le bouton de retour porte l'id d'Abyss pour hériter de sa
+   règle — au-delà de 1520 px il sort de la colonne, comme là-bas. */
+.qz-marque{display:flex;align-items:baseline;gap:10px;flex:0 0 auto}
+.qz-marque b{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.02em}
+.qz-marque span{
+  font-family:var(--mono);font-size:10px;color:var(--muted);
+  letter-spacing:.16em;text-transform:uppercase;
+}
+/* Le bouton de suggestion tient l'autre bout de la barre. Sans onglets pour
+   occuper le milieu, c'est cette marge qui l'y pousse — au-delà de 1520 px
+   la règle de l'Archive le sort de la colonne et celle-ci ne compte plus.
+
+   Sous 640 px l'en-tête passe en colonne et les boutons s'étirent sur toute
+   la largeur : une marge automatique les recollerait à droite en les
+   rétrécissant, d'où la borne basse. */
+@media (min-width:641px){
+  #suggBtn{margin-left:auto}
+}
+
+/* ---------- Chronologie ----------
+   Cinq jaquettes en ligne, le titre dessous, du plus ancien a gauche au plus
+   recent a droite. En grand : c'est l'image qu'on reconnait avant le titre,
+   et une frise se lit d'un bout a l'autre d'un seul regard.
+
+   Sous 640 px, cinq jaquettes cote a cote feraient cinq timbres : la liste
+   repasse en colonne, en lignes compactes. Le script ne connait pas ces deux
+   dispositions -- il lit la direction de la liste au moment ou on attrape une
+   carte (chronoAxe), donc la changer ici suffit a tout deplacer avec.
+   ======================================================================= */
+/* Toute la largeur de la colonne, et pas les 560 px d'une manche de jaquette
+   floue : cinq jaquettes cote a cote, c'est le seul ecran du site ou la place
+   disponible se traduit directement en lisibilite. Sur 1120 px, une carte
+   fait plus de 200 px de large -- une vraie jaquette, pas une vignette. */
+.qz-partie.qz-chrono{max-width:none}
+.qz-frise{list-style:none;margin:0;padding:0;display:flex;gap:16px;align-items:stretch}
+.qz-piece{
+  position:relative;flex:1 1 0;min-width:0;
+  display:flex;flex-direction:column;padding:9px 9px 13px;
+  border:1px solid var(--line);border-radius:16px;background:var(--bg2);
+  cursor:grab;
+  /* pan-y : le doigt garde le defilement vertical de la page, et le
+     glissement horizontal -- le seul qui nous interesse ici -- nous revient */
+  touch-action:pan-y;
+  transition:transform .16s cubic-bezier(.2,.7,.3,1),border-color .15s,background .15s;
+}
+.qz-piece:hover{border-color:var(--line-strong)}
+/* Pendant qu'une carte est tenue : elle suit le doigt au pixel, donc aucune
+   transition sur elle -- sinon elle traine derriere. Les autres, si : ce sont
+   elles qui doivent se ranger doucement. */
+.qz-piece.prise{
+  z-index:3;cursor:grabbing;transition:none;
+  border-color:var(--gold);background:var(--bg3);
+  box-shadow:0 24px 46px -22px #000,0 0 34px -20px var(--gold);
+}
+/* Glisser une carte ne doit pas surligner le texte de la page au passage. */
+.qz-frise.bouge{user-select:none;-webkit-user-select:none}
+/* La remise en ordre du corrige : plus lente que les echanges d'une partie,
+   parce qu'elle est la seule chose a regarder a ce moment-la. */
+.qz-frise.corrige .qz-piece{transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion:reduce){
+  .qz-piece,.qz-frise.corrige .qz-piece{transition:none}
+}
+
+/* La jaquette, a la proportion de partout ailleurs sur le site. Un jeu sans
+   image garde sa place : une frise dont les cartes n'ont pas toutes la meme
+   forme se lit moins bien qu'une initiale dans un cadre. */
+.qz-face{
+  position:relative;display:block;width:100%;aspect-ratio:var(--cov-ratio);
+  border-radius:11px;overflow:hidden;background:var(--bg3);
+}
+.qz-face img{display:block;width:100%;height:100%;object-fit:cover}
+.qz-vide{
+  display:grid;place-items:center;width:100%;height:100%;color:var(--muted);
+  font-family:var(--display);font-weight:800;font-size:clamp(24px,3.4vw,44px);
+}
+/* Le rang, pose sur le coin de la jaquette : c'est la reponse qu'on donne,
+   elle doit se lire sur la carte et pas a cote. */
+.qz-rang{
+  position:absolute;top:9px;left:9px;z-index:2;
+  min-width:26px;height:26px;padding:0 7px;border-radius:9px;
+  display:grid;place-items:center;
+  font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;
+  color:var(--text);background:rgba(15,12,20,.72);backdrop-filter:blur(3px);
+}
+.qz-titre{display:flex;flex-direction:column;gap:3px;padding:11px 4px 0;min-width:0;text-align:center}
+/* Deux lignes, reservees meme quand le titre en fait une : sans ca les
+   cartes n'auraient pas toutes la meme hauteur et la ligne se deformerait
+   au moindre echange. */
+.qz-titre b{
+  /* La carte se dilate avec la page ; le titre suit, entre deux bornes. */
+  font-size:clamp(11.5px,1.25vw,14.5px);
+  font-weight:600;line-height:1.3;min-height:2.6em;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+/* La date reste cachee jusqu'au corrige : c'est la reponse. */
+.qz-date{
+  font-style:normal;font-family:var(--mono);font-size:clamp(10px,1vw,11.5px);
+  letter-spacing:.04em;color:var(--muted);
+}
+/* La place qu'on avait donnee a une carte mal placee. Sans elle, une frise
+   remise dans l'ordre juste ne dirait plus d'ou chaque carte vient. */
+.qz-place{
+  font-style:normal;font-family:var(--mono);font-size:clamp(9.5px,.95vw,10.5px);
+  letter-spacing:.04em;color:#E38F89;
+}
+/* La poignee ne sert qu'en colonne (voir la requete media plus bas) : en
+   ligne, la carte entiere s'attrape, au doigt comme a la souris. */
+.qz-grip{display:none}
+
+/* La fleche du temps sous la frise. Les rangs disent deja l'ordre ; elle dit
+   dans quel SENS il se lit, et c'est ce qu'on oublie une fois la premiere
+   carte posee. Inutile en colonne, ou elle pointerait de travers. */
+.qz-axe{display:flex;align-items:center;gap:10px;margin-top:12px}
+.qz-axe u{
+  flex:0 0 auto;text-decoration:none;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);
+}
+.qz-axe i{
+  flex:1;height:1px;
+  background:linear-gradient(90deg,rgba(229,196,107,.12),rgba(229,196,107,.5));
+}
+
+/* Le corrige : chaque carte dit si elle etait a sa place. La frise ne bouge
+   plus, le curseur ne doit donc plus promettre qu'on peut la deplacer. */
+.qz-piece.juste,.qz-piece.faux{cursor:default}
+.qz-piece.juste{border-color:rgba(155,227,190,.45);background:rgba(155,227,190,.07)}
+.qz-piece.juste .qz-rang{background:#9BE3BE;color:#0F1A14}
+.qz-piece.faux{border-color:rgba(227,143,137,.38)}
+.qz-piece.faux .qz-rang{background:#E38F89;color:#1A0F12}
+
+.qz-consigne{margin-left:auto;letter-spacing:.1em}
+/* Le bouton de verification, detache de la frise. Dans le bilan c'est la
+   ligne de score qui tient cet ecart, d'ou la remise a zero. */
+.qz-chrono .qz-boutons{margin-top:18px}
+.qz-bilan .qz-boutons{margin-top:0}
+
+/* Le score, la ou etait le bouton. Il arrive en meme temps que la frise se
+   range : c'est le meme evenement, il ne doit pas demander un clic de plus. */
+.qz-bilan{text-align:center;margin-top:26px;animation:qz-monte .34s cubic-bezier(.2,.7,.3,1) both}
+.qz-bilan .qz-total{font-size:clamp(44px,9vw,68px)}
+.qz-bilan .qz-sur{margin-bottom:20px}
+@keyframes qz-monte{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){ .qz-bilan{animation:none} }
+
+/* ---------- Chronologie, en colonne ----------
+   Le telephone. Meme balisage, meme script : seule la direction change, et
+   le glissement suit. La carte redevient une ligne compacte, et la poignee
+   reapparait -- c'est le seul endroit en touch-action:none, donc le seul par
+   ou glisser sans emporter le defilement de la page avec soi. */
+@media (max-width:640px){
+  .qz-frise{flex-direction:column;gap:8px}
+  .qz-piece{
+    flex:0 0 auto;flex-direction:row;align-items:stretch;gap:11px;
+    /* min-height et non height : le corrige ajoute une date et parfois la
+       place donnee, et la ligne doit pouvoir grandir plutot que rogner. */
+    min-height:62px;padding:0;overflow:hidden;touch-action:auto;
+  }
+  /* .qz-face sert aussi au tableau de fin : ici, seule celle de la frise
+     change de forme. */
+  .qz-frise .qz-face{flex:0 0 auto;width:auto;height:auto;align-self:stretch;border-radius:0}
+  .qz-rang{top:4px;left:4px;min-width:18px;height:18px;padding:0 4px;font-size:10px;border-radius:6px}
+  .qz-vide{font-size:17px}
+  .qz-titre{flex:1;justify-content:center;gap:1px;padding:7px 0;text-align:left}
+  .qz-titre b{
+    display:block;min-height:0;font-size:13.5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .qz-date{font-size:10.5px}
+  .qz-place{font-size:10px}
+  .qz-grip{
+    display:grid;place-items:center;flex:0 0 auto;width:40px;
+    background:none;border:0;color:var(--muted);cursor:grab;touch-action:none;
+    transition:color .15s;
+  }
+  .qz-grip:hover{color:var(--gold)}
+  .qz-grip:focus-visible{outline:2px solid var(--gold);outline-offset:-3px;border-radius:9px}
+  .qz-axe{display:none}
+}
+
+/* =======================================================================
+   Le téléphone
+
+   La barre de titre est celle de l'Archive : sous 640 px elle passe en une
+   rangée d'icônes rondes avec un titre au milieu (voir style_jeuxvideos.css).
+   .qz-marque prend la place que .brand occupe là-bas, il lui faut donc les
+   mêmes règles — sans quoi « Mini-Jeux / Quiz » et son sous-titre poussaient
+   le bouton de suggestion hors de l'écran.
+   ======================================================================= */
+@media (max-width:640px){
+  /* order:3 comme .brand là-bas : sans lui, la marque (ordre par défaut 0)
+     serait passée AVANT le bouton de retour, qui porte order:1. */
+  .qz-marque{order:3;flex:1 1 auto;min-width:0;align-items:center;gap:8px}
+  .qz-marque b{
+    font-size:17px;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  /* Le sous-titre dit la manche en cours (« chronologie », « 3/5 »...). Il
+     n'a plus la place à côté du titre sur une rangée unique, et la partie
+     l'affiche déjà dans sa propre barre. */
+  .qz-marque span{display:none}
+
+  /* ---------- l'entrée ----------
+     Le titre géant tenait la moitié de l'écran avant la première carte de
+     jeu : sur téléphone, ce qu'on vient chercher, c'est la liste. */
+  .qz-hero{padding:30px 0 24px}
+  .qz-hero p{font-size:13.5px;margin-top:10px}
+  .qz-fam{margin-top:26px}
+  .qz-corps{padding:20px 0 calc(40px + env(safe-area-inset-bottom,0px))}
+
+  /* ---------- une partie ----------
+     Les cibles passent à 48 px : répondre est le seul geste de cet écran,
+     il ne doit jamais demander de viser. 16 px dans le champ, sinon iOS
+     zoome à chaque réponse tapée et ne remet plus la page d'aplomb. */
+  .qz-choix{gap:8px}
+  .qz-choix button{font-size:14px;padding:13px 14px;min-height:50px}
+  .qz-saisie input{height:48px;font-size:16px}
+  .qz-saisie .cta,.qz-saisie .ghost{height:48px}
+  .qz-ac{max-height:min(42vh,246px)}
+  .qz-ac button{padding:11px 10px;font-size:14px}
+  /* les deux boutons de fin de manche se partagent la largeur plutôt que
+     de se serrer au milieu */
+  .qz-boutons{gap:8px}
+  .qz-boutons .cta,.qz-boutons .cta.auto,.qz-boutons .ghost{flex:1 1 0;height:48px}
+  .qz-nav{margin-bottom:14px}
+  /* Deux options ecrites en toutes lettres ne tiennent plus a cote du titre
+     de famille : la piste passe a la ligne suivante, sur toute la largeur,
+     plutot que de rogner ses libelles. Le titre garde son trait au-dessus. */
+  .qz-fam-tete{flex-wrap:wrap;row-gap:12px}
+  .qz-src{flex:1 1 100%}
+  .qz-src-piste{flex:1 1 auto}
+  /* cibles au pouce, et les deux options se partagent la largeur */
+  .qz-src-opt{flex:1 1 0;padding:10px 12px;font-size:12.5px}
+  .qz-tableau{margin:20px 0}
+}
+
+/* =======================================================================
+   Grille de connexions
+
+   Seize cases en carré, et des bandes qui s'empilent au-dessus à mesure
+   qu'on résout : le plateau rétrécit, ce qu'on a trouvé reste sous les yeux.
+   C'est la forme du jeu, et elle tient toute seule — il n'y a rien à faire
+   défiler entre la grille et ce qu'on vient d'en tirer.
+
+   Quatre couleurs pour quatre groupes, données dans l'ordre d'arrivée (que
+   le serveur mélange exprès : la couleur ne dit jamais la nature du lien).
+   Elles sont choisies dans ce que la page utilise déjà — l'or du site, le
+   bleu de la wishlist, le vert des bonnes réponses — plutôt qu'inventées.
+   ======================================================================= */
+.gc{max-width:760px;margin:0 auto}
+
+/* ---------- une bande de groupe résolu ---------- */
+.gc-bandes{display:flex;flex-direction:column;gap:8px}
+.gc-bandes:not(:empty){margin-bottom:12px}
+.gc-bande{
+  padding:11px 14px;border-radius:12px;text-align:center;
+  background:color-mix(in srgb, var(--gc) 16%, var(--bg2));
+  border:1px solid color-mix(in srgb, var(--gc) 45%, transparent);
+  animation:gc-bande-entre .32s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes gc-bande-entre{
+  from{opacity:0;transform:scale(.96)}
+  to{opacity:1;transform:none}
+}
+.gc-bande b{
+  display:block;font-family:var(--mono);font-size:10.5px;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--gc);
+}
+.gc-bande i{
+  display:block;margin-top:5px;font-style:normal;font-size:13px;line-height:1.45;
+  color:var(--text);
+}
+/* Dévoilée en perdant, pas trouvée : la teinte reste, pour qu'on relie la
+   bande à ce qu'on cherchait, mais elle s'éteint — ce n'est pas la même
+   chose de l'avoir vue. */
+.gc-bande.ratee{opacity:.5}
+.gc-bande.ratee b::after{content:" · non trouvé";opacity:.7}
+.gc-bande.or{--gc:var(--gold)}
+.gc-bande.vert{--gc:#9BE3BE}
+.gc-bande.bleu{--gc:#8FB8E8}
+.gc-bande.violet{--gc:#C6A0E0}
+
+/* ---------- le plateau ----------
+   Quatre colonnes toujours : c'est la forme du jeu, pas une mise en page
+   qui s'adapte. Un carré de quatre sur quatre se lit en lignes ET en
+   colonnes, et une grille qui repasserait à deux colonnes sur téléphone ne
+   serait plus le même jeu. */
+.gc-plateau{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+}
+/* La case est d'abord une jaquette, le titre vient par-dessus. Elle était
+   en filigrane à 17 % : on lisait seize titres, l'image ne servait qu'à
+   meubler. Une jaquette se reconnaît avant de se lire — c'est même tout le
+   propos de « Jaquette floue » deux jeux plus haut —, et un lien entre
+   quatre jeux saute bien plus vite aux yeux sur des images. D'où la case
+   haute, l'image nette, et le titre posé en bas sur un voile. */
+.gc-case{
+  position:relative;isolation:isolate;overflow:hidden;
+  display:flex;align-items:flex-end;justify-content:center;
+  min-height:124px;padding:8px 7px;
+  border-radius:12px;border:1px solid var(--line);background:var(--bg2);
+  font-family:var(--body);font-size:12px;line-height:1.25;color:var(--text);
+  text-align:center;cursor:pointer;
+  transition:border-color .15s,background .15s,transform .12s,box-shadow .15s;
+}
+/* La jaquette, dans une couche à part et non en background de la case :
+   c'est ce qui permet de poser le voile entre elle et le texte sans la
+   teinter — même procédé que les bannières de l'Archive. */
+.gc-case::before{
+  content:'';position:absolute;inset:0;z-index:-2;
+  background-image:var(--fond);background-size:cover;background-position:center;
+  opacity:.72;transition:opacity .15s;
+}
+/* Le voile. Franc sous le titre, presque rien en haut : l'image reste
+   lisible sur les deux tiers de la case, et le texte ne se bat jamais
+   contre un ciel clair ou une armure blanche. Posé seulement quand il y a
+   une jaquette — sur une case nue il ne ferait qu'assombrir le vide. */
+.gc-case.jaq::after{
+  content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(to top,
+    rgba(14,11,20,.95) 16%, rgba(14,11,20,.72) 44%, rgba(14,11,20,.2) 78%,
+    rgba(14,11,20,.06));
+}
+.gc-case.jaq span{text-shadow:0 1px 3px rgba(0,0,0,.85)}
+.gc-case span{
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  overflow:hidden;overflow-wrap:anywhere;
+}
+.gc-case:hover:not(:disabled){border-color:var(--line-strong)}
+.gc-case:hover:not(:disabled)::before{opacity:.9}
+.gc-case:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.gc-case:disabled{cursor:default}
+/* Désignée : la jaquette recule, l'or prend toute la case. Un liseré seul
+   ne suffisait pas — sur une image, une bordure de plus se perd dedans ;
+   d'où le cerne intérieur en plus, et l'enfoncement. */
+.gc-case.prise{
+  border-color:var(--gold);background:rgba(229,196,107,.16);
+  color:var(--gold);transform:scale(.97);
+  box-shadow:inset 0 0 0 2px rgba(229,196,107,.55);
+}
+.gc-case.prise::before{opacity:.2}
+.gc-case.prise::after{opacity:.25}
+.gc-case.prise span{text-shadow:none}
+/* Le groupe part : les quatre cases s'allument ensemble juste avant que la
+   grille ne se redessine. Sans ce temps d'arrêt, il disparaîtrait sans
+   qu'on ait vu lesquelles. */
+.gc-case.juste{
+  border-color:#9BE3BE;background:rgba(155,227,190,.22);color:#9BE3BE;
+  transform:none;box-shadow:inset 0 0 0 2px rgba(155,227,190,.6);
+}
+.gc-case.juste::before{opacity:.2}
+/* Raté : une secousse courte, la seule chose qu'on lise sans la lire. */
+.gc-case.faux{
+  border-color:#B4295C;background:rgba(180,41,92,.18);color:#F5B9C6;
+  animation:gc-secousse .42s ease-in-out;
+}
+@keyframes gc-secousse{
+  10%,90%{transform:translateX(-2px)}
+  30%,70%{transform:translateX(3px)}
+  50%{transform:translateX(-3px)}
+}
+
+/* ---------- le message ----------
+   Une seule ligne, réservée en permanence : sans hauteur fixe, « Il n'en
+   manquait qu'un » ferait sauter tout le bas de la page à chaque essai. */
+.gc-message{
+  margin:14px 0 0;min-height:1.5em;text-align:center;
+  font-size:13px;color:var(--muted);transition:color .15s;
+}
+.gc-message.fort{color:var(--gold)}
+
+/* ---------- vies et actions ---------- */
+.gc-vies{
+  display:flex;align-items:center;justify-content:center;gap:7px;margin:6px 0 16px;
+}
+.gc-vies u{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);text-decoration:none;margin-right:4px;
+}
+.gc-vies i{
+  width:10px;height:10px;border-radius:50%;
+  background:#B4295C;box-shadow:0 0 9px -2px #B4295C;
+  transition:background .25s,box-shadow .25s,opacity .25s;
+}
+/* Une vie dépensée s'éteint mais reste : le nombre d'erreurs encore permises
+   se lit alors sans compter, et le total ne bouge pas d'un essai à l'autre. */
+.gc-vies i.usee{background:var(--bg3);box-shadow:none;opacity:.6}
+.gc-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.gc-actions .ghost{height:40px}
+.gc-ok{width:auto;padding:0 28px;height:40px}
+.gc-ok:disabled{opacity:.4;cursor:default;filter:none}
+
+@media (max-width:640px){
+  /* Le carré reste un carré — voir plus haut. Ce sont le texte et les
+     écarts qui se resserrent, pas la grille qui se déplie. */
+  .gc-plateau{gap:6px}
+  .gc-case{min-height:104px;padding:6px 4px;font-size:10.5px;border-radius:10px}
+  .gc-case span{-webkit-line-clamp:3}
+  .gc-bande{padding:9px 11px}
+  .gc-bande i{font-size:11.5px}
+  .gc-bande b{font-size:9.5px;letter-spacing:.1em}
+  .gc-actions{gap:6px}
+  .gc-actions .ghost,.gc-ok{flex:1 1 0;height:46px;padding:0 10px;min-width:0}
+  .gc-message{font-size:12.5px}
+}
+@media (max-width:380px){
+  .gc-case{min-height:92px;font-size:9.5px}
+}
