@@ -343,6 +343,58 @@ function dessineMenu() {
 }
 
 /* =========================================================
+   Le bilan de fin de partie
+
+   Les trois mini-jeux se comptent sur mille (voir POINTS, CHRONO_PAR_JEU et
+   GRILLE_PAR_GROUPE dans quiz.py). Ils finissaient pourtant sur trois écrans
+   qui disaient la même chose de trois façons, et surtout sur un grand
+   nombre seul : « 740 » ne dit pas si on est passé près, et « sur 1000
+   possibles » en petit dessous se lit après coup, quand le regard est déjà
+   reparti.
+
+   D'où un seul bloc pour les trois, et trois façons de lire le même
+   résultat, de la plus rapide à la plus précise :
+
+     - une mention. C'est ce qu'on retient d'une partie, et ça se lit sans
+       compter ;
+     - une jauge. La part remplie donne le rapport d'un coup d'œil, là où
+       deux nombres demandent une division ;
+     - les nombres, le score contre son maximum, collés l'un à l'autre
+       plutôt qu'à deux étages.
+
+   Le détail (« 3 jaquettes sur 5 ») reste dessous : c'est la phrase qu'on
+   lit en dernier, quand on veut savoir ce qui s'est passé et plus seulement
+   comment ça s'est fini.
+   ========================================================= */
+/* Du meilleur au pire : la première tranche atteinte gagne. Le parfait a sa
+   propre marche — c'est la seule partie dont on se souvient. */
+const MENTIONS = [
+  { part: 1,  texte: "Parfait",          classe: "parfait" },
+  { part: .8, texte: "Excellent",        classe: "haut" },
+  { part: .6, texte: "Bien joué",        classe: "haut" },
+  { part: .4, texte: "Pas mal",          classe: "moyen" },
+  { part: .2, texte: "Peut mieux faire", classe: "moyen" },
+  { part: 0,  texte: "Aïe...",           classe: "bas" },
+];
+
+/* `detail` : la phrase du dessous, propre à chaque jeu — ce qui a été trouvé
+   et sur combien. Le reste se déduit du score et de son maximum.
+
+   La jauge s'anime en CSS depuis une largeur nulle : la valeur part dans une
+   variable, pas dans un style calculé au rendu, sinon il faudrait attendre
+   une image pour la faire bouger. */
+function bilanHTML(score, maxi, detail) {
+  const part = maxi > 0 ? Math.min(1, Math.max(0, score / maxi)) : 0;
+  const m = MENTIONS.find((x) => part >= x.part) || MENTIONS[MENTIONS.length - 1];
+  return `
+    <p class="qz-mention ${m.classe}">${m.texte}</p>
+    <p class="qz-total">${score}<span class="qz-max">/ ${maxi}</span></p>
+    <div class="qz-jauge ${m.classe}" style="--part:${(part * 100).toFixed(1)}%"
+         role="img" aria-label="${score} points sur ${maxi}"><i></i></div>
+    <p class="qz-sur">${detail}</p>`;
+}
+
+/* =========================================================
    Jaquette floue
 
    Une manche : une image, trois propositions. Les deux premières se tapent
@@ -353,7 +405,7 @@ function dessineMenu() {
    eu de prise dessus.
 
    Chaque erreur dévoile la jaquette d'un cran et fait tomber le gain —
-   1000, 500, 250, puis rien. Trois erreurs et la manche est perdue, la
+   200, 100, 50, puis rien. Trois erreurs et la manche est perdue, la
    réponse s'affiche, on passe à la suivante.
 
    PARTIE.manches porte la bonne réponse : le serveur l'envoie avec la
@@ -726,9 +778,8 @@ function dessineFin() {
   const s = trouvees > 1 ? "s" : "";
   el("scene").innerHTML = `
     <div class="qz-partie qz-etendu qz-fin">
-      <p class="qz-total">${ETAT.score}</p>
-      <p class="qz-sur">sur ${maxi} possibles · ${trouvees} jaquette${s} sur ${
-        PARTIE.manches.length} trouvée${s}</p>
+      <div class="qz-bilan">${bilanHTML(ETAT.score, maxi,
+        `${trouvees} jaquette${s} sur ${PARTIE.manches.length} trouvée${s}`)}</div>
       <div class="qz-tableau">${PARTIE.manches.map((m, k) => {
         const r = ETAT.resultats[k] || { points: 0 };
         return `<div class="qz-carte ${r.points ? "gagne" : "rate"}">
@@ -1061,10 +1112,9 @@ function chronoTermine() {
   const s = CHRONO.bien > 1 ? "s" : "";
   el("apres").innerHTML = `
     <div class="qz-bilan">
-      <p class="qz-total">${CHRONO.score}</p>
-      <p class="qz-sur">sur ${CHRONO.jeux.length * CHRONO.parJeu} possibles · ${CHRONO.bien
+      ${bilanHTML(CHRONO.score, CHRONO.jeux.length * CHRONO.parJeu, CHRONO.bien
         ? `${CHRONO.bien} jeu${s} sur ${CHRONO.jeux.length} bien placé${s}`
-        : "aucun jeu à sa place"}</p>
+        : "aucun jeu à sa place")}
       <div class="qz-boutons">
         <button type="button" class="cta" id="rejouer">Rejouer</button>
         <button type="button" class="cta" id="autres"
@@ -1307,11 +1357,10 @@ function gcPied() {
     const s = g.trouves.length > 1 ? "s" : "";
     el("gcPied").innerHTML = `
       <div class="qz-bilan">
-        <p class="qz-total">${gcScore()}</p>
-        <p class="qz-sur">sur ${gcMaxi()} possibles · ${g.gagne
+        ${bilanHTML(gcScore(), gcMaxi(), g.gagne
           ? `grille complète · ${g.erreurs ? `${g.erreurs} erreur${g.erreurs > 1 ? "s" : ""}`
                                            : "sans la moindre erreur"}`
-          : `${g.trouves.length || "aucun"} groupe${s} sur ${g.groupes.length} trouvé${s}`}</p>
+          : `${g.trouves.length || "aucun"} groupe${s} sur ${g.groupes.length} trouvé${s}`)}
         <div class="qz-boutons">
           <button type="button" class="cta" id="gcRejouer">Rejouer</button>
           <button type="button" class="cta" id="gcAutres"
@@ -1342,9 +1391,10 @@ function gcPied() {
 const gcScore = () =>
   GRILLE.trouves.length * GRILLE.parGroupe
   + (GRILLE.erreursMax - GRILLE.erreurs) * GRILLE.parVie;
-/* Une grille parfaite vaut le même millier qu'une chronologie sans faute —
-   le barème est calé pour ça côté serveur. Le total s'affiche donc en
-   toutes lettres : sans lui, 750 ne dit pas si on est passé près. */
+/* Une grille parfaite vaut le même millier qu'une chronologie sans faute et
+   que cinq jaquettes trouvées du premier coup — le barème est calé pour ça
+   côté serveur. C'est ce maximum que le bilan met en face du score : sans
+   lui, 750 ne dit pas si on est passé près. */
 const gcMaxi = () =>
   GRILLE.groupes.length * GRILLE.parGroupe + GRILLE.erreursMax * GRILLE.parVie;
 

@@ -297,12 +297,55 @@
 
 /* ---------- la fin ---------- */
 .qz-fin{text-align:center}
+/* ---------- le bilan, commun aux trois mini-jeux ----------
+   Les trois se comptent sur mille et finissent donc sur le meme bloc : une
+   mention, le score contre son maximum, une jauge, puis le detail. Voir
+   bilanHTML dans la page pour le pourquoi de ces quatre lignes-la.
+
+   L'ordre a l'ecran n'est pas celui du balisage par hasard : la mention est
+   ce qu'on lit en premier, elle est donc au-dessus du nombre. */
+.qz-mention{
+  margin:0 0 6px;font-family:var(--mono);font-size:11px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+}
+.qz-mention.parfait{color:var(--gold)}
+.qz-mention.haut{color:#9BE3BE}
+.qz-mention.moyen{color:var(--muted)}
+.qz-mention.bas{color:#E38FAE}
 .qz-total{
   font-family:var(--display);font-weight:800;line-height:1;letter-spacing:-.04em;
   font-size:clamp(48px,13vw,76px);color:var(--gold);
   font-variant-numeric:tabular-nums;margin:0;
 }
-.qz-sur{color:var(--muted);font-size:13.5px;margin:8px 0 24px}
+/* Le maximum contre lequel le score se lit. Colle au nombre plutot que
+   renvoye a la ligne du dessous : c'est une fraction, pas une note de bas de
+   page, et separer les deux moities obligeait a les rapprocher soi-meme. */
+.qz-total .qz-max{
+  font-family:var(--mono);font-weight:400;font-size:clamp(13px,2.6vw,17px);
+  letter-spacing:0;color:var(--muted);margin-left:8px;vertical-align:baseline;
+}
+/* La jauge. Un rapport se voit, il ne se calcule pas : c'est la seule des
+   trois lectures qui ne demande aucun effort. Elle est bornee a 340px pour
+   ne pas devenir une barre de chargement en travers de l'ecran. */
+.qz-jauge{
+  width:min(340px,72%);height:7px;margin:16px auto 0;
+  background:var(--bg3);border:1px solid var(--line);border-radius:999px;
+  overflow:hidden;
+}
+.qz-jauge i{
+  display:block;height:100%;border-radius:999px;width:var(--part,0%);
+  background:linear-gradient(90deg,rgba(229,196,107,.55),var(--gold));
+  animation:qz-remplit .62s cubic-bezier(.2,.7,.3,1) both;
+}
+.qz-jauge.haut i{background:linear-gradient(90deg,rgba(155,227,190,.5),#9BE3BE)}
+.qz-jauge.moyen i,.qz-jauge.bas i{
+  background:linear-gradient(90deg,rgba(167,156,180,.4),var(--muted));
+}
+/* De zero jusqu'a la part atteinte : le remplissage dit combien il manquait,
+   ce qu'une barre deja pleine a l'arrivee ne dit pas. */
+@keyframes qz-remplit{from{width:0}to{width:var(--part,0%)}}
+@media (prefers-reduced-motion:reduce){ .qz-jauge i{animation:none} }
+.qz-sur{color:var(--muted);font-size:13.5px;margin:14px 0 24px}
 /* Le tableau de fin : les cinq jaquettes en ligne, nettes cette fois. Une
    liste de titres dirait la meme chose, mais c'est d'images qu'on vient de
    jouer -- et une jaquette qu'on n'a pas reconnue, on la reconnaitra la
@@ -486,6 +529,10 @@
    ligne de score qui tient cet ecart, d'ou la remise a zero. */
 .qz-chrono .qz-boutons{margin-top:18px}
 .qz-bilan .qz-boutons{margin-top:0}
+/* Chez la jaquette floue le bilan OUVRE l'ecran de fin, il n'a donc rien
+   au-dessus de quoi se detacher -- contrairement a la chronologie et a la
+   grille, ou il vient se poser sous un plateau. */
+.qz-fin .qz-bilan{margin-top:0}
 
 /* Le score, la ou etait le bouton. Il arrive en meme temps que la frise se
    range : c'est le meme evenement, il ne doit pas demander un clic de plus. */

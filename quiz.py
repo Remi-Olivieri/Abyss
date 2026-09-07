@@ -65,7 +65,15 @@ MANCHES = 5
 PROPOSITIONS = 3
 
 # Ce que rapporte une bonne reponse, selon le rang de la proposition.
-POINTS = (1000, 500, 250)
+#
+# Une partie sans faute vaut 1000, comme une chronologie sans faute et comme
+# une grille parfaite (voir CHRONO_PAR_JEU et GRILLE_PAR_GROUPE) : trois
+# mini-jeux qui se jouent a la suite doivent se comparer, et un maximum de
+# 5000 d'un cote contre 1000 des deux autres faisait passer la jaquette pour
+# le jeu qui rapporte, alors qu'elle est seulement celle qui compte
+# autrement. MANCHES * 200 = 1000 pile, et le partage entre les trois
+# propositions reste celui d'avant : moitie, puis quart.
+POINTS = (200, 100, 50)
 
 # Combien de titres proposes a la derniere proposition, la bonne reponse
 # comprise. Six : quatre laisseraient une chance sur quatre a qui n'en sait
@@ -85,7 +93,8 @@ CHRONO_JEUX = 5
 # Un seul essai, et chaque jeu bien place rapporte. Pas de tout ou rien :
 # une frise a moitie juste est a moitie sue, et la compter zero effacerait
 # la difference entre s'etre trompe de deux places et n'avoir rien reconnu.
-# Le maximum d'une partie vaut donc CHRONO_JEUX * CHRONO_PAR_JEU.
+# Le maximum d'une partie vaut donc CHRONO_JEUX * CHRONO_PAR_JEU, soit les
+# 1000 sur lesquels les trois mini-jeux se comptent (voir POINTS).
 CHRONO_PAR_JEU = 200
 
 blueprint_quiz = Blueprint("quiz", __name__, url_prefix="/api/quiz")
@@ -297,7 +306,8 @@ GRILLE_ERREURS = 4         # au quatrieme faux pas, la partie est perdue
 # grille finie de justesse.
 #
 # Le bareme est cale pour qu'une grille parfaite vaille 1000, comme une
-# chronologie sans faute (CHRONO_JEUX * CHRONO_PAR_JEU) : deux mini-jeux
+# chronologie sans faute (CHRONO_JEUX * CHRONO_PAR_JEU) et comme cinq
+# jaquettes trouvees du premier coup (MANCHES * POINTS[0]) : trois mini-jeux
 # qui se jouent a la suite doivent se comparer, et un maximum de 1400 d'un
 # cote contre 1000 de l'autre faisait passer la grille pour le jeu qui
 # rapporte, alors qu'elle est seulement celle qui compte autrement.

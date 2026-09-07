@@ -474,7 +474,7 @@ def interroge(requete):
 # --------------------------------------------------------------------------
 #   Recherche
 # --------------------------------------------------------------------------
-CHAMPS = ("id, name, slug, url, first_release_date, category, "
+CHAMPS = ("id, name, slug, url, first_release_date, game_type, "
           "parent_game, version_parent, cover.image_id")
 
 
@@ -490,7 +490,12 @@ def _fiche(jeu, cherche, exige_jaquette=True):
     if not couverture and exige_jaquette:
         return None
     date, annee, iso = _date_fr(jeu.get("first_release_date"))
-    categorie = jeu.get("category", 0)
+    # `game_type` a remplace `category` : meme numerotation, autre nom. IGDB
+    # ne renvoie plus l'ancien champ du tout, si bien qu'un DLC passait pour
+    # un jeu -- sans etiquette, et devant les vrais jeux au classement.
+    # `get(..., 0)` ne suffit pas : une fiche de type 0 (jeu principal) est
+    # renvoyee sans le champ, IGDB omettant les valeurs par defaut.
+    categorie = jeu.get("game_type") or 0
     return {
         "id": jeu.get("id") or 0,
         "titre": jeu.get("name") or "",
@@ -553,6 +558,32 @@ def toutes_les_fiches(nom, limite=40):
             return [], souci
 
     cherche = slug(nom, "-")
+
+    # Le titre exact, quand `search` ne l'a pas remonte.
+    #
+    # L'index plein texte classe par pertinence, et cette pertinence n'est
+    # pas la notre : un titre court et ancien passe derriere les fiches
+    # recentes qui le contiennent. Verifie : « Super Mario Kart » arrive au
+    # 26e rang, derriere ses hommages et ses cartes Barcode Battler -- donc
+    # hors de la liste, qui s'arrete a 25 pour la completion. « Pokemon Go »
+    # n'y est pas du tout : on n'obtient que ses saisons et les « Let's Go ».
+    #
+    # `where slug = "..."` ne passe pas par cet index. C'est une egalite sur
+    # l'identifiant textuel d'IGDB, forme comme notre slug() -- minuscules,
+    # sans accents, tirets -- si bien que « Pokemon Go » sans accent trouve
+    # « Pokémon Go », ce que `name ~` ne faisait pas.
+    #
+    # Un appel de plus, et seulement quand aucun resultat ne porte deja le
+    # titre cherche : une frappe en cours de mot (« Zel ») n'a pas de slug
+    # correspondant, la requete ne part donc pas. Son echec eventuel est
+    # ignore -- `search` a repondu, on ne perd pas sa reponse pour un
+    # complement.
+    if cherche and not any(slug(jeu.get("name"), "-") == cherche
+                           for jeu in resultats):
+        exactes, _ = interroge(
+            f'fields {CHAMPS}; where slug = "{cherche}"; limit 5;')
+        resultats = list(exactes or []) + list(resultats)
+
     fiches, vues = [], set()
     for jeu in resultats:
         # deux fiches sans image ne sont pas la meme : on dedoublonne par
