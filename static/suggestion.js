@@ -29,7 +29,7 @@
  * Tout est facultatif sauf `projet`. Sans `estConnecte`, l'etat est demande
  * au serveur avant d'ouvrir quoi que ce soit ; sans `surVisiteur`, un
  * visiteur part vers la connexion d'Abyss ; sans `toast`, la confirmation
- * s'affiche dans la fenetre elle-meme.
+ * s'affiche dans la fenetre elle-meme -- puis la fenetre se referme seule.
  */
 (function () {
   "use strict";
@@ -61,6 +61,7 @@
   let RENDRE_FOCUS = null;  // a qui rendre le focus en refermant
   let COMPTE = null;        // { connecte, admin }, une fois /api/moi revenu
   let SUR_FOND = false;     // le mousedown qui precede le clic visait le fond
+  let MINUTEUR_OK = null;   // la fermeture differee apres un envoi reussi
 
   /* ---------- ce que le serveur sait de nous ----------
      Demande a l'ouverture et garde ensuite : il n'y a qu'une chose a en
@@ -109,9 +110,9 @@
             }</select>
           </label>
           <label class="sg-champ">
-            <span>Ton message</span>
+            <span>Ton message <span class="sg-oblig" aria-hidden="true">*</span></span>
             <textarea class="sg-zone" id="sgMessage" rows="4"
-                      maxlength="${MAXI}" required></textarea>
+                      maxlength="${MAXI}" required aria-required="true"></textarea>
           </label>
           <p class="sg-compteur" id="sgCompteur"></p>
           <p class="sg-err" id="sgErr" hidden></p>
@@ -136,6 +137,12 @@
       if (SUR_FOND && e.target === FOND) ferme();
       SUR_FOND = false;
     });
+
+    /* Et le meme geste au doigt : sur un telephone la fenetre monte du bas
+       et se repousse par sa poignee. Sous condition, parce que ce script
+       vit sur des pages qui ne chargent pas static/gestes.js -- la fenetre
+       s'y ferme par sa croix, comme avant. */
+    if (typeof poigneeFeuille === "function") poigneeFeuille(FOND, ferme);
 
     /* En capture, et non en bulle : les pages qui accueillent cette fenetre
        ont deja leur propre gestionnaire d'Echap sur `document` -- l'Archive
@@ -231,6 +238,8 @@
 
   function ferme() {
     if (!FOND || FOND.hidden) return;
+    clearTimeout(MINUTEUR_OK);
+    MINUTEUR_OK = null;
     FOND.hidden = true;
     if (OPT.surBascule) OPT.surBascule();
     if (RENDRE_FOCUS && document.contains(RENDRE_FOCUS)) RENDRE_FOCUS.focus();
@@ -267,7 +276,19 @@
       majCompteur();
       const merci = genre === "bug" ? "Bug signalé, merci." : "Suggestion envoyée, merci.";
       if (OPT.toast) { ferme(); OPT.toast(merci); }
-      else { el("sgOk").textContent = merci; el("sgOk").hidden = false; }
+      else {
+        /* Pas de toast sur cette page : le merci s'affiche dans la fenetre,
+           qui se referme ensuite d'elle-meme. Elle restait ouverte -- vide,
+           sur un message envoye -- et il fallait la fermer a la main apres
+           chaque envoi, alors qu'un accuse de reception n'attend pas de
+           reponse. La seconde et demie laisse le temps de le lire ; un clic
+           sur la croix, le fond ou Echap coupe court, ferme() annulant le
+           minuteur. */
+        el("sgOk").textContent = merci;
+        el("sgOk").hidden = false;
+        clearTimeout(MINUTEUR_OK);
+        MINUTEUR_OK = setTimeout(ferme, 1500);
+      }
     } catch (err) {
       el("sgErr").textContent = err.message;
       el("sgErr").hidden = false;

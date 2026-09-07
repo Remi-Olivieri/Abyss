@@ -172,16 +172,19 @@ input,textarea{
   min-height:38px;
   max-width:min(46vw,260px);
 }
+/* Menu ouvert : le bouton reste allume, exactement comme au survol. Sans
+   ca le menu semble flotter sous un bouton eteint, et on ne voit plus d'ou
+   il sort -- ce qui compte d'autant plus qu'il s'ouvre au-dessus du reste
+   de la page. L'etat est lu sur aria-expanded, que compte.js tient deja a
+   jour pour les lecteurs d'ecran : rien a ajouter dans le HTML. */
+.bouton.pseudo[aria-expanded="true"]{
+  border-color:rgba(120,200,230,.45);
+  box-shadow:0 0 22px -8px rgba(120,200,230,.6);
+}
 /* Un pseudo long tient sur une ligne et se coupe : sans ca il pousse le
    chevron hors de la barre, et sur telephone il passe carrement dessous. */
 .pseudo-nom{
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
-}
-.pastille{
-  width:7px;height:7px;border-radius:50%;
-  background:var(--algue);
-  box-shadow:0 0 8px var(--algue);
-  flex:none;
 }
 .avatar-mini{
   width:27px;height:27px;border-radius:50%;object-fit:cover;flex:none;
@@ -199,7 +202,13 @@ input,textarea{
   background:hsl(var(--h,205) 46% 32%);
   border-color:hsl(var(--h,205) 46% 46%);
 }
-.chevron{color:var(--brume);font-size:11px;flex:none}
+/* Le chevron se retourne a l'ouverture : c'est la seule chose qui dise, au
+   premier coup d'oeil et sans lire, dans quel sens le prochain clic ira. */
+.chevron{
+  color:var(--brume);font-size:11px;flex:none;
+  transition:transform .2s ease,color .2s ease;
+}
+.bouton.pseudo[aria-expanded="true"] .chevron{transform:rotate(180deg);color:var(--os)}
 
 /* Lu par les lecteurs d'ecran, invisible a l'oeil. Pas display:none, qui
    les ferait taire aussi. */
@@ -247,6 +256,14 @@ input,textarea{
   background:#0C1523;
   border:1px solid rgba(150,195,220,.16);
   box-shadow:0 18px 42px rgba(0,0,0,.66);
+  /* Il descend du bouton, et le dit : le coin d'ou il sort est celui qui
+     ne bouge pas. Le menu est montre en retirant `hidden`, donc l'animation
+     rejoue a chaque ouverture, sans rien a nettoyer derriere. */
+  transform-origin:top right;
+  animation:menu-ouvre .16s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes menu-ouvre{
+  from{opacity:0;transform:translateY(-6px) scale(.97)}
 }
 .menu hr{
   border:0;
@@ -255,6 +272,7 @@ input,textarea{
 }
 .entree{
   display:block;
+  position:relative;    /* pour le repere de la page courante */
   width:100%;
   text-align:left;
   text-decoration:none;
@@ -271,8 +289,22 @@ input,textarea{
 .entree:hover,.entree:focus-visible{background:rgba(120,190,225,.12)}
 .entree:focus-visible{outline:2px solid var(--plancton);outline-offset:-2px}
 /* L'entree de la page ou l'on est deja : gardee, pour que le menu ne
-   change pas de forme d'une page a l'autre, mais eteinte. */
+   change pas de forme d'une page a l'autre, mais eteinte et marquee d'un
+   trait. Eteinte toute seule, elle se lisait comme une entree desactivee ;
+   le trait dit « c'est ici », ce qui n'est pas la meme chose. */
 .entree[aria-current="page"]{color:var(--brume)}
+.entree[aria-current="page"]::before{
+  content:'';position:absolute;left:2px;top:50%;transform:translateY(-50%);
+  width:3px;height:15px;border-radius:999px;background:var(--plancton);
+}
+/* Se deconnecter : la seule entree qui ne mene nulle part mais defait
+   quelque chose. Elle reste sobre au repos -- la teindre en permanence en
+   ferait le point le plus voyant d'un menu ou elle est le dernier recours
+   -- et ne se colore qu'au moment ou l'on s'y pose. */
+.entree.sortie:hover,.entree.sortie:focus-visible{
+  color:var(--rouge);
+  background:rgba(232,106,106,.13);
+}
 
 /* ---------- En-tête ---------- */
 .entete{
@@ -516,6 +548,11 @@ input,textarea{
   margin-bottom:6px;
 }
 .champ > span em{font-style:normal;opacity:.65}
+/* Le champ qu'un formulaire exige, dit avant l'envoi. Dans la fenetre de
+   suggestion c'est le seul : le projet a toujours une valeur, la nature du
+   message aussi -- l'etoile ne sert qu'a ne pas laisser le navigateur le
+   reprocher au moment du clic. */
+.champ > span .oblig{color:var(--rouge);margin-left:2px}
 .champ input,.champ textarea,.champ select{
   width:100%;
   font:inherit;
@@ -700,7 +737,7 @@ input,textarea{
   .modale{padding:22px 20px 24px}
 }
 @media (prefers-reduced-motion:reduce){
-  *{transition-duration:.01ms !important}
+  *{transition-duration:.01ms !important;animation-duration:.01ms !important}
   .carte:hover,.carte:focus-visible{transform:none}
   .carte::after{display:none}
 }

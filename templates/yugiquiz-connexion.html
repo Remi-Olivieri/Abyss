@@ -36,7 +36,7 @@
                 </p>
 
                 <div class="input-wrapper">
-                    <label for="username-input" class="input-label">Pseudo du Duelliste</label>
+                    <label for="username-input" class="input-label">Pseudo du Duelliste <span class="req" aria-hidden="true">*</span></label>
                     <!-- name="pseudo-invite" et pas "username" : cette page
                          est sur la meme adresse que le formulaire de connexion
                          d'Abyss, et un champ qui s'annonce comme un identifiant
@@ -49,6 +49,8 @@
                         maxlength="20" 
                         id="username-input" 
                         name="pseudo-invite"
+                        required
+                        aria-required="true"
                         class="user-input" 
                         placeholder="Entrez votre pseudo"
                         autocomplete="off"

@@ -20,13 +20,13 @@
 
     <form id="formReset" hidden>
       <label class="champ">
-        <span>Nouveau mot de passe</span>
-        <input id="rMdp" type="password" autocomplete="new-password" required minlength="8">
+        <span>Nouveau mot de passe <span class="oblig" aria-hidden="true">*</span></span>
+        <input id="rMdp" type="password" autocomplete="new-password" required minlength="8" aria-required="true">
         <small>8 caractères au minimum.</small>
       </label>
       <label class="champ">
-        <span>Répéter le nouveau mot de passe</span>
-        <input id="rMdp2" type="password" autocomplete="new-password" required minlength="8">
+        <span>Répéter le nouveau mot de passe <span class="oblig" aria-hidden="true">*</span></span>
+        <input id="rMdp2" type="password" autocomplete="new-password" required minlength="8" aria-required="true">
       </label>
       <p class="explication">Les autres appareils connectés à ton compte seront déconnectés.</p>
       <p class="erreur" id="rErr" hidden></p>

@@ -1095,9 +1095,11 @@ function chronoTermine() {
    C'est le parti pris des deux autres mini-jeux, et il vaut ici aussi tant
    qu'aucun score n'est enregistré — voir l'avertissement en tête de quiz.py.
 
-   « Il n'en manquait qu'un » : quand trois des quatre cases désignées
-   appartiennent au même groupe. Sans ce retour, une erreur ne dit rien, et
-   on recommence la même à une case près sans savoir qu'on y était.
+   « Presque : il n'en manquait qu'un » : quand trois des quatre cases
+   désignées appartiennent au même groupe. Sans ce retour, une erreur ne
+   dit rien, et on recommence la même à une case près sans savoir qu'on y
+   était. Il s'écrit dès la validation, pendant la secousse — et le plateau
+   se tait le temps de le laisser lire : voir gcAnime().
    ========================================================= */
 let GRILLE = null;   // { groupes, cases, choisies, trouves, erreurs, ... }
 
@@ -1142,14 +1144,27 @@ async function lanceGrille() {
       g.jeux.map((j) => ({ titre: j.titre, image: j.image, groupe: i })))),
     choisies: [],
     trouves: [],          // les groupes résolus, dans l'ordre où ils l'ont été
+    /* Les quatuors déjà proposés, chacun réduit à ses quatre titres triés.
+       Reproposer le même ne coûte pas une seconde vie : voir gcValide(). */
+    essais: [],
     erreurs: 0,
     erreursMax: data.erreurs || 4,
     parGroupe: data.parGroupe || 150,
     parVie: data.parVie || 100,
     message: "",
+    /* Le numéro du message, et non son texte : c'est lui qui décide de
+       rejouer l'apparition, pour que deux « Presque » de suite se voient.
+       Voir gcDitMessage(). */
+    messageNo: 0,
+    /* Vrai le temps qu'une réponse s'anime. Le plateau est alors sourd :
+       sans ce verrou, un clic pressé pendant la secousse effaçait le
+       message avant qu'il ne s'affiche, et un second appui sur « Valider »
+       coûtait une deuxième vie pour le même essai. */
+    anime: false,
     fini: false,
     gagne: false,
   };
+  GC_MSG_PEINT = 0;
   dessineGrille();
 }
 
@@ -1175,12 +1190,7 @@ function gcPeint() {
   const g = GRILLE;
   const resolus = new Set(g.trouves);
 
-  el("gcBandes").innerHTML = g.trouves.map((i) => gcBande(i, true)).join("")
-    /* Perdu : les groupes restants s'affichent quand même. Finir sur une
-       grille muette, c'est repartir sans savoir ce qu'on n'a pas vu. */
-    + (g.fini && !g.gagne
-        ? g.groupes.map((_, i) => (resolus.has(i) ? "" : gcBande(i, false))).join("")
-        : "");
+  gcEmpileBandes();
 
   /* Partie finie, le plateau se vide : les bandes ci-dessus disent déjà
      tout, y compris les groupes qu'on n'a pas trouvés. Laisser les cases
@@ -1199,11 +1209,11 @@ function gcPeint() {
               title="${esc(c.titre)}"${g.fini ? " disabled" : ""}
               ${c.image ? `style="--fond:url('${esc(c.image)}')"` : ""}>
         <span>${esc(c.titre)}</span>
+        <i class="gc-coche" aria-hidden="true">&#10003;</i>
       </button>`;
     }).join("");
 
-  el("gcMessage").textContent = g.message;
-  el("gcMessage").classList.toggle("fort", !!g.message);
+  gcDitMessage();
   gcPied();
 
   if (g.fini) return;
@@ -1214,6 +1224,63 @@ function gcPeint() {
     GRILLE.choisies = []; GRILLE.message = ""; gcPeint();
   });
   el("gcValider").addEventListener("click", gcValide);
+}
+
+/* ---------- le message ----------
+   Il doit se REVOIR même quand il redit la même chose. « Presque » deux
+   essais de suite s'écrivait deux fois au même endroit sans que rien ne
+   bouge à l'écran : le jeu avait l'air de n'avoir rien entendu, alors
+   qu'il venait de répondre. Un lecteur d'écran, lui, ne réannonce même pas
+   un aria-live dont le texte n'a pas changé.
+
+   D'où le numéro : chaque message en reçoit un neuf, et c'est lui — pas le
+   texte — qui décide de rejouer l'apparition. Le texte est vidé puis
+   réécrit pour la même raison, du côté de ceux qui écoutent la page. */
+let GC_MSG_PEINT = 0;
+
+function gcDitMessage() {
+  const g = GRILLE, p = el("gcMessage");
+  p.classList.toggle("fort", !!g.message);
+  if (g.messageNo === GC_MSG_PEINT) { p.textContent = g.message; return; }
+  GC_MSG_PEINT = g.messageNo;
+  p.textContent = "";
+  p.textContent = g.message;
+  /* Retirer, forcer un recalcul, reposer : sans ce détour le navigateur ne
+     voit aucun changement et l'animation ne repart pas. */
+  p.classList.remove("dit");
+  void p.offsetWidth;
+  p.classList.add("dit");
+}
+
+/* Les bandes s'empilent, elles ne se refont pas.
+
+   Tout le reste de la grille est repeint à chaque geste — c'est voulu, seize
+   cases ne coûtent rien — mais les bandes arrivent en s'ouvrant
+   (gc-bande-entre dans la feuille de style), et une bande réécrite rejoue
+   son animation. Désigner ou relâcher une case faisait donc reclignoter les
+   groupes déjà trouvés, comme s'ils venaient d'être découverts : le seul
+   endroit de la page où l'on avait posé quelque chose de définitif était
+   aussi le seul à bouger sans raison.
+
+   Une bande n'est jamais retirée ni déplacée une fois posée, et le plateau
+   repart d'un hôte vide à chaque partie (voir dessineGrille) : ce qui est
+   déjà à l'écran est donc toujours le début de ce qu'on veut y voir, et il
+   suffit d'ajouter la suite. Seules les nouvelles s'ouvrent, les autres ne
+   bronchent pas. */
+function gcEmpileBandes() {
+  const g = GRILLE;
+  const hote = el("gcBandes");
+  const resolus = new Set(g.trouves);
+  /* Les groupes trouvés, dans l'ordre où ils l'ont été. Puis, si la partie
+     est perdue, ceux qu'on n'a pas vus : finir sur une grille muette, c'est
+     repartir sans savoir ce qu'on cherchait. */
+  const voulues = g.trouves.map((i) => [i, true]).concat(
+    g.fini && !g.gagne
+      ? g.groupes.map((_, i) => [i, false]).filter(([i]) => !resolus.has(i))
+      : []);
+  for (let n = hote.children.length; n < voulues.length; n++) {
+    hote.insertAdjacentHTML("beforeend", gcBande(voulues[n][0], voulues[n][1]));
+  }
 }
 
 /* Une bande de groupe résolu : son lien en toutes lettres, et les quatre
@@ -1282,6 +1349,10 @@ const gcMaxi = () =>
   GRILLE.groupes.length * GRILLE.parGroupe + GRILLE.erreursMax * GRILLE.parVie;
 
 function gcTouche(titre) {
+  /* Sourd tant qu'une réponse s'anime : les cases restent à l'écran
+     pendant la secousse, et le clic qui partait dedans effaçait le message
+     avant même qu'on ait pu le lire. */
+  if (GRILLE.fini || GRILLE.anime) return;
   const c = GRILLE.choisies;
   const p = c.indexOf(titre);
   if (p >= 0) c.splice(p, 1);
@@ -1296,6 +1367,7 @@ function gcTouche(titre) {
    La sélection en cours survit — on mélange justement pour regarder
    autrement ce qu'on hésitait à valider. */
 function gcMelange() {
+  if (GRILLE.fini || GRILLE.anime) return;
   melange(GRILLE.cases);
   GRILLE.message = "";
   gcPeint();
@@ -1303,7 +1375,23 @@ function gcMelange() {
 
 function gcValide() {
   const g = GRILLE;
-  if (g.fini || g.choisies.length !== 4) return;
+  if (g.fini || g.anime || g.choisies.length !== 4) return;
+
+  /* Le même quatuor proposé deux fois ne coûte pas deux vies. C'est le plus
+     souvent un double appui sur « Valider » ; et quand c'est vraiment un
+     second essai, le redire vaut mieux que le punir — on n'apprend rien
+     d'une vie perdue sur une réponse qu'on a déjà eue.
+     La clé est triée : l'ordre dans lequel on a désigné les quatre cases
+     ne fait pas un essai différent. */
+  const essai = [...g.choisies].sort().join("\u0000");
+  if (g.essais.indexOf(essai) >= 0) {
+    g.message = "Déjà proposé.";
+    g.messageNo += 1;
+    gcDitMessage();
+    return;
+  }
+  g.essais.push(essai);
+
   const cases = g.choisies.map((t) => g.cases.find((c) => c.titre === t));
   const comptes = new Map();
   cases.forEach((c) => comptes.set(c.groupe, (comptes.get(c.groupe) || 0) + 1));
@@ -1312,7 +1400,11 @@ function gcValide() {
   if (combien === 4) {
     g.trouves.push(groupe);
     g.choisies = [];
+    /* Effacé tout de suite, et pas au repaint : le « Presque » de l'essai
+       précédent serait resté affiché sous les quatre cases en train de
+       s'allumer en vert, à dire le contraire de ce qui vient d'arriver. */
     g.message = "";
+    gcDitMessage();
     if (g.trouves.length === g.groupes.length) { g.fini = true; g.gagne = true; }
     gcAnime("juste", () => gcPeint());
     return;
@@ -1320,10 +1412,16 @@ function gcValide() {
 
   g.erreurs += 1;
   /* Trois sur quatre : le seul retour utile qu'on puisse donner sans
-     désigner la case fautive — le dire coûterait le groupe entier. */
+     désigner la case fautive — le dire coûterait le groupe entier.
+     Le cas de la dernière vie ne se tait plus : il ne disait rien
+     précisément là où l'on veut savoir sur quoi on a perdu. */
   g.message = combien === 3
-    ? "Presque..."
-    : (g.erreurs >= g.erreursMax ? "" : "Aucun lien entre ces quatre-là.");
+    ? "Presque : il n'en manquait qu'un."
+    : "Aucun lien entre ces quatre-là.";
+  g.messageNo += 1;
+  /* Écrit maintenant et non au repaint : c'est pendant la secousse qu'on
+     le lit, pas six dixièmes de seconde après. */
+  gcDitMessage();
   if (g.erreurs >= g.erreursMax) { g.fini = true; g.gagne = false; }
   gcAnime("faux", () => gcPeint());
 }
@@ -1331,11 +1429,31 @@ function gcValide() {
 /* Les quatre cases désignées réagissent avant que la grille ne se
    redessine : sans ce temps d'arrêt, un groupe trouvé disparaîtrait
    instantanément et une erreur ne se verrait pas du tout. La classe est
-   posée sur les cases actuelles, le repaint arrive après. */
+   posée sur les cases actuelles, le repaint arrive après.
+
+   Le plateau est verrouillé pendant ce temps-là, ce qu'il n'était pas :
+   cases et boutons restaient vivants sous l'animation. Un joueur qui
+   enchaîne — et on enchaîne, sur seize cases — effaçait le « Presque »
+   avant qu'il ne s'affiche, ou repayait une vie en réappuyant sur
+   « Valider ». Le verrou tient dans GRILLE.anime, que gcTouche, gcMelange
+   et gcValide consultent ; les boutons, eux, s'éteignent tout de suite
+   plutôt qu'au repaint, sinon ils restent cliquables — et l'air
+   cliquables — pendant toute l'animation. */
 function gcAnime(classe, apres) {
-  const cases = Array.from(el("gcPlateau").querySelectorAll(".gc-case.prise"));
-  cases.forEach((b) => b.classList.add(classe));
-  setTimeout(apres, classe === "juste" ? 420 : 620);
+  const g = GRILLE;
+  const plateau = el("gcPlateau");
+  g.anime = true;
+  plateau.querySelectorAll(".gc-case.prise").forEach((b) => b.classList.add(classe));
+  el("gcPied").querySelectorAll("button").forEach((b) => { b.disabled = true; });
+  /* `fige` par-dessus le verrou : gcTouche() ignore déjà les clics, mais
+     une case qui s'allume encore au survol pendant qu'on lui répond dit le
+     contraire de ce qui se passe. */
+  plateau.classList.add("fige");
+  setTimeout(() => {
+    g.anime = false;
+    plateau.classList.remove("fige");
+    apres();
+  }, classe === "juste" ? 420 : 620);
 }
 
 /* Clic droit sur une image de partie : bloque. « Ouvrir l'image dans un

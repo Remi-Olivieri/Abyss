@@ -49,6 +49,12 @@ function fermeSurFond(id, ferme){
     if(surFond && e.target.id === id) ferme();
     surFond = false;
   });
+  /* Sur un téléphone, la même fermeture au doigt : la feuille se repousse
+     par sa poignée. C'est ici qu'on la branche parce que chaque fenêtre
+     passe déjà par là pour dire « voici mon fond, voici comment je me
+     ferme » — les deux seules choses dont le geste a besoin. Voir
+     static/gestes.js. */
+  poigneeFeuille(fond, ferme);
 }
 const esc = s => (s===null||s===undefined?'':String(s))
   .replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

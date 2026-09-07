@@ -91,8 +91,8 @@
                      c'est aussi ce qu'il faut écrire pour la rejoindre : le
                      mot de passe d'une salle n'est l'identifiant de personne. -->
                 <div>
-                    <label class="input-label" style="display:block; margin-bottom:.5rem;">Nom de la salle</label>
-                    <input type="text" maxlength="24" id="room-name-input" class="create-input" placeholder="Nom de la salle..." autocomplete="off" name="nom-de-salle">
+                    <label for="room-name-input" class="input-label" style="display:block; margin-bottom:.5rem;">Nom de la salle <span class="req" aria-hidden="true">*</span></label>
+                    <input type="text" maxlength="24" id="room-name-input" class="create-input" placeholder="Nom de la salle..." autocomplete="off" required aria-required="true" name="nom-de-salle">
                 </div>
                 <div>
                     <label class="input-label" style="display:block; margin-bottom:.5rem;">Mot de passe <span style="opacity:.5; font-size:.85em;">(optionnel)</span></label>

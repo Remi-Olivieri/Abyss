@@ -212,10 +212,22 @@ function monteFiche(host){
   boite.querySelector('.sheet-x').onclick = fermeFiche;
   boite.querySelector('.sheet-edit').onclick = ()=>{ const g = jeu(); if(g) openForm(g); };
   boite.querySelector('.sheet-share').onclick = ()=>{ const g = jeu(); if(g) partagerJeu(g); };
-  host.querySelector('.nav-prev').onclick = ()=>{ if(S.open > 0){ S.open--; paintSheet(-1); } };
-  host.querySelector('.nav-next').onclick = ()=>{
-    if(S.open < SHEET_LIST.length - 1){ S.open++; paintSheet(1); }
-  };
+  host.querySelector('.nav-prev').onclick = ()=> ficheVoisine(-1);
+  host.querySelector('.nav-next').onclick = ()=> ficheVoisine(1);
+  /* Le doigt fait ce que font les flèches, dans le sens où l'on pousse la
+     fiche : vers la gauche pour amener le jeu suivant, comme on tourne une
+     page.
+     Posé sur le contenu et non sur la boîte entière, ce qui laisse la barre
+     du haut à la poignée — elle, se tire vers le bas pour refermer, et deux
+     gestes qui se disputent le même bandeau de quarante pixels finiraient
+     par se déclencher ensemble.
+     La feuille de style met #sheet .sheet en touch-action:pan-y : le
+     défilement vertical reste au navigateur, l'horizontal nous revient
+     entier. */
+  glissement(boite.querySelector('.sheet-in'), {
+    gauche: ()=> ficheVoisine(1),
+    droite: ()=> ficheVoisine(-1),
+  });
   // sur `host` et non sur la boîte : les flèches sont dehors, et le piège
   // doit les compter parmi ce qu'on peut atteindre
   host.addEventListener('keydown', e=> piegeFocus(host, e));
@@ -325,6 +337,16 @@ function animeFiche(sens){
      impulsion recommence par la retirer. */
   fleche.addEventListener('animationend',
     () => fleche.classList.remove('pousse'), {once: true});
+}
+
+/* Le jeu d'à côté, s'il existe. Les flèches de la fiche, les flèches du
+   clavier et le doigt aboutissent tous ici : un seul endroit sait ce que
+   veut dire « suivant », et ce qu'il faut faire quand il n'y en a pas. */
+function ficheVoisine(sens){
+  const i = S.open + sens;
+  if(i < 0 || i >= SHEET_LIST.length) return;
+  S.open = i;
+  paintSheet(sens);
 }
 
 /* `sens` : +1 vers le jeu suivant, -1 vers le précédent, rien sinon. Les
@@ -580,6 +602,6 @@ document.addEventListener('keydown', e=>{
     return;
   }
   if(e.key === 'Escape'){ fermeFiche(); }
-  else if(e.key === 'ArrowLeft' && S.open > 0){ S.open--; paintSheet(-1); }
-  else if(e.key === 'ArrowRight' && S.open < SHEET_LIST.length-1){ S.open++; paintSheet(1); }
+  else if(e.key === 'ArrowLeft') ficheVoisine(-1);
+  else if(e.key === 'ArrowRight') ficheVoisine(1);
 });

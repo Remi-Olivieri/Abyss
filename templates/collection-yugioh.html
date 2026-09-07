@@ -13,70 +13,131 @@
 
 <header>
   <div class="brand">
-    <a class="retour" href="/abyss" aria-label="Retour à Abyss">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Les deux actions qui ne parlent pas du classeur affiché mais du site
+         autour : le retour au hub à un bout, le signalement à l'autre. Même
+         paire qu'en tête de l'Archive Jeux Vidéos. -->
+    <a class="entete-action" id="abyssBtn" href="/abyss" aria-label="Retour à Abyss">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M19 12H5M12 19l-7-7 7-7"/>
       </svg>
+      <span>Retour à Abyss</span>
     </a>
+    <!-- Ce qu'on cherche le plus souvent depuis le classeur de quelqu'un
+         d'autre : le sien. Masquée tant qu'on n'a pas de classeur à soi —
+         voir majVerrou(). -->
+    <button class="maison" id="homeBtn" hidden aria-label="Ouvrir mon classeur">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"/>
+        <path d="M5 9.8V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.8"/>
+        <path d="M9.5 21v-6h5v6"/>
+      </svg>
+    </button>
     <div class="titre">
-      <button class="jnl" id="jnl" aria-haspopup="true" aria-expanded="false">
-        <h1 id="brand-title">Classeur</h1>
-        <svg class="jnl-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 9l6 6 6-6"/>
+      <h1 id="brand-title">Classeur</h1>
+      <!-- Le titre était un menu déroulant listant les classeurs écrits en
+           dur dans le fichier. Il n'y a plus de liste écrite en dur : les
+           classeurs sont ceux des comptes d'Abyss, on les cherche. -->
+      <button class="jnl-search" id="jnlSearchBtn" aria-haspopup="dialog">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M21 21l-4.3-4.3"/>
         </svg>
+        <span>Rechercher</span>
       </button>
-      <div class="menu jnl-menu" id="jnlMenu" hidden role="menu"></div>
     </div>
     <nav class="tabs" id="tabs" role="tablist"></nav>
     <div class="cog-wrap">
-      <button class="gear" id="shine" aria-label="Reflets de rareté" aria-pressed="true">&#10022;</button>
-      <button class="gear" id="gear" data-etat="offline" aria-haspopup="true" aria-expanded="false" aria-label="Réglages">
+      <!-- Masqués tous les deux au départ, comme l'engrenage : ils ne règlent que
+           le classeur, et l'annuaire n'a pas encore dit s'il y en aura un. -->
+      <button class="gear" id="shine" hidden aria-label="Reflets de rareté" aria-pressed="true">&#10022;</button>
+      <button class="gear" id="gear" data-etat="offline" hidden aria-haspopup="true" aria-expanded="false" aria-label="Réglages">
         <span class="led"></span>&#9881;
       </button>
       <div class="menu" id="menu" hidden role="menu">
-        <div class="menu-info" id="srcInfo">chargement...</div>
-        <button class="menu-item" id="reload" role="menuitem">Rafraîchir</button>
-        <button class="menu-item" id="unlock" role="menuitem">Passer en mode éditeur...</button>
-        <button class="menu-item quit" id="relock" role="menuitem" hidden>Repasser en lecture seule</button>
+        <button class="menu-item" id="exportBtn" role="menuitem">Exporter&#8230;</button>
+        <!-- Il n'y a plus de mode éditeur à déverrouiller : le serveur dit
+             `write: true` quand le classeur affiché est celui du visiteur
+             connecté. Le bouton mène donc à son classeur, ou à Abyss. -->
+        <button class="menu-item" id="unlock" role="menuitem">Ouvrir mon classeur</button>
       </div>
     </div>
+    <a class="entete-action" id="suggBtn" href="/abyss?suggestion=collection" aria-label="Suggestion / Bug">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>
+      </svg>
+      <span>Suggestion / Bug</span>
+    </a>
   </div>
 </header>
 
 <main>
-  <div class="stage" id="stage">
-    <button class="nav" id="prev" aria-label="Page précédente">&lsaquo;</button>
-    <div class="col">
-      <div class="topbar" id="topbar">
-        <div class="search" id="searchBox">
-          <input id="q" type="text" placeholder="Chercher une carte..." autocomplete="off" spellcheck="false">
-          <div class="results" id="res" hidden></div>
+  <!-- Les trois écrans d'avant le classeur, dans l'ordre où on les
+       rencontre : personne n'est connecté, connecté mais sans classeur, et
+       le classeur demandé ne s'ouvre pas. Mêmes trois écrans que l'Archive
+       Jeux Vidéos, pour la même raison — atterrir par défaut sur le classeur
+       d'un inconnu ne dit ni où l'on est, ni ce que la page sait faire. -->
+  <section class="gate" id="gate" hidden>
+    <h2 id="gTitle">Ce classeur ne répond pas</h2>
+    <p id="gMsg"></p>
+    <div class="gate-err" id="gErr" hidden></div>
+    <button class="act" id="gRetry" hidden>Réessayer</button>
+  </section>
+
+  <section class="gate" id="invite" hidden>
+    <h2>Tu n'as pas encore de classeur</h2>
+    <p>Crée le tien : toutes les pochettes t'attendent, vides. Il ne restera
+       qu'à dire ce que tu as, dans quelle rareté et dans quel état.</p>
+    <button class="act" id="inviteCreate">Créer mon classeur</button>
+  </section>
+
+  <!-- Personne n'est connecté. La recherche est posée là, dépliée : c'est la
+       seule chose qu'un visiteur puisse faire, et la cacher derrière le
+       bouton de l'en-tête laisserait un écran qui ne propose rien. -->
+  <section class="gate" id="accueil" hidden>
+    <h2>Connectez-vous pour commencer votre classeur</h2>
+    <p>Chaque carte à sa place, sa rareté et son état, page après page.</p>
+    <a class="act" href="/abyss?connexion=1">Se connecter sur Abyss</a>
+    <div class="accueil-rech">
+      <u>Ou feuilleter le classeur de quelqu'un</u>
+      <div id="accueilRech"></div>
+    </div>
+  </section>
+
+  <div id="app" hidden>
+    <div class="stage" id="stage">
+      <button class="nav" id="prev" aria-label="Page précédente">&lsaquo;</button>
+      <div class="col">
+        <div class="topbar" id="topbar">
+          <div class="search" id="searchBox">
+            <input id="q" type="text" placeholder="Chercher une carte..." autocomplete="off" spellcheck="false">
+            <div class="results" id="res" hidden></div>
+          </div>
+          <span class="meter" id="meter">
+            <span class="val"><b id="mOwn">0</b> / <span id="mTot">0</span></span>
+            <span class="bar"><i id="mBar" style="width:0"></i></span>
+            <span class="val" id="mPct">0 %</span>
+          </span>
         </div>
-        <span class="meter" id="meter">
-          <span class="val"><b id="mOwn">0</b> / <span id="mTot">0</span></span>
-          <span class="bar"><i id="mBar" style="width:0"></i></span>
-          <span class="val" id="mPct">0 %</span>
-        </span>
+        <div class="binder" id="binder"></div>
       </div>
-      <div class="binder" id="binder"></div>
+      <button class="nav" id="next" aria-label="Page suivante">&rsaquo;</button>
     </div>
-    <button class="nav" id="next" aria-label="Page suivante">&rsaquo;</button>
-  </div>
-  <footer id="foot">
-    <div class="classeurs" id="classeurs"></div>
-    <span class="jump">Page
-      <input id="goPage" type="number" min="1" inputmode="numeric" aria-label="Numéro de page">
-      <span id="ofPages"></span></span>
-  </footer>
-  <div class="offline" id="offline" hidden>
-    <b>Classeur non connecté</b>
-    <p id="offlineMsg"></p>
-    <div class="orow">
-      <button class="act" id="retry">Réessayer</button>
-      <button class="act ghost" id="offCfg">Réglages</button>
-    </div>
+    <footer id="foot">
+      <div class="classeurs" id="classeurs"></div>
+      <span class="jump">Page
+        <input id="goPage" type="number" min="1" inputmode="numeric" aria-label="Numéro de page">
+        <span id="ofPages"></span></span>
+    </footer>
   </div>
 </main>
+
+<!-- La fenêtre de recherche : quel classeur ouvrir. Vide tant qu'elle n'est
+     pas ouverte — son contenu est monté à l'ouverture et démonté après. -->
+<div class="voile-rech" id="recherche" hidden></div>
 
 <div id="scrim"></div>
 <div id="zoom" aria-hidden="true"></div>
@@ -103,27 +164,43 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Les gestes du doigt, partagés avec l'Archive Jeux Vidéos : ici le
+     balayage tourne les pages du classeur et passe d'une carte à l'autre.
+     Voir la section « gestes du doigt » plus bas. -->
+<script src="/static/gestes.js"></script>
+<!-- Le formulaire de suggestion, ouvert sur place plutôt que sur le hub :
+     voir static/suggestion.js. Chargé avant le script de la page, qui le
+     branche — un defer arriverait après lui. -->
+<script src="/static/suggestion.js"></script>
+
 <script>
 /* =========================================================
-   LA SEULE PARTIE À MODIFIER
-   Un classeur = une adresse de script Apps Script (finit par /exec).
-   Ajoute-en autant que tu veux : un sélecteur apparaît dès qu'il
-   y en a deux, et chacun peut être celui d'un ami.
+   Le classeur Yu-Gi-Oh
 
-   LE JETON NE S'ÉCRIT PAS ICI. La lecture est ouverte à tout le
-   monde ; le jeton se saisit dans la page (menu ⚙ → mode éditeur),
-   ne sert qu'à écrire, et ne quitte jamais ce navigateur.
+   Il vivait sur une feuille Google : une adresse de script Apps Script
+   écrite en dur en tête de ce fichier, un jeton saisi dans la page pour
+   avoir le droit d'écrire, et une carte repérée par « feuille + ligne +
+   colonne ». Rien de tout ça n'existe plus. Les classeurs sont ceux des
+   comptes d'Abyss, servis par collection.py ; l'autorisation d'écrire vient
+   de la session, que le cookie porte tout seul ; et une carte a un `id` qui
+   ne bouge pas.
+
+   La page reprend donc le fonctionnement de l'Archive Jeux Vidéos, dont
+   elle est la voisine : un annuaire des classeurs publics, une recherche
+   pour aller chez les autres, une adresse /collection/<pseudo> qu'on peut
+   donner, et trois écrans avant le classeur — visiteur, connecté sans
+   classeur, classeur qui ne s'ouvre pas.
+
+   Ce qui ne bouge pas, c'est le classeur lui-même : la reliure, les pages
+   qui tournent, les pochettes, la carte qu'on sort pour la regarder. C'est
+   l'objet de cette page, et il n'avait rien à voir avec l'endroit d'où
+   venaient les données.
    ========================================================= */
-const SOURCES = [
-  { nom: 'Jokrem', url: 'https://script.google.com/macros/s/AKfycbwNdYPX4VzqAn097XWfvfjXuU-u4wyeyjmgTs-NDiWVBJbr4mpCnr6qCP49iiBuFjCYuQ/exec' },
-];
 
-/* chemins locaux, aucun secret : servis par Abyss depuis /static.
-   Cards/ est le fonds d'illustrations partagé avec Abyss:DUEL (le quiz) */
-const CHEMINS = {
-  img: '/static/Cards/',
-  noms: '/static/cards_fr.json'
-};
+const el = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 const PER_PAGE = 18, PER_FACE = 9, PAGES_PAR_CLASSEUR = 30;
 const RARETES = [
   ['C','Commune'], ['R','Rare'], ['SR','Super'], ['UR','Ultra'], ['SE','Secrète'],
@@ -132,37 +209,44 @@ const RARETES = [
 ];
 const CODES = RARETES.map(r => r[0]);
 const ETATS = [[3,'Bon'], [2,'Moyen'], [1,'Mauvais']];
+
+/* Une carte est un petit tableau et non un objet : deux mille cartes en
+   JSON, ce sont deux mille fois les mêmes noms de champs à ne pas répéter.
+   Ses cases, telles que collection.py les envoie (voir en_json) :
+
+       [0] nom   [1] rareté   [2] état   [3] id   [4] fichier de l'artwork
+
+   Les deux dernières sont nouvelles. `id` remplace le couple ligne/colonne
+   de la feuille : c'est lui qu'on renvoie pour écrire. `fichier` remplace
+   tout un mécanisme — la page téléchargeait 570 Ko de noms français, en
+   construisait un index de quatorze mille entrées, puis essayait .jpg, .png
+   et .webp au hasard jusqu'à ce que l'une réponde. Le serveur le sait déjà,
+   il le dit une fois par carte. */
+const NOM = 0, RAR = 1, ETAT = 2, ID = 3, ART = 4;
+
 /* rareté normalisée d'une carte ('' si elle n'est pas dans le classeur) */
-const codeRar = card => !card || !card[1] ? ''
-  : (CODES.indexOf(card[1]) >= 0 ? card[1] : 'C');
+const codeRar = card => !card || !card[RAR] ? ''
+  : (CODES.indexOf(card[RAR]) >= 0 ? card[RAR] : 'C');
 /* les communes et les rares n'ont aucun vernis sur l'illustration */
 const brille = c => !!c && c !== 'C';
 const FOIL = '<i class="foil"><span></span></i>';
 
-/* toutes les illustrations sont dans un seul dossier, nommées par passcode */
-const EXTS = ['jpg','png','webp','jpeg'];
-let BASE_IMG = CHEMINS.img;
-let URL_NOMS = CHEMINS.noms;
-let EXT_OK = null;
-
-let DATA = { types: [] };
+let DATA = { types: [], images: '/static/Cards/', vignettes: '/api/collection/vignette/' };
 let MODE = 'offline';
-let FR = null;        // id -> nom français
-let PAR_NOM = null;   // nom normalisé -> id
-let IMGOK = {};       // id -> chemin qui a fonctionné ('' = pas d'image trouvée)
 const S = { t:0, c:0, spread:0, sel:null, hit:null, pose:null, zoom:false, zt:0, zc:0 };
 
-const el = id => document.getElementById(id);
-const T = () => DATA.types[S.t] || { label:'', color:'#A086B7', sheet:'', classeurs:[] };
+const T = () => DATA.types[S.t] || { label:'', color:'#A086B7', classeurs:[] };
 const C = () => T().classeurs[S.c] || { n:1, cards:[] };
 const sheets = () => Math.max(PAGES_PAR_CLASSEUR, Math.ceil(C().cards.length / PER_PAGE));
 const narrow = () => matchMedia('(max-width:900px)').matches;
 const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-const esc = s => String(s == null ? '' : s)
-  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-/* La couleur vient du Sheet, et un Sheet n'est plus forcément le tien : elle
-   part dans un style="", où esc() ne protège que des guillemets. On n'accepte
-   donc qu'une vraie couleur, jamais un morceau de CSS. */
+
+/* La couleur d'un onglet vient de la base, et la base n'est pas forcément
+   remplie par toi : elle part dans un style="", où esc() ne protège que des
+   guillemets. On n'accepte donc qu'une vraie couleur, jamais un morceau de
+   CSS. Le serveur fait la même vérification de son côté (voir COULEUR dans
+   collection.py) : la page se protège des classeurs des autres, la base se
+   protège de ce qu'on lui donne. */
 const COULEUR = /^(#[0-9a-f]{3,8}|rgba?\([0-9\s.,%/]+\)|[a-z]{3,20})$/i;
 const couleurSure = c => (typeof c === 'string' && COULEUR.test(c.trim())) ? c.trim() : '#A086B7';
 
@@ -173,76 +257,30 @@ function pos(i){
            face: k < PER_FACE ? 'recto' : 'verso',
            slot: k % PER_FACE + 1 };
 }
-const short = (cl, i) => {
-  const o = pos(i);
-  return 'C' + cl + '\u00b7P' + o.page + '\u00b7' + o.face[0].toUpperCase() + o.slot;
-};
 
-/* ---------------- réglages ---------------- */
-/* Les chemins d'avant Abyss (Images/Fusion/123.jpg...) sont mémorisés dans le
-   navigateur et ne valent plus rien : on les jette une bonne fois.
-   abyss-2 : /static/Cartes/ a fusionné dans /static/Cards/ (fonds partagé
-   avec le quiz) — un ancien chemin mémorisé doit lui aussi être jeté.
-   abyss-3 : l'ancienne config gardait l'adresse ET le jeton du Sheet dans
-   classeur-cfg. Le jeton ne doit plus traîner là : on ne conserve que le
-   dossier d'images, et le cache change de clé (une par source).
-   abyss-5 : le classeur a quitté Google Sheets pour la base d'Abyss. Les
-   jetons n'ouvrent plus rien et n'ont plus à dormir ici ; les caches, dont
-   la clé était l'adresse du script, parlent d'un format qui n'existe plus
-   (une carte y finissait par sa ligne et sa colonne de feuille) — on les
-   jette tous, y compris ceux qui portaient l'ancienne clé par source. */
-const VERSION_CHEMINS = 'abyss-5';
+/* ---------------- ce qui dormait dans le navigateur ----------------
+   Les versions précédentes gardaient ici des choses qui n'ont plus d'objet :
+   un dossier d'images à deviner, l'extension qui avait fonctionné, un jeton
+   par adresse de script, et des caches dont la clé était l'adresse d'un
+   Sheet — avec, dedans, des cartes qui finissaient par leur ligne et leur
+   colonne de feuille. On jette tout d'un coup plutôt que de lire un vieux
+   format qui ne veut plus rien dire. */
+const VERSION_CACHE = 'abyss-6';
 try {
-  if (localStorage.getItem('classeur-chemins') !== VERSION_CHEMINS){
+  if (localStorage.getItem('classeur-chemins') !== VERSION_CACHE){
     ['classeur-img', 'classeur-ext', 'classeur-data', 'classeur-cfg',
      'classeur-jetons', 'classeur-source']
       .forEach(k => localStorage.removeItem(k));
-    /* les caches par source : leur clé porte l'adresse, on les balaie */
     for (let k = localStorage.length - 1; k >= 0; k--){
       const c = localStorage.key(k);
       if (c && c.indexOf('classeur-data:') === 0) localStorage.removeItem(c);
     }
-    localStorage.setItem('classeur-chemins', VERSION_CHEMINS);
+    localStorage.setItem('classeur-chemins', VERSION_CACHE);
   }
 } catch(e){}
 
-/* ---------------- sources et session ---------------- */
-let SRC = 0;              // index dans SOURCES
-let CAN_WRITE = false;    // le serveur a confirmé que ce classeur est le mien
-/* qui je suis, rempli par l'annuaire : { connecte, pseudo } */
-let MOI = { connecte: false, pseudo: null };
-const source = () => SOURCES[SRC] || null;
-/* le classeur affiché est-il le mien ? sert au titre et aux invitations */
-const estLeMien = () => !!MOI.pseudo && !!source()
-  && norm(source().nom) === norm(MOI.pseudo);
-
-/* Le classeur ouvert la dernière fois : on retient l'adresse, pas le rang,
-   pour que réordonner SOURCES ne rouvre pas le classeur de quelqu'un d'autre. */
-const CLE_CLASSEUR = 'classeur-source';
-function memoriseClasseur(){
-  try { localStorage.setItem(CLE_CLASSEUR, source() ? source().url : ''); } catch(e){}
-}
-try {
-  const vu = localStorage.getItem(CLE_CLASSEUR);
-  const i = vu ? SOURCES.findIndex(s => s.url === vu) : -1;
-  if (i >= 0) SRC = i;
-} catch(e){}
-
-/* un jeton par adresse : le classeur d'un ami a le sien, que tu n'as pas */
-const CLE_JETONS = 'classeur-jetons';
-function jetons(){
-  try { return JSON.parse(localStorage.getItem(CLE_JETONS)) || {}; } catch(e){ return {}; }
-}
-function jetonDe(url){ const j = jetons()[url]; return typeof j === 'string' ? j : ''; }
-function poserJeton(url, jeton){
-  const j = jetons();
-  if (jeton) j[url] = jeton; else delete j[url];
-  try { localStorage.setItem(CLE_JETONS, JSON.stringify(j)); } catch(e){}
-}
-
-/* dernière réponse connue du script : sert uniquement à afficher quelque chose
-   pendant que la vraie requête est en vol. Effacé de l'écran si elle échoue. */
-/* une clé par source : deux classeurs différents ne partagent pas leur cache */
+/* dernière réponse connue : affichée tout de suite au chargement, le temps
+   que la vraie requête reparte en arrière-plan. Une clé par classeur. */
 const cleCache = url => 'classeur-data:' + url;
 function lireCache(url){
   try { return JSON.parse(localStorage.getItem(cleCache(url))); }
@@ -251,52 +289,69 @@ function lireCache(url){
 function ecrireCache(url, d){
   try { localStorage.setItem(cleCache(url), JSON.stringify(d)); } catch(e){}
 }
-/* L'état ne s'écrit plus en clair dans l'en-tête : il tient dans la pastille
-   de l'engrenage — verte en ligne, ambrée pendant une actualisation, rouge
-   quand celle-ci a échoué, éteinte hors ligne — et en toutes lettres dans le
-   menu qu'il ouvre. */
-let DERNIERE_SYNC = 0;   // horodatage, pas une heure toute faite
-let ETAT_TXT = '';       // ce que la pastille dit en ce moment
 
-/* « il y a 2 min » plutôt que « 21 h 14 » : en ouvrant le menu, ce qu'on
-   cherche à savoir c'est si les données sont fraîches, pas quelle heure il
-   était quand elles sont arrivées. Au-delà d'une journée le relatif cesse
-   d'être lisible — « il y a 37 h » ne dit rien à personne — on repasse donc
-   à une date. */
-function ilYa(t){
-  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
-  if (s < 45) return "à l'instant";
-  const min = Math.round(s / 60);
-  if (min < 60) return 'il y a ' + min + ' min';
-  const h = Math.round(min / 60);
-  if (h < 24) return 'il y a ' + h + ' h';
-  return 'le ' + new Date(t).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+/* ---------------- qui suis-je, quels classeurs existent ----------------
+   Un seul appel au démarrage : l'annuaire des classeurs publics, plus
+   l'état de la session. C'est lui qui remplit SOURCES, jusqu'ici écrit en
+   dur en tête du fichier. */
+let SOURCES = [];
+let SRC = 0;
+let CAN_WRITE = false;
+let MOI = { connecte: false, pseudo: null };
+
+const source = () => SOURCES[SRC] || null;
+const estLeMien = () => !!MOI.pseudo && !!source() && norm(source().nom) === norm(MOI.pseudo);
+const urlClasseur = pseudo => '/api/collection/' + encodeURIComponent(pseudo);
+
+async function chargeAnnuaire(){
+  const r = await fetch('/api/collection', { credentials: 'same-origin' });
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.message || 'annuaire illisible');
+  MOI = { connecte: !!d.connecte, pseudo: d.moi ? d.moi.pseudo : null };
+  SOURCES = (d.classeurs || []).map(c => ({
+    nom: c.pseudo, titre: c.titre, cartes: c.cartes,
+    avatar: c.avatar, banniere: c.banniere, url: urlClasseur(c.pseudo),
+  }));
+  /* Le sien d'abord : c'est celui qu'on vient consulter neuf fois sur dix,
+     et le seul qu'on puisse modifier. Un classeur privé n'apparaît pas dans
+     l'annuaire, qui ne liste que les publics : on l'ajoute nous-mêmes
+     plutôt que de laisser la page retomber sur n'importe qui d'autre. */
+  if (MOI.pseudo){
+    const i = SOURCES.findIndex(x => x.nom === MOI.pseudo);
+    if (i > 0) SOURCES.unshift(SOURCES.splice(i, 1)[0]);
+    else if (i < 0) SOURCES.unshift({ nom: MOI.pseudo, url: urlClasseur(MOI.pseudo) });
+    SOURCES[0].moi = true;
+    SOURCES[0].cartes = d.moi.cartes;
+    SOURCES[0].avatar = d.moi.avatar;
+    SOURCES[0].banniere = d.moi.banniere;
+  }
 }
+
+/* ---------------- l'état de la connexion ----------------
+   Il tient tout entier dans la pastille de l'engrenage — verte en ligne,
+   ambrée pendant une actualisation, rouge quand celle-ci a échoué, éteinte
+   hors ligne — et dans son aria-label pour qui ne voit pas la pastille.
+
+   Il était aussi écrit en toutes lettres en tête du menu (« synchronisé à
+   l'instant », « modifiable »), au-dessus d'un bouton « Rafraîchir ». Trois
+   lignes pour dire que tout va bien, dans un menu qu'on ouvre pour agir : la
+   page se recharge seule à chaque visite, et un classeur qui n'aurait pas
+   répondu le dit déjà par son écran. */
 function setSync(mode, txt){
   MODE = mode;
-  if (mode === 'live') DERNIERE_SYNC = Date.now();
-  ETAT_TXT = txt;
   const g = el('gear');
   g.dataset.etat = mode;
   g.setAttribute('aria-label', 'Réglages — ' + txt);
-  ecritEtat();
-}
-/* Réécrit la ligne du menu sans toucher à l'état. Appelée à chaque
-   ouverture : sans ça le texte resterait figé sur ce qu'il valait au moment
-   de la synchro, c'est-à-dire toujours « à l'instant ». */
-function ecritEtat(){
-  el('srcInfo').innerHTML = (MODE === 'live' && DERNIERE_SYNC
-    ? 'synchronisé ' + ilYa(DERNIERE_SYNC) + '<br>' : '') + esc(ETAT_TXT);
 }
 
-/* ---------------- noms français + artworks ---------------- */
+/* ---------------- normalisation des noms ----------------
+   Sert à la recherche de cartes et à comparer deux pseudos. œ et æ ne se
+   décomposent pas en NFD, il faut les déplier à la main pour que « coeur »
+   trouve « Cœur ». */
 function norm(s){
   return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 }
-/* norm() sert aussi de clé à l'index des artworks : on n'y touche pas.
-   Pour la recherche on va plus loin. œ et æ ne se décomposent pas en NFD,
-   il faut les déplier à la main pour que « coeur » trouve « Cœur ». */
 const deplier = s => String(s == null ? '' : s).replace(/[œŒ]/g, 'oe').replace(/[æÆ]/g, 'ae');
 const motsCle = s => norm(deplier(s)).split(' ').filter(Boolean);
 /* « Maître d'Oz » -> « maitredoz » : apostrophes, tirets, accents et espaces
@@ -308,249 +363,173 @@ function cle(s){
   if (k === undefined) k = CLES[s] = motsCle(s).join('');
   return k;
 }
-function indexerFR(src){
-  const map = {};
-  if (Array.isArray(src)){
-    src.forEach(o => {
-      if (!o) return;
-      const id = o.id || o.card_id || o.passcode;
-      const nm = o.name || o.nom || o.name_fr || o.fr;
-      if (id != null && nm) map[id] = nm;
-    });
-  } else if (src && typeof src === 'object'){
-    const inner = src.data || src.cards || src.cartes;
-    if (inner) return indexerFR(inner);
-    for (const k in src){
-      const v = src[k];
-      if (typeof v === 'string') map[k] = v;
-      else if (v && typeof v === 'object' && (v.name || v.nom)) map[k] = v.name || v.nom;
-    }
-  }
-  FR = map;
-  if (!PAR_NOM) PAR_NOM = {};
-  for (const id in map){
-    const k = norm(map[id]);
-    if (k && !(k in PAR_NOM)) PAR_NOM[k] = id;
-  }
-  return Object.keys(map).length;
+/* Les initiales d'un pseudo, pour l'avatar de secours dans la recherche. */
+function initiales(nom){
+  const mots = String(nom || '?').trim().split(/\s+/).filter(Boolean);
+  const deux = (mots[0] || '?')[0] + (mots.length > 1 ? mots[mots.length - 1][0] : '');
+  return deux.toUpperCase();
 }
-async function chargerFR(){
-  BASE_IMG = CHEMINS.img;
-  URL_NOMS = CHEMINS.noms;
-  try { IMGOK = JSON.parse(localStorage.getItem('classeur-img') || '{}'); } catch(e){ IMGOK = {}; }
-  try { EXT_OK = localStorage.getItem('classeur-ext') || null; } catch(e){}
+/* Une teinte stable par pseudo, pour que l'avatar d'une même personne ne
+   change pas de couleur d'une recherche à l'autre. */
+function teinteAvatar(nom){
+  let h = 0;
+  for (const c of (nom || '?')) h = (h * 31 + c.codePointAt(0)) % 360;
+  return h;
+}
 
-  PAR_NOM = {};
-  try {
-    const r = await fetch(URL_NOMS);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    indexerFR(await r.json());
-  } catch(e){}
-  redrawAll();
+/* ---------------- les illustrations ----------------
+   Deux adresses, envoyées une fois par le serveur plutôt que deux mille
+   fois : la vignette pour les pochettes, l'original pour la carte qu'on
+   sort du classeur. Le nom du fichier, lui, est déjà dans la carte.
+
+   Une pochette fait cent pixels de large ; l'original en fait 813 pour
+   160 Ko. Servir l'original partout revenait à télécharger 2,8 Mo par
+   double-page pour afficher dix-huit timbres-poste. */
+const vignetteDe = card => (card && card[ART]) ? DATA.vignettes + card[ART] : '';
+const artworkDe  = card => (card && card[ART]) ? DATA.images    + card[ART] : '';
+
+/* pixel transparent : réaffecter src coupe net un téléchargement en cours */
+const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+/* L'image d'une pochette. Rien pendant un feuilletage maintenu : les pages
+   traversées ne feraient qu'empiler des requêtes qu'il faudra annuler avant
+   de voir la page d'arrivée. Le rendu complet suit à l'arrêt. */
+function imgHTML(card){
+  const src = vignetteDe(card);
+  if (!src || RAPIDE) return '';
+  return '<img class="art" alt="" decoding="async" data-art="' + esc(card[ART])
+       + '" src="' + esc(src) + '">';
 }
-let sauveT;
-function sauverImg(){
-  clearTimeout(sauveT);
-  sauveT = setTimeout(() => {
-    try { localStorage.setItem('classeur-img', JSON.stringify(IMGOK)); } catch(e){}
-  }, 800);
-}
-function idDe(card){
-  if (!PAR_NOM || !card) return null;
-  return PAR_NOM[norm(card[0])] || null;
-}
-/* un seul dossier, un fichier par passcode : seule l'extension reste à deviner.
-   Celle qui a déjà fonctionné une fois est essayée en premier. */
-function candidats(id){
-  const exts = EXT_OK ? [EXT_OK].concat(EXTS.filter(e => e !== EXT_OK)) : EXTS.slice();
-  return exts.map(e => BASE_IMG + id + '.' + e);
-}
-/* Vrai quand on sait deja que la carte a une illustration. Sert a poser la
-   classe `art` des le rendu : sans elle le nom de la carte reste visible
-   jusqu'a l'evenement load, et clignote a chaque page tournee. */
-const aArtwork = id => !!id && !!IMGOK[id];
-function imgHTML(id, cls){
-  /* pendant un feuilletage maintenu on n'emet aucune image : les pages
-     traversees ne feraient qu'empiler des requetes qu'il faudra vider
-     avant de voir la page d'arrivee. Le rendu complet suit a l'arret. */
-  if (!id || RAPIDE) return '';
-  const memo = IMGOK[id];
-  if (memo === '') return '';
-  const src = memo || candidats(id)[0];
-  return '<img class="' + cls + '" alt="" decoding="async" data-id="' + esc(id) + '"'
-       + ' data-k="' + (memo ? -1 : 0) + '" src="' + esc(src) + '">';
-}
-/* les événements load/error ne remontent pas : on écoute en phase de capture */
+/* L'artwork peut manquer sur le disque alors que l'index le donnait : sans
+   ce filet, `.slot.art .nm` garderait le nom caché derrière une image qui
+   n'arrivera pas, et la pochette resterait vide. Les événements load/error
+   ne remontent pas : on écoute en capture. */
 document.addEventListener('error', e => {
   const im = e.target;
-  if (!im || im.tagName !== 'IMG' || !im.dataset || !im.dataset.id) return;
-  const list = candidats(im.dataset.id);
-  let k = +im.dataset.k;
-  k = k < 0 ? 0 : k + 1;
-  if (k >= list.length){
-    IMGOK[im.dataset.id] = ''; sauverImg();
-    const p = im.parentNode;
-    im.remove();
-    if (p) p.classList.remove('art');
-    return;
-  }
-  im.dataset.k = k;
-  im.src = list[k];
-}, true);
-document.addEventListener('load', e => {
-  const im = e.target;
-  if (!im || im.tagName !== 'IMG' || !im.dataset || !im.dataset.id) return;
-  const rel = im.getAttribute('src');
-  if (IMGOK[im.dataset.id] !== rel){ IMGOK[im.dataset.id] = rel; sauverImg(); }
-  if (!EXT_OK){
-    const m = /\.([a-z0-9]+)$/i.exec(rel);
-    if (m){ EXT_OK = m[1].toLowerCase(); try { localStorage.setItem('classeur-ext', EXT_OK); } catch(e){} }
-  }
-  if (im.parentNode) im.parentNode.classList.add('art');
+  if (!im || im.tagName !== 'IMG' || !im.dataset || !im.dataset.art) return;
+  const p = im.parentNode;
+  im.remove();
+  if (p) p.classList.remove('art');
 }, true);
 
-/* ---------------- chargement ---------------- */
-function poserDonnees(j){
-  DATA = j;
-  /* la réponse ne vient plus forcément de ton Sheet : une feuille mal formée
-     ne doit pas casser la page, juste être ignorée */
+/* ---------------- chargement d'un classeur ---------------- */
+function applyData(d, frais){
+  DATA = d;
+  /* la réponse ne vient pas forcément de ton classeur : une famille mal
+     formée ne doit pas casser la page, juste être ignorée */
   DATA.types = (Array.isArray(DATA.types) ? DATA.types : []).filter(t => t && typeof t === 'object');
   DATA.types.forEach(t => {
     t.classeurs = (Array.isArray(t.classeurs) ? t.classeurs : [])
       .filter(c => c && Array.isArray(c.cards));
   });
+  DATA.images = DATA.images || '/static/Cards/';
+  DATA.vignettes = DATA.vignettes || '/api/collection/vignette/';
+  CAN_WRITE = DATA.write === true;
   S.t = Math.max(0, Math.min(S.t, DATA.types.length - 1));
   S.c = Math.max(0, Math.min(S.c, T().classeurs.length - 1));
   S.spread = Math.min(S.spread, sheets());
-  el('offline').hidden = true;
-  el('stage').hidden = false;
-  el('foot').hidden = false;
-  el('meter').hidden = false;
-  el('searchBox').hidden = false;
-  redrawAll();
+  majEntete();
+  majVerrou();
+  setSync(frais ? 'live' : 'stale',
+          frais ? (CAN_WRITE ? 'modifiable' : 'lecture seule') : 'actualisation...');
 }
 
-async function load(frais){
+async function charger(opts){
+  const o = opts || {};
   const s = source();
-  if (!s || !s.url){ sansSource(); return; }
+  if (!s || !s.url){ showGate(null); return; }
+  const silencieux = !!o.silencieux;
 
-  // affichage immédiat de la dernière réponse connue, le temps de la requête
-  const cache = lireCache(s.url);
-  if (cache && cache.types && cache.types.length){
-    poserDonnees(cache);
-    setSync('stale', 'actualisation...');
-  } else {
-    DATA = { types: [] };
-    setSync('offline', 'connexion...');
-  }
-
-  /* le jeton n'est envoyé que si tu en as un : sans lui le script doit
-     répondre les mêmes données, avec write:false */
-  const jeton = jetonDe(s.url);
-  const p = new URLSearchParams({ t: String(Date.now()) });
-  if (jeton) p.set('token', jeton);
-  if (frais) p.set('fresh', '1');
-
+  /* Plus de jeton dans l'adresse : le cookie de session part tout seul,
+     même origine oblige, et c'est le serveur qui décide de `write`. */
+  let data = null, pourquoi = '', statut = 0;
   const stop = new AbortController();
   const minuteur = setTimeout(() => stop.abort(), 20000);
   try {
-    const r = await fetch(s.url + (s.url.indexOf('?') >= 0 ? '&' : '?') + p.toString(),
-                          { signal: stop.signal });
-    clearTimeout(minuteur);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
-    if (j.error) throw new Error(j.error === 'token' ? 'jeton refusé' : j.error);
-    if (!j.types || !j.types.length) throw new Error('le script n’a renvoyé aucune feuille');
-    /* seul le script décide qui peut écrire : un jeton mémorisé ne suffit pas */
-    CAN_WRITE = j.write === true;
-    ecrireCache(s.url, j);
-    poserDonnees(j);
-    setSync('live', CAN_WRITE ? 'modifiable' : 'lecture seule');
-    majCadenas();
-    if (jeton && !CAN_WRITE) toast('Jeton enregistré, mais le script ne l’accepte pas en écriture.', true);
-    if (S.sel !== null && ZOOM){ majPanel(S.sel); majGrandeCarte(); }
-  } catch(err){
-    clearTimeout(minuteur);
-    CAN_WRITE = false;
-    majCadenas();
-    echec(err.name === 'AbortError' ? 'le script n’a pas répondu à temps' : err.message);
+    const r = await fetch(s.url, { credentials:'same-origin', signal: stop.signal });
+    statut = r.status;
+    if (r.ok) data = await r.json();
+    else {
+      try { data = await r.json(); } catch(e){}
+      pourquoi = (data && data.message) || ('réponse HTTP ' + r.status);
+      data = null;
+    }
+  } catch(e){
+    pourquoi = e.name === 'AbortError' ? "le serveur n'a pas répondu à temps"
+                                       : 'serveur injoignable';
   }
-}
+  clearTimeout(minuteur);
 
-/* aucune adresse dans SOURCES : ce n'est pas une panne, c'est à remplir */
-function sansSource(){
-  DATA = { types: [] };
-  CAN_WRITE = false;
-  majCadenas();
-  setSync('offline', 'aucun classeur');
-  el('offline').querySelector('b').textContent = 'Aucun classeur configuré';
-  el('retry').hidden = true;
-  el('offCfg').hidden = true;
-  el('offline').hidden = false;
-  el('stage').hidden = true;
-  el('foot').hidden = true;
-  el('meter').hidden = true;
-  el('searchBox').hidden = true;
-  el('tabs').innerHTML = '';
-  el('binder').innerHTML = '';
-  fermerNet();
-}
-
-function echec(msg){
-  /* du cache est déjà à l'écran : une coupure passagère ne doit pas le
-     faire disparaître sous les yeux, on se contente de le signaler */
-  if (DATA.types.length){
-    setSync('erreur', 'actualisation impossible');
-    toast(msg, true);
+  if (!data || !data.ok){
+    if (silencieux){
+      setSync('erreur', 'actualisation impossible');
+      if (pourquoi) toast(pourquoi, true);
+      return;
+    }
+    // 403 privé, 404 inconnu : le serveur a répondu, et il a dit non
+    const refus = statut === 403 || statut === 404;
+    const dit = pourquoi ? (/[.!?]$/.test(pourquoi) ? pourquoi : pourquoi + '.') : '';
+    showGate(!dit ? null
+      : refus ? '<b>' + esc(dit) + '</b>'
+              : '<b>Impossible de charger le classeur.</b> ' + esc(dit), refus);
     return;
   }
-  DATA = { types: [] };
-  setSync('offline', 'non connecté');
-  el('offline').querySelector('b').textContent = 'Classeur non connecté';
-  el('offlineMsg').textContent = msg;
-  el('retry').hidden = false;
-  el('offCfg').hidden = false;
-  el('offline').hidden = false;
-  el('stage').hidden = true;
-  el('foot').hidden = true;
-  el('meter').hidden = true;
-  el('searchBox').hidden = true;
-  el('tabs').innerHTML = '';
-  el('binder').innerHTML = '';
-  fermerNet();
+
+  ecrireCache(s.url, data);
+  applyData(data, true);
+  /* Un classeur sans la moindre famille : il existe, il est bien à son
+     propriétaire, mais il n'a aucune pochette à dessiner. Ça n'arrive que si
+     le site n'avait encore aucun classeur à recopier au moment de le créer
+     (voir page_modele dans collection.py). Le dire vaut mieux qu'une reliure
+     vide dont rien n'explique le silence. */
+  if (!DATA.types.length){
+    showGate('<b>Ce classeur est vide.</b> Aucune famille de cartes n’y a'
+           + ' encore été versée.', true);
+    return;
+  }
+  showApp();
+  redrawAll();
+  if (S.sel !== null && ZOOM){ majPanel(S.sel); majGrandeCarte(); }
 }
 
-/* ---------------- écriture ---------------- */
-async function push(card, rarity, quality){
-  const s = source();
-  if (!s){ return false; }
+/* ---------------- écriture ----------------
+   Une requête JSON vers Flask, cookie de session compris. Le serveur ne
+   renvoie que la carte touchée, et non le classeur entier : contrairement à
+   un jeu ajouté, rien d'autre ne bouge — ni l'ordre, ni les onglets, ni les
+   classeurs — et deux mille cartes à chaque clic sur une pochette feraient un
+   aller-retour de plus à chaque geste. */
+async function poser(card, rarete, etat){
   if (!CAN_WRITE){
-    toast('Lecture seule : ouvre ⚙ et passe en mode éditeur pour modifier.', true);
+    toast(MOI.connecte ? "Ce classeur n'est pas le tien : lecture seule."
+                       : 'Connecte-toi sur Abyss pour modifier ton classeur.', true);
     return false;
   }
-  if (MODE !== 'live'){
-    toast('Pas de connexion au Sheet : modification impossible.', true);
-    return false;
-  }
-  const body = { token:jetonDe(s.url), sheet:T().sheet, row:card[3], col:card[4],
-                 name:card[0], rarity:rarity || '', quality:quality || '' };
+  let data = null, pourquoi = '';
   try {
-    const r = await fetch(s.url, {
-      method:'POST',
-      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-      body: JSON.stringify(body)
+    const r = await fetch('/api/collection/carte/' + encodeURIComponent(card[ID]), {
+      method: 'PUT',
+      credentials: 'same-origin',
+      // application/json : un formulaire posté depuis un autre site ne peut
+      // pas produire ce type sans pré-vol CORS. C'est la parade CSRF.
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rarete: rarete || '', etat: etat || '' }),
     });
-    const j = await r.json();
-    if (j.error) throw new Error(j.error);
-    card[1] = rarity; card[2] = quality;
-    ecrireCache(s.url, DATA);
-    toast(rarity ? '« ' + card[0] + ' » enregistrée dans le Sheet.'
-                 : '« ' + card[0] + ' » retirée du Sheet.');
-    return true;
-  } catch(err){
-    toast('Échec de l’écriture : ' + err.message, true);
+    try { data = await r.json(); } catch(e){}
+    if (!r.ok) pourquoi = (data && data.message) || ('réponse HTTP ' + r.status);
+  } catch(e){ pourquoi = 'serveur injoignable'; }
+  if (!data || data.ok === false){
+    toast("Échec de l'écriture : " + (pourquoi || 'erreur inconnue'), true);
     return false;
   }
+  /* La carte relue remplace la nôtre case par case, et non l'objet lui-même :
+     c'est le même tableau qui est dans DATA.types, dans ZOOM et dans les
+     résultats de recherche — le remplacer ne mettrait à jour aucun des trois. */
+  const neuve = data.carte || [];
+  for (let k = 0; k < neuve.length; k++) card[k] = neuve[k];
+  ecrireCache(source().url, DATA);
+  toast(card[RAR] ? '« ' + card[NOM] + ' » rangée dans le classeur.'
+                  : '« ' + card[NOM] + ' » retirée du classeur.');
+  return true;
 }
 
 let toastT;
@@ -562,21 +541,345 @@ function toast(msg, bad){
   toastT = setTimeout(() => { t.className = 'toast' + (bad ? ' bad' : ''); }, 4200);
 }
 
+/* =========================================================
+   Les écrans
+
+   Quatre, et un seul à la fois : le classeur, l'écran du visiteur, celui de
+   qui n'a pas encore de classeur, et celui du classeur qui ne s'ouvre pas.
+   ========================================================= */
+function cacheTout(){
+  fermerNet(); fermerRecherche(); closeMenu(); fermerModale();
+  el('res').hidden = true;
+  ['app', 'gate', 'invite', 'accueil'].forEach(k => { el(k).hidden = true; });
+}
+
+/* Le classeur. Rien n'est ferme ici, contrairement aux trois autres :
+   showApp() est rejoue a chaque actualisation en arriere-plan, et fermer la
+   carte qu'on est en train de regarder parce que le serveur vient de
+   repondre n'aurait aucun sens. */
+function showApp(){
+  ['gate', 'invite', 'accueil'].forEach(k => { el(k).hidden = true; });
+  el('app').hidden = false;
+  el('tabs').hidden = false;
+  outils(true);
+  fit();
+}
+
+/* Les deux boutons du bout de barre. Ils ne règlent que le classeur — l'état
+   de la connexion, les reflets de rareté — et n'ont donc rien à faire
+   au-dessus d'un écran qui n'en montre aucun. */
+function outils(visibles){
+  el('gear').hidden = !visibles;
+  el('shine').hidden = !visibles;
+}
+
+/* Écran d'aide : le classeur demandé ne répond pas, ou le serveur a dit non.
+   `refus` distingue le second cas — classeur privé, pseudo inconnu. Un lien
+   /collection/<pseudo> partagé tombe surtout là-dessus, et « ne répond pas »
+   serait faux : il a répondu, c'est justement le problème. Pas de bouton
+   « Réessayer » dans ce cas, il ne pourrait que faire redire non. */
+function showGate(erreur, refus){
+  cacheTout();
+  const s = source();
+  majEntete();
+  setSync('offline', s ? 'non connecté' : 'aucun classeur');
+  outils(!!s);
+  el('tabs').hidden = true;
+  el('tabs').innerHTML = '';
+  el('binder').innerHTML = '';
+  el('gTitle').textContent = refus
+    ? 'Ce classeur ne peut pas être ouvert'
+    : (s ? 'Ce classeur ne répond pas' : 'Aucun classeur');
+  el('gMsg').textContent = refus || !s ? ''
+    : 'Le serveur d’Abyss n’a pas renvoyé le classeur de ' + (s.nom || '?') + '.';
+  el('gErr').hidden = !erreur;
+  if (erreur) el('gErr').innerHTML = erreur;
+  el('gRetry').hidden = !s || !!refus;
+  el('gate').hidden = false;
+}
+
+/* Connecté mais aucun classeur : plutôt que d'atterrir sur celui d'un
+   inconnu, on propose tout de suite de créer le sien. */
+function showInvite(){ ecranSansClasseur('invite'); }
+
+/* Personne n'est connecté : on n'ouvre le classeur de personne. La page
+   tombait jusqu'ici sur SOURCES[0], c'est-à-dire le premier classeur public
+   venu — un visiteur atterrissait chez quelqu'un qu'il n'avait pas demandé,
+   sans qu'aucun mot ne lui dise où il était. */
+function showAccueil(){
+  ecranSansClasseur('accueil');
+  monteRecherche(el('accueilRech'));
+}
+
+function ecranSansClasseur(quel){
+  cacheTout();
+  /* Aucun classeur n'est réellement affiché ici : SRC restait à 0, si bien
+     que la recherche marquait le premier classeur public comme déjà ouvert —
+     cocher une coche sur laquelle cliquer ne fait rien, puisque
+     choisirClasseur() ignore un clic sur ce qui est déjà « SRC ». -1
+     n'existe dans aucune liste : rien ne coche, et le premier clic ouvre
+     bien le classeur visé. */
+  SRC = -1;
+  CAN_WRITE = false;
+  DATA = { types: [], images: DATA.images, vignettes: DATA.vignettes };
+  el('brand-title').textContent = 'Classeur Yu-Gi-Oh';
+  el('tabs').hidden = true;
+  el('tabs').innerHTML = '';
+  el('binder').innerHTML = '';
+  outils(false);
+  majVerrou();
+  el(quel).hidden = false;
+}
+
 /* ---------------- en-tête ---------------- */
-/* Le titre est le bouton : « Classeur de Jokrem » déroule la liste des
-   classeurs déclarés dans SOURCES, et un clic ouvre celui qu'on désigne. */
 function majEntete(){
   const s = source();
-  el('brand-title').textContent = s && s.nom ? 'Classeur de ' + s.nom : 'Classeur';
+  el('brand-title').textContent = s && s.nom
+    ? (s.moi || estLeMien() ? 'Mon classeur' : 'Classeur de ' + s.nom)
+    : 'Classeur Yu-Gi-Oh';
 }
-function renderSourcesMenu(){
-  const m = el('jnlMenu');
-  const items = SOURCES.map((s, i) =>
-    '<button class="menu-item' + (i === SRC ? ' on' : '') + '" role="menuitem" data-s="' + i + '">'
-    + esc(s.nom || ('Classeur ' + (i + 1)))
-    + (i === SRC ? '<span class="tick">\u2713</span>' : '') + '</button>').join('');
-  m.innerHTML = items;
+
+/* Ce que le visiteur peut faire, une fois qu'on sait qui il est.
+   Il n'y a plus rien à déverrouiller : le serveur répond `write: true` quand
+   le classeur affiché est celui du visiteur connecté, et `false` sinon. */
+function majVerrou(){
+  /* La maison ne se montre que si elle mène quelque part : il faut un
+     classeur à soi, et ne pas déjà être dessus. Sinon elle resterait là à ne
+     rien faire — un bouton qui ne change rien à l'écran se lit comme une
+     panne. */
+  el('homeBtn').hidden = !MOI.pseudo || CAN_WRITE;
+  el('unlock').hidden = CAN_WRITE;
+  el('unlock').textContent = !MOI.connecte ? 'Se connecter sur Abyss'
+    : MOI.pseudo ? 'Ouvrir mon classeur' : 'Créer mon classeur';
+  /* les boutons d'écriture dépendent du verrou, pas de la carte ouverte :
+     sans ça « Enregistrer » restait visible tant qu'aucune carte n'avait été
+     désignée, donc dès l'arrivée sur la page */
+  el('pSave').hidden = !CAN_WRITE;
+  el('pDel').hidden = true;
+  if (S.sel !== null) majPanel(S.sel);   // rétablit pDel selon la carte
 }
+
+/* =========================================================
+   La recherche : quel classeur ouvrir
+
+   Elle se monte où on le lui demande — dans sa fenêtre quand on clique sur
+   « Rechercher », et à même l'écran d'accueil quand personne n'est connecté,
+   où elle est tout ce qu'un visiteur peut faire et n'a donc pas à être
+   derrière un bouton. D'où l'absence d'identifiants ici : deux exemplaires
+   peuvent vivre en même temps dans la page, et deux id identiques n'en
+   désigneraient qu'un.
+
+   Une seule chose à chercher, contrairement à l'Archive qui cherche aussi
+   un jeu : ici, chercher une carte se fait dans le classeur ouvert, avec la
+   barre posée au-dessus des pages.
+   ========================================================= */
+const LOUPE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"'
+  + ' stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"'
+  + ' aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+
+function monteRecherche(hote){
+  hote.innerHTML = '<label class="rsearch-box">' + LOUPE
+    + '<input class="rsearch-input" type="text" placeholder="Nom du collectionneur..."'
+    + ' autocomplete="off" spellcheck="false" aria-label="Rechercher un classeur"></label>'
+    + '<div class="rsearch-list"></div>';
+
+  const champ = hote.querySelector('.rsearch-input');
+  const liste = hote.querySelector('.rsearch-list');
+
+  /* Un mot à la place de la liste plutôt qu'une liste vide : une liste qui
+     reste vide sans rien dire laisse croire que la frappe n'a pas pris. Le
+     rôle part avec les résultats — une liste déroulante qui ne contient
+     qu'une phrase n'en est plus une, et un lecteur d'écran l'annoncerait
+     comme une liste vide de choix. */
+  function mot(texte){
+    liste.removeAttribute('role');
+    liste.removeAttribute('aria-label');
+    liste.innerHTML = '<p class="rsearch-vide">' + esc(texte) + '</p>';
+  }
+
+  function dessine(){
+    const brut = champ.value;
+    const q = norm(brut);
+    const items = SOURCES.map((s, i) => ({ s:s, i:i })).filter(x => !q || norm(x.s.nom).includes(q));
+    if (!items.length){ mot('Aucun classeur ne correspond à « ' + brut + ' ».'); return; }
+    liste.setAttribute('role', 'list');
+    liste.setAttribute('aria-label', 'Classeurs trouvés');
+    liste.innerHTML = items.map(x => {
+      const s = x.s;
+      const n = typeof s.cartes === 'number'
+        ? s.cartes + ' carte' + (s.cartes > 1 ? 's' : '') : 'classeur public';
+      const sous = s.moi ? 'Ton classeur — ' + n : n.charAt(0).toUpperCase() + n.slice(1);
+      const avatar = s.avatar
+        ? '<img class="rsearch-avatar" src="' + esc(s.avatar) + '" alt="">'
+        : '<span class="rsearch-avatar" style="--h:' + teinteAvatar(s.nom) + '">'
+          + esc(initiales(s.nom)) + '</span>';
+      return '<button class="rsearch-item' + (x.i === SRC ? ' on' : '')
+        + (s.banniere ? ' rsearch-orne' : '') + '" data-i="' + x.i + '">'
+        + avatar
+        + '<span class="rsearch-meta"><b>' + esc(s.nom || '?') + '</b><i>' + esc(sous) + '</i></span>'
+        + (x.i === SRC ? '<span class="tick">✓</span>' : '')
+        + '</button>';
+    }).join('');
+    liste.querySelectorAll('.rsearch-item').forEach(b => {
+      b.onclick = () => choisirClasseur(+b.dataset.i);
+      /* La bannière tapisse la ligne, très en retrait : elle dit à qui
+         appartient le classeur d'un coup d'œil sans rendre le texte
+         illisible. L'adresse est posée en JavaScript et non écrite dans le
+         HTML : esc() n'échappe pas l'apostrophe, qui suffirait à sortir d'un
+         url('...') et à injecter du CSS. */
+      const s = SOURCES[+b.dataset.i];
+      if (s && s.banniere) b.style.setProperty('--banniere', 'url("' + s.banniere + '")');
+    });
+  }
+
+  champ.addEventListener('input', dessine);
+  champ.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const premier = liste.querySelector('.rsearch-item');
+    if (premier) premier.click();
+  });
+  dessine();
+  return { champ: champ };
+}
+
+function fermerRecherche(){
+  const host = el('recherche');
+  if (host.hidden) return;
+  host.hidden = true;
+  host.innerHTML = '';
+}
+function ouvrirRecherche(){
+  closeMenu();
+  const host = el('recherche');
+  host.innerHTML = '<div class="rsearch-sheet" role="dialog" aria-modal="true" aria-label="Rechercher un classeur">'
+    + '<div class="rsearch-tete"><b>Rechercher un classeur</b>'
+    + '<button class="rsearch-x" aria-label="Fermer">&times;</button></div>'
+    + '<div class="rsearch-in"></div></div>';
+  host.hidden = false;
+  host.querySelector('.rsearch-x').onclick = fermerRecherche;
+  monteRecherche(host.querySelector('.rsearch-in')).champ.focus();
+}
+el('recherche').addEventListener('click', e => {
+  if (e.target === el('recherche')) fermerRecherche();
+});
+el('jnlSearchBtn').addEventListener('click', e => { e.stopPropagation(); ouvrirRecherche(); });
+
+/* ---------------- changer de classeur ---------------- */
+function choisirClasseur(i){
+  fermerRecherche();
+  if (i === SRC || !SOURCES[i]) return;
+  landFlip(); fermerNet();
+  SRC = i;
+  majAdresse();
+  S.t = 0; S.c = 0; S.spread = 0; S.hit = null; S.pose = null; S.sel = null;
+  CAN_WRITE = false;
+  DATA = { types: [], images: DATA.images, vignettes: DATA.vignettes };
+  el('q').value = '';
+  majEntete(); majVerrou();
+  ouvreClasseurAffiche();
+}
+
+/* Le cache s'affiche tout de suite, quitte à ne pas être à jour : la vraie
+   requête part en même temps, en silence, et remplace dès qu'elle répond.
+   Sans cache, l'attente est nue — mais elle est courte, et le classeur ne se
+   dessine qu'une fois qu'il est là. */
+function ouvreClasseurAffiche(){
+  const s = source();
+  if (!s || !s.url){ showGate(null); return; }
+  setSync('offline', 'connexion...');
+  const cache = lireCache(s.url);
+  if (cache && cache.types && cache.types.length){
+    applyData(cache, false);
+    showApp();
+    redrawAll();
+    charger({ silencieux:true });
+  } else {
+    charger();
+  }
+}
+
+function ouvrirLeMien(){
+  const i = SOURCES.findIndex(x => x.nom === MOI.pseudo);
+  if (i < 0) return;
+  if (i !== SRC){ choisirClasseur(i); return; }
+  landFlip(); fermerNet();
+  S.t = 0; S.c = 0; S.spread = 0; S.hit = null; S.pose = null;
+  el('q').value = ''; el('res').hidden = true;
+  redrawAll();
+  charger({ silencieux:true });
+}
+
+/* Créer son classeur : une seule requête, et le serveur renvoie le classeur
+   tout prêt — les mêmes pochettes que les autres, toutes vides (voir
+   cree_page dans collection.py). Rejouable sans dégât, il rend l'existant
+   s'il y en a un. */
+async function creerMonClasseur(){
+  const b = el('inviteCreate');
+  b.disabled = true;
+  try {
+    const r = await fetch('/api/collection', {
+      method:'POST', credentials:'same-origin',
+      headers:{ 'Content-Type':'application/json' }, body:'{}',
+    });
+    const d = await r.json();
+    if (!r.ok || d.ok === false) throw new Error(d.message || 'création impossible');
+    MOI.pseudo = d.pseudo;
+    SOURCES.unshift({ nom: d.pseudo, titre: d.titre, moi: true, cartes: 0,
+                      url: urlClasseur(d.pseudo) });
+    SRC = 0;
+    majAdresse();
+    S.t = 0; S.c = 0; S.spread = 0;
+    ecrireCache(SOURCES[0].url, d);
+    applyData(d, true);
+    showApp();
+    redrawAll();
+    toast('Ton classeur est prêt. Range ta première carte.');
+  } catch(e){
+    toast('Création impossible — ' + (e.message || 'erreur inconnue'), true);
+  }
+  b.disabled = false;
+}
+
+/* =========================================================
+   L'adresse : /collection/<pseudo>
+
+   Un classeur a une adresse à lui, qu'on peut copier et donner. C'est ce qui
+   rend la page partageable, et c'est aussi le chemin le plus court pour
+   arriver chez quelqu'un : le lien ouvre son classeur directement, même chez
+   qui n'a pas de compte et verrait sinon l'écran d'accueil.
+   ========================================================= */
+function pseudoDeURL(){
+  const m = location.pathname.match(/^\/collection\/([^/]+)\/?$/);
+  if (!m) return '';
+  try { return decodeURIComponent(m[1]); } catch(e){ return m[1]; }
+}
+
+/* Le rang d'un classeur dans SOURCES, en l'y ajoutant s'il n'y est pas.
+   L'annuaire ne liste que les classeurs publics : un lien vers un classeur
+   privé, ou vers un pseudo qui n'existe pas, n'y trouve rien. On l'ajoute
+   quand même pour tenter le chargement — c'est le serveur qui doit dire
+   « privé » ou « inconnu », pas un silence ici. */
+function rangDuClasseur(nom){
+  const i = SOURCES.findIndex(x => norm(x.nom) === norm(nom));
+  if (i >= 0) return i;
+  SOURCES.push({ nom: nom, url: urlClasseur(nom) });
+  return SOURCES.length - 1;
+}
+
+/* L'adresse suit le classeur affiché : elle est copiable telle quelle à tout
+   moment, ce qui est tout l'intérêt. replaceState et non pushState — une
+   entrée d'historique par changement de classeur ferait du bouton Retour un
+   « classeur précédent » que personne n'a demandé, et il doit continuer de
+   ramener d'où l'on vient. */
+function majAdresse(){
+  const s = source();
+  const voulue = (s && s.nom) ? '/collection/' + encodeURIComponent(s.nom) : '/collection';
+  if (location.pathname !== voulue){
+    try { history.replaceState(null, '', voulue + location.search); } catch(e){}
+  }
+}
+
+/* ---------------- l'en-tête : onglets, jauge, classeurs ---------------- */
 function renderTabs(){
   el('tabs').innerHTML = DATA.types.map((t, i) => {
     const tot = t.classeurs.reduce((a, c) => a + c.cards.length, 0);
@@ -587,7 +890,7 @@ function renderTabs(){
 }
 function renderMeter(){
   let tot = 0, own = 0;
-  T().classeurs.forEach(c => c.cards.forEach(x => { tot++; if (x[1]) own++; }));
+  T().classeurs.forEach(c => c.cards.forEach(x => { tot++; if (x[RAR]) own++; }));
   const pct = tot ? own / tot * 100 : 0;
   el('mOwn').textContent = own;
   el('mTot').textContent = tot;
@@ -605,7 +908,7 @@ function renderClasseurs(){
 /* ---------------- dimensionnement : le classeur remplit l'écran ---------------- */
 function fit(){
   const st = el('stage');
-  if (!st || st.hidden) return;
+  if (!st || el('app').hidden) return;
   const gap = 8, pad = 13, head = 28, marge = 6;
   let ch;
   if (narrow()){
@@ -630,12 +933,13 @@ function slotHTML(i, col){
   const card = C().cards[i];
   if (!card) return '<span class="slot void" aria-hidden="true"></span>';
   if (!col) col = couleurSure(T().color);
-  const owned = !!card[1];
-  const idc = owned ? idDe(card) : null;
+  const owned = !!card[RAR];
+  const art = owned ? imgHTML(card) : '';
   const cls = ['slot', owned ? 'owned' : 'miss'];
-  /* illustration deja connue : on masque le nom tout de suite plutot que
-     d'attendre le load, sinon il apparait le temps que l'image arrive */
-  if (aArtwork(idc)) cls.push('art');
+  /* la classe est posée dès le rendu, et non à l'événement load : sinon le
+     nom de la carte reste visible jusqu'à l'arrivée de l'image et clignote
+     à chaque page tournée */
+  if (art) cls.push('art');
   const rc = codeRar(card);
   if (rc){ cls.push('r-' + rc); if (brille(rc)) cls.push('brille'); }
   if (S.zoom && S.sel === i && S.t === S.zt && S.c === S.zc) cls.push('sortie');
@@ -643,11 +947,11 @@ function slotHTML(i, col){
   if (S.pose && S.pose.c === S.c && S.pose.i === i) cls.push('pose');
   /* décalage du reflet : les neuf pochettes d'une face ne clignotent pas ensemble */
   return '<button class="' + cls.join(' ') + '" style="--c:' + couleurSure(col)
-    + ';--d:' + ((i * 7) % 9 * 0.62).toFixed(2) + 's" data-i="' + i + '"' + '">'
-    + (owned ? imgHTML(idc, 'art') : '')
+    + ';--d:' + ((i * 7) % 9 * 0.62).toFixed(2) + 's" data-i="' + i + '">'
+    + art
     + (owned ? FOIL : '')
-    + (owned ? '<span class="rar">' + esc(card[1]) + '</span>' : '')
-    + '<span class="nm">' + esc(card[0]) + '</span></button>';
+    + (owned ? '<span class="rar">' + esc(card[RAR]) + '</span>' : '')
+    + '<span class="nm">' + esc(card[NOM]) + '</span></button>';
 }
 /* remplace une seule pochette : évite de reconstruire (et recharger) toute la double-page */
 function majSlot(i){
@@ -670,7 +974,7 @@ function faceHTML(sheet, face){
   let slots = '', pleines = 0;
   for (let j = 0; j < PER_FACE; j++){
     const i = start + j;
-    if (cards[i] && cards[i][1]) pleines++;
+    if (cards[i] && cards[i][RAR]) pleines++;
     slots += slotHTML(i, col);
   }
   return '<div class="page ' + side + '">'
@@ -680,18 +984,15 @@ function faceHTML(sheet, face){
 }
 const SPINE = '<div class="spine">' + '<i class="ring"></i>'.repeat(4) + '</div>';
 
-/* pixel transparent : reaffecter src coupe net un telechargement en cours */
-const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-
 function draw(leftSheet, rightSheet){
   const b = el('binder');
-  /* on abandonne cette double-page : on annule ses telechargements, sinon
-     ils restent dans la file du navigateur et retardent la page d'arrivee.
-     data-id est retire d'abord pour que les ecouteurs load/error ci-dessus
-     ignorent le pixel et n'aillent pas l'ecrire dans IMGOK. */
-  const vieilles = b.querySelectorAll('img[data-id]');
+  /* on abandonne cette double-page : on annule ses téléchargements, sinon
+     ils restent dans la file du navigateur et retardent la page d'arrivée.
+     data-art est retiré d'abord pour que l'écouteur d'erreur ci-dessus
+     ignore le pixel et n'aille pas dégrader une pochette au passage. */
+  const vieilles = b.querySelectorAll('img[data-art]');
   for (let k = 0; k < vieilles.length; k++){
-    vieilles[k].removeAttribute('data-id');
+    vieilles[k].removeAttribute('data-art');
     vieilles[k].src = PIXEL;
   }
   b.innerHTML = faceHTML(leftSheet, 'verso') + SPINE + faceHTML(rightSheet, 'recto');
@@ -700,7 +1001,7 @@ function render(){
   if (!DATA.types.length) return;
   fit();
   draw(S.spread, S.spread + 1);
-  // en bout de classeur la fleche reste active s'il y a un classeur voisin
+  // en bout de classeur la flèche reste active s'il y a un classeur voisin
   el('prev').disabled = S.spread <= 0 && classeurVoisin(-1) < 0;
   el('next').disabled = S.spread >= sheets() && classeurVoisin(1) < 0;
   el('goPage').max = sheets();
@@ -719,9 +1020,9 @@ const slotEl = i => el('binder').querySelector('.slot[data-i="' + i + '"]');
 let flip = null, lastTurn = 0;
 let swap = null;   // changement de classeur en cours
 
-/* feuilletage maintenu (fleche enfoncee) : tant que les pages defilent on
+/* feuilletage maintenu (flèche enfoncée) : tant que les pages défilent on
    dessine les pochettes sans artwork, et on redessine pour de bon 160 ms
-   apres la derniere page tournee. */
+   après la dernière page tournée. */
 let RAPIDE = false, rapideT = null;
 function feuilletage(){
   RAPIDE = true;
@@ -729,8 +1030,8 @@ function feuilletage(){
   rapideT = setTimeout(() => {
     RAPIDE = false;
     /* une feuille tourne encore : la redessiner maintenant remettrait la
-       double-page a sa position d'arrivee sous la feuille en mouvement
-       (page dedoublee le temps de l'animation). Son onfinish s'en charge. */
+       double-page à sa position d'arrivée sous la feuille en mouvement
+       (page dédoublée le temps de l'animation). Son onfinish s'en charge. */
     if (!flip && !swap) render();
   }, 160);
 }
@@ -751,7 +1052,7 @@ function classeurVoisin(dir){
   return (c >= 0 && c < T().classeurs.length) ? c : -1;
 }
 
-/* changement de classeur commence : on l'acheve tout de suite */
+/* changement de classeur commencé : on l'achève tout de suite */
 function landSwap(){
   if (!swap) return;
   const s = swap;
@@ -761,17 +1062,19 @@ function landSwap(){
   s.appliquer();
 }
 
-/* Bascule sur le classeur `c`. On change de reliure, pas de page : une feuille
-   qui pivote n'aurait aucun sens. Le classeur en cours sort dans le sens de
-   lecture (`dir`), le nouveau entre par l'autre bord ; .stage a overflow:hidden,
-   la sortie est donc rognee net. `debut` dit si on arrive a la premiere
-   double-page du classeur ou a la derniere. */
+/* Bascule sur le classeur `c` — celui du bas de page, pas celui de la
+   personne : un onglet qui déborde se poursuit dans un second classeur. On
+   change donc de reliure, pas de page : une feuille qui pivote n'aurait
+   aucun sens. Le classeur en cours sort dans le sens de lecture (`dir`), le
+   nouveau entre par l'autre bord ; .stage a overflow:hidden, la sortie est
+   donc rognée net. `debut` dit si on arrive à la première double-page du
+   classeur ou à la dernière. */
 function changeClasseur(c, dir, debut){
   if (c < 0 || c === S.c) return false;
 
   const appliquer = () => {
     S.c = c;
-    S.spread = debut ? 0 : sheets();   // sheets() lit deja le nouveau classeur
+    S.spread = debut ? 0 : sheets();   // sheets() lit déjà le nouveau classeur
     S.hit = null; S.pose = null;
     renderClasseurs(); render();
   };
@@ -787,13 +1090,13 @@ function changeClasseur(c, dir, debut){
   swap = { anim: sortie, appliquer: appliquer };
   sortie.onfinish = () => {
     swap = null;
-    appliquer();                       // le binder est encore masque (fill:forwards)
+    appliquer();                       // le binder est encore masqué (fill:forwards)
     const b = el('binder');
     b.animate([
       { transform:'translateX(' + (-dx) + 'px) scale(.93)', opacity:0 },
       { transform:'translateX(0) scale(1)',                 opacity:1 }
     ], { duration:240, easing:'cubic-bezier(0,0,.3,1)' });
-    sortie.cancel();                   // l'entree pilote deja opacity/transform
+    sortie.cancel();                   // l'entrée pilote déjà opacity/transform
   };
   return true;
 }
@@ -802,7 +1105,7 @@ function turn(dir){
   landFlip();
   const from = S.spread, to = from + dir;
   if (to < 0 || to > sheets()){
-    // bout du classeur : on enchaine sur le voisin s'il existe
+    // bout du classeur : on enchaîne sur le voisin s'il existe
     if (!changeClasseur(classeurVoisin(dir), dir, dir > 0)) render();
     return;
   }
@@ -867,16 +1170,16 @@ let hitT;
 function majPanel(i){
   const card = C().cards[i];
   if (!card) return;
-  const o = pos(i), owned = !!card[1];
-  el('pName').textContent = card[0];
+  const o = pos(i), owned = !!card[RAR];
+  el('pName').textContent = card[NOM];
   el('pStat').innerHTML = esc(T().label) + ' · '
     + (owned ? '<b class="oui">Possédée</b>' : '<b class="non">Non possédée</b>');
   el('pCoord').innerHTML = [['Classeur', C().n], ['Page', o.page],
       ['Face', o.face === 'recto' ? 'R' : 'V'], ['Emplacement', o.slot]]
     .map(kv => '<div class="cbox"><div class="k">' + kv[0] + '</div><div class="v">'
       + kv[1] + '</div></div>').join('');
-  el('pRar').value = card[1] && CODES.indexOf(card[1]) >= 0 ? card[1] : 'C';
-  el('pQual').value = card[2] || 3;
+  el('pRar').value = card[RAR] && CODES.indexOf(card[RAR]) >= 0 ? card[RAR] : 'C';
+  el('pQual').value = card[ETAT] || 3;
   el('pSave').textContent = owned ? 'Enregistrer' : 'Ajouter au classeur';
   el('pSave').hidden = !CAN_WRITE;
   el('pDel').hidden = !owned || !CAN_WRITE;
@@ -892,17 +1195,27 @@ function rectCible(){
   return { w:w, h:h, x:(innerWidth - w) / 2, y:marge + (dispoH - h) / 2 };
 }
 
+/* La carte agrandie montre son illustration même quand on ne la possède
+   pas : c'est la carte qu'on cherche, pas la pochette. Elle est alors
+   grisée et cerclée de pointillés (voir .bigcard.absente). */
+function bigArtHTML(card){
+  const src = artworkDe(card);
+  return src ? '<img class="bigart" alt="" decoding="async" data-art="' + esc(card[ART])
+             + '" src="' + esc(src) + '">' : '';
+}
 function grandeCarteHTML(card){
-  const owned = !!card[1];
+  const owned = !!card[RAR];
   const rc = codeRar(card);
+  const art = bigArtHTML(card);
   const cls = ['bigcard'];
+  if (art) cls.push('art');
   if (!owned) cls.push('absente');
   if (rc){ cls.push('r-' + rc); if (brille(rc)) cls.push('brille'); }
   return '<div class="' + cls.join(' ') + '" style="--c:' + couleurSure(T().color) + ';--d:.35s">'
-    + imgHTML(card, 'bigart', true)
-    + '<div class="bigfb"><span>' + esc(card[0]) + '</span></div>'
+    + art
+    + '<div class="bigfb"><span>' + esc(card[NOM]) + '</span></div>'
     + (owned ? FOIL : '')
-    + (owned ? '<span class="bigrar">' + esc(card[1]) + '</span>'
+    + (owned ? '<span class="bigrar">' + esc(card[RAR]) + '</span>'
              : '<span class="bigmiss">Non possédée</span>')
     + '</div>';
 }
@@ -912,17 +1225,17 @@ function majGrandeCarte(){
   if (!card) return;
   const big = ZOOM.box.querySelector('.bigcard');
   if (!big){ ZOOM.box.innerHTML = grandeCarteHTML(card); return; }
-  const owned = !!card[1];
+  const owned = !!card[RAR];
   big.classList.toggle('absente', !owned);
   /* l'illustration correspond peut-être encore à la carte précédente : on la
      remplace si le fichier ne correspond plus (navigation entre cartes) */
-  const neuf = fichierArt(card);
-  const vieilleArt = big.querySelector('.bigart');
-  if ((vieilleArt ? vieilleArt.dataset.art : '') !== neuf){
-    if (vieilleArt) vieilleArt.remove();
+  const neuf = card[ART] || '';
+  const vieille = big.querySelector('.bigart');
+  if ((vieille ? vieille.dataset.art : '') !== neuf){
+    if (vieille) vieille.remove();
     big.classList.remove('art');
-    const html = imgHTML(card, 'bigart', true);
-    if (html) big.insertAdjacentHTML('afterbegin', html);
+    const html = bigArtHTML(card);
+    if (html){ big.insertAdjacentHTML('afterbegin', html); big.classList.add('art'); }
   }
   /* la rareté vient peut-être de changer dans le panneau : on refait le vernis */
   CODES.forEach(c => big.classList.remove('r-' + c));
@@ -935,7 +1248,7 @@ function majGrandeCarte(){
   const vieux = big.querySelector('.bigrar') || big.querySelector('.bigmiss');
   if (vieux) vieux.remove();
   big.insertAdjacentHTML('beforeend', owned
-    ? '<span class="bigrar">' + esc(card[1]) + '</span>'
+    ? '<span class="bigrar">' + esc(card[RAR]) + '</span>'
     : '<span class="bigmiss">Non possédée</span>');
 }
 
@@ -949,13 +1262,11 @@ function poserRect(box, r){
 /* la carte sort de la pochette, avance vers nous et grandit */
 function animEntree(box, s, r){
   let dx = 0, dy = 50, sc = .82, depuisPochette = false;
-  if (s){
-    if (s.width > 4){
-      sc = s.width / r.w;
-      dx = (s.left + s.width / 2) - (r.x + r.w / 2);
-      dy = (s.top + s.height / 2) - (r.y + r.h / 2);
-      depuisPochette = true;
-    }
+  if (s && s.width > 4){
+    sc = s.width / r.w;
+    dx = (s.left + s.width / 2) - (r.x + r.w / 2);
+    dy = (s.top + s.height / 2) - (r.y + r.h / 2);
+    depuisPochette = true;
   }
   const mid = sc + (1 - sc) * .8;
   return box.animate([
@@ -970,13 +1281,11 @@ function animEntree(box, s, r){
 /* la carte repart vers sa pochette et s'y glisse */
 function animSortie(box, s, r, owned){
   let dx = 0, dy = 60, sc = .8, versPochette = false;
-  if (s){
-    if (s.width > 4){
-      sc = s.width / r.w;
-      dx = (s.left + s.width / 2) - (r.x + r.w / 2);
-      dy = (s.top + s.height / 2) - (r.y + r.h / 2);
-      versPochette = true;
-    }
+  if (s && s.width > 4){
+    sc = s.width / r.w;
+    dx = (s.left + s.width / 2) - (r.x + r.w / 2);
+    dy = (s.top + s.height / 2) - (r.y + r.h / 2);
+    versPochette = true;
   }
   const mid = sc + (1 - sc) * .72;
   return box.animate([
@@ -1027,7 +1336,7 @@ function fermer(insertion){
   const dst = dstEl ? dstEl.getBoundingClientRect() : null;
   const card = (DATA.types[z.t] && DATA.types[z.t].classeurs[z.c])
     ? DATA.types[z.t].classeurs[z.c].cards[z.i] : null;
-  const owned = !!(card && card[1]);
+  const owned = !!(card && card[RAR]);
   ZOOM = null;
 
   let fait = false;
@@ -1046,7 +1355,7 @@ function fermer(insertion){
   a.onfinish = fini;
   if (reduce()) setTimeout(fini, 20);
 }
-/* fermeture sans animation (changement d'onglet, perte de connexion, etc.) */
+/* fermeture sans animation (changement d'onglet, changement de classeur...) */
 function fermerNet(){
   if (ZOOM){ ZOOM.box.remove(); ZOOM = null; }
   el('panel').classList.remove('open');
@@ -1080,11 +1389,11 @@ function navCarte(dir){
   const cible = carteAdjacente(dir);
   if (!cible) return;
   landFlip();
-  const changeClasseur = cible.ci !== S.c;
+  const change = cible.ci !== S.c;
   S.c = cible.ci; S.zc = cible.ci; S.sel = cible.i;
   const o = pos(cible.i);
   S.spread = o.face === 'recto' ? o.page - 1 : o.page;
-  if (changeClasseur) renderClasseurs();
+  if (change) renderClasseurs();
   render();
   ZOOM.i = cible.i; ZOOM.c = cible.ci; ZOOM.t = S.t;
   majPanel(cible.i);
@@ -1098,9 +1407,9 @@ el('pSave').onclick = async () => {
   if (S.sel === null) return;
   const card = C().cards[S.sel];
   if (!card) return;
-  const avait = !!card[1];
+  const avait = !!card[RAR];
   el('pSave').disabled = true;
-  const ok = await push(card, el('pRar').value, Number(el('pQual').value));
+  const ok = await poser(card, el('pRar').value, Number(el('pQual').value));
   el('pSave').disabled = false;
   renderMeter();
   if (ok && !avait){ fermer(true); return; }   // ajout : la carte se glisse dans la pochette
@@ -1111,7 +1420,7 @@ el('pDel').onclick = async () => {
   const card = C().cards[S.sel];
   if (!card) return;
   el('pDel').disabled = true;
-  await push(card, null, null);
+  await poser(card, null, null);
   el('pDel').disabled = false;
   renderMeter();
   majPanel(S.sel); majGrandeCarte(); majSlot(S.sel); majFace();  // la carte reste en main
@@ -1119,7 +1428,7 @@ el('pDel').onclick = async () => {
 el('pClose').onclick = () => fermer();
 el('scrim').onclick = () => fermer();
 
-/* ---------------- recherche ---------------- */
+/* ---------------- recherche d'une carte dans le classeur ouvert ---------------- */
 let cursor = -1, hits = [];
 el('q').addEventListener('input', e => {
   cursor = -1;
@@ -1129,9 +1438,9 @@ el('q').addEventListener('input', e => {
   hits = [];
   DATA.types.forEach((t, ti) => t.classeurs.forEach((c, ci) => c.cards.forEach((x, i) => {
     if (hits.length >= 40) return;
-    const k = cle(x[0]);
+    const k = cle(x[NOM]);
     if (mots.every(m => k.indexOf(m) >= 0)){
-      hits.push({ ti:ti, ci:ci, i:i, nm:x[0], own:!!x[1], cl:c.n });
+      hits.push({ ti:ti, ci:ci, i:i, nm:x[NOM], own:!!x[RAR], cl:c.n });
     }
   })));
   el('res').hidden = false;
@@ -1180,9 +1489,9 @@ el('classeurs').onclick = e => {
   const b = e.target.closest('[data-c]'); if (!b) return;
   landFlip(); fermerNet();
   const c = +b.dataset.c;
-  // le classeur deja ouvert : on revient juste a sa premiere page
+  // le classeur déjà ouvert : on revient juste à sa première page
   if (c === S.c){ S.spread = 0; S.hit = null; S.pose = null; render(); return; }
-  changeClasseur(c, c > S.c ? 1 : -1, true);   // toujours a la premiere page
+  changeClasseur(c, c > S.c ? 1 : -1, true);   // toujours à la première page
 };
 el('binder').addEventListener('click', e => {
   const s = e.target.closest('.slot[data-i]');
@@ -1190,6 +1499,31 @@ el('binder').addEventListener('click', e => {
 });
 el('prev').onclick = () => turn(-1);
 el('next').onclick = () => turn(1);
+
+/* ---------------- gestes du doigt ----------------
+   Sur un téléphone, les flèches du classeur sont deux petits ronds posés en
+   haut et en bas d'une page qui prend tout l'écran ; le classeur, lui,
+   s'ouvre à plat sous le pouce. On le feuillette donc comme un vrai : le
+   doigt pousse la page vers la gauche pour aller à la suivante.
+
+   Les trois gestes doublent des boutons qui restent là — les flèches du
+   classeur, celles de la carte agrandie, la croix du panneau. Rien ne
+   devient inatteignable faute de les connaître. Voir static/gestes.js.
+
+   La feuille de style pose les touch-action qui vont avec : pan-y sur le
+   classeur, pour que le doigt laisse le défilement vertical de la page au
+   navigateur et nous rende l'horizontal ; none sur la carte agrandie et sur
+   le panneau, qui n'ont rien à faire défiler. */
+glissement(el('binder'), { gauche: () => turn(1), droite: () => turn(-1) });
+/* Écoute posée sur #zoom, qui ne bouge jamais, plutôt que sur la carte
+   elle-même : ouvrir() en construit une neuve à chaque fois. */
+glissement(el('zoom'), {
+  gauche: () => navCarte(1),
+  droite: () => navCarte(-1),
+  bas:    () => fermer(),
+});
+glissement(el('panel'), { bas: () => fermer() });
+
 el('goPage').addEventListener('change', () => {
   const p = parseInt(el('goPage').value, 10);
   if (!isNaN(p)) goToSpread(Math.max(1, Math.min(sheets(), p)) - 1);
@@ -1198,7 +1532,8 @@ el('goPage').addEventListener('keydown', e => { if (e.key === 'Enter') el('goPag
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape'){
     if (el('modal').classList.contains('open')){ fermerModale(); return; }
-    if (!el('menu').hidden || !el('jnlMenu').hidden){ closeMenu(); closeJnl(); return; }
+    if (!el('recherche').hidden){ fermerRecherche(); return; }
+    if (!el('menu').hidden){ closeMenu(); return; }
     if (ZOOM){ fermer(); return; }
   }
   const tag = document.activeElement.tagName;
@@ -1217,73 +1552,47 @@ addEventListener('resize', () => {
   clearTimeout(resizeT);
   resizeT = setTimeout(() => {
     fit();
-    if (DATA.types.length) render();
+    if (DATA.types.length && !el('app').hidden) render();
     if (ZOOM){ ZOOM.rect = rectCible(); poserRect(ZOOM.box, ZOOM.rect); }
   }, 120);
 });
 
-/* ---------------- menus de l'en-tête ---------------- */
-/* Deux menus, jamais ouverts en même temps : celui du titre change de
-   classeur, celui de l'engrenage dit l'état et donne les réglages. */
+/* ---------------- le menu de l'engrenage ---------------- */
 function closeMenu(){
   el('menu').hidden = true;
   el('gear').setAttribute('aria-expanded', 'false');
 }
 function toggleMenu(){
   const m = el('menu'), ouvert = m.hidden;
-  // un seul menu ouvert à la fois, et l'âge de la synchro relu au passage
-  if (ouvert){ closeJnl(); ecritEtat(); }
+  if (ouvert) fermerRecherche();                   // un seul panneau ouvert à la fois
   m.hidden = !ouvert;
   el('gear').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
 }
-function closeJnl(){
-  el('jnlMenu').hidden = true;
-  el('jnl').setAttribute('aria-expanded', 'false');
-}
-function toggleJnl(){
-  const m = el('jnlMenu'), ouvert = m.hidden;
-  if (ouvert){ closeMenu(); renderSourcesMenu(); }
-  m.hidden = !ouvert;
-  el('jnl').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
-}
 el('gear').onclick = e => { e.stopPropagation(); toggleMenu(); };
-el('jnl').onclick  = e => { e.stopPropagation(); toggleJnl(); };
+/* Une sélection de texte commencée dans le menu et relâchée dehors ne doit
+   pas le fermer : on ne ferme que si le clic ET le mousedown qui l'a précédé
+   visaient tous les deux en dehors. */
+let HORS_COG = false;
+document.addEventListener('mousedown', e => { HORS_COG = !e.target.closest('.cog-wrap'); });
 document.addEventListener('click', e => {
-  if (!el('menu').hidden && !e.target.closest('.cog-wrap')) closeMenu();
-  if (!el('jnlMenu').hidden && !e.target.closest('.titre')) closeJnl();
+  if (HORS_COG && !el('menu').hidden && !e.target.closest('.cog-wrap')) closeMenu();
 });
 
-/* ---------------- changer de classeur ---------------- */
-el('jnlMenu').onclick = e => {
-  const b = e.target.closest('[data-s]'); if (!b) return;
-  choisirClasseur(+b.dataset.s);
+el('gRetry').onclick = () => charger();
+el('inviteCreate').onclick = creerMonClasseur;
+el('homeBtn').onclick = () => { closeMenu(); fermerRecherche(); ouvrirLeMien(); };
+el('unlock').onclick = () => {
+  closeMenu();
+  /* Pas connecté : direction Abyss, sur sa fenêtre de connexion — atterrir
+     sur le hub laisserait le bouton à retrouver, un clic de plus pour la
+     seule chose qu'on venait faire. Connecté avec un classeur : on l'ouvre.
+     Connecté sans classeur : on lui en crée un et on l'y emmène. */
+  if (!MOI.connecte){ location.href = '/abyss?connexion=1'; return; }
+  if (MOI.pseudo){ ouvrirLeMien(); return; }
+  creerMonClasseur();
 };
-function choisirClasseur(i){
-  closeJnl();
-  if (i === SRC || !SOURCES[i]) return;
-  landFlip(); fermerNet();
-  SRC = i; memoriseClasseur();
-  S.t = 0; S.c = 0; S.spread = 0; S.hit = null; S.pose = null; S.sel = null;
-  CAN_WRITE = false;
-  DATA = { types: [] };
-  DERNIERE_SYNC = 0;   // autre classeur : sa synchro n'a rien à voir avec l'ancienne
-  majEntete(); majCadenas();
-  load();
-}
 
-/* ---------------- lecture seule / mode éditeur ---------------- */
-function majCadenas(){
-  el('unlock').hidden = CAN_WRITE;
-  el('relock').hidden = !CAN_WRITE;
-  /* les boutons d'écriture dépendent du verrou, pas de la carte ouverte :
-     sans ça « Enregistrer » restait visible tant qu'aucune carte n'avait
-     été sélectionnée, donc dès l'arrivée sur la page */
-  el('pSave').hidden = !CAN_WRITE;
-  el('pDel').hidden = true;
-  if (S.sel !== null) majPanel(S.sel);   // rétablit pDel selon la carte
-}
-
-/* ---------------- modales : jeton, images ---------------- */
+/* ---------------- modales ---------------- */
 function ouvrirModale(html){
   el('sheetbox').innerHTML = html;
   el('modal').classList.add('open');
@@ -1296,61 +1605,179 @@ el('modal').addEventListener('click', e => {
   if (e.target === el('modal')) fermerModale();
 });
 
-function openJeton(){
-  const s = source();
-  if (!s) return;
-  closeMenu();
-  ouvrirModale(
-    '<h2>Passer en mode éditeur</h2>'
-    + '<div class="fld"><label>Jeton</label>'
-    + '<input id="cfgTok" type="password" autocomplete="off" spellcheck="false"></div>'
-    + '<p class="diag" id="jErr" hidden></p>'
-    + '<div class="row"><button class="act ghost" id="cfgCancel">Annuler</button>'
-    + '<button class="act" id="cfgSave">Déverrouiller</button></div>');
-  el('cfgTok').value = jetonDe(s.url);
-  el('cfgCancel').onclick = fermerModale;
-  el('cfgSave').onclick = validerJeton;
-  el('cfgTok').addEventListener('keydown', e => { if (e.key === 'Enter') validerJeton(); });
-  setTimeout(() => { if (el('cfgTok')) el('cfgTok').focus(); }, 30);
+/* =========================================================
+   Exporter le classeur
+
+   Tout est deja en memoire : pas de requete, juste mettre en forme et
+   declencher un telechargement. Ouvert a n'importe quel classeur affiche,
+   comme dans l'Archive -- c'est deja ce qu'on regarde, pas besoin d'en etre
+   le proprietaire pour en garder une copie.
+
+   Le nom de la carte et sa famille partent toujours : sans eux le fichier ne
+   dit rien. Tout le reste se choisit, y compris la question qui n'a pas
+   d'equivalent dans l'Archive -- les pochettes vides. Un classeur est fait
+   d'emplacements dont la plupart sont vides ; exporter les deux mille
+   pochettes quand on en possede six cents, c'est un fichier qui parle surtout
+   de ce qu'on n'a pas. D'ou le choix, et « Possedees » par defaut.
+   ========================================================= */
+function telecharge(contenu, type, nom){
+  const blob = new Blob([contenu], { type: type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nom; a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // laisse le temps au téléchargement de démarrer avant de libérer l'URL
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-async function validerJeton(){
-  const s = source();
-  const jeton = el('cfgTok').value.trim();
-  if (!jeton){
-    el('jErr').hidden = false;
-    el('jErr').textContent = 'Saisis le jeton, ou annule pour rester en lecture seule.';
-    return;
-  }
-  const b = el('cfgSave');
-  b.disabled = true; b.textContent = 'Vérification...';
-  poserJeton(s.url, jeton);
-  await load(true);
-  /* seul le script décide : CAN_WRITE ne passe à true que s'il l'a confirmé,
-     jamais parce qu'on a saisi quelque chose */
-  if (CAN_WRITE){
-    fermerModale();
-    toast('Passage en mode éditeur.');
-  } else if (el('jErr')){
-    b.disabled = false; b.textContent = 'Déverrouiller';
-    el('jErr').hidden = false;
-    el('jErr').textContent = 'Jeton incorrect';
-  }
+function slug(n){
+  return String(n == null ? '' : n).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
 }
 
-el('reload').onclick = () => { closeMenu(); load(true); };
-el('unlock').onclick = openJeton;
-el('relock').onclick = () => {
-  const s = source();
+const CHAMPS_EXPORT = [
+  ['rarete', 'Rareté'], ['etat', 'État'], ['classeur', 'Classeur'],
+  ['page', 'Page'], ['face', 'Face'], ['place', 'Emplacement'],
+];
+const LIBELLE_ETAT = { 3:'Bon', 2:'Moyen', 1:'Mauvais' };
+
+/* Une carte, mise a plat : ce que l'export sait ecrire d'elle. `i` est sa
+   place dans le classeur, d'ou se deduisent la page, la face et
+   l'emplacement -- les memes quatre nombres que le panneau affiche sous son
+   nom, et sous les memes noms. */
+function carteAplat(t, classeur, card, i){
+  const o = pos(i);
+  return {
+    famille: t.label, nom: card[NOM],
+    rarete: card[RAR] || '', etat: LIBELLE_ETAT[card[ETAT]] || '',
+    classeur: classeur.n, page: o.page,
+    face: o.face === 'recto' ? 'R' : 'V', place: o.slot,
+  };
+}
+/* Les cartes retenues par la selection en cours de la fenetre. */
+function choixExport(){
+  const b = el('sheetbox');
+  if (!b) return [];
+  const familles = new Set(Array.from(b.querySelectorAll('#expFamilles input:checked'))
+    .map(c => c.value));
+  const quoi = b.querySelector('.exp-quoi .exp-btn.on').dataset.quoi;
+  const sortie = [];
+  DATA.types.forEach(t => {
+    if (!familles.has(t.key)) return;
+    t.classeurs.forEach(classeur => classeur.cards.forEach((card, i) => {
+      if (quoi === 'possedees' && !card[RAR]) return;
+      sortie.push(carteAplat(t, classeur, card, i));
+    }));
+  });
+  return sortie;
+}
+/* Combien de cartes partiraient : un retour immediat, plutot que de le
+   decouvrir dans le fichier telecharge. */
+function majExportInfo(){
+  const n = choixExport().length;
+  el('expInfo').innerHTML = '<b>' + n + '</b> carte' + (n > 1 ? 's' : '')
+    + ' avec cette sélection';
+}
+function ouvrirExport(){
   closeMenu();
-  if (!s) return;
-  poserJeton(s.url, '');
-  CAN_WRITE = false;
-  majCadenas();
-  toast('Retour en lecture seule.');
-  load(true);
-};
-el('retry').onclick = () => load(true);
-el('offCfg').onclick = e => { e.stopPropagation(); closeJnl(); if (el('menu').hidden) toggleMenu(); };
+  if (!DATA.types.length){ toast('Ce classeur est vide : rien à exporter.', true); return; }
+  const s = source();
+  const familles = DATA.types.map(t =>
+    '<label class="exp-case"><input type="checkbox" value="' + esc(t.key) + '" checked>'
+    + '<span>' + esc(t.label) + '</span></label>').join('');
+  const champs = CHAMPS_EXPORT.map(c =>
+    '<label class="exp-case"><input type="checkbox" value="' + c[0] + '" checked>'
+    + '<span>' + esc(c[1]) + '</span></label>').join('');
+  ouvrirModale(
+    '<h2>Exporter le classeur</h2>'
+    + '<p>' + esc(s && s.nom ? 'Le classeur de ' + s.nom : 'Ce classeur')
+    + ', tel qu\'il est à l\'écran.</p>'
+    + '<div class="exp-format exp-quel" role="group" aria-label="Format du fichier">'
+    +   '<button type="button" class="exp-btn on" data-format="json">JSON</button>'
+    +   '<button type="button" class="exp-btn" data-format="csv">CSV</button></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Familles</span></div>'
+    +   '<div class="exp-grille" id="expFamilles">' + familles + '</div></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Quelles pochettes</span></div>'
+    +   '<div class="exp-format exp-quoi" role="group" aria-label="Quelles pochettes">'
+    +     '<button type="button" class="exp-btn on" data-quoi="possedees">Possédées</button>'
+    +     '<button type="button" class="exp-btn" data-quoi="tout">Tout le classeur</button>'
+    +   '</div></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Données</span>'
+    +   '<span class="exp-note">nom et famille toujours inclus</span></div>'
+    +   '<div class="exp-grille" id="expChamps">' + champs + '</div></div>'
+    + '<p class="exp-info" id="expInfo"></p>'
+    + '<div class="row"><button class="act ghost" id="expAnnuler">Annuler</button>'
+    + '<button class="act" id="expGo">Exporter</button></div>');
+
+  const b = el('sheetbox');
+  el('expAnnuler').onclick = fermerModale;
+  el('expGo').onclick = lancerExport;
+  /* Deux bascules a deux boutons, et non des cases : ce sont des choix
+     exclusifs, et une case a cocher promettrait de pouvoir n'en prendre
+     aucun. Le meme geste des deux cotes, donc le meme dessin. */
+  b.querySelectorAll('.exp-format').forEach(groupe => {
+    groupe.querySelectorAll('.exp-btn').forEach(btn => btn.onclick = () => {
+      groupe.querySelectorAll('.exp-btn').forEach(x => x.classList.remove('on'));
+      btn.classList.add('on');
+      majExportInfo();
+    });
+  });
+  b.querySelectorAll('#expFamilles input').forEach(c =>
+    c.addEventListener('change', majExportInfo));
+  majExportInfo();
+}
+function lancerExport(){
+  const b = el('sheetbox');
+  const format = b.querySelector('.exp-quel .exp-btn.on').dataset.format;
+  const champs = Array.from(b.querySelectorAll('#expChamps input:checked')).map(c => c.value);
+  const cartes = choixExport();
+  if (!cartes.length){ toast('Rien à exporter avec cette sélection.', true); return; }
+  const nom = 'classeur-' + (slug(source() && source().nom) || 'yugioh');
+  const colonnes = ['famille', 'nom'].concat(champs);
+  if (format === 'json'){
+    const sortie = cartes.map(c => {
+      const o = {};
+      colonnes.forEach(k => { o[k] = c[k]; });
+      return o;
+    });
+    telecharge(JSON.stringify(sortie, null, 2), 'application/json', nom + '.json');
+  } else {
+    const lignes = cartes.map(c => colonnes.map(k => celluleCSV(c[k])).join(','));
+    // BOM UTF-8 : sans lui, Excel lit les accents de travers en ouvrant le fichier
+    const csv = '\uFEFF' + colonnes.join(',') + '\n' + lignes.join('\n');
+    telecharge(csv, 'text/csv;charset=utf-8', nom + '.csv');
+  }
+  fermerModale();
+}
+/* Une valeur par cellule CSV : guillemets doubles, et la cellule entiere
+   entre guillemets des qu'elle contient une virgule, un guillemet ou un
+   retour a la ligne -- un nom de carte peut porter les trois. */
+function celluleCSV(v){
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+el('exportBtn').onclick = ouvrirExport;
+
+/* ---------------- suggestion / bug ----------------
+   Le bouton menait à /abyss?suggestion=collection : signaler un bug du
+   classeur faisait quitter le classeur — avec la page où l'on était et la
+   carte qu'on regardait — pour revenir à la main une fois le message parti.
+   La fenêtre s'ouvre maintenant ici, habillée comme le reste de la page
+   (voir .sg-* dans la feuille de style). Le lien reste dans le HTML et reste
+   vrai : c'est ce qui se passe si le script n'arrive pas. */
+if (window.Suggestion){
+  Suggestion.branche({
+    bouton: 'suggBtn',
+    projet: 'collection',
+    estConnecte: () => MOI.connecte,
+    toast: (txt, mauvais) => toast(txt, mauvais),
+  });
+}
 
 /* ---------------- bascule des reflets ---------------- */
 let REFLETS = true;
@@ -1368,12 +1795,36 @@ el('shine').onclick = () => {
 };
 majReflets();
 
-/* ---------------- go ---------------- */
-fit();
-majEntete();
-majCadenas();
-chargerFR();
-load();
+/* ---------------- démarrage ----------------
+   L'annuaire vient avant tout : sans lui on ne sait même pas quel classeur
+   ouvrir, ni qui regarde. C'est le seul temps d'attente incompressible. */
+(async function demarrer(){
+  setSync('offline', 'connexion...');
+  try { await chargeAnnuaire(); }
+  catch(e){
+    showGate("<b>Serveur injoignable.</b> Le hub Abyss ne répond pas.");
+    return;
+  }
+
+  /* Une adresse /collection/<pseudo> passe avant tout le reste : elle dit
+     exactement quel classeur ouvrir, et c'est pour ça qu'on l'a suivie. Elle
+     court-circuite donc l'écran d'accueil — un lien partagé doit montrer ce
+     qu'il promet, pas une invitation à se connecter. */
+  const demande = pseudoDeURL();
+  if (demande){
+    SRC = rangDuClasseur(demande);
+  } else if (!MOI.connecte){
+    showAccueil(); return;
+  } else if (!MOI.pseudo){
+    showInvite(); return;
+  } else {
+    // le sien : chargeAnnuaire() l'a placé en tête de SOURCES
+    SRC = 0;
+  }
+  majAdresse();
+  majEntete();
+  ouvreClasseurAffiche();
+})();
 </script>
 </body>
 </html>

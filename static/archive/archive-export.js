@@ -340,6 +340,15 @@ function ouvrirZoom(images, i){
   const prev = host.querySelector('.zoom-prev'), next = host.querySelector('.zoom-next');
   if(prev) prev.onclick = ()=> zoomBouge(-1);
   if(next) next.onclick = ()=> zoomBouge(1);
+  /* Une galerie d'images plein écran est l'endroit où le doigt s'attend le
+     plus à être écouté. À gauche la suivante, comme les flèches ; vers le
+     bas, on repose la capture — cette fenêtre-là n'a pas de poignée à
+     tirer, elle n'est pas une feuille mais une image posée sur l'écran. */
+  glissement(host.querySelector('.zoom-boite'), {
+    gauche: ()=> zoomBouge(1),
+    droite: ()=> zoomBouge(-1),
+    bas:    fermerZoom,
+  });
   peintZoom();
 }
 function peintZoom(){

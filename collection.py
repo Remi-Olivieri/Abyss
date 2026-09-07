@@ -314,6 +314,64 @@ def ma_page(u):
         " WHERE p.utilisateur_id = ? AND p.projet = ?", (u["id"], PROJET)).fetchone()
 
 
+def page_modele():
+    """Le classeur qui sert de moule aux nouveaux. None s'il n'y en a aucun.
+
+    Un classeur n'est pas une liste libre : ce sont les memes pochettes pour
+    tout le monde -- toutes les Fusion, toutes les Synchro, dans le meme
+    ordre -- et ce qui appartient a chacun, c'est ce qu'il a range dedans.
+    Creer un classeur, c'est donc recopier ces pochettes, vides.
+
+    Le moule est le classeur le plus complet parmi ceux qui existent : c'est
+    lui qui a le plus de chances de contenir toutes les cartes parues, et il
+    n'y a rien d'autre ici pour le dire -- la famille d'une carte (Fusion,
+    Synchro...) ne se lit dans aucun des fichiers du site, elle vient de
+    l'import qui a rempli le premier classeur.
+
+    Un classeur prive fait un moule aussi valable qu'un public : ce qu'on y
+    recopie, ce sont des noms de cartes et un ordre de rangement, jamais ce
+    que quelqu'un possede. La rarete et l'etat ne sont pas copies.
+    """
+    return cx().execute(
+        "SELECT p.id, COUNT(c.id) AS n FROM page p"
+        " LEFT JOIN carte c ON c.page_id = p.id"
+        " WHERE p.projet = ? GROUP BY p.id HAVING n > 0"
+        " ORDER BY n DESC, p.id LIMIT 1", (PROJET,)).fetchone()
+
+
+def cree_page(u):
+    """Cree le classeur de `u`, avec les pochettes du moule, toutes vides.
+
+    Sans moule -- premier classeur du site -- la page est creee quand meme,
+    sans onglet : elle existe, elle est a son proprietaire, et le premier
+    import la remplira. Mieux vaut un classeur vide qu'un refus qu'on ne
+    saurait pas expliquer.
+    """
+    modele = page_modele()
+    c = cx()
+    with c:
+        page_id = c.execute(
+            "INSERT INTO page(utilisateur_id, projet, titre, cree_le) VALUES(?,?,?,?)",
+            (u["id"], PROJET, f"Classeur de {u['pseudo']}", maintenant())).lastrowid
+        if modele is not None:
+            familles = c.execute(
+                "SELECT * FROM famille WHERE page_id = ? ORDER BY rang, id",
+                (modele["id"],)).fetchall()
+            for f in familles:
+                fid = c.execute(
+                    "INSERT INTO famille(page_id, cle, label, couleur, rang)"
+                    " VALUES(?,?,?,?,?)",
+                    (page_id, f["cle"], f["label"], f["couleur"], f["rang"])).lastrowid
+                # d'un seul SQL : recopier deux mille pochettes une par une
+                # ferait deux mille allers-retours pour la meme chose
+                c.execute(
+                    "INSERT INTO carte(page_id, famille_id, classeur, rang, nom)"
+                    " SELECT ?, ?, classeur, rang, nom FROM carte"
+                    " WHERE page_id = ? AND famille_id = ?",
+                    (page_id, fid, modele["id"], f["id"]))
+    return ma_page(u)
+
+
 def annuaire():
     """Les classeurs publics, avec leur nombre de cartes possedees.
 
@@ -481,6 +539,20 @@ def liste():
                     "classeurs": annuaire(),
                     "connecte": u is not None,
                     "moi": moi})
+
+
+@blueprint_collection.post("")
+def creer():
+    """Cree mon classeur. Rejouable : renvoie l'existant plutot qu'une erreur.
+
+    Meme route et meme contrat que POST /api/journal : la page d'en face
+    fait le meme geste, elle n'a pas a le faire de deux facons.
+    """
+    u = actuel()
+    if u is None:
+        return echec("connexion", "Connecte-toi sur Abyss pour creer ton classeur.", 401)
+    page = ma_page(u) or cree_page(u)
+    return reponse(contenu(page, u), 201)
 
 
 @blueprint_collection.get("/<pseudo>")

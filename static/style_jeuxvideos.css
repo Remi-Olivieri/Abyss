@@ -990,14 +990,27 @@ input,textarea{caret-color:var(--gold)}
    s'ouvre, pas le fond qui se fond. */
 :root{view-transition-name:none}
 
+/* Les coins, pendant le voyage. La vignette du mur tient ses arrondis de la
+   tuile qui la deborde -- .tile porte le border-radius et l'overflow, la
+   jaquette elle-meme n'en a aucun (voir .cov.big) -- et la grande jaquette
+   tient les siens d'elle-meme (.cov.xl, 10px). La photo prise au depart est
+   donc a angles droits, et comme les deux images restent a pleine opacite
+   l'une sur l'autre, les coins carres de l'ancienne se voyaient dans les
+   coins arrondis de la nouvelle : la jaquette partait ronde, devenait carree
+   le temps du trajet, et redevenait ronde en arrivant. Le meme rayon des
+   deux cotes, et le decoupage sur le groupe qui les porte, lui rendent ses
+   coins pour toute la traversee. */
 ::view-transition-group(jaquette-active){
   animation-duration:.28s;
   animation-timing-function:cubic-bezier(.2,.7,.3,1);
+  border-radius:10px;
+  clip-path:inset(0 round 10px);
 }
 ::view-transition-old(jaquette-active),
 ::view-transition-new(jaquette-active){
   animation:none;mix-blend-mode:normal;
   height:100%;object-fit:cover;
+  border-radius:10px;
 }
 /* la règle globale plus bas ne vise que des éléments : les pseudo-éléments
    de transition ont besoin de la leur */
@@ -1030,8 +1043,12 @@ input,textarea{caret-color:var(--gold)}
   color:var(--muted);text-decoration:none;margin-bottom:6px;
 }
 /* l'astérisque des champs obligatoires : la même teinte que les bordures
-   d'erreur juste en dessous, pour qu'un coup d'œil relie les deux */
-.req{color:#D9436E;margin-left:1px}
+   d'erreur juste en dessous, pour qu'un coup d'œil relie les deux.
+   .sg-oblig est la même chose dans la fenêtre de suggestion, où « Ton
+   message » est le seul champ exigé — le projet a toujours une valeur, la
+   nature du message aussi. Deux noms parce que le balisage de la fenêtre
+   vient de suggestion.js et ne connaît que ses classes `sg-`. */
+.req,.sg-oblig{color:#D9436E;margin-left:1px}
 .fld input,.fld select,.fld textarea,
 .sg-select,.sg-zone{
   width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:9px;
@@ -1609,10 +1626,19 @@ input,textarea{caret-color:var(--gold)}
 .field input::placeholder{color:var(--muted);opacity:.65}
 .check{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;margin:16px 0 22px}
 .check input{accent-color:var(--gold);width:15px;height:15px}
+/* inline-flex, et pas block : l'ecran d'accueil du visiteur porte ce dessin
+   sur un <a> (« Se connecter sur Abyss »), et un lien est inline -- la
+   hauteur et la largeur ne s'appliquaient pas, le fond dore ne tenait que
+   sous le texte et le soulignement passait au travers. Le flex lui rend sa
+   boite et centre le libelle comme dans un bouton. Inline et non block pour
+   que .cta.auto, qui reprend sa largeur naturelle, ne s'etale pas sur toute
+   la colonne. */
 .cta,
 .sg-go{
+  display:inline-flex;align-items:center;justify-content:center;
   width:100%;height:44px;background:var(--gold);color:#1A1206;border-radius:9px;
   font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:-.01em;
+  text-align:center;text-decoration:none;
   transition:filter .15s;
 }
 .cta:hover,.sg-go:hover{filter:brightness(1.08)}
@@ -1887,9 +1913,21 @@ input,textarea{caret-color:var(--gold)}
     overscroll-behavior:contain;
     animation:monte-feuille .26s cubic-bezier(.2,.8,.3,1);
   }
-  /* La poignée. Elle ne s'attrape pas — rien ici ne se glisse — mais elle
-     dit d'où la feuille est venue et par où elle repartira. */
-  .sheet-tools,.sg-tete{padding:17px 10px 6px}
+  /* La fiche d'un jeu, et elle seule : le vertical au navigateur,
+     l'horizontal à nous, c'est ce qui laisse le balayage passer d'un jeu au
+     suivant sans que le doigt ait à éviter le défilement. Voir
+     glissement() dans static/gestes.js.
+     Nommément #sheet et pas toutes les feuilles : touch-action vaut aussi
+     pour la descendance, et pan-y sur la fenêtre « plus d'informations »
+     bloquerait le défilement horizontal de sa galerie de captures. */
+  #sheet .sheet{touch-action:pan-y}
+
+  /* La poignée, et elle s'attrape : la feuille se repousse vers le bas pour
+     la refermer, comme elle est montée (voir poigneeFeuille() dans
+     static/gestes.js). touch-action:none pour cela — la barre est collée en
+     haut et ne défile pas, le doigt qui s'y pose ne peut vouloir que ça.
+     Le corps de la feuille, lui, garde son défilement. */
+  .sheet-tools,.sg-tete{padding:17px 10px 6px;touch-action:none}
   .sheet-tools::before,.sg-tete::before{
     content:'';position:absolute;top:7px;left:50%;transform:translateX(-50%);
     width:38px;height:4px;border-radius:99px;background:var(--line-strong);
@@ -1970,6 +2008,11 @@ input,textarea{caret-color:var(--gold)}
      colle les fenêtres en bas de l'écran, ce qui n'a de sens que pour
      celles qui ont une barre d'outils à portée de pouce */
   #zoom{padding:12px;align-items:center}
+  /* La capture se balaie : à gauche la suivante, vers le bas on la repose.
+     Rien à faire défiler ici, le doigt est libre — d'où touch-action:none,
+     qui empêche au passage le geste de retour du navigateur de partir
+     pendant qu'on feuillette. Voir glissement() dans static/gestes.js. */
+  .zoom-boite{touch-action:none}
   .zoom-boite img{max-height:80vh}
 
   /* ---------- les écrans d'attente ---------- */

@@ -640,6 +640,10 @@
 .gc-plateau{
   display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
 }
+/* Le temps qu'une réponse s'anime, le plateau ne répond plus — ni au clic,
+   qui est déjà ignoré côté script, ni au survol, qui laissait croire le
+   contraire. Voir gcAnime() dans templates/quiz.html. */
+.gc-plateau.fige{pointer-events:none}
 /* La case est d'abord une jaquette, le titre vient par-dessus. Elle était
    en filigrane à 17 % : on lisait seize titres, l'image ne servait qu'à
    meubler. Une jaquette se reconnaît avant de se lire — c'est même tout le
@@ -653,7 +657,8 @@
   border-radius:12px;border:1px solid var(--line);background:var(--bg2);
   font-family:var(--body);font-size:12px;line-height:1.25;color:var(--text);
   text-align:center;cursor:pointer;
-  transition:border-color .15s,background .15s,transform .12s,box-shadow .15s;
+  transition:border-color .16s,background .16s,color .16s,box-shadow .16s,
+             transform .16s cubic-bezier(.2,.8,.3,1);
 }
 /* La jaquette, dans une couche à part et non en background de la case :
    c'est ce qui permet de poser le voile entre elle et le texte sans la
@@ -661,7 +666,7 @@
 .gc-case::before{
   content:'';position:absolute;inset:0;z-index:-2;
   background-image:var(--fond);background-size:cover;background-position:center;
-  opacity:.72;transition:opacity .15s;
+  opacity:.72;transition:opacity .16s;
 }
 /* Le voile. Franc sous le titre, presque rien en haut : l'image reste
    lisible sur les deux tiers de la case, et le texte ne se bat jamais
@@ -678,38 +683,106 @@
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
   overflow:hidden;overflow-wrap:anywhere;
 }
-.gc-case:hover:not(:disabled){border-color:var(--line-strong)}
-.gc-case:hover:not(:disabled)::before{opacity:.9}
+/* ---------- survol, appui, sélection ----------
+   Trois états, et une seule règle qui les tient : la jaquette ne disparaît
+   jamais. C'est elle qu'on compare — quatre images qu'on rapproche des
+   yeux —, et l'ancienne sélection la faisait tomber à 20 % d'opacité :
+   désigner une case revenait à effacer ce sur quoi on était en train de
+   réfléchir. Tout se dit donc autour et par-dessus, jamais à sa place.
+
+   Et deux directions opposées, pour que les deux gestes ne se confondent
+   pas : le survol SOULÈVE la case, la sélection l'ENFONCE. */
 .gc-case:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .gc-case:disabled{cursor:default}
-/* Désignée : la jaquette recule, l'or prend toute la case. Un liseré seul
-   ne suffisait pas — sur une image, une bordure de plus se perd dedans ;
-   d'où le cerne intérieur en plus, et l'enfoncement. */
-.gc-case.prise{
-  border-color:var(--gold);background:rgba(229,196,107,.16);
-  color:var(--gold);transform:scale(.97);
-  box-shadow:inset 0 0 0 2px rgba(229,196,107,.55);
+
+/* Le survol soulève et rallume : au repos les jaquettes sont à 72 % pour
+   que seize images ne se disputent pas l'œil, et celle qu'on montre du
+   doigt est justement celle qu'on veut voir en grand.
+   Sous (hover:hover) : sur un écran tactile, :hover reste accroché à la
+   dernière case touchée, et une case allumée sans raison au milieu de la
+   grille se lit comme une sélection. */
+@media (hover:hover){
+  .gc-case:hover:not(:disabled){
+    border-color:var(--line-strong);
+    transform:translateY(-3px);
+    box-shadow:0 12px 24px -14px #000;
+  }
+  .gc-case:hover:not(:disabled)::before{opacity:1}
+  /* Déjà prise : elle reste enfoncée, elle remonte juste d'un cheveu.
+     La faire bondir annulerait la seule chose qui distingue les deux. */
+  .gc-case.prise:hover:not(:disabled){transform:scale(.965) translateY(-2px)}
 }
-.gc-case.prise::before{opacity:.2}
-.gc-case.prise::after{opacity:.25}
-.gc-case.prise span{text-shadow:none}
+/* L'appui, au doigt comme à la souris. Sur un écran tactile c'est le seul
+   retour immédiat : il n'y a pas de survol pour préparer le geste. */
+.gc-case:active:not(:disabled),
+.gc-case.prise:active:not(:disabled){transform:scale(.94);transition-duration:.06s}
+
+/* Désignée. La jaquette passe au contraire à pleine lumière, et la
+   sélection se dit par un cerne d'or épais, une lueur autour, le titre en
+   or et une coche dans le coin. Le fond doré ne se voit que sur les cases
+   sans jaquette — ailleurs l'image le couvre, ce qui est exactement ce
+   qu'on veut. */
+.gc-case.prise{
+  border-color:var(--gold);
+  background:color-mix(in srgb,var(--gold) 15%,var(--bg2));
+  color:var(--gold);
+  transform:scale(.965);
+  box-shadow:inset 0 0 0 2px var(--gold),
+             0 6px 20px -10px rgba(229,196,107,.75);
+}
+.gc-case.prise::before{opacity:1}
+/* L'image reste nette sous le titre : le voile doit donc rester entier,
+   et l'ombre portée du texte se renforce plutôt que de disparaître. */
+.gc-case.prise span{text-shadow:0 1px 4px rgba(0,0,0,.95)}
+
+/* La coche. Le cerne dit « celle-ci » ; la coche dit « elle est prise » —
+   et sur quatre cases d'un coup, c'est elle qu'on compte du regard sans
+   relire les titres. Elle arrive en rebondissant : c'est ce qui accuse
+   réception du clic, à l'endroit exact où l'on vient de cliquer. */
+.gc-coche{
+  position:absolute;top:6px;right:6px;width:21px;height:21px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--gold);color:#231B0A;
+  font-style:normal;font-size:12px;font-weight:700;line-height:1;
+  opacity:0;transform:scale(.4);pointer-events:none;
+  box-shadow:0 2px 8px -2px rgba(0,0,0,.8);
+  transition:opacity .14s,transform .22s cubic-bezier(.2,1.7,.4,1),
+             background .16s,color .16s;
+}
+.gc-case.prise .gc-coche{opacity:1;transform:none}
+
 /* Le groupe part : les quatre cases s'allument ensemble juste avant que la
    grille ne se redessine. Sans ce temps d'arrêt, il disparaîtrait sans
-   qu'on ait vu lesquelles. */
+   qu'on ait vu lesquelles — et on veut les revoir en vert, jaquettes
+   comprises, pour comprendre le lien qu'on vient de trouver. */
 .gc-case.juste{
-  border-color:#9BE3BE;background:rgba(155,227,190,.22);color:#9BE3BE;
-  transform:none;box-shadow:inset 0 0 0 2px rgba(155,227,190,.6);
+  border-color:#9BE3BE;
+  background:color-mix(in srgb,#9BE3BE 16%,var(--bg2));
+  color:#9BE3BE;transform:scale(.965);
+  box-shadow:inset 0 0 0 2px #9BE3BE, 0 6px 22px -8px rgba(155,227,190,.55);
 }
-.gc-case.juste::before{opacity:.2}
-/* Raté : une secousse courte, la seule chose qu'on lise sans la lire. */
+.gc-case.juste::before{opacity:1}
+.gc-case.juste .gc-coche{background:#9BE3BE;color:#0E2019}
+
+/* Raté : une secousse courte, la seule chose qu'on lise sans la lire.
+   L'image recule à moitié — la case vire au rouge sans pour autant
+   s'effacer, on doit pouvoir regarder ce qu'on vient de proposer. */
 .gc-case.faux{
-  border-color:#B4295C;background:rgba(180,41,92,.18);color:#F5B9C6;
+  border-color:#B4295C;
+  background:color-mix(in srgb,#B4295C 22%,var(--bg2));
+  color:#F5B9C6;
+  box-shadow:inset 0 0 0 2px rgba(180,41,92,.8);
   animation:gc-secousse .42s ease-in-out;
 }
+.gc-case.faux::before{opacity:.5}
+.gc-case.faux .gc-coche{background:#B4295C;color:#FFE8EE}
+/* L'échelle est reprise dans chaque étape : une animation remplace le
+   transform de la case, et sans elle la case bondirait à sa taille pleine
+   le temps de la secousse — un sursaut vertical par-dessus l'horizontal. */
 @keyframes gc-secousse{
-  10%,90%{transform:translateX(-2px)}
-  30%,70%{transform:translateX(3px)}
-  50%{transform:translateX(-3px)}
+  10%,90%{transform:scale(.965) translateX(-2px)}
+  30%,70%{transform:scale(.965) translateX(3px)}
+  50%{transform:scale(.965) translateX(-3px)}
 }
 
 /* ---------- le message ----------
@@ -720,6 +793,14 @@
   font-size:13px;color:var(--muted);transition:color .15s;
 }
 .gc-message.fort{color:var(--gold)}
+/* Il rejoue son apparition à chaque essai, même quand il redit exactement
+   la même chose : deux « Presque » de suite s'écrivaient au même endroit
+   sans que rien ne bouge, et le jeu avait l'air de n'avoir pas entendu.
+   C'est gcDitMessage() qui repose la classe — voir templates/quiz.html. */
+.gc-message.dit{animation:gc-dit .3s cubic-bezier(.2,.8,.3,1)}
+@keyframes gc-dit{
+  from{opacity:0;transform:translateY(-5px)}
+}
 
 /* ---------- vies et actions ---------- */
 .gc-vies{
@@ -748,6 +829,7 @@
   .gc-plateau{gap:6px}
   .gc-case{min-height:104px;padding:6px 4px;font-size:10.5px;border-radius:10px}
   .gc-case span{-webkit-line-clamp:3}
+  .gc-coche{width:18px;height:18px;top:5px;right:5px;font-size:10.5px}
   .gc-bande{padding:9px 11px}
   .gc-bande i{font-size:11.5px}
   .gc-bande b{font-size:9.5px;letter-spacing:.1em}
@@ -757,4 +839,16 @@
 }
 @media (max-width:380px){
   .gc-case{min-height:92px;font-size:9.5px}
+}
+/* Mouvement réduit : tout ce qui bouge s'arrête, rien de ce qui informe ne
+   part. Le cerne, la couleur, la coche et le texte du message disent déjà
+   tout — la secousse, le rebond et le soulèvement n'étaient que la manière
+   de le dire. */
+@media (prefers-reduced-motion:reduce){
+  .gc-case,.gc-case:hover:not(:disabled),.gc-case:active:not(:disabled),
+  .gc-case.prise,.gc-case.prise:hover:not(:disabled),
+  .gc-case.prise:active:not(:disabled),.gc-case.juste{transform:none}
+  .gc-case.faux{animation:none}
+  .gc-coche{transform:none}
+  .gc-message.dit{animation:none}
 }

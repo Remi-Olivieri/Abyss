@@ -29,14 +29,37 @@ header{position:relative;z-index:60;flex:0 0 auto;padding:14px 22px 0;max-width:
 .retour:hover{color:var(--ink);border-color:#ffffff33;background:#ffffff0d}
 h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:21px;letter-spacing:-.03em;line-height:1}
 
-/* le titre est le bouton qui change de classeur */
-.titre{position:relative;display:flex;align-items:center;flex:0 0 auto}
-.jnl{display:flex;align-items:center;gap:7px;padding:0;color:inherit}
-.jnl h1{transition:color .16s}
-.jnl:hover h1,.jnl[aria-expanded="true"] h1{color:var(--accent)}
-.jnl-chev{color:var(--ink-faint);transition:transform .18s,color .16s}
-.jnl:hover .jnl-chev{color:var(--accent)}
-.jnl[aria-expanded="true"] .jnl-chev{transform:rotate(180deg);color:var(--accent)}
+/* Les deux actions qui parlent du site et non du classeur : le retour au
+   hub, le signalement. Elles encadrent la barre, comme en tete de l'Archive
+   Jeux Videos -- meme paire, meme place, on ne les cherche pas deux fois. */
+.entete-action{
+  display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;
+  height:34px;padding:0 12px;border-radius:9px;
+  border:1px solid var(--edge);color:var(--ink-dim);
+  font-family:'DM Mono';font-size:11.5px;letter-spacing:.02em;
+  text-decoration:none;white-space:nowrap;transition:.16s;
+}
+.entete-action:hover{color:var(--ink);border-color:#ffffff33;background:#ffffff0d}
+
+/* Ce qu'on cherche le plus souvent depuis le classeur d'un autre : le sien. */
+.maison{
+  width:34px;height:34px;border-radius:9px;border:1px solid var(--edge);
+  color:var(--ink-dim);display:grid;place-items:center;flex:0 0 auto;transition:.16s;
+}
+.maison:hover{color:var(--accent);border-color:var(--accent);background:#ffffff0d}
+
+/* Le titre etait un menu deroulant listant les classeurs ecrits en dur en
+   tete du fichier. Il n'y a plus de liste ecrite en dur : les classeurs sont
+   ceux des comptes d'Abyss, et on les cherche. Le titre redevient un titre,
+   la loupe se pose a cote. */
+.titre{position:relative;display:flex;align-items:center;gap:10px;flex:0 0 auto;min-width:0}
+.jnl-search{
+  display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+  height:28px;padding:0 10px;border-radius:999px;
+  border:1px solid var(--edge);color:var(--ink-dim);
+  font-size:12px;white-space:nowrap;transition:.16s;
+}
+.jnl-search:hover{color:var(--ink);border-color:var(--accent);background:#ffffff0d}
 
 .tabs{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none;min-width:0}
 .tabs::-webkit-scrollbar{display:none}
@@ -67,9 +90,6 @@ h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:21px;letter-spaci
 .menu{position:absolute;right:0;top:calc(100% + 9px);z-index:70;min-width:236px;padding:6px;
   background:var(--bg-2);border:1px solid var(--edge);border-radius:12px;
   box-shadow:0 18px 46px #000000a6}
-.jnl-menu{left:0;right:auto;min-width:200px}
-.menu-info{padding:9px 10px 11px;margin-bottom:6px;border-bottom:1px solid var(--edge);
-  font-family:'DM Mono';font-size:10.5px;line-height:1.6;color:var(--ink-faint)}
 .menu-item{display:block;width:100%;text-align:left;padding:9px 10px;border-radius:8px;
   font-size:13.5px;color:var(--ink);transition:background .15s}
 .menu-item:hover{background:#ffffff0d}
@@ -77,9 +97,6 @@ h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:21px;letter-spaci
 .menu-item.quit:hover{color:var(--ink)}
 .menu-item.on{color:var(--accent)}
 .menu-item .tick{float:right;font-size:12px;opacity:.85}
-.menu-note{padding:9px 10px 3px;margin-top:6px;border-top:1px solid var(--edge);
-  font-family:'DM Mono';font-size:10px;line-height:1.7;color:var(--ink-faint)}
-.menu-note code{color:var(--ink);font-size:10px}
 
 /* ---------------- jauge de complétion, au-dessus du classeur ---------------- */
 .meter{display:flex;align-items:center;gap:11px;flex:0 0 auto}
@@ -109,13 +126,23 @@ h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:21px;letter-spaci
 /* ---------------- scène : le classeur occupe tout le reste ---------------- */
 main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 22px 12px;
   max-width:1700px;margin:0 auto;width:100%}
+/* Le classeur et ce qui va avec. C'est lui qui prend toute la hauteur
+   restante -- fit() mesure .stage pour decider de la taille des pochettes,
+   et une scene qui ne remplit pas son parent les rendrait minuscules. */
+#app{flex:1;min-height:0;display:flex;flex-direction:column}
 .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden}
 .nav{width:38px;height:38px;border-radius:50%;border:1px solid var(--edge);color:var(--ink-dim);
   display:grid;place-items:center;flex:0 0 auto;transition:.16s;font-size:17px}
 .nav:hover:not(:disabled){background:#ffffff10;color:var(--ink);border-color:var(--accent)}
 .nav:disabled{opacity:.25;cursor:default}
 
-.binder{position:relative;display:flex;perspective:3000px;width:max-content;max-width:100%}
+/* touch-action:pan-y : le défilement vertical de la page reste au
+   navigateur, l'horizontal nous revient entier — c'est ce qui laisse le
+   doigt tourner les pages sans avoir à éviter le défilement, et ce qui
+   empêche le geste de retour du navigateur de partir en même temps.
+   Voir la section « gestes du doigt » dans templates/collection-yugioh.html. */
+.binder{position:relative;display:flex;perspective:3000px;width:max-content;max-width:100%;
+  touch-action:pan-y}
 .page{flex:0 0 auto;width:calc(3 * var(--cw) + 2 * var(--gap) + 2 * var(--pad));
   background:linear-gradient(150deg,#2A2331,#211B28);
   border:1px solid var(--edge);padding:var(--pad);position:relative;
@@ -207,7 +234,10 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
   .zoomnav-l{left:8px}
   .zoomnav-r{right:8px}
 }
-.zoomwrap{position:absolute;pointer-events:auto;transform-style:preserve-3d;will-change:transform,opacity}
+/* La carte agrandie se balaie : à gauche la suivante, vers le bas on la
+   repose. Rien à faire défiler dessous, le doigt est libre — d'où none. */
+.zoomwrap{position:absolute;pointer-events:auto;transform-style:preserve-3d;will-change:transform,opacity;
+  touch-action:none}
 .bigcard{position:absolute;inset:0;border-radius:calc(var(--r) + 3px);overflow:hidden;
   background:linear-gradient(165deg,var(--c,#2A2331) 0%,color-mix(in srgb,var(--c,#2A2331) 30%,#12101A) 60%,#12101A 100%);
   box-shadow:0 40px 100px #000d,0 0 0 1px #ffffff1f,0 0 90px -30px var(--c,#A086B7)}
@@ -226,16 +256,25 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
   background:linear-gradient(0deg,#0A0710f0,#0A0710a0 70%,transparent);
   font-family:'DM Mono';font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:#F3C9CF}
 
+/* Le panneau est monté du bas : il repart par le même chemin, d'un
+   glissement vers le bas. touch-action:none pour que ce geste-là ne fasse
+   pas défiler la page derrière en même temps. */
 .panel{position:fixed;inset:auto 0 0 0;background:var(--bg-2);border-top:1px solid var(--edge);
   padding:15px 22px 18px;transform:translateY(101%);transition:transform .28s cubic-bezier(.2,.8,.2,1);
-  z-index:60;box-shadow:0 -16px 50px #000a}
+  z-index:60;box-shadow:0 -16px 50px #000a;touch-action:none}
 .panel.open{transform:none}
 .panel-in{max-width:1700px;margin:0 auto;display:flex;gap:18px;align-items:center;
   justify-content:center;flex-wrap:wrap;text-align:center}
 .panel .who{flex:0 1 auto;min-width:0}
 .panel .who h3{font-family:'Bricolage Grotesque';font-weight:700;font-size:19px;letter-spacing:-.02em;line-height:1.2}
 .panel .who .st{font-size:12.5px;color:var(--ink-dim);margin-top:3px}
-.panel .who .st b{color:#F3C9CF;font-weight:500}
+/* Possédée / Non possédée : c'est la seule chose que le panneau dit avant
+   qu'on lise quoi que ce soit, et les deux se lisaient dans le même rose.
+   Le vert et le rouge tranchent d'un coup d'oeil — la couleur porte
+   l'information, le mot la confirme pour qui ne la distingue pas. */
+.panel .who .st b{font-weight:500}
+.panel .who .st .oui{color:#7FD8A8}
+.panel .who .st .non{color:#F3C9CF}
 .coord{display:flex;gap:7px;flex-wrap:wrap}
 .cbox{background:#00000047;border:1px solid var(--edge);border-radius:8px;padding:6px 11px;text-align:center;min-width:56px}
 .cbox .k{font-family:'DM Mono';font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint)}
@@ -246,7 +285,13 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
 .edit select:hover{border-color:#ffffff33}
 /* la liste ouverte : certains navigateurs la repeignent en clair si on ne l'impose pas */
 .edit select option{background:#120E19;color:var(--ink)}
-.act{padding:10px 16px;border-radius:8px;background:var(--accent);color:#17121D;font-weight:600;font-size:13.5px;white-space:nowrap}
+/* inline-flex, et pas le defaut : l'ecran du visiteur porte ce dessin sur un
+   <a> (« Se connecter sur Abyss »), et un lien est inline -- le fond ne
+   tiendrait que sous le texte, le remplissage ne s'appliquerait qu'a moitie
+   et le soulignement passerait au travers. */
+.act{display:inline-flex;align-items:center;justify-content:center;
+  padding:10px 16px;border-radius:8px;background:var(--accent);color:#17121D;
+  font-weight:600;font-size:13.5px;white-space:nowrap;text-decoration:none}
 .act:disabled{opacity:.5;cursor:default}
 .act.ghost{background:none;border:1px solid var(--edge);color:var(--ink-dim);font-weight:500}
 .close{position:absolute;top:10px;right:18px;color:var(--ink-faint);font-size:20px;line-height:1}
@@ -257,15 +302,37 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
   width:min(460px,100%);box-shadow:0 24px 70px #000b}
 .sheetbox h2{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;margin-bottom:4px}
 .sheetbox p{font-size:12.5px;color:var(--ink-dim);line-height:1.5;margin-bottom:14px}
-.fld{margin-bottom:11px}
-.fld label{display:block;font-family:'DM Mono';font-size:10px;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--ink-faint);margin-bottom:5px}
-.fld input{width:100%;padding:9px 11px;border-radius:8px;background:#00000059;border:1px solid var(--edge);
-  color:var(--ink);font-size:13px;font-family:'DM Mono'}
-.diag{font-family:'DM Mono';font-size:11px;color:var(--ink-faint);line-height:1.65;
-  margin:13px 0 0;padding-top:11px;border-top:1px solid var(--edge);white-space:pre-wrap;word-break:break-all}
 .modal .row{display:flex;gap:8px;margin-top:15px}
 .modal .row .act{flex:1;text-align:center}
+
+/* ---------------- exporter le classeur ----------------
+   La fenetre se pose dans .sheetbox, comme tout ce qui s'ouvre au milieu de
+   la page. Trois sections et deux bascules : le format, ce qu'on emporte,
+   et ce qu'on en dit. */
+.exp-format{display:inline-flex;align-self:flex-start;padding:3px;gap:3px;
+  background:#00000059;border:1px solid var(--edge);border-radius:10px}
+.exp-btn{padding:6px 14px;border-radius:7px;font-family:'DM Mono';font-size:11.5px;
+  letter-spacing:.04em;color:var(--ink-dim);transition:.15s}
+.exp-btn:hover{color:var(--ink)}
+.exp-btn.on{background:var(--accent);color:#17121D}
+.exp-section{margin-top:14px;padding:13px 14px 14px;border-radius:12px;
+  background:#00000038;border:1px solid var(--edge)}
+.exp-tete{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.exp-titre{font-family:'DM Mono';font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-faint)}
+.exp-note{font-size:11.5px;color:var(--ink-faint)}
+.exp-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:7px}
+/* Une case a cocher qui remplit sa tuile : la cible est la tuile entiere, pas
+   le carre de quinze pixels a cote du mot. */
+.exp-case{display:flex;align-items:center;gap:8px;min-width:0;height:34px;padding:0 11px;
+  border-radius:8px;background:#00000047;border:1px solid var(--edge);
+  font-size:12.5px;color:var(--ink-dim);cursor:pointer;transition:.15s}
+.exp-case:hover{color:var(--ink);border-color:#ffffff2b}
+.exp-case:has(input:checked){color:var(--ink);border-color:var(--accent)}
+.exp-case input{accent-color:var(--accent);width:14px;height:14px;flex:0 0 auto}
+.exp-case span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-info{margin:14px 0 0;font-size:12.5px;color:var(--ink-dim);text-align:center}
+.exp-info b{color:var(--accent);font-weight:600}
 
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#101017;
   border:1px solid var(--edge);border-radius:10px;padding:11px 17px;font-size:13px;z-index:90;
@@ -274,10 +341,93 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
 .toast.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition-delay:0s}
 .toast.bad{border-color:#8B4A52;color:#F4C8CC}
 
-.offline{margin:auto;text-align:center;max-width:420px}
-.offline b{display:block;font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;margin-bottom:7px}
-.offline p{font-size:13px;color:var(--ink-dim);line-height:1.5;min-height:20px}
-.offline .orow{display:flex;gap:8px;justify-content:center;margin-top:16px}
+/* =======================================================================
+   Les ecrans d'avant le classeur
+
+   Trois, dans l'ordre ou on les rencontre : personne n'est connecte,
+   connecte mais sans classeur, et le classeur demande ne s'ouvre pas. Ils
+   remplacent l'unique « Classeur non connecte » d'avant, qui ne parlait que
+   d'un script injoignable -- la seule chose qui pouvait mal tourner du temps
+   de la feuille Google.
+
+   Memes trois ecrans que l'Archive Jeux Videos, dessines ici avec les
+   couleurs du classeur : c'est la meme situation, ce n'est pas la meme page.
+   ======================================================================= */
+/* <body> ne defile pas sur grand ecran (height:100dvh, overflow:hidden) :
+   c'est le classeur qui tient dans la fenetre, pas une page qu'on parcourt.
+   L'ecran du visiteur, lui, porte une liste de classeurs qui peut deborder --
+   il defile donc pour lui-meme. */
+.gate{margin:auto;text-align:center;max-width:460px;padding:20px 0 40px;
+  max-height:100%;overflow-y:auto}
+.gate h2{font-family:'Bricolage Grotesque';font-weight:800;font-size:25px;
+  letter-spacing:-.03em;line-height:1.15;margin-bottom:10px}
+.gate>p{font-size:13.5px;color:var(--ink-dim);line-height:1.6;margin-bottom:22px}
+.gate .act{min-width:210px}
+.gate-err{
+  margin:0 0 20px;padding:11px 13px;border-radius:9px;font-size:12.5px;line-height:1.55;
+  background:#8b4a5220;border:1px solid #8B4A52;color:#F4C8CC;text-align:left;
+}
+/* La recherche, depliee sous l'invitation a se connecter : c'est la seule
+   chose qu'un visiteur puisse faire ici, et la cacher derriere le bouton de
+   l'en-tete laisserait un ecran qui ne propose rien. */
+.accueil-rech{margin-top:32px;border-top:1px solid var(--edge);padding-top:22px;text-align:left}
+.accueil-rech>u{
+  display:block;text-decoration:none;margin-bottom:12px;
+  font-family:'DM Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-faint);text-align:center;
+}
+
+/* =======================================================================
+   La recherche : quel classeur ouvrir
+
+   Le meme contenu a deux endroits -- dans sa fenetre depuis l'en-tete, et a
+   meme l'ecran d'accueil -- d'ou des classes et aucun identifiant : deux
+   exemplaires peuvent vivre en meme temps dans la page.
+   ======================================================================= */
+.voile-rech{position:fixed;inset:0;z-index:85;background:#0B0810c4;
+  display:flex;align-items:flex-start;justify-content:center;padding:60px 20px 20px}
+.rsearch-sheet{width:min(460px,100%);max-height:100%;display:flex;flex-direction:column;
+  background:var(--bg-2);border:1px solid var(--edge);border-radius:14px;
+  box-shadow:0 26px 60px #000000b8;overflow:hidden}
+.rsearch-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px 14px 10px}
+.rsearch-tete b{font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;letter-spacing:-.02em}
+.rsearch-x{width:30px;height:30px;border-radius:8px;border:1px solid var(--edge);
+  color:var(--ink-dim);display:grid;place-items:center;font-size:17px;line-height:1;transition:.16s}
+.rsearch-x:hover{color:var(--ink);border-color:#ffffff33;background:#ffffff0d}
+.rsearch-in{padding:0 14px 14px;min-height:0;display:flex;flex-direction:column}
+
+.rsearch-box{display:flex;align-items:center;gap:9px;padding:0 12px;
+  height:42px;border-radius:var(--r);background:#0000004d;border:1px solid var(--edge);
+  color:var(--ink-faint);flex:0 0 auto}
+.rsearch-box:focus-within{border-color:var(--accent)}
+.rsearch-input{flex:1;min-width:0;background:none;border:none;outline:none;
+  color:var(--ink);font:inherit;font-size:13.5px}
+.rsearch-input::placeholder{color:var(--ink-faint)}
+.rsearch-list{margin-top:10px;overflow:auto;min-height:0;display:flex;flex-direction:column;gap:4px}
+.rsearch-vide{padding:14px 4px;font-size:13px;color:var(--ink-faint);text-align:center}
+
+/* Une ligne : l'avatar, le pseudo, ce que le classeur contient. La banniere
+   la tapisse tres en retrait -- elle dit a qui il appartient d'un coup d'oeil
+   sans rendre le texte illisible. */
+.rsearch-item{position:relative;display:flex;align-items:center;gap:11px;width:100%;
+  padding:9px 11px;border-radius:10px;border:1px solid transparent;text-align:left;
+  color:var(--ink);transition:background .15s,border-color .15s;overflow:hidden}
+.rsearch-item::before{content:'';position:absolute;inset:0;z-index:0;
+  background-image:var(--banniere);background-size:cover;background-position:center;
+  opacity:0;transition:opacity .15s}
+.rsearch-orne::before{opacity:.14}
+.rsearch-item:hover,.rsearch-item:focus-visible{background:#ffffff0d;border-color:var(--edge)}
+.rsearch-item.on{border-color:var(--accent)}
+.rsearch-item>*{position:relative;z-index:1}
+.rsearch-avatar{width:34px;height:34px;border-radius:50%;flex:0 0 auto;object-fit:cover;
+  display:grid;place-items:center;
+  font-family:'DM Mono';font-size:12px;color:#EDE7E0;
+  background:hsl(var(--h,270) 30% 34%);border:1px solid #ffffff1f}
+.rsearch-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.rsearch-meta b{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsearch-meta i{font-style:normal;font-family:'DM Mono';font-size:11px;color:var(--ink-faint)}
+.rsearch-item .tick{color:var(--accent);font-size:13px;flex:0 0 auto}
 
 
 /* ======================================================================
@@ -432,11 +582,99 @@ body.sansreflets .foil{display:none}
   background:linear-gradient(120deg,#ff4fd8,#4fd8ff 25%,#6bff9e 50%,#ffe14f 75%,#ff4fd8);
   color:#150f1c;text-shadow:none;animation:chip 5s linear infinite}
 
+/* =======================================================================
+   La fenetre « Suggestion / Bug »
+
+   Le balisage vient de static/suggestion.js et il est le meme partout
+   (classes `sg-`) ; l'habillage appartient a chaque page. Le bouton menait
+   a /abyss?suggestion=collection : signaler un bug du classeur faisait
+   quitter le classeur, avec la page ou l'on etait et la carte qu'on
+   regardait, pour revenir a la main une fois le message parti.
+
+   Dessinee ici comme le reste de la page -- meme boite que .sheetbox, memes
+   bascules que l'export, memes champs -- et non avec les couleurs d'Abyss :
+   une fenetre qui arriverait dans la palette d'une autre page se lirait
+   comme un bout de site etranger pose par-dessus celui qu'on regarde.
+   ======================================================================= */
+/* Sous le toast (90), qui doit rester lisible par-dessus, et au-dessus de
+   tout le reste : elle s'ouvre depuis l'en-tete, rien n'est cense etre
+   ouvert derriere, mais l'ordre ne doit pas dependre de ce qui traine. */
+.sg-fond{position:fixed;inset:0;z-index:86;background:#0B0810c4;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.sg-boite{width:min(480px,100%);max-height:100%;display:flex;flex-direction:column;
+  background:var(--bg-2);border:1px solid var(--edge);border-radius:14px;
+  box-shadow:0 24px 70px #000b;overflow:hidden}
+.sg-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:16px 16px 10px;flex:0 0 auto}
+.sg-titre{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;
+  letter-spacing:-.02em;margin:0}
+.sg-x{width:30px;height:30px;border-radius:8px;border:1px solid var(--edge);
+  color:var(--ink-faint);display:grid;place-items:center;font-size:19px;line-height:1;transition:.16s}
+.sg-x:hover{color:var(--ink);border-color:#ffffff33;background:#ffffff0d}
+.sg-form{padding:0 16px 18px;overflow:auto;min-height:0}
+
+/* Les deux natures du message : la meme bascule que le format de l'export,
+   parce que c'est le meme geste -- choisir entre deux lectures d'un seul
+   champ. Le rond natif est cache, le libelle devient le bouton. */
+.sg-genres{display:flex;gap:5px;padding:3px;margin-bottom:16px;
+  background:#00000059;border:1px solid var(--edge);border-radius:10px}
+.sg-genre{flex:1;min-width:0}
+.sg-genre input{position:absolute;opacity:0;width:0;height:0}
+.sg-genre span{display:flex;align-items:center;justify-content:center;height:32px;
+  border-radius:7px;font-family:'DM Mono';font-size:11.5px;letter-spacing:.04em;
+  color:var(--ink-dim);cursor:pointer;transition:.15s}
+.sg-genre:hover span{color:var(--ink)}
+.sg-genre input:checked + span{background:var(--accent);color:#17121D}
+.sg-genre input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+
+.sg-champ{display:block;margin-bottom:12px;min-width:0}
+.sg-champ > span{display:block;font-family:'DM Mono';font-size:10px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px}
+/* L'asterisque des champs obligatoires, comme dans l'Archive et sur Abyss :
+   un seul signe pour tout le site, meme quand les palettes different. */
+.sg-oblig{color:#D9436E;margin-left:2px}
+.sg-select,.sg-zone{width:100%;padding:9px 11px;border-radius:8px;background:#00000059;
+  border:1px solid var(--edge);color:var(--ink);font:inherit;font-size:13.5px;outline:none;
+  transition:border-color .15s}
+.sg-select{cursor:pointer}
+.sg-select option{background:#120E19;color:var(--ink)}
+.sg-zone{min-height:104px;line-height:1.5;resize:vertical}
+.sg-select:focus,.sg-zone:focus{border-color:var(--accent)}
+.sg-compteur{font-family:'DM Mono';font-size:10.5px;color:var(--ink-faint);margin:0 0 12px}
+.sg-err,.sg-ok{margin:0 0 12px;padding:10px 12px;border-radius:9px;font-size:12.5px;line-height:1.5}
+.sg-err{background:#8b4a5220;border:1px solid #8B4A52;color:#F4C8CC}
+.sg-ok{background:#7fd8a81f;border:1px solid #7FD8A8;color:#BFEFD6}
+.sg-go{width:100%;height:42px;border-radius:9px;background:var(--accent);color:#17121D;
+  font-weight:600;font-size:13.5px;transition:filter .15s}
+.sg-go:hover{filter:brightness(1.08)}
+.sg-go[disabled]{opacity:.5;cursor:progress}
+
+/* Au doigt, la fenetre monte du bas et se repousse par sa poignee -- la
+   barre de titre, que static/gestes.js reconnait a sa classe. */
+@media (max-width:640px){
+  .sg-fond{padding:0;align-items:flex-end}
+  .sg-boite{width:100%;max-height:92dvh;border-radius:16px 16px 0 0;border-bottom:none;
+    animation:sg-monte .26s cubic-bezier(.2,.8,.3,1)}
+  @keyframes sg-monte{from{transform:translateY(100%)}}
+  .sg-tete{position:relative;padding-top:20px;touch-action:none}
+  .sg-tete::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);
+    width:38px;height:4px;border-radius:99px;background:#ffffff26}
+  /* 16 px : en dessous, iOS zoome sur le champ des qu'on y pose le doigt */
+  .sg-select,.sg-zone{font-size:16px}
+}
+
 @media (max-width:900px){
   header,main{padding-left:14px;padding-right:14px}
-  .brand{flex-wrap:wrap;gap:12px}
+  .brand{flex-wrap:wrap;gap:10px}
   .tabs{order:3;flex:1 0 100%;margin-left:0;padding-bottom:2px}
   .cog-wrap{margin-left:auto}
+  /* Les libelles des deux actions sautent : « Retour a Abyss » et
+     « Suggestion / Bug » cotoient un titre et une loupe sur une barre qui
+     n'a plus la place. Les icones restent, et l'aria-label avec. */
+  .entete-action{padding:0 9px;width:34px;justify-content:center}
+  .entete-action span{display:none}
+  .gate h2{font-size:21px}
+  .voile-rech{padding:16px}
   .topbar{justify-content:flex-start}
   body{overflow:auto;height:auto;min-height:100dvh}
   main{overflow:visible}

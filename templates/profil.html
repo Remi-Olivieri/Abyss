@@ -135,7 +135,7 @@
         <path d="M19 12H5M12 19l-7-7 7-7"/>
       </svg>
     </a>
-    <div class="compte" id="compte"><!-- rempli par dessineCompte() --></div>
+    <div class="compte" id="compte"><!-- rempli par static/compte.js --></div>
   </div>
 
   <main id="corps" hidden>
@@ -187,8 +187,8 @@
           <input id="eMail" type="email" autocomplete="email">
         </label>
         <label class="champ">
-          <span>Mot de passe actuel</span>
-          <input id="eMdp" type="password" autocomplete="current-password" required>
+          <span>Mot de passe actuel <span class="oblig" aria-hidden="true">*</span></span>
+          <input id="eMdp" type="password" autocomplete="current-password" required aria-required="true">
         </label>
         <p class="erreur" id="eErr" hidden></p>
         <button class="valider" type="submit" id="eGo">Changer l'e-mail</button>
@@ -233,16 +233,16 @@
       <h2 class="titre-modale" id="titreMdp">Changer de mot de passe</h2>
       <form id="formMdp">
         <label class="champ">
-          <span>Mot de passe actuel</span>
-          <input id="pActuel" type="password" autocomplete="current-password" required>
+          <span>Mot de passe actuel <span class="oblig" aria-hidden="true">*</span></span>
+          <input id="pActuel" type="password" autocomplete="current-password" required aria-required="true">
         </label>
         <label class="champ">
-          <span>Nouveau mot de passe</span>
-          <input id="pNouveau" type="password" autocomplete="new-password" required minlength="8">
+          <span>Nouveau mot de passe <span class="oblig" aria-hidden="true">*</span></span>
+          <input id="pNouveau" type="password" autocomplete="new-password" required minlength="8" aria-required="true">
         </label>
         <label class="champ">
-          <span>Répéter le nouveau</span>
-          <input id="pNouveau2" type="password" autocomplete="new-password" required minlength="8">
+          <span>Répéter le nouveau <span class="oblig" aria-hidden="true">*</span></span>
+          <input id="pNouveau2" type="password" autocomplete="new-password" required minlength="8" aria-required="true">
         </label>
         <p class="explication">Les autres appareils connectés à ton compte seront déconnectés.</p>
         <p class="erreur" id="pErr" hidden></p>
@@ -261,6 +261,10 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
+     Chargé avant le script de la page, qui l'appelle dès la réponse de
+     /api/moi — un defer arriverait peut-être trop tard. -->
+<script src="/static/compte.js"></script>
 <script>
 /* La liste des projets masquables : la meme qu'Abyss.html, juste ce qu'il
    faut pour dessiner la case a cocher de chacun — id, nom, accent. */
@@ -345,54 +349,18 @@ function posePasswordOeil(input){
 document.querySelectorAll(".champ input[type=password]").forEach(posePasswordOeil);
 
 /* =========================================================
-   Menu du compte — identique à Abyss.html
-   ========================================================= */
-let MOI = { connecte: false, utilisateur: null, masques: [] };
+   Le compte
+   =========================================================
+   Ce que la page sait de la personne connectée, et ce dont le bouton du
+   coin est dessiné — par static/compte.js, comme sur les trois autres
+   pages d'Abyss. Cette page en avait sa propre copie, et c'est elle qui
+   avait le plus dérivé : une pastille verte à la place du médaillon, pas
+   de chevron, et un menu amputé de « Mon profil » et de « Monitoring ».
 
-function dessineCompte() {
-  const zone = el("compte");
-  if (!MOI.connecte) { zone.innerHTML = ""; return; }
-  zone.innerHTML = `
-    <div class="enveloppe-menu">
-      <button class="bouton pseudo" id="btnMenu" aria-expanded="false" aria-haspopup="true">
-        <span class="pastille" aria-hidden="true"></span>
-        ${echappe(MOI.utilisateur.pseudo)}
-        <span class="chevron" aria-hidden="true">&#9662;</span>
-      </button>
-      <div class="menu" id="menuCompte" hidden>
-        ${MOI.utilisateur.admin
-          ? '<a class="entree" href="/abyss/suggestions">Suggestions</a>'
-          : ""}
-        <button class="entree" id="mnSortie">Se déconnecter</button>
-      </div>
-    </div>`;
-  el("btnMenu").addEventListener("click", (e) => { e.stopPropagation(); basculeMenu(); });
-  el("mnSortie").addEventListener("click", sortir);
-}
-function basculeMenu() {
-  const m = el("menuCompte");
-  if (!m) return;
-  m.hidden = !m.hidden;
-  el("btnMenu").setAttribute("aria-expanded", m.hidden ? "false" : "true");
-}
-function fermeMenu() {
-  const m = el("menuCompte");
-  if (m && !m.hidden) { m.hidden = true; el("btnMenu").setAttribute("aria-expanded", "false"); }
-}
-/* Une sélection de texte commencée dans le menu et relâchée dehors ne doit
-   pas le fermer : on ne ferme que si le clic ET le mousedown qui l'a
-   précédé visaient tous les deux en dehors du menu. */
-let SOURIS_DEHORS = false;
-document.addEventListener("mousedown", (e) => {
-  SOURIS_DEHORS = !e.target.closest(".enveloppe-menu");
-});
-document.addEventListener("click", (e) => {
-  if (SOURIS_DEHORS && !e.target.closest(".enveloppe-menu")) fermeMenu();
-});
-async function sortir() {
-  try { await api("/api/deconnexion", "POST", {}); } catch (e) { /* cookie deja mort */ }
-  location.href = "/abyss";
-}
+   Aucun réglage à lui passer : la page exige un compte — un visiteur ne
+   voit pas le bouton, il voit le portail — et se déconnecter renvoie sur
+   /abyss, ce que compte.js fait par défaut. */
+let MOI = { connecte: false, utilisateur: null, masques: [] };
 
 /* =========================================================
    Modales — e-mail et mot de passe, ouvertes à la demande plutôt que
@@ -541,7 +509,7 @@ document.querySelectorAll(".voile").forEach((v) => {
   });
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") { fermeMenu(); fermeTout(); }
+  if (e.key === "Escape") fermeTout();
 });
 el("btnEmail").addEventListener("click", () => ouvre("mEmail", "eMail"));
 el("btnMdp").addEventListener("click", () => ouvre("mMdp", "pActuel"));
@@ -595,6 +563,10 @@ function majAvatarApercu() {
   vide.hidden = !!url;
   suppr.hidden = !url;
   if (url) img.src = url;
+  /* Le médaillon du coin montre la même photo : c'est la page où on la
+     change, ce serait la seule à en afficher une périmée jusqu'au prochain
+     chargement. */
+  Compte.dessine(MOI);
 }
 /* Pseudo et e-mail affichés dans la bannière — appelée au chargement et
    après chaque changement d'e-mail, pour que la bannière ne mente jamais. */
@@ -706,7 +678,7 @@ el("formMdp").addEventListener("submit", async (e) => {
   }
   MOI = { connecte: true, utilisateur: data.utilisateur,
           masques: Array.isArray(data.masques) ? data.masques : [] };
-  dessineCompte();
+  Compte.dessine(MOI);
   majBanniereCompte();
   majAvatarApercu();
   majBanniereImage();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Suggestions — Abyss</title>
+<title>Suggestions - Abyss</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
@@ -226,7 +226,7 @@
         <path d="M19 12H5M12 19l-7-7 7-7"/>
       </svg>
     </a>
-    <div class="compte" id="compte"><!-- rempli par dessineCompte() --></div>
+    <div class="compte" id="compte"><!-- rempli par static/compte.js --></div>
   </div>
 
   <main id="corps" hidden>
@@ -247,6 +247,10 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
+     Chargé avant le script de la page, qui l'appelle dès la réponse de
+     /api/moi — un defer arriverait peut-être trop tard. -->
+<script src="/static/compte.js"></script>
 <script>
 const el = (id) => document.getElementById(id);
 const echappe = (s) => String(s === null || s === undefined ? "" : s)
@@ -295,48 +299,14 @@ function toast(message, mauvais) {
   minuteurToast = setTimeout(() => { t.className = "toast"; t.hidden = true; }, 3600);
 }
 
-/* ---------- menu du compte, comme sur les autres pages ---------- */
-function dessineCompte() {
-  if (!MOI.connecte) { el("compte").innerHTML = ""; return; }
-  const u = MOI.utilisateur;
-  const vignette = u.avatar
-    ? `<img class="avatar-mini" src="${echappe(u.avatar)}" alt="">`
-    : '<span class="pastille"></span>';
-  el("compte").innerHTML = `
-    <div class="enveloppe-menu">
-      <button class="bouton pseudo" id="btnMenu" aria-expanded="false" aria-haspopup="true">
-        ${vignette}${echappe(u.pseudo)}
-      </button>
-      <div class="menu" id="menuCompte" hidden>
-        <a class="entree" href="/abyss/profil">Mon profil</a>
-        ${u.admin ? '<a class="entree" href="/abyss/suggestions">Suggestions</a>' : ""}
-        <hr>
-        <button class="entree" id="mnSortie">Se déconnecter</button>
-      </div>
-    </div>`;
-  el("btnMenu").addEventListener("click", (e) => { e.stopPropagation(); basculeMenu(); });
-  el("mnSortie").addEventListener("click", sortir);
-}
-function basculeMenu() {
-  const m = el("menuCompte");
-  m.hidden = !m.hidden;
-  el("btnMenu").setAttribute("aria-expanded", String(!m.hidden));
-}
-let SOURIS_DEHORS = false;
-document.addEventListener("mousedown", (e) => {
-  SOURIS_DEHORS = !e.target.closest(".enveloppe-menu");
-});
-document.addEventListener("click", (e) => {
-  const m = el("menuCompte");
-  if (m && !m.hidden && SOURIS_DEHORS && !e.target.closest(".enveloppe-menu")) {
-    m.hidden = true;
-    el("btnMenu").setAttribute("aria-expanded", "false");
-  }
-});
-async function sortir() {
-  try { await api("/api/deconnexion", "POST", {}); } catch (e) { /* on part quand même */ }
-  location.href = "/abyss";
-}
+/* ---------- menu du compte ----------
+   Dessiné par static/compte.js, comme sur les trois autres pages d'Abyss.
+   La copie qui vivait ici n'avait ni chevron ni « Monitoring », et son
+   pseudo débordait faute du <span> qui le coupe : de quoi croire, en
+   arrivant depuis le hub, qu'on avait changé de site.
+
+   Aucun réglage à passer : la page exige un compte, et se déconnecter
+   renvoie sur /abyss — le défaut de compte.js. */
 
 /* =========================================================
    La liste
@@ -570,7 +540,7 @@ async function resoudre(bouton) {
   catch (e) { el("gate").hidden = false; return; }
 
   MOI = { connecte: !!data.connecte, utilisateur: data.utilisateur };
-  dessineCompte();
+  Compte.dessine(MOI);
   if (!MOI.connecte || !MOI.utilisateur.admin) { el("gate").hidden = false; return; }
 
   try {

@@ -1,11 +1,18 @@
 /* Le bouton de compte, en haut a droite de toutes les pages d'Abyss.
  *
- * Il vivait en trois exemplaires -- Abyss, le profil, les suggestions --
- * recopies l'un de l'autre puis retouches chacun de leur cote. Ils avaient
- * fini par diverger : le profil ne montrait jamais la photo, les
- * suggestions n'avaient pas de chevron, et le menu ne proposait pas les
- * memes entrees d'une page a l'autre. Trois copies, c'est trois dessins qui
- * s'eloignent -- d'ou ce fichier, qui est desormais le seul.
+ * Il a vecu en quatre exemplaires -- Abyss, le profil, les suggestions, le
+ * monitoring -- recopies l'un de l'autre puis retouches chacun de leur
+ * cote. Ils avaient fini par diverger sur a peu pres tout : le profil
+ * montrait une pastille verte de 7 px la ou les autres montraient un
+ * visage, les suggestions n'avaient pas de chevron, le pseudo debordait de
+ * la barre faute du <span> qui le coupe, et le menu ne proposait ni les
+ * memes entrees ni le meme ordre d'une page a l'autre -- « Mon profil »
+ * manquait sur le profil, « Monitoring » manquait partout ailleurs que sur
+ * Abyss. Quatre copies, c'est quatre dessins qui s'eloignent.
+ *
+ * Ce fichier est desormais le seul : les quatre pages l'appellent, aucune
+ * ne redessine le bouton de son cote. Le style, lui, a toujours ete commun
+ * -- voir « Le bouton de compte » dans static/style_abyss.css.
  *
  * Une page l'utilise ainsi :
  *
@@ -97,7 +104,7 @@
           ${u.admin ? entree("/abyss/suggestions", "Suggestions", neuf) : ""}
           ${u.admin ? entree("/abyss/monitoring", "Monitoring") : ""}
           <hr>
-          <button class="entree" id="mnSortie">Se déconnecter</button>
+          <button class="entree sortie" id="mnSortie">Se déconnecter</button>
         </div>
       </div>`;
     document.getElementById("btnMenu")

@@ -284,6 +284,11 @@ header h1 {
   padding-left: .1rem;
 }
 
+/* L'asterisque des champs obligatoires, comme ailleurs sur le site. En
+   --wrong plutot qu'en or : l'or est deja la couleur du libelle, et une
+   etoile de la meme teinte que le mot qu'elle suit ne se voit pas. */
+.input-label .req { color: var(--wrong); margin-left: .15em; }
+
 .user-input {
   width: 100%;
   background: rgba(7,6,14,.7);
