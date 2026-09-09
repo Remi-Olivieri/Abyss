@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-journal.js
+   Archive Jeux Vidéos - archive-journal.js
 
    Le journal affiché : le charger, le garder, en changer.
 
@@ -66,7 +66,7 @@ const source = () => SOURCES[SRC] || null;
 /* L'année la plus récente : la plus grande parmi les onglets, et à défaut
    d'onglet nommé comme une année, le dernier de la liste.
 
-   Ne sert plus qu'à proposer une catégorie au formulaire d'ajout — un jeu
+   Ne sert plus qu'à proposer une catégorie au formulaire d'ajout - un jeu
    qu'on vient de finir appartient presque toujours à l'année en cours.
    L'ouverture du classeur, elle, se fait sur « Tout » ou sur l'onglet que
    son auteur a désigné (voir ONGLET_DEFAUT). */
@@ -117,19 +117,19 @@ async function charger(opts = {}){
   render();
 }
 
-/* L'état de la connexion tient dans la pastille de l'engrenage — verte quand
+/* L'état de la connexion tient dans la pastille de l'engrenage - verte quand
    les données viennent du script, ambrée pendant une actualisation, rouge
    quand celle-ci a échoué, éteinte quand rien n'a pu être joint. */
 function majEtat(mode, txt){
   const c = document.getElementById('cog');
   c.dataset.etat = mode;
-  c.setAttribute('aria-label', 'Paramètres — ' + txt);
+  c.setAttribute('aria-label', 'Paramètres - ' + txt);
 }
 
 /* Range la réponse dans GAMES / BUCKETS. Appelée aussi après chaque
    écriture : le serveur renvoie le journal relu, comme le faisait le script.
    frais=false : c'est le cache local qui vient d'être affiché, la vraie
-   requête est encore en vol — on le dit au lieu d'annoncer une synchro. */
+   requête est encore en vol - on le dit au lieu d'annoncer une synchro. */
 function applyData(data, frais){
   /* Les jeux arrivent tout faits, avec les mêmes noms de champs que
      produisait readSheet. Seul `id` est nouveau, et il remplace le couple
@@ -140,6 +140,7 @@ function applyData(data, frais){
   BUCKETS = (data.periodes || []).slice();
   CAN_WRITE = data.write === true;
   TITRE = data.titre || '';
+  IDENTITE = {avatar: data.avatar || null, banniere: data.banniere || null};
   oublieTuiles();   // le mur garde ses tuiles : celles des jeux partis s'en vont
   // à l'ouverture seulement : on se place sur l'année la plus récente
   ONGLET_DEFAUT = data.ongletDefaut || '';
@@ -166,7 +167,7 @@ function applyData(data, frais){
   majVerrou();
   /* Chez moi elle se remplit sur place, chez un autre elle part la
      chercher : dans les deux cas c'est ici qu'on sait quel classeur est à
-     l'écran. Rien ne l'attend — une fiche déjà ouverte se repeindra. */
+     l'écran. Rien ne l'attend - une fiche déjà ouverte se repeindra. */
   chargeMaBiblio();
   /* Le serveur ne dit « rattrapage » qu'au propriétaire d'un classeur
      rempli avant que les fiches IGDB existent. On laisse la page finir de
@@ -235,212 +236,126 @@ document.addEventListener('keydown', e=>{
    Plus un menu déroulant sous le titre, mais une recherche façon réseau
    social : le bouton loupe ouvre #recherche, où taper un nom filtre les
    journaux connus (le sien, et les journaux publics de l'annuaire). */
-function majEntete(){
+/* ---------- qui tient ce journal ----------
+   La photo et la bannière arrivent avec le journal (voir identite() dans
+   journal.py) plutôt que d'être repêchées dans l'annuaire : celui-ci ne
+   liste que les journaux publics, et son propriétaire serait donc arrivé
+   sans visage sur son propre journal privé. */
+let IDENTITE = {avatar: null, banniere: null};
+
+function majEntete(){ majIdentite(); }
+
+/* ---------- moi, dans la barre du haut ----------
+   Ma photo et mon pseudo, quel que soit le journal ouvert. C'est le seul
+   élément de la barre qui ne change jamais, et c'est ce qui en fait un
+   point de repère : on sait sous quel compte on est sans avoir à ouvrir un
+   menu, et on rentre chez soi en cliquant dessus.
+
+   Ça remplace la petite maison, qui disait la même chose sans le dire - une
+   icône de plus dans une barre qui en comptait déjà cinq.
+
+   Posé une fois, après l'annuaire : il ne dépend pas du journal affiché, et
+   n'a donc rien à faire dans majIdentite() qui, elle, se rejoue à chaque
+   changement de classeur. */
+function majMoi(){
+  const bouton = document.getElementById('moiBtn');
+  const titre = document.getElementById('brand-title');
+  bouton.hidden = !MOI.pseudo;
+  // sans compte, la barre porte le nom du site : elle ne peut pas rester nue
+  titre.hidden = !!MOI.pseudo;
+  if(!MOI.pseudo) return;
+  bouton.href = '/archive/' + encodeURIComponent(MOI.pseudo);
+  document.getElementById('moiAva').innerHTML = avatarHTML(MOI.pseudo, MOI.avatar);
+  document.getElementById('moiNom').textContent = MOI.pseudo;
+  bouton.onclick = e=>{
+    /* On est déjà sur la page : changer de classeur sur place vaut mieux
+       que de la recharger. L'adresse reste vraie pour le clic du milieu et
+       le menu contextuel, qui n'entrent pas ici. */
+    e.preventDefault();
+    closeMenu(); fermerRecherche();
+    ouvrirLeMien();
+  };
+}
+
+/* La pastille de l'en-tête et le bandeau du haut, remplis d'un seul geste :
+   ils montrent la même personne, et deux fonctions finiraient par ne plus
+   dire pareil.
+
+   Sans photo, les initiales sur une teinte tirée du pseudo - la même que
+   dans la recherche, pour que quelqu'un garde sa couleur d'un écran à
+   l'autre. Sans bannière, un dégradé de la page : le bandeau existe quand
+   même, avec sa place vide bien visible, et c'est précisément ce qui
+   donne envie de la remplir. */
+function majIdentite(){
   const s = source();
-  document.getElementById('brand-title').textContent =
-    s && s.nom ? `Journal de ${s.nom}` : 'Journal de jeu';
+  const nom = (s && s.nom) || '';
+  const avatar = IDENTITE.avatar;
+
+  const ligne = document.getElementById('ident');
+  if(!nom){ ligne.hidden = true; return; }
+  ligne.hidden = false;
+  /* La classe va sur la tête entière et non sur la ligne d'identité : c'est
+     elle qui porte le fond, et il court derrière les statistiques et la
+     courbe des notes. */
+  document.getElementById('jtete').classList.toggle('sans-banniere', !IDENTITE.banniere);
+  /* L'adresse est posée en JavaScript et non écrite dans le HTML : esc()
+     n'échappe pas l'apostrophe, qui suffirait à sortir d'un url('...') et
+     à injecter du CSS. Rien à échapper, rien à oublier. */
+  const fond = document.getElementById('identFond');
+  fond.style.backgroundImage = IDENTITE.banniere ? `url("${IDENTITE.banniere}")` : '';
+
+  document.getElementById('identAva').innerHTML = avatarHTML(nom, avatar, 'xl');
+  /* Le pseudo seul. « Journal de Jokrem » disait deux fois où l'on est -
+     on est sur l'Archive, la page ne parle que de journaux - et le mot
+     poussait le nom, qui est la seule chose à lire ici, à mi-chemin de la
+     ligne. Le titre que l'auteur s'est choisi passe devant s'il en a mis
+     un autre que celui d'origine. */
+  const titre = TITRE && TITRE !== `Journal de ${nom}` ? TITRE : nom;
+  document.getElementById('identNom').textContent = titre;
+  document.getElementById('identSous').textContent = sousIdentite();
+  majIdentiteCta(avatar);
 }
 
-/* Une teinte stable par pseudo, pour que l'avatar d'une même personne ne
-   change pas de couleur d'une recherche à l'autre. */
-function teinteAvatar(nom){
-  let h = 0;
-  for(const c of (nom || '?')) h = (h * 31 + c.codePointAt(0)) % 360;
-  return h;
-}
-/* =======================================================================
-   La recherche : un journal, ou un jeu
-   Deux choses à chercher et une seule barre. Le choix se fait dedans, à
-   côté de ce qu'on tape, et non entre deux boutons de l'en-tête : il
-   fallait alors trancher avant de savoir ce qu'on trouverait derrière
-   l'un ou l'autre. Un journal se cherche parmi ceux d'ici, déjà chargés ;
-   un jeu se cherche chez IGDB, donc à chaque frappe et avec un délai.
-
-   Elle se monte où on le lui demande — dans sa fenêtre quand on clique sur
-   « Rechercher », et à même l'écran d'accueil quand personne n'est
-   connecté, où elle est tout ce qu'un visiteur peut faire et n'a donc pas
-   à être derrière un bouton. D'où l'absence d'identifiants ici : deux
-   exemplaires peuvent vivre en même temps dans la page, et deux id
-   identiques n'en désigneraient qu'un.
-   ======================================================================= */
-const LOUPE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
-  aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
-
-const MODES = [
-  {cle: 'journal', nom: 'Un journal', invite: 'Nom du joueur...'},
-  {cle: 'jeu',     nom: 'Un jeu',     invite: 'Nom du jeu...'},
-];
-
-function monteRecherche(hote){
-  hote.innerHTML = `
-    <!-- deux bascules, et non des onglets : un onglet doit désigner le
-         panneau qu'il ouvre, et il n'y en a pas — c'est la même liste qui
-         change de contenu. aria-pressed dit exactement ce qui se passe. -->
-    <div class="rsearch-modes" role="group" aria-label="Que chercher">
-      ${MODES.map((m, k)=>`<button type="button" class="rsearch-mode${k ? '' : ' on'}"
-        data-mode="${m.cle}" aria-pressed="${k ? 'false' : 'true'}"
-        >${esc(m.nom)}</button>`).join('')}
-    </div>
-    <label class="rsearch-box">
-      ${LOUPE}
-      <input class="rsearch-input" type="text" placeholder="${esc(MODES[0].invite)}"
-             autocomplete="off" spellcheck="false" aria-label="Rechercher">
-    </label>
-    <div class="rsearch-list"></div>`;
-
-  const champ = hote.querySelector('.rsearch-input');
-  const liste = hote.querySelector('.rsearch-list');
-  const etat = {mode: 'journal', jeton: 0, minuteur: null};
-
-  /* Un mot à la place de la liste : « rien trouvé », « ça cherche », « IGDB
-     n'a pas répondu ». Une liste qui reste vide sans rien dire laisse croire
-     que la frappe n'a pas pris. Le rôle part avec les résultats : une liste
-     déroulante qui ne contient qu'une phrase n'en est plus une, et un
-     lecteur d'écran l'annoncerait comme une liste vide de choix. */
-  function mot(texte){
-    liste.removeAttribute('role');
-    liste.removeAttribute('aria-label');
-    liste.innerHTML = `<p class="rsearch-vide">${esc(texte)}</p>`;
-  }
-  function nomme(role, etiquette){
-    liste.setAttribute('role', role);
-    liste.setAttribute('aria-label', etiquette);
-  }
-
-  /* ---------- les journaux d'ici ---------- */
-  function journaux(){
-    const brut = champ.value;
-    const q = norm(brut);
-    const items = SOURCES.map((s,i)=>({s,i})).filter(({s}) => !q || norm(s.nom).includes(q));
-    if(!items.length){ mot(`Aucun journal ne correspond à « ${brut} ».`); return; }
-    nomme('list', 'Journaux trouvés');
-    liste.innerHTML = items.map(({s,i})=>{
-      const compte = typeof s.jeux === 'number' ? `${s.jeux} jeu${s.jeux>1?'x':''} terminé${s.jeux>1?'s':''}` : 'journal public';
-      const sous = s.moi ? `Ton journal - ${compte}` : compte.charAt(0).toUpperCase() + compte.slice(1);
-      const avatar = s.avatar
-        ? `<img class="rsearch-avatar" src="${esc(s.avatar)}" alt="">`
-        : `<span class="rsearch-avatar" style="--h:${teinteAvatar(s.nom)}">${esc(initials(s.nom || '?'))}</span>`;
-      /* La bannière tapisse la ligne, très en retrait : elle dit à qui
-         appartient le journal d'un coup d'œil sans rendre le texte illisible.
-         L'adresse n'est pas écrite dans le HTML mais posée juste après, en
-         JavaScript : esc() n'échappe pas l'apostrophe, qui suffirait à sortir
-         d'un url('...') et à injecter du CSS. Rien à échapper, rien à oublier. */
-      return `<button class="rsearch-item${i===SRC?' on':''}${
-          s.banniere ? ' rsearch-orne' : ''}" data-i="${i}">
-        ${avatar}
-        <span class="rsearch-meta"><b>${esc(s.nom || '?')}</b><i>${esc(sous)}</i></span>
-        ${i===SRC?'<span class="tick">✓</span>':''}
-      </button>`;
-    }).join('');
-    liste.querySelectorAll('.rsearch-item').forEach(b=>{
-      b.onclick = ()=> choisirClasseur(+b.dataset.i);
-      const s = SOURCES[+b.dataset.i];
-      if(s && s.banniere) b.style.setProperty('--banniere', `url("${s.banniere}")`);
-    });
-  }
-
-  /* ---------- les jeux, chez IGDB ----------
-     Les lignes sont celles de la liste déroulante du formulaire (acHTML) :
-     même service rendu, même dessin, une seule fonction à corriger le jour
-     où IGDB changera la forme de ses réponses. */
-  function jeux(trouves){
-    if(!trouves.length){ mot('Aucun jeu ne porte ce nom sur IGDB.'); return; }
-    nomme('listbox', 'Jeux trouvés sur IGDB');
-    liste.innerHTML = acHTML(trouves);
-    liste.querySelectorAll('.ac-item').forEach((el, i)=>{
-      el.onclick = ()=> ouvrirDetailIgdb(trouves[i].id, trouves[i].titre);
-    });
-  }
-  async function chercheJeux(texte){
-    const jeton = ++etat.jeton;
-    let data;
-    try{ data = await api('/api/jeu/suggestions', {nom: texte}); }
-    catch(e){
-      if(jeton === etat.jeton) mot('Recherche impossible : ' + raisonReseau(e));
-      return;
-    }
-    // une frappe est passée devant, ou la recherche a été démontée
-    if(jeton !== etat.jeton || !hote.isConnected) return;
-    if(data.etat === 'ok') jeux(data.jeux || []);
-    else mot(data.raison ? 'IGDB : ' + data.raison : 'Aucun jeu ne porte ce nom sur IGDB.');
-  }
-
-  /* ---------- la frappe ----------
-     Chercher un journal ne coûte rien : la liste est déjà là, elle se filtre
-     à chaque lettre. Chercher un jeu part chez IGDB, et c'est le serveur qui
-     paie l'aller-retour : deux lettres minimum et un temps de répit, sans
-     quoi « Hollow K » en ferait huit. */
-  function frappe(){
-    clearTimeout(etat.minuteur);
-    etat.jeton++;
-    if(etat.mode === 'journal'){ journaux(); return; }
-    const texte = clean(champ.value);
-    if(texte.length < 2){ mot('Tape au moins deux lettres.'); return; }
-    mot('Recherche\u2026');
-    etat.minuteur = setTimeout(()=> chercheJeux(texte), 250);
-  }
-
-  function bascule(cle){
-    if(cle === etat.mode) return;
-    etat.mode = cle;
-    const m = MODES.find(x => x.cle === cle);
-    champ.placeholder = m.invite;
-    hote.querySelectorAll('.rsearch-mode').forEach(b=>{
-      const on = b.dataset.mode === cle;
-      b.classList.toggle('on', on);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-    // ce qui est déjà tapé vaut pour l'autre liste : on relance dessus
-    // plutôt que de vider le champ sous les doigts
-    frappe();
-    champ.focus();
-  }
-  hote.querySelectorAll('.rsearch-mode').forEach(b=>{
-    b.onclick = ()=> bascule(b.dataset.mode);
-  });
-
-  champ.addEventListener('input', frappe);
-  champ.addEventListener('keydown', e=>{
-    if(e.key !== 'Enter') return;
-    const premier = liste.querySelector('.rsearch-item, .ac-item');
-    if(premier) premier.click();
-  });
-  frappe();
-
-  /* `arrete` sert au démontage : sans lui, une réponse d'IGDB en vol
-     repeindrait une liste qui n'est plus dans la page. */
-  return {champ, arrete(){ clearTimeout(etat.minuteur); etat.jeton++; }};
+function avatarHTML(nom, url, taille){
+  const cls = 'ava' + (taille ? ' ' + taille : '');
+  if(url) return `<img class="${cls}" src="${esc(url)}" alt="" decoding="async">`;
+  return `<span class="${cls} ava-vide" style="--h:${teinteAvatar(nom)}"
+    >${esc(initials(nom || '?'))}</span>`;
 }
 
-/* ---------- la recherche dans sa fenêtre ---------- */
-let RECHERCHE = null;
+/* Ce que le journal pèse, sous son nom : les jeux terminés, et le temps
+   passé dessus quand il est noté. Deux chiffres qu'on lit avant d'entrer
+   dans le mur, et qui disent à quoi on a affaire. */
+function sousIdentite(){
+  const finis = GAMES.filter(g => !estStatut(g));
+  const heures = finis.reduce((t, g) => t + (g.hours || 0), 0);
+  const bouts = [`${finis.length} jeu${finis.length > 1 ? 'x' : ''} terminé${
+    finis.length > 1 ? 's' : ''}`];
+  if(heures >= 1) bouts.push(`${Math.round(heures)} h de jeu`);
+  return bouts.join(' · ');
+}
 
-function fermerRecherche(){
-  const host = document.getElementById('recherche');
-  if(host.hidden) return;
-  if(RECHERCHE){ RECHERCHE.arrete(); RECHERCHE = null; }
-  host.hidden = true; host.innerHTML = '';
-  verrouFond();
+/* L'invitation, chez soi et seulement chez soi : on ne dit pas à quelqu'un
+   d'autre qu'il lui manque une photo. Elle nomme ce qui manque, parce que
+   « personnalise ton journal » n'a jamais dit où cliquer ni pour quoi. */
+function majIdentiteCta(avatar){
+  const cta = document.getElementById('identCta');
+  if(!CAN_WRITE){ cta.hidden = true; return; }
+  const manque = [!avatar && 'une photo', !IDENTITE.banniere && 'une bannière']
+    .filter(Boolean);
+  cta.hidden = !manque.length;
+  if(manque.length) cta.textContent = 'Ajoute ' + manque.join(' et ');
 }
-function ouvrirRecherche(){
-  closeMenu(); closePer();
-  const host = document.getElementById('recherche');
-  host.innerHTML = `<div class="sheet recherche-sheet" role="dialog" aria-modal="true" aria-label="Rechercher">
-    <div class="sheet-tools">
-      <span class="grp"><b class="fhead">Rechercher</b></span>
-      <span class="grp"><button class="sbtn rsearch-x" aria-label="Fermer">×</button></span>
-    </div>
-    <div class="rsearch-in"></div>
-  </div>`;
-  host.hidden = false;
-  verrouFond();
-  host.querySelector('.rsearch-x').onclick = fermerRecherche;
-  RECHERCHE = monteRecherche(host.querySelector('.rsearch-in'));
-  RECHERCHE.champ.focus();
-}
-fermeSurFond('recherche', fermerRecherche);
-document.getElementById('jnlSearchBtn').addEventListener('click', e=>{ e.stopPropagation(); ouvrirRecherche(); });
+
+/* La recherche - un journal, ou un jeu - vivait ici, avec l'annuaire
+   qu'elle fouille. Elle est passée dans archive-recherche.js : la page
+   Social ouvre la même fenêtre, et deux exemplaires d'un même écran
+   finissent toujours par ne plus dire pareil.
+
+   Ce qui reste de ce côté-ci, c'est ce qu'elle DÉCLENCHE : choisir un
+   journal, ici, change de classeur sans quitter la page (choisirClasseur
+   ci-dessous) ; sur le Social, ça mène à l'adresse du journal. Les deux
+   gestes partent en paramètre - voir monteRecherche. */
 
 function choisirClasseur(i){
   fermerRecherche();
@@ -470,11 +385,11 @@ function choisirClasseur(i){
 }
 
 /* Écran d'aide : aucun journal configuré, celui-ci ne répond pas, ou le
-   serveur a dit non. Plus rien à saisir ici — l'adresse est dans le fichier.
+   serveur a dit non. Plus rien à saisir ici - l'adresse est dans le fichier.
 
    `refus` distingue le troisième cas : journal privé, pseudo inconnu. Un
    lien /archive/<pseudo> partagé tombe surtout là-dessus, et « ne répond
-   pas » serait faux — il a répondu, c'est justement le problème. Ni adresse
+   pas » serait faux - il a répondu, c'est justement le problème. Ni adresse
    d'API ni bouton « Réessayer » dans ce cas : la première ne parle à
    personne, le second ne peut que faire redire non. */
 function showGate(erreur, refus){
@@ -520,7 +435,7 @@ function showInvite(){
   closeSheet(); closeForm(); closeMenu(); fermerRecherche();
   /* Aucun journal n'est réellement affiché ici : SRC restait à sa valeur
      par défaut (0), si bien que la recherche marquait le premier journal
-     public comme déjà sélectionné — cocher une coche sur laquelle cliquer
+     public comme déjà sélectionné - cocher une coche sur laquelle cliquer
      ne faisait rien, puisque choisirClasseur() ignore un clic sur ce qui
      est déjà "SRC". -1 n'existe dans aucune liste : rien ne coche, et le
      premier clic ouvre bien le journal visé. */
@@ -546,7 +461,7 @@ function showInvite(){
 function showAccueil(){
   closeSheet(); closeForm(); closeMenu(); fermerRecherche();
   /* Aucun journal affiché : SRC restait à 0, si bien que la recherche
-     marquait le premier journal public comme déjà sélectionné — cocher une
+     marquait le premier journal public comme déjà sélectionné - cocher une
      coche sur laquelle cliquer ne fait rien, puisque choisirClasseur()
      ignore un clic sur ce qui est déjà « SRC ». Même raison qu'à
      showInvite(), et même remède : -1 n'existe dans aucune liste. */
@@ -564,14 +479,14 @@ function showAccueil(){
 /* ---------- squelette du premier chargement ----------
    Sans cache local il n'y a rien à montrer tant que le script n'a pas
    répondu, et une page vide pendant deux secondes ressemble à une panne
-   plutôt qu'à une attente. On dresse donc la page entière en gris —
-   onglets, stats, histogramme, mur — à la forme exacte de ce qui va
+   plutôt qu'à une attente. On dresse donc la page entière en gris -
+   onglets, stats, histogramme, mur - à la forme exacte de ce qui va
    arriver : les vraies données se posent dessus sans rien faire sauter.
 
    Deux choses ne sont pas des fantômes, parce qu'elles n'ont pas besoin
    des données pour être justes : le titre « Répartition des notes », déjà
    dans le HTML, et la liste des tris, qui ne dépend que de l'onglet. Les
-   deux champs sont seulement désactivés — une recherche lancée maintenant
+   deux champs sont seulement désactivés - une recherche lancée maintenant
    remplacerait le squelette par « aucun jeu trouvé ».
 
    Tous les fantômes portent aria-hidden : ils ne décrivent rien. */
@@ -635,7 +550,6 @@ function squelette(){
    bouton mène donc à Abyss au lieu d'ouvrir une boîte à jeton. */
 function majVerrou(){
   const chezMoi = CAN_WRITE;
-  majMaison();
   document.getElementById('unlock').hidden = chezMoi;
   document.getElementById('relock').hidden = true;   // plus de retour arrière à faire
   document.getElementById('addBtn').hidden = !chezMoi;
@@ -652,7 +566,7 @@ document.getElementById('unlock').addEventListener('click', ()=>{
   /* Connecté sans journal : on lui en crée un et on l'y emmène. Connecté
      avec un journal : on l'ouvre. Pas connecté : direction Abyss. */
   /* ?connexion : Abyss ouvre sa fenêtre de connexion en arrivant. Sans ça
-     on atterrissait sur le hub, à charge de retrouver le bouton — un clic
+     on atterrissait sur le hub, à charge de retrouver le bouton - un clic
      de plus pour la seule chose qu'on venait faire. */
   if(!MOI.connecte){ location.href = '/abyss?connexion=1'; return; }
   if(MOI.pseudo){ ouvrirLeMien(); return; }
@@ -669,7 +583,7 @@ document.getElementById('inviteCreate').addEventListener('click', creerMonJourna
    celles-ci comptaient. */
 /* `anBucket` : l'onglet dont l'onglet « Statistiques » parle. Séparé de
    `bucket` parce que les statistiques ne sont pas un tiroir mais une
-   lecture — on y entre depuis un onglet, et c'est de celui-là qu'on veut
+   lecture - on y entre depuis un onglet, et c'est de celui-là qu'on veut
    d'abord des chiffres, quitte à en choisir un autre une fois sur place. */
 const S = { bucket:'all', q:'', sort:'note', dir:'desc', open:null, range:null,
             anBucket:'all' };
@@ -677,13 +591,20 @@ const S = { bucket:'all', q:'', sort:'note', dir:'desc', open:null, range:null,
 /* ---------- qui suis-je, et quels journaux existent ----------
    Un seul appel au démarrage : l'annuaire des journaux publics, plus l'état
    de la session. C'est lui qui remplit SOURCES, jusqu'ici écrit en dur. */
-let MOI = { connecte: false, pseudo: null };
+/* MOI est déclaré dans archive-noyau.js : la page Social s'en sert aussi,
+   et c'est le seul fichier que les deux chargent. */
 
 async function chargeAnnuaire(){
   const r = await fetch('/api/journal', {credentials: 'same-origin'});
   const d = await r.json();
   if(!d.ok) throw new Error(d.message || 'annuaire illisible');
-  MOI = { connecte: !!d.connecte, pseudo: d.moi ? d.moi.pseudo : null };
+  MOI = { connecte: !!d.connecte, pseudo: d.moi ? d.moi.pseudo : null,
+          // la pastille de l'en-tête montre MA photo, pas celle du journal
+          // affiché : elle est le seul point fixe de la barre
+          avatar: d.moi ? d.moi.avatar : null,
+          // la pastille de la cloche arrive avec l'annuaire, pas par un
+          // appel à elle (voir liste() dans journal.py)
+          notifs: d.notificationsNeuves || 0 };
   SOURCES = (d.journaux || []).map(j => ({
     nom: j.pseudo,
     titre: j.titre,
@@ -697,7 +618,7 @@ async function chargeAnnuaire(){
      dans cet annuaire, qui ne liste que les journaux publics : on l'ajoute
      nous-memes plutot que de laisser la page par defaut retomber sur
      n'importe qui d'autre. `moi` sert à la recherche : c'est ce qui lui
-     fait dire « Ton journal » — avec son nombre de jeux, connu même quand
+     fait dire « Ton journal » - avec son nombre de jeux, connu même quand
      le journal est privé et absent de l'annuaire ci-dessus. */
   if(MOI.pseudo){
     const i = SOURCES.findIndex(x => x.nom === MOI.pseudo);
@@ -713,14 +634,14 @@ async function chargeAnnuaire(){
 
 /* ---------- ma bibliothèque, quand je lis celle de quelqu'un d'autre ----------
    GAMES ne contient que le journal affiché. Chez un autre, il n'y a donc
-   nulle part où lire ce que *moi* j'ai pensé du jeu dont j'ouvre la fiche —
+   nulle part où lire ce que *moi* j'ai pensé du jeu dont j'ouvre la fiche -
    alors que c'est précisément la question qu'on se pose en feuilletant le
    classeur d'un ami : « lui il met 9, moi j'avais mis quoi ? ».
    Le mien est donc gardé de côté, à part, et ne sert qu'à ça.
 
    Une seule fois par visite : le journal est petit, et le relire à chaque
    changement de classeur ne dirait rien de neuf. Chez moi, il ne coûte même
-   pas de requête — GAMES *est* déjà ma bibliothèque. */
+   pas de requête - GAMES *est* déjà ma bibliothèque. */
 let MA_BIBLIO = null;          // Map clé -> mon exemplaire du jeu
 let MA_BIBLIO_PRETE = false;   // vrai dès qu'on l'a eue de première main
 let MA_BIBLIO_EN_VOL = false;
@@ -730,7 +651,7 @@ const estMonJournal = () =>
 
 /* Les clés sous lesquelles un même jeu se reconnaît d'un classeur à
    l'autre : l'identifiant IGDB d'abord, parce que deux « Doom » n'en font
-   pas un seul, et le nom normalisé à défaut — les classeurs remplis avant
+   pas un seul, et le nom normalisé à défaut - les classeurs remplis avant
    que les fiches IGDB existent n'ont que ça. */
 function clesJeu(g){
   const c = [];
@@ -791,8 +712,8 @@ async function chargeMaBiblio(){
 
 /* L'onglet sur lequel ce classeur s'ouvre : le choix de son auteur s'il
    existe encore, « Tout » sinon. La règle est celle d'applyData(), et elle
-   sert maintenant à trois endroits — l'ouverture, l'étoile de la barre
-   d'onglets, et la maison qui se cache quand on y est déjà — d'où cette
+   sert maintenant à trois endroits - l'ouverture, l'étoile de la barre
+   d'onglets, et la maison qui se cache quand on y est déjà - d'où cette
    fonction plutôt que trois copies qui finiraient par diverger.
 
    « Tout » et non l'année en cours : c'est la vue qui ne cache rien à qui
@@ -802,20 +723,16 @@ function ongletEntree(){
     ? ONGLET_DEFAUT : 'all';
 }
 
-/* La maison ne se montre que si elle mène quelque part : il faut un journal
-   à soi, et ne pas déjà être dessus sur son onglet d'entrée. Sinon elle
-   resterait là à ne rien faire — un bouton qui ne change rien à l'écran se
-   lit comme une panne. */
-function majMaison(){
-  document.getElementById('homeBtn').hidden =
-    !MOI.pseudo || (CAN_WRITE && S.bucket === ongletEntree());
-}
+/* La maison a disparu de la barre : c'est la pastille d'identité qui mène
+   maintenant chez soi (voir majMoi). Elle, contrairement à la maison, reste
+   là même quand on est déjà chez soi - elle ne sert pas qu'à naviguer, elle
+   dit sous quel compte on est. */
 
 /* Mon journal, sur l'onglet que j'y ai choisi comme entrée : la même
    arrivée que depuis Abyss, et ce que promet la maison de l'en-tête.
 
-   Déjà chez soi, choisirClasseur() refuse — il ignore un clic sur le
-   journal déjà ouvert — et applyData() ne reposera pas l'onglet, puisque
+   Déjà chez soi, choisirClasseur() refuse - il ignore un clic sur le
+   journal déjà ouvert - et applyData() ne reposera pas l'onglet, puisque
    PREMIERE_FOIS est retombé depuis longtemps. On se replace donc ici, avec
    la règle qu'applyData applique à l'ouverture : le choix de l'auteur s'il
    existe encore, « Tout » sinon. */
@@ -835,7 +752,7 @@ function pseudoDeURL(){
 /* Le rang d'un journal dans SOURCES, en l'y ajoutant s'il n'y est pas.
    L'annuaire ne liste que les journaux publics : un lien vers un journal
    privé, ou vers un pseudo qui n'existe pas, n'y trouve rien. On l'ajoute
-   quand même pour tenter le chargement — c'est le serveur qui doit dire
+   quand même pour tenter le chargement - c'est le serveur qui doit dire
    « privé » ou « inconnu », pas un silence ici. */
 function rangDuJournal(nom){
   const i = SOURCES.findIndex(x => norm(x.nom) === norm(nom));
@@ -845,7 +762,7 @@ function rangDuJournal(nom){
 }
 
 /* L'adresse suit le journal affiché : elle est copiable telle quelle à tout
-   moment, ce qui est tout l'intérêt. replaceState et non pushState — une
+   moment, ce qui est tout l'intérêt. replaceState et non pushState - une
    entrée d'historique par changement de classeur ferait du bouton Retour un
    « journal précédent » que personne n'a demandé, et il doit continuer de
    ramener d'où l'on vient. */
@@ -869,10 +786,7 @@ function ouvrirLeMien(){
   charger({silencieux:true});
   window.scrollTo(0, 0);
 }
-document.getElementById('homeBtn').addEventListener('click', ()=>{
-  closeMenu(); fermerRecherche();
-  ouvrirLeMien();
-});
+
 
 /* Créer son journal : une seule requête, et le serveur renvoie la page vide
    toute prête. Rejouable sans dégât, il rend l'existant s'il y en a un. */
@@ -888,6 +802,7 @@ async function creerMonJournal(){
       return d;
     })();
     MOI.pseudo = data.pseudo;
+    majMoi();          // la barre du haut me connaît enfin : elle m'affiche
     SOURCES.unshift({nom: data.pseudo, titre: data.titre, moi: true, jeux: 0,
                      url: '/api/journal/' + encodeURIComponent(data.pseudo)});
     SRC = 0;
@@ -896,6 +811,6 @@ async function creerMonJournal(){
     applyData(data, true); showApp(); render();
     toast('Ton journal est prêt. Ajoute ton premier jeu.');
   }catch(e){
-    toast('Création impossible — ' + (e.message || 'erreur inconnue'), true);
+    toast('Création impossible - ' + (e.message || 'erreur inconnue'), true);
   }
 }

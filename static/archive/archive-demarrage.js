@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-demarrage.js
+   Archive Jeux Vidéos - archive-demarrage.js
 
    Le rendu global, les contrôles, et le démarrage de la page.
 
@@ -24,8 +24,8 @@ function render(){
      lisait une fiche la refermait sous les yeux. On retient plutôt quel jeu
      est affiché, et on va le rechercher dans les données neuves.
 
-     Son identité, c'est le couple (onglet, ligne) — celui-là même qui sert
-     déjà à réécrire la bonne cellule du classeur — plus le nom. Le nom
+     Son identité, c'est le couple (onglet, ligne) - celui-là même qui sert
+     déjà à réécrire la bonne cellule du classeur - plus le nom. Le nom
      n'est pas du luxe : quand une ligne est supprimée, les suivantes
      remontent d'un cran, et (onglet, ligne) désignerait alors le voisin. */
   const iAvant = S.open;
@@ -34,11 +34,10 @@ function render(){
   const nAvant = SHEET_LIST.length;
 
   majEntete();
-  majMaison();      // elle dépend de l'onglet affiché, pas seulement du compte
   document.getElementById('addBtn').hidden = !CAN_WRITE;
   /* Le résumé en image dessine un bilan de jeux terminés : une moyenne, un
      podium, des heures. Les statistiques n'ont pas de liste à résumer, « En
-     cours » et la wishlist n'ont ni note ni heures — l'image y serait vide.
+     cours » et la wishlist n'ont ni note ni heures - l'image y serait vide.
      Plutôt que de laisser le bouton et de répondre par un refus au clic, il
      ne se montre pas là où il n'a rien à faire. */
   const vueStats = S.bucket === 'stats';
@@ -51,7 +50,7 @@ function render(){
 
   /* L'onglet des statistiques n'est pas un tiroir : il n'a ni mur, ni tri,
      ni recherche, ni histogramme. Tout ce qui parle d'une liste de jeux est
-     donc rangé, et lui seul s'affiche — plutôt que de laisser un bandeau de
+     donc rangé, et lui seul s'affiche - plutôt que de laisser un bandeau de
      stats et une barre d'outils sans objet flotter au-dessus du vide. */
   document.getElementById('analyse').hidden = !vueStats;
   document.getElementById('statsWrap').hidden = vueStats;
@@ -71,7 +70,7 @@ function render(){
   if(TRANSITION_EN_COURS) RENDU_MUR_EN_ATTENTE = true;
   else renderWall();
   /* Prix Steam et suggestions : uniquement quand la wishlist est à l'écran.
-     Les suggestions, en plus, uniquement chez moi — elles ne s'affichent pas
+     Les suggestions, en plus, uniquement chez moi - elles ne s'affichent pas
      ailleurs (voir renderDecouverte), et les demander quand même coûterait
      un appel IGDB pour une section que personne ne verra. Les tarifs, eux,
      s'affichent partout : c'est le prix du jeu, pas un conseil. */
@@ -85,7 +84,7 @@ function render(){
   if(!vu){ closeSheet(); return; }     // index sans jeu en face : on ferme
   /* filtered() est relu ici et pas plus haut : renderSort() peut changer le
      tri et renderDist() annuler la tranche de notes, donc l'ordre de la
-     liste — et le rang de la fiche dedans. */
+     liste - et le rang de la fiche dedans. */
   const liste = filtered();
   const i = liste.findIndex(x => x.id === vu.id);
   // plus là : ligne supprimée, ou sortie du filtre affiché
@@ -113,7 +112,7 @@ document.getElementById('qClear').addEventListener('click', ()=>{
 });
 /* Firefox restaure le contenu des champs sur un simple rechargement. Le
    filtre doit repartir de ce qui est écrit, et la croix être là si le
-   texte l'est — sinon le champ dit une chose et le mur en montre une
+   texte l'est - sinon le champ dit une chose et le mur en montre une
    autre. */
 S.q = document.getElementById('q').value;
 majCroixQ();
@@ -155,6 +154,26 @@ if(window.Suggestion){
   });
 }
 
+/* ---------- la cloche ----------
+   Le bouton existe dans le balisage mais reste caché tant qu'on n'est pas
+   connecté : sans compte, personne ne peut rien nous notifier, et un bouton
+   qui n'ouvre jamais que « rien de neuf » n'a rien à faire dans la barre.
+
+   Le panneau, lui, est monté par archive-social.js - partagé avec la page
+   Social, qui a exactement le même bouton au même endroit. */
+function brancheCloche(){
+  const cloche = document.getElementById('cloche');
+  if(!cloche || !MOI.connecte) return;
+  cloche.hidden = false;
+  monteCloche(cloche);
+  socialMajNeuves(MOI.notifs || 0);
+  /* La pastille en direct : quelqu'un aime ou commente pendant qu'on
+     range son classeur, et le chiffre bouge sans qu'on recharge. Cette
+     page n'a pas de fil à remplir - elle ne prend que la cloche.
+     Voir socialTempsReel dans archive-social.js. */
+  socialTempsReel();
+}
+
 (async function demarrer(){
   document.documentElement.style.setProperty('--cov-ratio', CONFIG.coverRatio);
   /* Part avant tout le reste, et sans qu'on l'attende : le rendu se fait
@@ -169,9 +188,30 @@ if(window.Suggestion){
   try{ await chargeAnnuaire(); }
   catch(e){ showGate('<b>Serveur injoignable.</b> Le hub Abyss ne répond pas.'); return; }
 
+  brancheCloche();
+  /* Ma pastille d'identité : posée une fois, juste après l'annuaire qui la
+     renseigne. Elle ne dépend pas du journal ouvert - c'est justement ce
+     qui en fait un repère fixe. */
+  majMoi();
+
+  /* La recherche demandée par l'adresse. C'est le bouton « Rechercher » de
+     la page Social qui mène ici : la fenêtre vit avec les journaux qu'elle
+     fouille, donc de ce côté-ci.
+
+     Le paramètre est effacé aussitôt - il a servi. Le garder ferait rouvrir
+     la fenêtre à chaque rechargement, et il partirait dans le lien qu'on
+     copie pour donner son journal. */
+  if(new URLSearchParams(location.search).get('recherche')){
+    const propre = new URLSearchParams(location.search);
+    propre.delete('recherche');
+    const reste = propre.toString();
+    try{ history.replaceState(null, '', location.pathname + (reste ? '?' + reste : '')); }catch(e){}
+    ouvrirRecherche();
+  }
+
   /* Une adresse /archive/<pseudo> passe avant tout le reste : elle dit
      exactement quel journal ouvrir, et c'est pour ça qu'on l'a suivie. Elle
-     court-circuite donc l'écran d'accueil comme le « ouvre le mien » — un
+     court-circuite donc l'écran d'accueil comme le « ouvre le mien » - un
      lien partagé doit montrer ce qu'il promet, pas une invitation à se
      connecter. */
   const demande = pseudoDeURL();

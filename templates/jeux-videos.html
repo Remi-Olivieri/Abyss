@@ -8,6 +8,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Karla:wght@400;500;700&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style_jeuxvideos.css">
+<!-- Le social : les cartes du fil, la fenêtre d'une discussion, la cloche et
+     le bouton « Avis » de la fiche. Partagé avec templates/archive-feed.html,
+     qui charge exactement les deux mêmes feuilles. -->
+<link rel="stylesheet" href="/static/style_social.css">
 </head>
 <body>
 
@@ -23,32 +27,66 @@
       </svg>
       <span>Retour à Abyss</span>
     </a>
-    <!-- La flèche menait à Abyss, ce que dit maintenant le bouton ci-dessus.
-         Cette place-ci revient à ce qu'on cherche le plus souvent depuis le
-         journal de quelqu'un d'autre : le sien. Masquée tant qu'on n'a pas
-         de journal à soi — voir majVerrou(). -->
-    <button class="maison" id="homeBtn" hidden aria-label="Ouvrir mon journal">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 10.5L12 3l9 7.5"/>
-        <path d="M5 9.8V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.8"/>
-        <path d="M9.5 21v-6h5v6"/>
-      </svg>
-    </button>
+    <!-- La maison qui ouvrait mon journal est partie : c'est la pastille
+         d'identité ci-dessous qui fait ce chemin-là maintenant. Un bouton
+         de moins, et le geste est au bon endroit - on clique sur soi pour
+         rentrer chez soi. -->
     <div class="brand">
+      <!-- MOI, et non le journal affiché : c'est la seule chose de la barre
+           qui ne change pas d'un écran à l'autre, et c'est ce qui en fait
+           un point de repère. Le journal qu'on lit, lui, se nomme en grand
+           dans son bandeau juste dessous.
+
+           Un lien vers mon journal, qui fait office de retour au bercail -
+           le geste que portait la petite maison. Il garde une vraie adresse
+           pour qu'un clic du milieu l'ouvre dans un onglet, mais le clic
+           simple reste dans la page (voir majMoi). Masqué tant qu'on n'a
+           pas de journal à soi. -->
+      <a class="brand-moi" id="moiBtn" hidden href="/archive">
+        <span class="brand-moi-ava" id="moiAva"></span>
+        <b id="moiNom"></b>
+      </a>
+      <!-- Le nom du site, pour qui n'est pas connecté : la barre ne peut
+           pas rester vide, et il n'y a alors personne à y mettre. -->
       <b id="brand-title">Jeux Vidéos</b>
-      <!-- Un seul bouton : le choix entre chercher un journal et chercher un
-           jeu se fait dans la fenêtre, à côté de ce qu'on tape. Deux boutons
-           ici obligeaient à trancher avant même de savoir ce qu'on trouverait
-           derrière l'un ou l'autre. -->
-      <button class="jnl-search" id="jnlSearchBtn" aria-haspopup="dialog">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7"/>
-          <path d="M21 21l-4.3-4.3"/>
+      <!-- « Social » a pris la place de « Rechercher ».
+
+           La recherche est un outil : on s'en sert quand on sait déjà qui ou
+           quoi on cherche. Le fil, lui, est un endroit où aller - ce que
+           les autres ont terminé, et ce qu'ils en ont dit. C'est la porte à
+           côté du titre du journal, pas un champ de saisie.
+
+           La recherche n'a pas disparu : elle est en haut de la page Social
+           (voir templates/archive-feed.html), et sa fenêtre s'ouvre toujours
+           ici, à l'arrivée, quand l'adresse porte ?recherche=1. -->
+      <a class="jnl-search" id="socialBtn" href="/archive/feed">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="8" r="3.4"/>
+          <path d="M2.5 19.5a6.5 6.5 0 0 1 13 0"/>
+          <path d="M16.5 5.2a3.4 3.4 0 0 1 0 5.6M18 19.5a6.6 6.6 0 0 0-1.6-4.3"/>
         </svg>
-        <span>Rechercher</span>
-      </button>
+        <span>Social</span>
+      </a>
     </div>
     <nav class="tabs" id="tabs" role="tablist"></nav>
+    <!-- La cloche, à gauche de l'engrenage : les deux boutons du compte,
+         côte à côte. Masquée tant qu'on n'est pas connecté, exactement comme
+         lui - sans compte, personne ne peut rien nous notifier.
+
+         Le panneau est construit par archive-social.js (voir monteCloche),
+         et vient se poser dans ce .cloche-wrap : il faut un parent
+         positionné pour qu'il s'accroche sous le bouton et non au coin de
+         la page. -->
+    <div class="cloche-wrap">
+      <button class="cloche" id="cloche" hidden aria-haspopup="true"
+              aria-expanded="false" aria-label="Notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.2 7.5-2.2 7.5h16.4S18 14.5 18 8.5z"/>
+          <path d="M13.7 20a2 2 0 0 1-3.4 0"/>
+        </svg>
+      </button>
+    </div>
     <div class="cog-wrap">
       <button class="cog" id="cog" data-etat="offline" hidden aria-haspopup="true" aria-expanded="false" aria-label="Paramètres">
         <span class="led"></span>
@@ -108,11 +146,35 @@
   </section>
 
   <div id="app" hidden>
-  <section class="wrap" id="statsWrap">
-    <div class="stats" id="stats"></div>
-  </section>
+  <!-- ---------- la tête du journal ----------
+       La bannière n'est pas un bandeau posé au-dessus de la page : c'est le
+       FOND de tout son haut. Le nom, la photo, les quatre chiffres et la
+       courbe des notes s'écrivent dessus.
 
-  <section class="dist" id="dist">
+       C'est ce qui la rend visible sans rien coûter en hauteur - un bandeau
+       décoratif de deux cents pixels repousse le journal d'autant, alors
+       qu'un fond ne prend la place de rien. Et c'est ce qui donne à chaque
+       journal une couleur qui n'appartient qu'à lui, jusque dans ses
+       statistiques.
+
+       Rempli par majIdentite() - voir archive-journal.js. -->
+  <div class="jtete" id="jtete">
+    <div class="jtete-fond" id="identFond"></div>
+
+    <section class="wrap ident-in" id="ident" hidden>
+      <div class="ident-ava" id="identAva"></div>
+      <div class="ident-txt">
+        <h1 id="identNom"></h1>
+        <p class="ident-sous" id="identSous"></p>
+      </div>
+      <a class="ident-cta" id="identCta" href="/abyss/profil" hidden></a>
+    </section>
+
+    <section class="wrap" id="statsWrap">
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section class="dist" id="dist">
     <div class="wrap">
       <div class="dist-head">
         <h2>Répartition des notes</h2>
@@ -125,7 +187,8 @@
         <div class="tip" id="tip"></div>
       </div>
     </div>
-  </section>
+    </section>
+  </div>
 
   <section class="wrap">
     <div class="tools">
@@ -136,7 +199,7 @@
              recherche, et celle de Chrome est grise et non stylable : la
              nôtre est posée ici pour tout le monde, la native est masquée
              en CSS. Elle vit dans le <label>, donc un clic rend aussi le
-             focus au champ — exactement ce qu'on veut après avoir effacé. -->
+             focus au champ - exactement ce qu'on veut après avoir effacé. -->
         <button type="button" class="search-x" id="qClear"
           aria-label="Effacer la recherche" hidden>&times;</button>
       </label>
@@ -184,7 +247,18 @@
 <script src="/static/gestes.js"></script>
 <!-- Le formulaire de suggestion, ouvert sur place plutôt que sur le hub :
      voir static/suggestion.js. Chargé avant le script de la page, qui le
-     branche en s'installant — un defer arriverait après lui. -->
+     branche en s'installant - un defer arriverait après lui. -->
+<!-- Les zones de texte grandissent en écrivant plutôt que de porter une
+     poignée à tirer : une taille de départ, la hauteur du texte ensuite,
+     et le défilement dans le champ passé un plafond. Voir
+     static/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
+<!-- Le canal du hub, monté pour le Yu-Gi-Quiz et partagé avec le Social :
+     un jeu terminé apparaît dans le fil et la pastille de la cloche bouge
+     sans qu'on recharge. La même version que le lobby du quiz - c'est le
+     même serveur en face. Son absence ne casse rien : voir socialTempsReel
+     dans archive-social.js. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+<script src="/static/champs.js"></script>
 <script src="/static/suggestion.js"></script>
 <!-- La page tenait dans un seul bloc de six mille lignes de JavaScript,
      écrit à même le HTML. Il est découpé en onze fichiers de
@@ -199,6 +273,10 @@
 
      Chaque fichier s'ouvre sur ce dont il a la charge. -->
 <script src="/static/archive/archive-noyau.js"></script>
+<!-- La recherche, partagée avec la page /archive/feed : ce qu'un résultat
+     déclenche arrive en paramètre, le reste est le même écran des deux
+     côtés. Elle ne dépend que du noyau, d'où sa place juste après lui. -->
+<script src="/static/archive/archive-recherche.js"></script>
 <script src="/static/archive/archive-journal.js"></script>
 <script src="/static/archive/archive-mur.js"></script>
 <script src="/static/archive/archive-fiche.js"></script>
@@ -208,6 +286,10 @@
 <script src="/static/archive/archive-image.js"></script>
 <script src="/static/archive/archive-igdb.js"></script>
 <script src="/static/archive/archive-stats.js"></script>
+<!-- Le social, partagé avec la page /archive/feed : il ne dépend que de
+     archive-noyau.js, d'où sa place ici plutôt qu'auprès de la fiche qui
+     l'appelle - l'ordre des balises est l'ordre des dépendances. -->
+<script src="/static/archive/archive-social.js"></script>
 <script src="/static/archive/archive-demarrage.js"></script>
 </body>
 </html>

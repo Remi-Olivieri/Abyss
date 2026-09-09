@@ -263,11 +263,11 @@
 
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
-     /api/moi — un defer arriverait peut-être trop tard. -->
+     /api/moi - un defer arriverait peut-être trop tard. -->
 <script src="/static/compte.js"></script>
 <script>
 /* La liste des projets masquables : la meme qu'Abyss.html, juste ce qu'il
-   faut pour dessiner la case a cocher de chacun — id, nom, accent. */
+   faut pour dessiner la case a cocher de chacun - id, nom, accent. */
 const PROJETS = [
     { id: "jeux-videos", nom: "Jeux Vidéos", accent: "var(--algue)" },
     { id: "collection", nom: "Collection Yu-Gi-Oh!", accent: "var(--luciole)" },
@@ -313,7 +313,7 @@ function toast(message, mauvais) {
 }
 
 /* =========================================================
-   Afficher / masquer un mot de passe — meme bouton qu'ailleurs sur Abyss
+   Afficher / masquer un mot de passe - meme bouton qu'ailleurs sur Abyss
    ========================================================= */
 function posePasswordOeil(input){
   const wrap = document.createElement("div");
@@ -352,18 +352,18 @@ document.querySelectorAll(".champ input[type=password]").forEach(posePasswordOei
    Le compte
    =========================================================
    Ce que la page sait de la personne connectée, et ce dont le bouton du
-   coin est dessiné — par static/compte.js, comme sur les trois autres
+   coin est dessiné - par static/compte.js, comme sur les trois autres
    pages d'Abyss. Cette page en avait sa propre copie, et c'est elle qui
    avait le plus dérivé : une pastille verte à la place du médaillon, pas
    de chevron, et un menu amputé de « Mon profil » et de « Monitoring ».
 
-   Aucun réglage à lui passer : la page exige un compte — un visiteur ne
-   voit pas le bouton, il voit le portail — et se déconnecter renvoie sur
+   Aucun réglage à lui passer : la page exige un compte - un visiteur ne
+   voit pas le bouton, il voit le portail - et se déconnecter renvoie sur
    /abyss, ce que compte.js fait par défaut. */
 let MOI = { connecte: false, utilisateur: null, masques: [] };
 
 /* =========================================================
-   Modales — e-mail et mot de passe, ouvertes à la demande plutôt que
+   Modales - e-mail et mot de passe, ouvertes à la demande plutôt que
    toujours dépliées sur la page (même mécanique qu'Abyss.html).
    ========================================================= */
 let RENDRE_FOCUS = null;
@@ -386,7 +386,7 @@ function fermeTout() {
    Bannière
    Deux origines pour une même chose. Une image envoyée finit sur le
    disque ; un artwork d'IGDB reste une adresse chez IGDB, jamais copiée
-   ici — c'est ce qui rend le choix instantané et gratuit en espace.
+   ici - c'est ce qui rend le choix instantané et gratuit en espace.
    Le serveur ne renvoie qu'une adresse dans les deux cas : la page n'a
    pas à savoir laquelle des deux elle affiche.
    ========================================================= */
@@ -568,7 +568,7 @@ function majAvatarApercu() {
      chargement. */
   Compte.dessine(MOI);
 }
-/* Pseudo et e-mail affichés dans la bannière — appelée au chargement et
+/* Pseudo et e-mail affichés dans la bannière - appelée au chargement et
    après chaque changement d'e-mail, pour que la bannière ne mente jamais. */
 function majBanniereCompte() {
   el("bannierePseudo").textContent = MOI.utilisateur.pseudo;
@@ -662,7 +662,7 @@ el("formMdp").addEventListener("submit", async (e) => {
 });
 
 /* =========================================================
-   Démarrage — page reservee aux connectes
+   Démarrage - page reservee aux connectes
    ========================================================= */
 (async function () {
   let data;

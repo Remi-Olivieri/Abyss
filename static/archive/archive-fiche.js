@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-fiche.js
+   Archive Jeux Vidéos - archive-fiche.js
 
    La fiche d'un jeu, ouverte par-dessus le mur.
 
@@ -13,7 +13,7 @@
    ======================================================================= */
 
 
-/* Les jeux dans l'ordre où la fiche les feuillette — figé à l'ouverture,
+/* Les jeux dans l'ordre où la fiche les feuillette - figé à l'ouverture,
    relu par render() qui y retrouve la fiche après un rafraîchissement.
 
    Ici, auprès de la fiche à laquelle il sert : il était déclaré loin en
@@ -25,7 +25,7 @@ let SHEET_LIST = [];
    Le classement est calculé sur l'onglet affiché, comme les stats et
    l'histogramme : « 3e sur 42 en 2026 ». Les jeux en cours, ceux de la
    wishlist et ceux sans note n'en font pas partie, et en dessous de trois
-   jeux notés la position ne veut rien dire — on ne l'affiche pas. */
+   jeux notés la position ne veut rien dire - on ne l'affiche pas. */
 function rangJeu(g){
   if(!g || estStatut(g) || g.rating === null || g.rating === undefined) return null;
   const lot = current().filter(x => !estStatut(x) && x.rating !== null);
@@ -33,14 +33,14 @@ function rangJeu(g){
   // ex aequo : deux 8,5 partagent le même rang, aucun ne passe devant l'autre
   const rang = lot.filter(x => x.rating > g.rating).length + 1;
   /* Le podium ne compte pas les rangs, il compte les notes : si trois jeux
-     sont à 10, ils sont tous dorés — et celui qui vient juste après reste
+     sont à 10, ils sont tous dorés - et celui qui vient juste après reste
      « argenté », même si son rang affiché saute à la 4e place. */
   const notes = Array.from(new Set(lot.map(x => x.rating))).sort((a,b)=>b-a);
   const palier = notes.indexOf(g.rating) + 1;
   return { rang, total: lot.length, palier, ou: S.bucket === 'all' ? 'au total' : 'en ' + S.bucket };
 }
 /* Le podium, comme sur un vrai podium : deux jeux à égalité sont tous les
-   deux premiers, et le suivant est troisième — il n'y a pas d'argent cette
+   deux premiers, et le suivant est troisième - il n'y a pas d'argent cette
    année-là. */
 const MEDAILLES = ['or','argent','bronze'];
 function medailleDe(r){ return (r && r.palier && r.palier <= 3) ? MEDAILLES[r.palier - 1] : ''; }
@@ -53,13 +53,13 @@ function rangHTML(r, med){
 /* ---------- la fiche ----------
    La coquille est montée une fois et gardée : naviguer d'un jeu au suivant
    ne réécrit que le corps et la jaquette. Tout reconstruire relançait
-   l'image à chaque flèche — élément recréé, requête, décodage — et la case
+   l'image à chaque flèche - élément recréé, requête, décodage - et la case
    clignotait même quand elle était déjà en cache. */
 
 /* Copier dans le presse-papier. navigator.clipboard n'existe qu'en contexte
    sécurisé : depuis un autre poste du réseau, la page arrive en http et
-   l'API est tout simplement absente. D'où le repli sur la vieille méthode —
-   un champ hors écran, une sélection, execCommand — qui, elle, marche
+   l'API est tout simplement absente. D'où le repli sur la vieille méthode -
+   un champ hors écran, une sélection, execCommand - qui, elle, marche
    partout où ce hub est consulté. */
 async function copier(texte){
   try{
@@ -101,7 +101,7 @@ function corpsFiche(g){
      Prix de base / Payé tenir sur une seule ligne. */
   /* Jeu convoité et soldé aujourd'hui : la case de prix montre l'ancien
      barré, celui du jour, et la remise. Le prix barré est celui du
-     classeur, pas celui de Steam — c'est le montant qu'on avait noté, donc
+     classeur, pas celui de Steam - c'est le montant qu'on avait noté, donc
      celui auquel on compare. À défaut, le prix fort que Steam annonce. */
   const solde = wish && TARIFS[g.name] && TARIFS[g.name].remise > 0 ? TARIFS[g.name] : null;
   const avant = (g.base === null || g.base === undefined) ? (solde && solde.plein) : g.base;
@@ -115,13 +115,13 @@ function corpsFiche(g){
     enCours ? null : ['Temps', hoursFmt(g.hours)],
     // le troisième terme, quand il existe, est du HTML déjà échappé
     [solde ? 'Prix' : 'Prix de base', money(g.base), prix],
-    // rien n'a été payé pour un jeu de la wishlist : la case dirait « — »
+    // rien n'a été payé pour un jeu de la wishlist : la case dirait « - »
     wish ? null : ['Payé', money(g.paid)]
   ].filter(Boolean);
   const rang = rangJeu(g), med = medailleDe(rang);
   return `${statut
       ? `<span class="sheet-note ${wish ? 'wish' : 'encours'}">${esc(statut)}</span>`
-      : `<span class="sheet-note" style="color:${noteColor(g.rating)}">${g.rating!==null?fr(g.rating,1):'—'}</span>`}
+      : `<span class="sheet-note" style="color:${noteColor(g.rating)}">${g.rating!==null?fr(g.rating,1):'-'}</span>`}
     <h3 class="sheet-title${med ? ' medaille ' + med : ''}">${esc(g.name)}<button
         class="titre-copie" type="button" title="Copier le nom du jeu"
         aria-label="Copier le nom du jeu">${ICONE_COPIE}</button>${
@@ -140,7 +140,7 @@ function corpsFiche(g){
    Chez quelqu'un d'autre, un jeu qu'on a soi-même dans son classeur
    déroule les deux lignes côte à côte : sa note et la nôtre, son temps de
    jeu et le nôtre, quand chacun l'a terminé. Rien ne s'affiche chez soi,
-   ni pour un jeu qu'on n'a pas — la fiche reste ce qu'elle était.
+   ni pour un jeu qu'on n'a pas - la fiche reste ce qu'elle était.
 
    L'ordre est le sien d'abord : c'est son journal qu'on lit, sa ligne est
    celle que la fiche raconte au-dessus, et la nôtre vient s'y comparer. */
@@ -148,7 +148,7 @@ function ligneCompare(qui, g, moi){
   const statut = statutDe(g);
   const note = statut
     ? `<span class="cmp-statut ${estWishlist(g) ? 'wish' : 'encours'}">${esc(statut)}</span>`
-    : `<b style="color:${noteColor(g.rating)}">${g.rating!==null?fr(g.rating,1):'—'}</b>`;
+    : `<b style="color:${noteColor(g.rating)}">${g.rating!==null?fr(g.rating,1):'-'}</b>`;
   const quand = statut ? '' : (g.month ? `${MONTHS[g.month-1]} ${g.year||''}` : (g.year || g.bucket || ''));
   return `<div class="cmp-l${moi ? ' moi' : ''}">
       <span class="cmp-qui">${esc(qui)}</span>
@@ -174,7 +174,7 @@ function compareHTML(g){
 /* Les flèches encadrent la fiche au lieu d'être posées dessus : elles ne
    parlent pas de ce qu'on lit mais de ce qui l'entoure, et la barre du haut
    ne garde que ce qui concerne le jeu affiché. Elles sont donc voisines de
-   la boîte et non dedans — d'où les querySelector sur `host` plus bas, et
+   la boîte et non dedans - d'où les querySelector sur `host` plus bas, et
    le piège à focus déplacé sur lui aussi, sans quoi la tabulation ne les
    atteindrait jamais. */
 const CHEVRON = (d) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -201,7 +201,26 @@ function monteFiche(host){
       </span>
     </div>
     <div class="sheet-in">
-      <div class="sheet-cover"></div>
+      <div class="sheet-cover">
+        <!-- La jaquette dans sa boîte à elle, et le bouton dessous. Un
+             cran de plus dans le balisage, mais coverFiche() remplace tout
+             ce qu'elle trouve chez son hôte à chaque jeu : sans cette
+             boîte, le bouton partait avec l'image du jeu précédent. -->
+        <div class="cov-boite"></div>
+        <!-- « Avis » : ce que les AUTRES ont pensé du même jeu. Sa place est
+             sous la jaquette et non dans le corps de la fiche, parce qu'il
+             parle du jeu lui-même - pas de la ligne qu'on est en train de
+             lire, dont tout le reste de la fiche s'occupe.
+             Caché pour un jeu en cours ou convoité : il n'y a pas encore
+             d'avis à comparer. -->
+        <button type="button" class="fiche-avis" hidden>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>
+          </svg>
+          <span>Avis des joueurs</span>
+        </button>
+      </div>
       <div class="sheet-body"></div>
     </div>
   </div>
@@ -212,13 +231,21 @@ function monteFiche(host){
   boite.querySelector('.sheet-x').onclick = fermeFiche;
   boite.querySelector('.sheet-edit').onclick = ()=>{ const g = jeu(); if(g) openForm(g); };
   boite.querySelector('.sheet-share').onclick = ()=>{ const g = jeu(); if(g) partagerJeu(g); };
+  /* Les avis des autres sur ce jeu : la fenêtre est celle du Social, à
+     l'identique - voir ouvrirAvisSocial dans archive-social.js. Un avis lu
+     depuis le mur et le même avis lu depuis le fil ne doivent pas se
+     ressembler, ils doivent être la même chose. */
+  boite.querySelector('.fiche-avis').onclick = ()=>{
+    const g = jeu();
+    if(g) ouvrirAvisSocial(g.name, g.idIgdb);
+  };
   host.querySelector('.nav-prev').onclick = ()=> ficheVoisine(-1);
   host.querySelector('.nav-next').onclick = ()=> ficheVoisine(1);
   /* Le doigt fait ce que font les flèches, dans le sens où l'on pousse la
      fiche : vers la gauche pour amener le jeu suivant, comme on tourne une
      page.
      Posé sur le contenu et non sur la boîte entière, ce qui laisse la barre
-     du haut à la poignée — elle, se tire vers le bas pour refermer, et deux
+     du haut à la poignée - elle, se tire vers le bas pour refermer, et deux
      gestes qui se disputent le même bandeau de quarante pixels finiraient
      par se déclencher ensemble.
      La feuille de style met #sheet .sheet en touch-action:pan-y : le
@@ -252,7 +279,7 @@ function monteFiche(host){
 /* ---------- la jaquette de la fiche ----------
    Un seul <img>, gardé d'un jeu au suivant : seul son src change. Le repli
    en initiales est refait ici plutôt que confié à hydrateCovers(), qui
-   remplace l'élément — c'est précisément ce qu'on cherche à éviter. */
+   remplace l'élément - c'est précisément ce qu'on cherche à éviter. */
 function coverInitiales(hote, g){
   const d = document.createElement('div');
   d.className = 'cov xl ph';
@@ -262,7 +289,7 @@ function coverInitiales(hote, g){
   hote.replaceChildren(d);
 }
 function coverFiche(g){
-  const hote = document.querySelector('#sheet .sheet-cover');
+  const hote = document.querySelector('#sheet .sheet-cover .cov-boite');
   if(!hote) return;
   const url = coverURL(cleJaquette(g));
   if(!url){ coverInitiales(hote, g); return; }
@@ -277,7 +304,7 @@ function coverFiche(g){
     img.setAttribute('fetchpriority', 'high');
     /* Écoutes posées une fois, et sans {once} : le même élément servira à
        toutes les jaquettes suivantes. Elles vérifient que la réponse porte
-       bien sur l'image demandée — une arrivée en retard, sur un jeu qu'on a
+       bien sur l'image demandée - une arrivée en retard, sur un jeu qu'on a
        déjà quitté, ne doit rien changer à l'écran. */
     img.addEventListener('load', ()=>{
       if(img.dataset.url === img.getAttribute('src')) img.classList.remove('chargement');
@@ -293,7 +320,7 @@ function coverFiche(g){
 
   img.dataset.url = url;
   /* Déjà en cache : la bascule tient dans la même image, inutile de faire
-     clignoter la case. Un Image() jetable le dit tout de suite — complete
+     clignoter la case. Un Image() jetable le dit tout de suite - complete
      passe à true sans attendre quand le navigateur l'a déjà. */
   const sonde = new Image();
   sonde.src = url;
@@ -333,7 +360,7 @@ function animeFiche(sens){
   void fleche.offsetWidth;
   fleche.classList.add('pousse');
   /* La classe s'en va avec l'animation : laissée en place, elle garderait la
-     flèche dorée alors que plus rien ne bouge. `once` suffit — une nouvelle
+     flèche dorée alors que plus rien ne bouge. `once` suffit - une nouvelle
      impulsion recommence par la retirer. */
   fleche.addEventListener('animationend',
     () => fleche.classList.remove('pousse'), {once: true});
@@ -350,8 +377,8 @@ function ficheVoisine(sens){
 }
 
 /* `sens` : +1 vers le jeu suivant, -1 vers le précédent, rien sinon. Les
-   repeintures qui ne changent pas de jeu — rafraîchissement de fond, prix
-   Steam qui arrivent — n'en passent pas, et n'animent donc rien. */
+   repeintures qui ne changent pas de jeu - rafraîchissement de fond, prix
+   Steam qui arrivent - n'en passent pas, et n'animent donc rien. */
 function paintSheet(sens){
   const host = document.getElementById('sheet');
   const i = S.open, g = SHEET_LIST[i];
@@ -362,6 +389,9 @@ function paintSheet(sens){
   const boite = host.querySelector('.sheet');
   boite.setAttribute('aria-label', g.name);
   boite.querySelector('.sheet-edit').hidden = !CAN_WRITE;
+  // rien à comparer tant que le jeu n'est pas fini : ni « En cours » ni
+  // « Wishlist » n'ont d'avis derrière eux
+  boite.querySelector('.fiche-avis').hidden = estStatut(g);
   host.querySelector('.nav-prev').disabled = i <= 0;
   host.querySelector('.nav-next').disabled = i >= SHEET_LIST.length - 1;
   coverFiche(g);
@@ -399,7 +429,7 @@ function paintSheet(sens){
    tuile reste dans le document derrière la fiche : si les deux le portaient
    en même temps, le navigateur abandonnerait l'animation sans rien dire.
    D'où le passage de relais à l'intérieur du callback, et le nettoyage sur
-   `finished` — une transition interrompue ne doit pas laisser le nom
+   `finished` - une transition interrompue ne doit pas laisser le nom
    accroché à une tuile, sinon la suivante ne démarre plus.
 
    startViewTransition n'existe pas partout (Safari ancien) : dans ce cas la
@@ -412,7 +442,7 @@ function paintSheet(sens){
 
    À la fermeture, trois choses reviennent à leur place : le défilement, le
    focus, et le regard. Le focus revenait jusqu'ici sur <body>, si bien que
-   le Tab suivant repartait du haut du document et y ramenait la page —
+   le Tab suivant repartait du haut du document et y ramenait la page -
    punitif sur un mur de deux cents jeux. */
 const FOCUSABLES = 'a[href],button:not([disabled]),input:not([disabled]),' +
   'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
@@ -421,7 +451,7 @@ let FICHE_SCROLL = 0;      // le défilement au moment de l'ouverture
 let HALO = null;           // tuile à souligner une fois la fiche refermée
 
 /* Tab et Maj+Tab rebouclent aux extrémités. offsetParent écarte ce qui est
-   masqué — le bouton « Modifier » en lecture seule, par exemple — sans quoi
+   masqué - le bouton « Modifier » en lecture seule, par exemple - sans quoi
    la boucle s'arrêterait sur un élément invisible. */
 function piegeFocus(boite, e){
   if(e.key !== 'Tab') return;
@@ -454,7 +484,7 @@ function joueHalo(){
 }
 
 /* Remet le défilement puis le focus, sur la tuile du jeu qu'on regardait à
-   la fermeture — pas forcément celle sur laquelle on avait cliqué, si on a
+   la fermeture - pas forcément celle sur laquelle on avait cliqué, si on a
    feuilleté avec les flèches entre-temps. C'est elle qui décide d'où
    défiler : preventScroll coupe le scroll-into-view par défaut de focus(),
    sinon les deux se disputeraient la position finale. Sans tuile (jeu
@@ -473,7 +503,7 @@ function rendreFocus(){
 
 const VT_JAQUETTE = 'jaquette-active';
 /* La classe accompagne le nom : le liseré de note ne doit pas partir en
-   voyage avec la jaquette — voir .cov.big.envol dans la feuille de style. */
+   voyage avec la jaquette - voir .cov.big.envol dans la feuille de style. */
 function nomVT(el, actif){
   if(!el) return;
   el.style.viewTransitionName = actif ? VT_JAQUETTE : '';
@@ -488,7 +518,7 @@ function jaquetteTuile(g){
 }
 
 /* Un rafraîchissement de fond qui aboutit pendant la transition reconstruit
-   les tuiles (voir render()) — dont celle qui porte le nom de transition,
+   les tuiles (voir render()) - dont celle qui porte le nom de transition,
    si elle bouge de place ou change de contenu. Le navigateur abandonne
    alors l'animation sans le dire : la fiche apparaît d'un coup, comme
    téléportée, au lieu de voir la jaquette voyager jusqu'à sa place.
@@ -513,7 +543,7 @@ function ouvreFiche(i, tuile){
     /* Posée avant le premier rendu de la fiche : son animation d'entrée
        n'a alors jamais lieu, et la photo de la jaquette d'arrivée est
        prise à sa place définitive. Retirée par closeSheet(), une fois la
-       fiche fermée — l'enlever plus tôt déclencherait l'entrée qu'on
+       fiche fermée - l'enlever plus tôt déclencherait l'entrée qu'on
        vient d'éviter. */
     document.getElementById('sheet').classList.add('vt-entree');
     nomVT(jaquetteFiche(), true);  // ...la fiche le reprend
@@ -553,18 +583,15 @@ fermeSurFond('sheet', fermeFiche);
 document.addEventListener('keydown', e=>{
   /* L'ordre suit la pile : la fenêtre du dessus prend Échap et rend la
      main. Une fenêtre oubliée ici laisserait Échap traverser jusqu'à celle
-     du dessous et fermer la mauvaise — c'est ce qui arrivait au détail
+     du dessous et fermer la mauvaise - c'est ce qui arrivait au détail
      d'un jeu, qui refermait la fiche derrière lui. */
-  if(!document.getElementById('zoom').hidden){
-    if(e.key === 'Escape') fermerZoom();
-    else if(e.key === 'ArrowLeft') zoomBouge(-1);
-    else if(e.key === 'ArrowRight') zoomBouge(1);
-    return;
-  }
-  if(!document.getElementById('detail').hidden){
-    if(e.key === 'Escape') fermerDetail();
-    return;
-  }
+  /* Le zoom et le detail d'un jeu s'arretent ici sans etre traites : ils
+     ont leur propre ecoute dans archive-export.js, la ou vivent leurs deux
+     fenetres, parce que le Social les ouvre aussi et ne charge pas ce
+     fichier-ci. On garde les deux gardes pour que la fleche ne parte pas,
+     par-dessous, changer le jeu de la fiche du mur. */
+  if(!document.getElementById('zoom').hidden) return;
+  if(!document.getElementById('detail').hidden) return;
   if(!document.getElementById('export').hidden){
     if(e.key === 'Escape') fermerExport();
     return;

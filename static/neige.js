@@ -1,8 +1,8 @@
-/* Neige marine — le fond animé de tout le hub.
+/* Neige marine - le fond animé de tout le hub.
 
    Trois pages l'affichaient, avec trois copies du même code : Abyss, le
    profil, et maintenant les suggestions. Les deux premières avaient déjà
-   commencé à diverger — même code, mais l'une avait perdu tous ses
+   commencé à diverger - même code, mais l'une avait perdu tous ses
    commentaires en chemin. Une quatrième copie n'était pas envisageable.
 
    Le script s'active tout seul s'il trouve un <canvas id="neige"> ; une

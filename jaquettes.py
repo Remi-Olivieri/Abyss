@@ -1671,7 +1671,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     acces, probleme = jeton()
-    print(f"  jeton        : {'ok' if acces else 'ECHEC — ' + probleme}\n")
+    print(f"  jeton        : {'ok' if acces else 'ECHEC - ' + probleme}\n")
     if not acces:
         sys.exit(1)
 
@@ -1708,7 +1708,7 @@ if __name__ == "__main__":
     print(f"\n  test du prix ({retenue['titre']})...")
     valeur, appid, probleme = prix_du_jeu(retenue["id"])
     if probleme:
-        print(f"  prix           : ECHEC — {probleme}")
+        print(f"  prix           : ECHEC - {probleme}")
     elif not appid:
         print("  prix           : pas de fiche Steam (exclusivite console, jeu physique...)")
     elif valeur is None:
@@ -1724,7 +1724,7 @@ if __name__ == "__main__":
         print(f"  telechargement : ok ({poids // 1024} Ko -> {cible})\n")
         cible.unlink(missing_ok=True)
     else:
-        print(f"  telechargement : ECHEC — {probleme}")
+        print(f"  telechargement : ECHEC - {probleme}")
         print("\n  La recherche passe par api.igdb.com, ce test par images.igdb.com :")
         print("  ce sont deux adresses differentes, donc deux resolutions DNS")
         print("  differentes. Si la recherche marche mais pas ce test, le souci")

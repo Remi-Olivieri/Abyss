@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-mur.js
+   Archive Jeux Vidéos - archive-mur.js
 
    Le mur de jaquettes et ce qui le surmonte.
 
@@ -47,7 +47,7 @@ function filtered(){
 /* Le comparateur d'un critère dans un sens donné. Une seule règle pour
    tous : ce qu'on ne sait pas ne se classe pas. Un jeu sans note, sans
    date annoncée ou dont on n'a jamais noté le prix payé finit en bas dans
-   les deux sens — sans quoi retourner la flèche remplirait le haut de la
+   les deux sens - sans quoi retourner la flèche remplirait le haut de la
    liste de cases vides, alors qu'on cherchait le moins cher. */
 function comparateur(cle, sens){
   const def = TRIS.find(t => t[0] === cle) || TRIS[0];
@@ -76,7 +76,7 @@ function choisirOnglet(k){
   closePer();
   /* On entre dans les statistiques : elles s'ouvrent sur l'onglet qu'on
      était en train de lire. « En cours » et « Wishlist » n'ont ni note ni
-     temps de jeu, il n'y a rien à analyser dedans — depuis ceux-là, et
+     temps de jeu, il n'y a rien à analyser dedans - depuis ceux-là, et
      depuis « Tout », c'est le classeur entier. Le menu déroulant de la
      page permet ensuite d'en changer sans repasser par les onglets. */
   if(k === 'stats' && S.bucket !== 'stats'){
@@ -101,13 +101,13 @@ function togglePer(periodes){
     closeMenu(); fermerRecherche();               // un seul menu ouvert à la fois
     /* Plus de coche : l'onglet courant se surligne, comme dans la barre
        juste au-dessus. Une coche ici et un fond doré là pour dire la même
-       chose obligeait à apprendre deux signes au lieu d'un — et la coche
+       chose obligeait à apprendre deux signes au lieu d'un - et la coche
        se disputait la droite de la ligne avec l'étoile. */
     const entree = ongletEntree();
     m.innerHTML = periodes.map(b=>
       `<button class="menu-item${b===S.bucket?' on':''}" role="menuitem" data-b="${esc(b)}"
          aria-current="${b===S.bucket}"${periodeValide(b) ? '' :
-           ' title="Onglet d\'avant la règle — clic droit dessus pour le renommer"'
+           ' title="Onglet d\'avant la règle - clic droit dessus pour le renommer"'
          }>${esc(b)}${b===entree?ETOILE:''}${
          periodeValide(b)?'':'<span class="vieux">à renommer</span>'}</button>`).join('');
     m.querySelectorAll('.menu-item').forEach(x=>{
@@ -124,7 +124,7 @@ function togglePer(periodes){
    est impossible à découvrir et impossible à annuler.
 
    Réservé au propriétaire : le réglage s'écrit dans son classeur. Chez
-   quelqu'un d'autre, le clic droit rend la main au navigateur — son menu
+   quelqu'un d'autre, le clic droit rend la main au navigateur - son menu
    habituel vaut mieux que le nôtre, qui n'aurait rien à proposer. */
 function fermeMenuOnglet(){
   const m = document.getElementById('ongletMenu');
@@ -146,7 +146,7 @@ function menuOnglet(e, onglet){
      fautifs : corriger une année mal choisie relève du même geste. */
   /* « Tout », « En cours » et « Wishlist » ne se renomment pas : les deux
      derniers sont des tiroirs fixes du journal, et le premier n'est même pas
-     un onglet — c'est la vue qui les montre tous. Renommer l'un des trois
+     un onglet - c'est la vue qui les montre tous. Renommer l'un des trois
      n'aurait rien à renommer, seulement de quoi casser ce que la page
      reconnaît par leur nom. Le serveur refuse déjà ; l'entrée ne s'affiche
      pas, ce qui vaut mieux qu'un refus après le clic. */
@@ -276,7 +276,7 @@ function renderTabs(){
      qu'on parcourt du regard. Il est allé dans le bandeau juste en dessous,
      où « Jeux terminés » le donnait déjà pour les années. */
   /* L'onglet d'ouverture porte une étoile, posée après le libellé. C'était
-     une puce dorée dans son coin — soit, au pixel près, le dessin d'une
+     une puce dorée dans son coin - soit, au pixel près, le dessin d'une
      notification : tout le monde y lisait « il y a du neuf ici », alors
      qu'elle ne dit que « c'est là qu'on arrive ».
 
@@ -297,7 +297,7 @@ function renderTabs(){
                liste, donc elle restait là en affichant « 2024 » alors que
                le favori était « 2023 » : elle désignait le bouton au lieu
                de désigner l'onglet. Repliée sur « Année », elle ne
-               montre rien non plus — le favori est dans le menu, où sa
+               montre rien non plus - le favori est dans le menu, où sa
                ligne la porte. -->
           <span>${esc(surPeriode ? S.bucket : 'Année')}${
             surPeriode && S.bucket === entree ? ETOILE : ''}</span>
@@ -349,7 +349,7 @@ function renderSort(){
 }
 /* La flèche vaut pour toute la liste déroulante : quel que soit le
    critère affiché, elle le retourne. Changer de critère, en revanche, rend
-   à chacun son sens naturel (voir l'écouteur du menu) — sinon choisir
+   à chacun son sens naturel (voir l'écouteur du menu) - sinon choisir
    « Titre » après « Note ↑ » donnerait un Z → A que personne n'a demandé. */
 function renderSortDir(){
   const b = document.getElementById('sortDir');
@@ -357,7 +357,7 @@ function renderSortDir(){
   const asc = S.dir === 'asc';
   b.classList.toggle('asc', asc);
   const txt = asc ? 'Ordre croissant' : 'Ordre décroissant';
-  b.title = txt + ' — cliquer pour inverser';
+  b.title = txt + ' - cliquer pour inverser';
   b.setAttribute('aria-label', txt + ', inverser le tri');
 }
 
@@ -365,7 +365,7 @@ function renderSortDir(){
 
 /* « En cours » et « Wishlist » n'ont ni jeu terminé, ni note, ni temps de
    jeu : les quatre grandes cases n'y montreraient que des tirets. Une seule
-   ligne de chiffres à la place — et c'est elle qui porte désormais le nombre
+   ligne de chiffres à la place - et c'est elle qui porte désormais le nombre
    de jeux, que les onglets n'affichent plus. */
 function renderStatsStatut(){
   const jeux = current();
@@ -408,7 +408,7 @@ function renderStats(){
   document.getElementById('statsWrap').hidden = false;
   document.getElementById('stats').className = 'stats';
   // un jeu de la wishlist n'est pas acheté : il ne pèse nulle part, pas même
-  // dans les prix — sinon « Payé » compterait de l'argent jamais sorti
+  // dans les prix - sinon « Payé » compterait de l'argent jamais sorti
   const tout = current().filter(x=>!estWishlist(x));
   // un jeu en cours ne compte pas comme terminé, mais il est bien acheté :
   // il sort de la moyenne et du temps de jeu, il reste dans les prix
@@ -421,9 +421,9 @@ function renderStats(){
   const hrs  = g.reduce((s,x)=>s+(x.hours||0),0);
   const cards = [
     ['Jeux terminés', g.length, nEnCours ? `+ ${nEnCours} en cours` : ''],
-    ['Note moyenne', avg!==null?fr(avg,2):'—', ''],
-    ['Temps de jeu', hrs?hoursFmt(hrs):'—', hrs?`≈ ${Math.round(hrs/24)} jours`:''],
-    ['Payé', paid?EUR.format(paid):'—', base?`sur ${EUR.format(base)} de prix fort`:''],
+    ['Note moyenne', avg!==null?fr(avg,2):'-', ''],
+    ['Temps de jeu', hrs?hoursFmt(hrs):'-', hrs?`≈ ${Math.round(hrs/24)} jours`:''],
+    ['Payé', paid?EUR.format(paid):'-', base?`sur ${EUR.format(base)} de prix fort`:''],
   ];
   document.getElementById('stats').innerHTML = cards.map(([u,b,i])=>
     `<div class="stat"><u>${u}</u><b>${b}</b><i>${i||''}</i></div>`).join('');
@@ -433,7 +433,7 @@ function renderStats(){
    Combien de barres, de quelle largeur, et ce qu'il y a dedans. Partagé
    par l'histogramme de la page et par celui du bilan en image : les deux
    doivent montrer exactement la même chose, et ils recopiaient jusqu'ici
-   le même calcul chacun de son côté — donc chaque correction deux fois,
+   le même calcul chacun de son côté - donc chaque correction deux fois,
    ou une seule et deux histogrammes qui divergent.
 
    Le pas suit l'EFFECTIF autant que l'amplitude. Il ne suivait que
@@ -500,7 +500,7 @@ function renderDist(){
     const h = c ? Math.max(3, c/max*100) : 0;
     return `<button class="bar" type="button"
       data-i="${i}" data-c="${c}" data-a="${fr(a,2)}" data-b="${fr(b,2)}"
-      aria-label="${c} jeu${c>1?'x':''} entre ${fr(a,2)} et ${fr(b,2)}${c?" — n'afficher que ceux-là":''}">
+      aria-label="${c} jeu${c>1?'x':''} entre ${fr(a,2)} et ${fr(b,2)}${c?" - n'afficher que ceux-là":''}">
       <i style="height:${h}%;background:${noteColor(a + STEP/2)}"></i></button>`;
   }).join('');
   const avgP = pos(avg);
@@ -573,13 +573,13 @@ const TUILES = new Map();
 // séparateur invisible entre les morceaux d'une clé : ni un nom d'onglet
 // ni un nom de jeu ne peut le contenir, donc aucune collision possible
 const SEP = '\u0001';
-/* La clé d'une tuile : l'id du jeu, stable et unique — ce que `row`
+/* La clé d'une tuile : l'id du jeu, stable et unique - ce que `row`
    donnait avant que la base remplace les feuilles (voir journal.py). */
 const cleTuile = x => String(x.id);
 /* Tout ce que la tuile donne à voir. Si rien n'a bougé là-dedans, le nœud
    existant fait l'affaire tel quel. L'adresse de la jaquette en fait partie
    plutôt que le seul nom : elle change quand l'image arrive, quand elle est
-   remplacée, ou quand le manifeste apprend qu'elle n'existe pas — trois cas
+   remplacée, ou quand le manifeste apprend qu'elle n'existe pas - trois cas
    où la tuile doit être refaite, et un seul terme pour les couvrir. */
 const sigTuile = x => [x.name, x.rating, x.hours, x.bucket, x.release,
                        coverURL(cleJaquette(x)), sigPromo(x)].join(SEP);
@@ -596,8 +596,8 @@ function groupLabel(g){
 function tileInner(x, i){
   const statut = statutDe(x);
   /* Sous le titre : le temps de jeu pour un jeu terminé, le compte à rebours
-     pour un jeu convoité. Les deux ne se rencontrent jamais — un jeu de la
-     wishlist n'a pas d'heures au compteur — donc une seule ligne suffit. */
+     pour un jeu convoité. Les deux ne se rencontrent jamais - un jeu de la
+     wishlist n'a pas d'heures au compteur - donc une seule ligne suffit. */
   const attente = estWishlist(x) ? compteARebours(x.release) : null;
   const meta = attente
     ? `<span class="tmeta${attente.avant ? ' avant' : ''}">${esc(attente.txt)}</span>`
@@ -611,7 +611,7 @@ function tileInner(x, i){
     : '';
   return `${promo}${statut
       ? `<span class="tnote ${estWishlist(x) ? 'wish' : 'encours'}">${esc(statut)}</span>`
-      : `<span class="tnote" style="color:${noteColor(x.rating)}">${x.rating!==null?fr(x.rating,1):'—'}</span>`}
+      : `<span class="tnote" style="color:${noteColor(x.rating)}">${x.rating!==null?fr(x.rating,1):'-'}</span>`}
     ${coverTag(x, 'big', i < PRIORITAIRES)}
     <span class="tcap">
       <span class="tn">${esc(x.name)}</span>
@@ -622,7 +622,7 @@ function tileInner(x, i){
 const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 /* Coupe les jaquettes encore en vol et renvoie combien. Une image déjà
    arrivée n'est pas touchée : elle ne coûte plus rien et resservira telle
-   quelle. data-off dit au gestionnaire d'erreur d'ignorer le pixel — sans
+   quelle. data-off dit au gestionnaire d'erreur d'ignorer le pixel - sans
    lui il prendrait l'annulation pour un échec et poserait des initiales. */
 function annuleCovers(root){
   let coupees = 0;
@@ -657,7 +657,7 @@ function tuilePour(cle, x, i){
     /* Le liseré de note du bas de la jaquette. Posé sur la tuile et hérité
        par la case, plutôt que sur l'image : hydrateCovers() remplace
        celle-ci par une case d'initiales quand le fichier manque, et ne
-       recopie pas ses styles — la variable, elle, s'hérite. */
+       recopie pas ses styles - la variable, elle, s'hérite. */
     if(x.rating === null || x.rating === undefined) el.style.removeProperty('--note');
     else el.style.setProperty('--note', noteColor(x.rating));
     hydrateCovers(el);
@@ -706,7 +706,7 @@ function renderWall(){
   });
 
   /* Les jaquettes des tuiles qui quittent l'écran libèrent leur connexion,
-     comme avant — le mur qui arrive en a besoin. La tuile est marquée pour
+     comme avant - le mur qui arrive en a besoin. La tuile est marquée pour
      qu'un retour à l'écran la reconstruise plutôt que d'afficher le pixel
      transparent qu'on vient de lui mettre. */
   TUILES.forEach((el, cle)=>{
@@ -743,7 +743,7 @@ function emptyHTML(){
 }
 
 /* =======================================================================
-   Découverte par similarité — wishlist seulement
+   Découverte par similarité - wishlist seulement
 
    IGDB tient un champ similar_games sur chaque fiche. On lui donne
    quelques-uns des jeux qu'on a le mieux notés, il répond ce qu'il juge
@@ -868,7 +868,7 @@ function renderDecouverte(){
     : !DECOUVERTE ? ''
     : DECOUVERTE.length
       ? `<div class="deco-grille">${DECOUVERTE.map(carteDecouverte).join('')}</div>`
-      : `<p class="deco-note">Rien de plus à proposer pour l'instant — retente un tirage.</p>`;
+      : `<p class="deco-note">Rien de plus à proposer pour l'instant - retente un tirage.</p>`;
 
   hote.hidden = false;
   hote.innerHTML = `<div class="deco-tete">
@@ -885,7 +885,7 @@ function renderDecouverte(){
 }
 
 /* Ajout en un clic : la même écriture que le formulaire, avec le nom, la
-   date de sortie et rien d'autre — un jeu convoité n'a ni note, ni temps de
+   date de sortie et rien d'autre - un jeu convoité n'a ni note, ni temps de
    jeu, ni prix payé. La jaquette suit dans la foulée, puisqu'IGDB vient de
    nous dire laquelle c'est. */
 async function ajouteWishlist(i, btn){
@@ -900,7 +900,7 @@ async function ajouteWishlist(i, btn){
 
   /* Le prix de base, par le même chemin que le formulaire : la suggestion
      porte déjà son identifiant IGDB, qui donne le lien Steam, qui donne le
-     tarif. Demandé au clic et pas dans la liste des suggestions — les faire
+     tarif. Demandé au clic et pas dans la liste des suggestions - les faire
      toutes aurait coûté deux appels par jeu pour un prix qu'on n'utilise
      qu'une fois sur douze.
 
@@ -928,7 +928,7 @@ async function ajouteWishlist(i, btn){
     toast(`« ${s.titre} » ajouté à la wishlist`);
     if(s.image) poseJaquetteChoisie(s.titre, s.image, s.id);
   }catch(e){
-    toast('Ajout impossible — ' + (e.message || 'erreur inconnue'), true);
+    toast('Ajout impossible - ' + (e.message || 'erreur inconnue'), true);
     btn.disabled = false; btn.textContent = texte;
   }
 }

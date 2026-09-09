@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-image.js
+   Archive Jeux Vidéos - archive-image.js
 
    Le bilan en image, dessiné sur un canvas.
 
@@ -8,7 +8,7 @@
    jeux déjà chargés et des jaquettes déjà servies.
 
    Le découpage de l'histogramme vient de casiers(), dans
-   archive-mur.js — l'image doit montrer ce qu'on avait sous les yeux.
+   archive-mur.js - l'image doit montrer ce qu'on avait sous les yeux.
 
    Chargé par templates/jeux-videos.html, dans l'ordre : ces fichiers
    partagent une seule portée globale, comme quand ils n'en faisaient
@@ -34,9 +34,9 @@ const BIL = {
 BIL.W = BIL.L - BIL.M*2;
 
 /* Le reste du site écrit "300 h 15" (hoursFmt) : lisible dans une phrase.
-   Le bilan, plus dense, resserre en "300h15" — pas d'espace autour du h. */
+   Le bilan, plus dense, resserre en "300h15" - pas d'espace autour du h. */
 function bilHeures(h){
-  if(h===null||h===undefined) return '—';
+  if(h===null||h===undefined) return '-';
   const H = Math.floor(h), Min = Math.round((h-H)*60);
   return Min ? `${H}h${String(Min).padStart(2,'0')}` : `${H}h`;
 }
@@ -236,7 +236,7 @@ async function bilanCanvas(){
   const { L, M, W } = BIL;
 
   // la wishlist est hors sujet dans un bilan : ces jeux-là ne sont ni faits,
-  // ni achetés — ils ne comptent donc dans aucun des chiffres ci-dessous
+  // ni achetés - ils ne comptent donc dans aucun des chiffres ci-dessous
   const tout    = current().filter(x => !estWishlist(x));
   const jeux    = tout.filter(x => !estEnCours(x));
   const enCours = tout.length - jeux.length;
@@ -312,7 +312,7 @@ async function bilanCanvas(){
     y = yb + 28 + 2*22 + 12;
 
     /* rangs 6 à 10 : plus de jaquette, juste le nom et la note, une ligne
-       chacun — le podium a déjà montré la couverture, pas la peine de
+       chacun - le podium a déjà montré la couverture, pas la peine de
        répéter cinq fois le même traitement pour des jeux moins en avant */
     if(suivants.length){
       y += 14;
@@ -336,10 +336,10 @@ async function bilanCanvas(){
   /* --- les chiffres, les mêmes qu'en haut de la page --- */
   const cellules = [
     ['Jeux terminés', String(jeux.length), enCours ? `+ ${enCours} en cours` : ''],
-    ['Note moyenne', avg !== null ? fr(avg,2) : '—',
+    ['Note moyenne', avg !== null ? fr(avg,2) : '-',
       notes.length ? `sur ${notes.length} noté${notes.length>1?'s':''}` : ''],
-    ['Temps de jeu', hrs ? bilHeures(hrs) : '—', hrs ? `≈ ${Math.round(hrs/24)} jours` : ''],
-    ['Payé', paid ? EUR.format(paid) : '—', base ? `sur ${EUR.format(base)} de prix fort` : ''],
+    ['Temps de jeu', hrs ? bilHeures(hrs) : '-', hrs ? `≈ ${Math.round(hrs/24)} jours` : ''],
+    ['Payé', paid ? EUR.format(paid) : '-', base ? `sur ${EUR.format(base)} de prix fort` : ''],
   ];
   const cl = W/4;
   cellules.forEach(([u,b,i2],k)=>{
@@ -383,8 +383,8 @@ async function bilanCanvas(){
       c.fill();
     });
     /* Même correction que sur l'histogramme de la page (.avg dans le CSS) :
-       le repère se dessinait en or sur des barres claires — #E9A13C vers 5,
-       #A8C24A vers 7 — où l'or ne se détache pas, et c'est précisément là
+       le repère se dessinait en or sur des barres claires - #E9A13C vers 5,
+       #A8C24A vers 7 - où l'or ne se détache pas, et c'est précisément là
        qu'une moyenne tombe. Il porte donc son propre fond : un trait sombre
        posé sous le trait doré, une pastille sombre sous le chiffre.
        L'ordre compte, le sombre d'abord. */
@@ -470,7 +470,7 @@ async function bilanCanvas(){
 }
 
 /* =======================================================================
-   La carte d'un seul jeu — même moteur, une seule fiche.
+   La carte d'un seul jeu - même moteur, une seule fiche.
    C'est l'image qu'on envoie à quelqu'un pour dire « joue à ça » sans lui
    faire ouvrir le journal : jaquette, note, place au classement, et ce
    qu'on en a pensé.
@@ -513,7 +513,7 @@ async function ficheCanvas(g){
     bilEcrire(c, t, rx+21, ry+27, {f:`500 17px ${BIL.mono}`, c:teinte, ls:'.2em'});
     ry += 72;
   } else {
-    bilEcrire(c, g.rating !== null ? fr(g.rating,1) : '—', rx, ry+62,
+    bilEcrire(c, g.rating !== null ? fr(g.rating,1) : '-', rx, ry+62,
       {f:`700 80px ${BIL.mono}`, c:noteColor(g.rating), ls:'-.05em'});
     ry += 88;
   }
@@ -549,7 +549,7 @@ async function ficheCanvas(g){
   const faits = [
     ['Sortie', dateFmt(g.release)],
     enCours ? null : ['Terminé', g.month ? `${MONTHS[g.month-1]} ${g.year || ''}`.trim()
-                                         : String(g.year || g.bucket || '—')],
+                                         : String(g.year || g.bucket || '-')],
     (!enCours && g.hours) ? ['Temps de jeu', bilHeures(g.hours)] : null,
     g.base ? ['Prix du jeu', EUR.format(g.base)] : null,
   ].filter(Boolean);
@@ -705,7 +705,7 @@ async function composerImage(opt){
         a.remove();
       };
     }
-    /* partage direct quand le navigateur sait le faire — surtout utile
+    /* partage direct quand le navigateur sait le faire - surtout utile
        depuis le téléphone, où « télécharger » finit dans un dossier perdu */
     try{
       const f = new File([b], fichier, {type:'image/png'});
@@ -732,7 +732,7 @@ fermeSurFond('bilan', fermerBilan);
 /* Les statistiques sont une lecture à part du classeur, pas un tiroir de
    plus : elles vivent dans les réglages, à côté du résumé et de l'export,
    avec lesquels elles ont plus à voir qu'avec les onglets. La barre
-   d'onglets reste affichée pendant qu'on les consulte — c'est par elle
+   d'onglets reste affichée pendant qu'on les consulte - c'est par elle
    qu'on en ressort. */
 $('statsBtn').addEventListener('click', ()=>{
   closeMenu();

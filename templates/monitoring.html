@@ -72,7 +72,7 @@
      Des barres et non une ligne : un jour est une case, pas un point sur un
      continuum, et relier deux jours donnerait à croire qu'on sait ce qui
      s'est passé entre les deux. Une seule série, donc une seule teinte et
-     pas de légende — le titre dit ce qu'on regarde. */
+     pas de légende - le titre dit ce qu'on regarde. */
   .jours{display:flex;align-items:flex-end;gap:2px;height:150px}
   .jour{
     flex:1;min-width:0;height:100%;position:relative;
@@ -231,7 +231,7 @@
 
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
-     /api/moi — un defer arriverait peut-être trop tard. -->
+     /api/moi - un defer arriverait peut-être trop tard. -->
 <script src="/static/compte.js"></script>
 <script>
 const el = (id) => document.getElementById(id);
@@ -244,7 +244,7 @@ let DATA = null;
 
 /* La page se relit toute seule : « en ce moment » vieillit vite, et un
    chiffre de présence qu'il faut rafraîchir à la main ne vaut pas mieux
-   qu'une capture d'écran. Trente secondes — la fenêtre de présence en fait
+   qu'une capture d'écran. Trente secondes - la fenêtre de présence en fait
    cinq minutes, on ne rate donc jamais personne. */
 const CADENCE = 30000;
 
@@ -328,7 +328,7 @@ function dessineTuiles() {
 /* ---------- les jours ----------
    La hauteur se mesure sur le plus haut jour de la fenêtre, jamais sur zéro
    ni sur un maximum inventé : c'est ce qui rend deux barres comparables
-   entre elles. Un jour à zéro garde un trait de 2 px — une case vide et une
+   entre elles. Un jour à zéro garde un trait de 2 px - une case vide et une
    case absente ne se distingueraient pas autrement. */
 function dessineJours() {
   const jours = DATA.jours;

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Social - Jeux Vidéos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Karla:wght@400;500;700&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- La feuille de l'Archive, et pas celle d'Abyss : le Social est une salle
+     de l'Archive, pas un projet à part. Tout ce qu'une carte affiche - la
+     note en couleur, la jaquette, les « + » et les « − » d'un avis - vient
+     de là et doit se lire exactement pareil ici. -->
+<link rel="stylesheet" href="/static/style_jeuxvideos.css">
+<link rel="stylesheet" href="/static/style_social.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <!-- Le même en-tête que le journal, aux deux mêmes bouts et dans le même
+         ordre : « Retour à Abyss » dehors à gauche, « Suggestion / Bug »
+         dehors à droite, et entre les deux ma pastille d'identité, le titre
+         et la cloche.
+         Le Social est une salle de l'Archive, pas un autre site - on doit
+         pouvoir passer de l'une à l'autre sans chercher où sont partis les
+         boutons.
+
+         Une seule chose change de nature : la pastille posée à côté du
+         titre. Sur le journal elle mène ici ; ici, elle est la recherche. -->
+    <a class="entete-action" id="abyssBtn" href="/abyss">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      <span>Retour à Abyss</span>
+    </a>
+    <!-- Moi, comme sur le journal : ma photo et mon pseudo, qui mènent chez
+         moi. La petite maison qui tenait cette place y disait la même chose
+         sans la dire - une icône de plus dans une barre qui en compte cinq.
+         Masqué tant qu'on n'a pas de journal à soi. -->
+    <a class="brand-moi" id="moiBtn" hidden href="/archive">
+      <span class="brand-moi-ava" id="moiAva"></span>
+      <b id="moiNom"></b>
+    </a>
+    <div class="brand">
+      <!-- Pas de titre ici : la page en porte un, en grand, juste dessous.
+           « Social » écrit deux fois à quarante pixels d'écart n'apprenait
+           rien la seconde fois. Reste la pastille, qui elle a un travail. -->
+      <!-- La recherche prend exactement la place qu'occupe « Social » sur le
+           journal : la pastille à côté du titre, la porte à côté.
+
+           Un lien et non un bouton, parce que la fenêtre de recherche vit
+           dans la page du journal, avec les journaux qu'elle fouille - et
+           que choisir un résultat mène de toute façon là-bas. Autant y aller
+           tout de suite : ?recherche=1 l'ouvre à l'arrivée. -->
+      <a class="jnl-search" id="jnlSearchBtn" href="/archive?recherche=1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M21 21l-4.3-4.3"/>
+        </svg>
+        <span>Rechercher</span>
+      </a>
+    </div>
+    <!-- La place des onglets du journal, laissée vide : elle pousse la
+         cloche à droite comme là-bas, pour que la barre garde les mêmes
+         appuis d'une page à l'autre. Un fil n'a pas d'années. -->
+    <span class="soc-barre-vide"></span>
+    <!-- La cloche, à la place qu'elle occupe sur le journal. Pas d'engrenage
+         à côté : son menu ne parle que du classeur - statistiques, export,
+         mode éditeur - et aucune de ces lignes n'a de sens ici. -->
+    <div class="cloche-wrap">
+      <button class="cloche" id="cloche" hidden aria-haspopup="true"
+              aria-expanded="false" aria-label="Notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.2 7.5-2.2 7.5h16.4S18 14.5 18 8.5z"/>
+          <path d="M13.7 20a2 2 0 0 1-3.4 0"/>
+        </svg>
+      </button>
+    </div>
+    <a class="entete-action" id="suggBtn" href="/abyss?suggestion=jeux-videos">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>
+      </svg>
+      <span>Suggestion / Bug</span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <section class="wrap soc-colonne">
+    <!-- Le titre de la page, et il n'est qu'ici : la barre du haut n'écrit
+         plus « Social » - un mot qui nommait la salle sans dire ce qu'on y
+         trouve. Celui-ci le dit, et assez gros pour qu'on le lise avant la
+         première carte. -->
+    <h1 class="soc-titre">Feed des jeux terminés</h1>
+    <br>
+
+    <div class="soc-liste" id="feed"></div>
+    <p class="soc-muet soc-vide" id="feedEtat">Chargement du fil…</p>
+    <!-- « Voir plus » et non un défilement infini : le fil a une fin, et on
+         doit pouvoir la sentir. Une page qui repousse son bas indéfiniment
+         ne se quitte jamais franchement. -->
+    <p class="soc-plus" id="feedPlusZone" hidden>
+      <button type="button" class="cta" id="feedPlus">Voir plus</button>
+    </p>
+  </section>
+</main>
+
+<!-- Les fenêtres que cette page peut ouvrir. Vides dans le balisage : leur
+     contenu est monté au moment où on les ouvre.
+     « recherche » est celle de la pastille de l'en-tête ; « detail » et
+     « zoom » sont la fiche d'un jeu trouvé et l'agrandissement d'une de ses
+     captures, exactement comme sur le journal. -->
+<div class="sheet-back" id="recherche" hidden></div>
+<div class="sheet-back" id="detail" hidden></div>
+<div class="sheet-back" id="zoom" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<!-- Les gestes du doigt : la feuille d'une discussion se repousse vers le
+     bas, comme toutes les fenêtres de l'Archive. -->
+<script src="/static/gestes.js"></script>
+<!-- Les zones de texte grandissent en écrivant plutôt que de porter une
+     poignée à tirer : une taille de départ, la hauteur du texte ensuite,
+     et le défilement dans le champ passé un plafond. Voir
+     static/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
+<!-- Le canal du hub, monté pour le Yu-Gi-Quiz et partagé avec le Social :
+     un jeu terminé apparaît dans le fil et la pastille de la cloche bouge
+     sans qu'on recharge. La même version que le lobby du quiz - c'est le
+     même serveur en face. Son absence ne casse rien : voir socialTempsReel
+     dans archive-social.js. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+<script src="/static/champs.js"></script>
+<script src="/static/suggestion.js"></script>
+<!-- Deux fichiers seulement, et c'est tout l'intérêt du découpage de
+     l'Archive : archive-noyau.js ne connaît ni classeur ni mur - formats,
+     couleur d'une note, manifeste des jaquettes - et archive-social.js
+     n'a besoin de rien d'autre. Le journal, lui, charge les onze. -->
+<script src="/static/archive/archive-noyau.js"></script>
+<!-- La recherche, la même qu'ailleurs : ce qu'un résultat déclenche arrive
+     en paramètre (voir regleRecherche plus bas), la fenêtre est identique.
+     archive-export.js vient avec elle pour la fiche d'un jeu trouvé - son
+     export à lui ne s'active pas ici, faute de bouton (voir la fin du
+     fichier). -->
+<script src="/static/archive/archive-recherche.js"></script>
+<script src="/static/archive/archive-export.js"></script>
+<script src="/static/archive/archive-social.js"></script>
+<script>
+/* =======================================================================
+   La page Social - le fil, et rien d'autre.
+
+   Tout ce qui se dessine ici vient de archive-social.js, qui sert aussi la
+   page du journal : une carte, une discussion et la cloche doivent être les
+   mêmes des deux côtés. Ce qui suit ne fait que trois choses - demander le
+   fil, l'empiler, et brancher les clics.
+   ======================================================================= */
+/* Le bandeau d'information, celui de l'Archive : archive-social.js le
+   cherche sous ce nom (voir socialMot) et s'en sert pour dire pourquoi un
+   envoi n'est pas parti. Il vit dans archive-formulaire.js, que cette
+   page-ci ne charge pas - d'où cette copie, la même à la ligne près. */
+function toast(txt, mauvais){
+  const t = document.getElementById('toast');
+  t.textContent = txt;
+  t.className = 'toast show' + (mauvais ? ' bad' : '');
+  t.hidden = false;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>{ t.classList.remove('show'); }, 3000);
+}
+
+const feed = document.getElementById('feed');
+const etat = document.getElementById('feedEtat');
+const plusZone = document.getElementById('feedPlusZone');
+const plus = document.getElementById('feedPlus');
+
+/* Le curseur de la page suivante : l'identifiant de la dernière carte
+   reçue. Le serveur renvoie `suite: null` quand il n'y a plus rien
+   derrière, ce qui fait disparaître le bouton - voir fil() dans social.py. */
+let SUITE = null;
+let ENCOURS = false;
+
+function mot(txt){
+  etat.textContent = txt;
+  etat.hidden = !txt;
+}
+
+async function chargeFil(){
+  if(ENCOURS) return;
+  ENCOURS = true;
+  plus.disabled = true;
+  try{
+    const data = await socialAppel('/api/social/feed'
+      + (SUITE ? '?avant=' + encodeURIComponent(SUITE) : ''));
+    const posts = data.posts || [];
+    /* insertAdjacentHTML et non innerHTML += : réécrire tout le fil à
+       chaque « Voir plus » recréerait les cartes déjà lues, donc
+       relancerait leurs jaquettes et perdrait la position de lecture. */
+    feed.insertAdjacentHTML('beforeend',
+      posts.map(p => socialCarteHTML(p, true)).join(''));
+    SUITE = data.suite;
+    plusZone.hidden = !SUITE;
+    mot(feed.children.length ? '' :
+        "Personne n'a encore terminé de jeu dans un journal public.");
+  }catch(e){
+    mot(e.message || 'Le fil n\'a pas pu être chargé.');
+    plusZone.hidden = true;
+  }finally{
+    ENCOURS = false;
+    plus.disabled = false;
+  }
+}
+
+/* Une seule écoute pour tout le fil : les cartes arrivent par paquets, et
+   des écoutes posées carte par carte seraient à reposer à chaque paquet. */
+feed.addEventListener('click', e=>{
+  // la photo et le pseudo mènent au journal de la personne : on laisse le
+  // lien faire son travail plutôt que d'ouvrir la discussion par-dessus
+  if(socialVersProfil(e)) return;
+  // la jaquette et le titre ouvrent la fiche du jeu, pas la discussion
+  if(socialVersJeu(e)) return;
+  const jaime = e.target.closest('[data-act="jaime"]');
+  if(jaime){ e.stopPropagation(); socialAimer(jaime); return; }
+  const carte = e.target.closest('.soc-post');
+  if(carte) ouvrirFilSocial(carte.dataset.id);
+});
+plus.addEventListener('click', chargeFil);
+
+/* ---------- le fil en direct ----------
+   Quelqu'un termine un jeu pendant qu'on lit : sa carte se pose en haut,
+   sans rechargement. C'est ce qu'on attend d'un fil - l'ouvrir et le laisser
+   ouvert doit suffire.
+
+   Branché tout de suite, et pour tout le monde : le fil est public, on n'a
+   pas besoin d'un compte pour voir arriver ce que les autres finissent. La
+   cloche, elle, ne parle qu'à qui est connecté - c'est le serveur qui en
+   décide, en n'envoyant sa pastille qu'au salon de la personne concernée
+   (voir _salon_de dans social.py). */
+socialTempsReel({
+  surJeu: post => {
+    /* Déjà là : ça arrive quand on vient de charger une page qui contenait
+       déjà ce jeu, ou qu'un même navigateur reçoit deux fois l'événement.
+       On ne l'ajoute pas une seconde fois - un doublon dans un fil se voit
+       tout de suite, et se corrige mal. */
+    if(feed.querySelector(`.soc-post[data-id="${post.id}"]`)) return;
+    feed.insertAdjacentHTML('afterbegin', socialCarteHTML(post, true));
+    /* Un liseré doré le temps d'une seconde : une carte qui apparaît en
+       silence au-dessus de ce qu'on lit passe inaperçue, et le fil semble
+       simplement avoir bougé tout seul. */
+    const carte = feed.firstElementChild;
+    if(carte){
+      carte.classList.add('soc-neuve');
+      setTimeout(()=> carte.classList.remove('soc-neuve'), 2200);
+    }
+    // le fil n'est plus vide : le message qui le disait s'en va
+    mot('');
+  },
+  /* Un jeu remis « En cours », rangé en wishlist ou effacé quitte le fil.
+     Le laisser à l'écran promettrait une discussion qui n'existe plus. */
+  surRetrait: id => {
+    const carte = feed.querySelector(`.soc-post[data-id="${id}"]`);
+    if(carte) carte.remove();
+    if(!feed.children.length && !SUITE)
+      mot("Personne n'a encore terminé de jeu dans un journal public.");
+  },
+});
+
+/* ---------- ce que la recherche déclenche ici ----------
+   La fenêtre est la même que sur le journal ; seuls ces trois gestes
+   changent, et c'est tout ce qui les sépare.
+
+   Un journal mène à son adresse : d'ici on y va vraiment, il n'y a pas de
+   classeur affiché à remplacer. Un jeu ouvre sa fiche sur place, comme
+   là-bas. Et aucun journal n'est « celui qu'on regarde » sur cette page,
+   donc aucune ligne ne porte de coche. */
+regleRecherche({
+  surJournal: i => {
+    const s = SOURCES[i];
+    if(s) location.href = '/archive/' + encodeURIComponent(s.nom);
+  },
+  surJeu: (id, titre) => { fermerRecherche(); ouvrirDetailIgdb(id, titre); },
+  actif: () => -1,
+});
+
+/* Le bouton « Suggestion / Bug » ouvre son formulaire sur place, comme
+   partout ailleurs : voir static/suggestion.js. Sans `estConnecte`, il
+   demande lui-même au serveur avant d'ouvrir. */
+if(window.Suggestion){
+  Suggestion.branche({
+    bouton: 'suggBtn',
+    projet: 'jeux-videos',
+    toast: (txt, mauvais)=> toast(txt, mauvais),
+  });
+}
+
+/* Qui est là. Une seule requête pour les trois choses que l'en-tête doit
+   savoir : si on a un journal (ma pastille, et où elle mène), si on est
+   connecté (la cloche), et combien de notifications attendent. C'est
+   l'annuaire que le journal demande déjà - voir liste() dans journal.py.
+
+   En cas d'échec la page reste lisible : le fil est public, seul l'en-tête
+   restera nu. */
+(async ()=>{
+  chargeFil();
+  chargeManifeste();
+  try{
+    const d = await (await fetch('/api/journal', {credentials: 'same-origin'})).json();
+    /* Ma pastille n'apparaît que si j'ai un journal, et elle pointe droit
+       dessus : /archive ouvrirait le mien de toute façon, mais l'adresse
+       nominative est celle qu'on peut copier et donner. */
+    /* SOURCES est ce que la recherche fouille en mode « Un journal ». La
+       page du journal le remplit dans chargeAnnuaire() à partir de la même
+       réponse ; on en fait autant, avec les seuls champs qu'une ligne de
+       résultat affiche - nom, titre, nombre de jeux, avatar, bannière. */
+    SOURCES = (d.journaux || []).map(j => ({
+      nom: j.pseudo, titre: j.titre, jeux: j.jeux,
+      avatar: j.avatar, banniere: j.banniere,
+    }));
+    if(d.moi){
+      /* Ma pastille d'identité : ma photo, mon pseudo, et le chemin de chez
+         moi. Sans photo, les initiales sur la teinte tirée du pseudo - la
+         même que partout ailleurs, pour qu'on garde sa couleur d'un écran
+         à l'autre. */
+      /* MOI est déclaré dans archive-noyau.js et sert au-delà de l'en-tête :
+         c'est par lui que la fiche d'un jeu sait quel journal lire pour
+         décider si « + Wishlist » a lieu d'être (voir mesJeux). */
+      MOI = {connecte: true, pseudo: d.moi.pseudo, avatar: d.moi.avatar,
+             notifs: d.notificationsNeuves || 0};
+      const moi = document.getElementById('moiBtn');
+      moi.href = '/archive/' + encodeURIComponent(d.moi.pseudo);
+      document.getElementById('moiNom').textContent = d.moi.pseudo;
+      document.getElementById('moiAva').innerHTML = d.moi.avatar
+        ? `<img class="ava" src="${esc(d.moi.avatar)}" alt="" decoding="async">`
+        : `<span class="ava ava-vide" style="--h:${teinteAvatar(d.moi.pseudo)}"
+            >${esc(initials(d.moi.pseudo))}</span>`;
+      moi.hidden = false;
+      /* Le sien d'abord, comme sur le journal : c'est celui qu'on cherche
+         le plus souvent, et un journal privé n'est pas dans l'annuaire
+         public - il faut l'y mettre nous-mêmes. */
+      const i = SOURCES.findIndex(x => x.nom === d.moi.pseudo);
+      if(i > 0) SOURCES.unshift(SOURCES.splice(i, 1)[0]);
+      else if(i < 0) SOURCES.unshift({nom: d.moi.pseudo});
+      Object.assign(SOURCES[0], {moi: true, jeux: d.moi.jeux,
+                                 avatar: d.moi.avatar, banniere: d.moi.banniere});
+    }
+    if(!d.connecte) return;
+    const cloche = document.getElementById('cloche');
+    cloche.hidden = false;
+    monteCloche(cloche);
+    socialMajNeuves(d.notificationsNeuves || 0);
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

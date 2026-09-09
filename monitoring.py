@@ -53,7 +53,7 @@ PAGES = {
     "/abyss/suggestions": "Suggestions",
     "/abyss/monitoring": "Monitoring",
     "/archive": "Jeux Vidéos",
-    "/archive/<pseudo>": "Jeux Vidéos — journal partagé",
+    "/archive/<pseudo>": "Jeux Vidéos - journal partagé",
     "/collection": "Collection Yu-Gi-Oh!",
     "/quiz": "Mini-Jeux / Quiz",
     "/yugiquiz": "Yu-Gi-Quiz",

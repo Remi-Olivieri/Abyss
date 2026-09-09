@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-stats.js
+   Archive Jeux Vidéos - archive-stats.js
 
    L'onglet « Statistiques » : quatre lectures d'une même question.
 
@@ -91,7 +91,7 @@ function brancheChoixAnalyse(){
 }
 
 /* Coefficient de Pearson : entre -1 et 1. Sans lui, un nuage laisse croire
-   ce qu'on veut y voir — c'est le chiffre qui tranche entre « ça monte »
+   ce qu'on veut y voir - c'est le chiffre qui tranche entre « ça monte »
    et « ça ne dit rien ». */
 function correlation(paires){
   const n = paires.length;
@@ -125,7 +125,7 @@ function nuageHTML(titre, points, uniteX, fmtX, sous, log){
   const large = AN_L - AN_MG - AN_MR;
 
   /* Échelle logarithmique quand les valeurs s'étalent sur plusieurs ordres
-     de grandeur — c'est le cas du temps de jeu : moitié des jeux sous 12 h,
+     de grandeur - c'est le cas du temps de jeu : moitié des jeux sous 12 h,
      et un à 3 581 h. En linéaire, tout se tasserait contre l'axe gauche sur
      moins d'un pour cent de la largeur et le graphique ne dirait plus rien.
      Aucun point n'est écarté pour autant : c'est la règle qui change, pas
@@ -151,11 +151,11 @@ function nuageHTML(titre, points, uniteX, fmtX, sous, log){
 
   /* Les points sont tracés du plus grand rayon au plus petit ? Non : dans
      l'ordre reçu, mais semi-transparents. Là où les jeux se tassent, les
-     disques s'additionnent et la densité se voit — un aplat opaque ne
+     disques s'additionnent et la densité se voit - un aplat opaque ne
      dirait pas si un point en cache deux ou vingt. */
   const disques = points.map(p =>
     `<circle class="an-pt" cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="4.5"
-       fill="${noteColor(p.y)}" data-info="${esc(p.nom)} — ${fr(p.y,1)}/10, ${esc(fmtX(p.x))}"/>`).join('');
+       fill="${noteColor(p.y)}" data-info="${esc(p.nom)} - ${fr(p.y,1)}/10, ${esc(fmtX(p.x))}"/>`).join('');
 
   const r = correlation(points.map(p => [p.x, p.y]));
   return carteAnalyse(titre,
@@ -229,7 +229,7 @@ function carteAnalyse(titre, sous, corps){
 /* Regroupe les JEUX par valeur d'un champ à valeurs multiples
    (« Platform, Puzzle, Adventure ») : un jeu compte dans chacune.
    Les jeux et pas seulement leurs notes, parce que la barre se déplie sur
-   la liste — la moyenne se recalcule à partir d'eux. */
+   la liste - la moyenne se recalcule à partir d'eux. */
 function groupePar(jeux, champ){
   const d = {};
   jeux.forEach(x => String(x[champ] || '').split(',').forEach(v => {
@@ -251,7 +251,7 @@ function renderAnalyse(){
     hote.innerHTML = `<div class="tip" id="anTip"></div>
       <div class="an-entete"><h2>Statistiques</h2>${choix}</div>
       <p class="an-rien">${onglet === 'all'
-        ? 'Aucun jeu terminé et noté : les statistiques arriveront avec eux.'
+        ? 'Aucun jeu terminé et noté.'
         : esc(`Aucun jeu noté dans « ${onglet} ».`)}</p>`;
     brancheChoixAnalyse();
     return;
@@ -262,7 +262,7 @@ function renderAnalyse(){
      marché, c'est un jeu qui n'a pas été acheté (offert, bundle, gratuit).
      Le mettre dans le nuage collerait une colonne verticale contre l'axe
      et écraserait les vrais prix. Mais l'écarter en silence cacherait le
-     fait le plus intéressant du lot — alors il est dit en toutes lettres
+     fait le plus intéressant du lot - alors il est dit en toutes lettres
      dans le sous-titre, et il vaut mieux qu'un point de plus. */
   const payants = jeux.filter(x => x.paid > 0);
   const offerts = jeux.filter(x => x.paid === 0);
@@ -299,7 +299,7 @@ function renderAnalyse(){
 
    onclick et non addEventListener : renderAnalyse() rappelle cette
    fonction à chaque rendu. Avec addEventListener les écouteurs
-   s'empileraient, et deux d'entre eux s'annuleraient — le premier ouvre la
+   s'empileraient, et deux d'entre eux s'annuleraient - le premier ouvre la
    liste, le second la voit ouverte et la referme aussitôt. Une affectation
    remplace au lieu d'ajouter. */
 function brancheDepliage(){
@@ -321,7 +321,7 @@ function brancheDepliage(){
 }
 
 /* Une seule infobulle, pour les nuages de points : elle suit le pointeur et
-   lit data-info. Les barres n'en portent plus — leur ligne dit déjà tout ce
+   lit data-info. Les barres n'en portent plus - leur ligne dit déjà tout ce
    que l'infobulle répétait, le nom, la moyenne et l'effectif, et une bulle
    qui redit ce qu'on est en train de lire ne fait que masquer la ligne
    suivante. Un point d'un nuage, lui, n'a pas de place pour son étiquette. */

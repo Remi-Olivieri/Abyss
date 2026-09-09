@@ -8,7 +8,7 @@
   --muted:#A79CB4;
   --gold:#E5C46B;
   /* la wishlist : une teinte froide, pour ne pas se confondre avec l'or
-     de « En cours » — les deux pastilles se croisent dans le même mur */
+     de « En cours » - les deux pastilles se croisent dans le même mur */
   --wish:#8FB8E8;
   --display:"Bricolage Grotesque",system-ui,sans-serif;
   --body:"Karla",system-ui,sans-serif;
@@ -60,27 +60,18 @@ input,textarea{caret-color:var(--gold)}
   border-bottom:1px solid var(--line);
 }
 .top-in{display:flex;align-items:center;gap:22px;height:62px}
-/* La maison : mon journal, sur mon onglet d'entrée. C'était une flèche vers
-   Abyss — le retour au hub a maintenant son propre bouton en toutes lettres
-   à l'autre bout de la barre, et cette place-ci revient à ce qu'on cherche
-   le plus souvent depuis le journal de quelqu'un d'autre.
+/* La maison qui ouvrait mon journal est partie de la barre : c'est la
+   pastille d'identité (.brand-moi ci-dessous) qui fait ce chemin-la, et
+   qui dit en plus sous quel compte on est. Ses regles s'en vont avec elle
+   -- le classeur Yu-Gi-Oh! en a une aussi, mais elle vit dans sa propre
+   feuille de style.
 
-   position + z-index en plus du retrait du position:relative sur .brand
-   (voir plus bas) : ceinture et bretelles contre le même bug — un voisin
-   qui reprendrait un jour une position ne doit plus jamais gagner
-   l'empilement sur ce bouton-ci. */
-.maison{
-  position:relative;z-index:1;
-  width:34px;height:34px;border-radius:9px;border:1px solid var(--line);color:var(--muted);
-  display:grid;place-items:center;flex:0 0 auto;text-decoration:none;
-  transition:color .15s,border-color .15s,background .15s;
-}
-.maison:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
-.maison:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+   `position:relative; z-index:1` sur les boutons de cette barre reste, lui,
+   et le commentaire ci-dessous dit pourquoi. */
 /* position:relative n'est plus utile depuis que le menu déroulant qui
    s'y ancrait est parti (voir la recherche de journal) : en le laissant,
    .brand se retrouvait dans son propre contexte d'empilement et passait
-   devant .maison — statique, donc peint sous elle — sur leur zone de
+   devant .maison - statique, donc peint sous elle - sur leur zone de
    chevauchement, invisible mais bien là pour les clics. */
 .back{
   position:relative;z-index:1;
@@ -89,7 +80,42 @@ input,textarea{caret-color:var(--gold)}
   transition:color .15s,border-color .15s,background .15s;
 }
 .back:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
-.brand{display:flex;align-items:baseline;gap:10px;flex:0 0 auto}
+.brand{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+/* `align-items` est passe de `baseline` a `center` : une image n'a pas de
+   ligne de base, la photo se serait posee sur le bas du texte. */
+
+/* ---------- moi, dans la barre du haut ----------
+   Ma photo et mon pseudo, quel que soit le journal ouvert. C'est le seul
+   element de la barre qui ne change jamais, et c'est ce qui en fait un
+   point de repere -- on sait sous quel compte on est sans ouvrir de menu.
+
+   C'est aussi le chemin du retour chez soi, celui que portait la petite
+   maison : un bouton de moins, et le geste au bon endroit. */
+.brand-moi{
+  display:flex;align-items:center;gap:9px;flex:0 0 auto;
+  text-decoration:none;color:inherit;
+}
+/* Le pseudo passe a l'or, et rien d'autre. Une pastille qui se cerne au
+   survol dessine un bouton la ou il n'y en a pas -- et dans une barre qui
+   compte deja quatre contours, un cinquieme qui n'apparait qu'au passage de
+   la souris se lit comme un accroc. */
+/* La graisse et la taille du pseudo sont ecrites ici, et non heritees de
+   `.brand b` : sur le journal la pastille est DANS `.brand`, sur le Social
+   elle est a cote (l'en-tete y range la recherche seule dans `.brand`).
+   Sans ces trois lignes, le meme pseudo passait de 19px a la taille du
+   corps d'une page a l'autre. */
+.brand-moi b{
+  font-family:var(--display);font-weight:800;font-size:19px;
+  letter-spacing:-.02em;transition:color .15s;
+}
+.brand-moi:hover b{color:var(--gold)}
+.brand-moi:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:99px}
+.brand-moi-ava{display:flex;flex:0 0 auto}
+.brand-moi-ava .ava{width:28px;height:28px;font-size:10px}
+/* [hidden] vient de la feuille du navigateur : sans ce rappel, le
+   display:flex ci-dessus le couvre et la pastille reste la sur un ecran ou
+   personne n'est connecte. Meme cas que .search-x plus bas. */
+.brand-moi[hidden]{display:none}
 .brand b{
   font-family:var(--display);font-weight:800;font-size:19px;
   letter-spacing:-.02em;transition:color .15s;
@@ -97,18 +123,23 @@ input,textarea{caret-color:var(--gold)}
 /* Le bouton qui ouvre la recherche de journal, à droite du titre. Un mot à
    côté de la loupe plutôt qu'une icône seule : sans lui, rien ne dit que
    la fonction existe avant de tomber dessus par hasard. Bordure visible au
-   repos pour la même raison — pas seulement au survol, sans quoi il se
+   repos pour la même raison - pas seulement au survol, sans quoi il se
    fond dans le bandeau tant qu'on ne l'a pas déjà repéré. */
 .jnl-search{
   align-self:center;display:flex;align-items:center;gap:6px;
   height:27px;padding:0 11px 0 9px;border-radius:99px;
   color:var(--muted);border:1px solid var(--line);
   font-family:var(--mono);font-size:11px;letter-spacing:.02em;
+  /* C'etait un <button> ; c'est un lien depuis que la pastille mene au
+     Social ici et a la recherche la-bas. Un lien arrive souligne et se
+     coupe en deux lignes -- les deux se reglent ici plutot que dans deux
+     gabarits qui finiraient par ne plus dire pareil. */
+  text-decoration:none;white-space:nowrap;
   transition:color .15s,border-color .15s,background .15s;
 }
 .jnl-search:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
-/* Les deux actions de l'en-tête, une à chaque bout — « Retour à Abyss » à
-   gauche, « Suggestion / Bug » à droite — et, dès qu'il y a la place, en
+/* Les deux actions de l'en-tête, une à chaque bout - « Retour à Abyss » à
+   gauche, « Suggestion / Bug » à droite - et, dès qu'il y a la place, en
    dehors de la colonne centrale.
 
    Toute la page tient dans .wrap, large de --maxw : sur un grand écran il
@@ -119,19 +150,19 @@ input,textarea{caret-color:var(--gold)}
    Pourquoi hors flux et pas une marge négative : .tabs porte
    margin-left:auto, donc c'est elle qui absorbe l'espace libre. Retirer de
    la largeur au dernier élément lui en rend d'autant, et TOUT le groupe de
-   droite glisse — l'engrenage serait sorti de la colonne avec le bouton.
+   droite glisse - l'engrenage serait sorti de la colonne avec le bouton.
    position:absolute le retire du calcul : plus rien d'autre ne bouge.
    Le repère est .top (sticky, donc positionné), dont la largeur exclut la
-   barre de défilement — contrairement à 100vw, qui la compte.
+   barre de défilement - contrairement à 100vw, qui la compte.
 
    Le seuil n'est pas décoratif, il se calcule, et il a bougé avec la taille
    des boutons. La colonne va de (L - 1120)/2 + 20 à (L + 1120)/2 - 20 ; un
    bouton fait W et se pose à 24 du bord. Pour qu'il ne recouvre pas son
-   voisin (la maison à gauche, l'engrenage à droite) il faut, des deux
+   voisin (ma pastille à gauche, l'engrenage à droite) il faut, des deux
    côtés symétriquement, L >= 2W + 1140. W vaut environ 175 px depuis qu'ils
    sont passés de 27 à 34 px de haut, d'où 1520 avec la marge d'erreur des
    métriques de police. En dessous, chacun reste dans la colonne au bout de
-   la barre — là où il tient sans gêner personne. */
+   la barre - là où il tient sans gêner personne. */
 .entete-action{
   flex:0 0 auto;display:flex;align-items:center;gap:8px;
   height:34px;padding:0 15px 0 13px;border-radius:99px;
@@ -149,7 +180,7 @@ input,textarea{caret-color:var(--gold)}
 }
 /* Le libellé du bouton de recherche. La règle portait sur `.brand span` et
    visait la catégorie affichée derrière le titre (« Journal de X -
-   Catégorie ») ; celle-ci a disparu — l'onglet est déjà lisible dans la
+   Catégorie ») ; celle-ci a disparu - l'onglet est déjà lisible dans la
    barre juste dessous, l'écrire deux fois n'apprenait rien. Le bouton, lui,
    la recevait au passage : le sélecteur nomme donc maintenant ce qu'il
    habille vraiment, sans rien changer à ce qui s'affiche. */
@@ -196,7 +227,7 @@ input,textarea{caret-color:var(--gold)}
 .menu-item.on{color:var(--gold)}
 /* Le menu des catégories surligne l'onglet courant exactement comme la barre
    d'onglets le fait au-dessus : même fond doré, même texte sombre. Il portait
-   une coche à droite — un second signe à apprendre pour dire la même chose,
+   une coche à droite - un second signe à apprendre pour dire la même chose,
    et qui se disputait la place avec l'étoile de l'onglet d'ouverture. */
 .per-menu .menu-item.on{
   color:var(--bg);background:var(--gold);font-weight:700;
@@ -298,8 +329,8 @@ input,textarea{caret-color:var(--gold)}
    Deux choses le rendaient illisible, et il fallait les deux pour que ça
    se voie : l'opacité de .55 portée par .avg descendait aussi sur le
    chiffre (il est dedans), qui se retrouvait délavé partout ; et l'or seul
-   n'a presque aucun contraste sur les barres claires de l'échelle —
-   #E9A13C vers 5, #A8C24A vers 7 — c'est-à-dire justement là où une
+   n'a presque aucun contraste sur les barres claires de l'échelle -
+   #E9A13C vers 5, #A8C24A vers 7 - c'est-à-dire justement là où une
    moyenne a le plus de chances de tomber.
    Le repère porte donc maintenant son propre contraste, au lieu de compter
    sur la couleur qu'il aura derrière lui : liseré sombre autour du trait,
@@ -341,7 +372,7 @@ input,textarea{caret-color:var(--gold)}
 
    right:auto est indispensable : .menu pose right:0 pour s'accrocher sous
    son bouton, et un élément qui a à la fois left (posé ici en style en
-   ligne) et right s'étire de l'un à l'autre — le menu aurait fait toute
+   ligne) et right s'étire de l'un à l'autre - le menu aurait fait toute
    la largeur de l'écran. */
 .onglet-menu{
   position:fixed;right:auto;z-index:60;min-width:210px;
@@ -365,7 +396,7 @@ input,textarea{caret-color:var(--gold)}
 .analyse{position:relative;padding-top:6px;padding-bottom:20px}
 /* Le titre, le choix de l'onglet analysé, puis la phrase qui dit sur quoi
    portent les chiffres. Le menu est sur la ligne du titre et non au-dessus
-   des graphiques : c'est lui qui complète « Statistiques » — de quoi ? —
+   des graphiques : c'est lui qui complète « Statistiques » - de quoi ? -
    et l'en éloigner obligeait à relier les deux du regard. */
 .an-entete{
   margin-bottom:20px;
@@ -458,7 +489,7 @@ input,textarea{caret-color:var(--gold)}
   display:flex;align-items:baseline;gap:6px;
 }
 /* l'effectif derrière la moyenne : toujours visible, jamais au même niveau
-   qu'elle — c'est une précision, pas une valeur. « 7 jeux » et non « n=7 » :
+   qu'elle - c'est une précision, pas une valeur. « 7 jeux » et non « n=7 » :
    la notation statistique se lit vite quand on la connaît déjà, et pas du
    tout autrement. */
 .an-val em{font-style:normal;color:var(--muted);font-size:9.5px;white-space:nowrap}
@@ -479,7 +510,7 @@ input,textarea{caret-color:var(--gold)}
    page : c'est le même objet, il se choisit du même geste. Ranger un jeu
    dans une année devient un clic, sans dérouler quoi que ce soit.
 
-   Les formes composées — avant, après, entre — sont rares et vivent derrière
+   Les formes composées - avant, après, entre - sont rares et vivent derrière
    « Autre… ». Ce qu'on y compose revient dans la rangée, allumé : il y a
    toujours exactement une pastille allumée, et elle porte le nom qui sera
    écrit. */
@@ -515,8 +546,8 @@ input,textarea{caret-color:var(--gold)}
 /* La barre d'outils se pose sous l'en-tête et y reste : changer la recherche
    ou le tri ne demande plus de remonter tout un mur de trois cents jeux.
    Même fond translucide que l'en-tête, les tuiles défilent dessous en étant
-   floutées, exactement comme sous lui. Au repos le fond ne se voit pas — il
-   n'y a que la page derrière — donc rien ne change en haut de la liste.
+   floutées, exactement comme sous lui. Au repos le fond ne se voit pas - il
+   n'y a que la page derrière - donc rien ne change en haut de la liste.
    z-index 15 : au-dessus des tuiles, mais sous l'infobulle de l'histogramme
    (20) et sous l'en-tête (40), qui doivent tous deux passer devant. */
 .tools{
@@ -531,7 +562,48 @@ input,textarea{caret-color:var(--gold)}
 }
 .search input{background:none;border:none;outline:none;width:100%;height:100%}
 .search input::placeholder{color:var(--muted)}
+/* La croix native de Chrome sur un <input type="search"> : grise, non
+   stylable, et elle doublerait la notre. On garde le type -- il donne au
+   champ son role et sa touche Echap -- et on efface le bouton. */
+.search input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}
 .search svg{flex:0 0 auto;opacity:.5}
+/* --- .search-x --------------------------------------------------------
+   La croix d'effacement du champ de recherche, la notre : Firefox n'en
+   dessine aucune dans un <input type="search">, et celle de Chrome n'est
+   pas stylable. Voir le commentaire du <label class="search"> dans
+   templates/jeux-videos.html.
+
+   Elle etait arrivee en quatre retouches empilees, dont les deux dernieres
+   se contredisaient : la troisieme en faisait un enfant du flex, la
+   quatrieme la repositionnait en absolu. C'est la derniere qui gagnait, et
+   avec elle deux ennuis.
+
+   Le premier : .search n'est pas position:relative, si bien que la croix
+   se calait sur .tools -- position:sticky, donc positionne -- et partait
+   se poser tout a droite de la barre d'outils, par-dessus le tri. Sur
+   telephone .tools repasse en static et elle s'en allait plus loin encore.
+   Elle etait donc bien la, jamais sur le champ.
+
+   Le second : `display:grid` d'une regle d'auteur l'emporte sur le
+   `display:none` que la feuille du navigateur donne a [hidden], si bien
+   que majCroixQ() ne pouvait plus la cacher sur un champ vide.
+
+   Elle redevient donc un enfant du flex, a la suite du champ : rien a
+   positionner, et le texte saisi ne peut pas passer dessous.
+
+   Rouge comme toutes les croix du site -- voir .sbtn[aria-label="Fermer"] :
+   ce qui efface ou ferme se reconnait a sa couleur avant d'etre lu. */
+.search-x{
+  flex:0 0 auto;width:20px;height:20px;border-radius:6px;border:none;background:none;
+  display:grid;place-items:center;cursor:pointer;padding:0;
+  font-family:var(--mono);font-size:15px;line-height:1;color:#C97F7B;
+  transition:color .15s,background .15s;
+}
+/* [hidden] vient de la feuille du navigateur : sans ce rappel, le
+   display:grid ci-dessus le couvre et la croix ne se cache plus. */
+.search-x[hidden]{display:none}
+.search-x:hover{color:#fff;background:#8B4A52}
+.search-x:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .sel{
   background:var(--bg2);border:1px solid var(--line);border-radius:9px;height:38px;
   padding:0 30px 0 12px;outline:none;appearance:none;font-size:13.5px;
@@ -567,7 +639,7 @@ input,textarea{caret-color:var(--gold)}
 
    Avec box-sizing:border-box et aspect-ratio, elle est prise sur la hauteur
    de la case au lieu de s'y ajouter : la tuile ne change pas de taille. Le
-   repli transparent la garde pour les jeux non notés — invisible, mais les
+   repli transparent la garde pour les jeux non notés - invisible, mais les
    jaquettes gardent toutes exactement le même cadrage. */
 .cov.big{border-bottom:3px solid var(--note,transparent)}
 /* bouton « aller chercher la jaquette », dans le coin d'une case d'initiales */
@@ -626,7 +698,7 @@ input,textarea{caret-color:var(--gold)}
   to{box-shadow:0 0 0 3px rgba(229,196,107,0), 0 14px 32px rgba(0,0,0,0)}
 }
 .tile.revenu{animation:tuile-revenue .6s ease-out}
-/* la jaquette avance un peu dans son cadre — seule l'image bouge, la case
+/* la jaquette avance un peu dans son cadre - seule l'image bouge, la case
    d'initiales garde son bouton de telechargement bien en place */
 .tile img.cov.big{transition:transform .35s cubic-bezier(.2,.7,.3,1)}
 /* Zoom ancré en bas, et pas au centre : sinon l'image grandit aussi vers le
@@ -655,7 +727,7 @@ input,textarea{caret-color:var(--gold)}
 .tile .tnote.wish{color:var(--wish);border-color:rgba(143,184,232,.4)}
 /* Promotion en cours sur un jeu convoité. Dans le coin droit : la pastille
    de statut occupe déjà le gauche. En vert plein plutôt qu'en contour comme
-   ses voisines, avec une ombre de sa propre couleur — c'est la seule bonne
+   ses voisines, avec une ombre de sa propre couleur - c'est la seule bonne
    nouvelle qu'une tuile puisse annoncer, et elle doit se repérer de loin
    dans un mur de wishlist.
    z-index 3, au-dessus de .tnote : les deux ne se croisent pas aujourd'hui,
@@ -708,7 +780,7 @@ input,textarea{caret-color:var(--gold)}
 /* la seconde plus courte : un titre s'arrête rarement pile au bord */
 .fantome-l.court{width:58%;margin-top:8px}
 
-/* une case de stat : intitulé, chiffre, précision — centrés comme les vrais */
+/* une case de stat : intitulé, chiffre, précision - centrés comme les vrais */
 .stats .stat .fantome-l{margin-left:auto;margin-right:auto}
 .fantome-l.f-u{width:64px;height:8px}
 .fantome-l.f-b{width:56px;height:21px;margin-top:9px}
@@ -786,7 +858,7 @@ input,textarea{caret-color:var(--gold)}
 .sheet-back,
 .sg-fond{
   position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
-  gap:16px;      /* l'écart entre la fiche et ses flèches — voir .sheet-nav */
+  gap:16px;      /* l'écart entre la fiche et ses flèches - voir .sheet-nav */
   padding:22px;background:rgba(9,7,13,.90);
   animation:fade .16s ease;
 }
@@ -800,10 +872,40 @@ input,textarea{caret-color:var(--gold)}
   background:var(--bg2);border:1px solid var(--line-strong);border-radius:16px;
   box-shadow:0 30px 90px rgba(0,0,0,.65);animation:rise .22s cubic-bezier(.2,.7,.3,1);
 }
+/* La barre du haut d'une feuille : elle colle, et le contenu passe dessous
+   en se fondant dans son degrade.
+
+   Trois precautions contre une meme fuite : une ligne d'un pixel, tout en
+   haut, ou l'on voyait defiler ce qui aurait du passer derriere -- le
+   bandeau de titre d'une video YouTube, par exemple.
+
+     - `top:-1px`, avec le pixel rendu au padding : la barre se cale un
+       cheveu plus haut que le bord du conteneur, sans bouger a l'ecran,
+       puisqu'une position collante ne remonte jamais au-dessus de sa place
+       dans le flux ;
+     - le masque ci-dessous, qui prolonge son fond opaque VERS LE HAUT,
+       au-dela du bord. Il vit hors du champ visible et n'apparait donc
+       jamais -- sauf justement dans la ligne qui fuyait, ou il la bouche.
+
+   Le z-index, lui, ne bouge pas : la barre etait deja au-dessus du cadre
+   video, qui n'a pas de z-index a lui. Le monter aurait fait passer la
+   barre devant les fleches de la fiche (.sheet-nav, z-index 4 sur
+   telephone) sans rien regler.
+
+   Ni l'une ni l'autre ne coute quoi que ce soit la ou le probleme ne se
+   pose pas. */
 .sheet-tools,
 .sg-tete{
-  position:sticky;top:0;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:6px;
-  padding:12px 12px 6px;background:linear-gradient(var(--bg2) 72%,rgba(30,24,41,0));
+  position:sticky;top:-1px;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:6px;
+  padding:13px 12px 6px;background:linear-gradient(var(--bg2) 74%,rgba(30,24,41,0));
+}
+/* Le masque. `bottom:100%` le pose entierement au-dessus de la barre, donc
+   hors du conteneur qui defile, qui le coupe : on ne le voit pas. Il ne se
+   decouvre que si un pixel manque la-haut, et c'est tout son role. */
+.sheet-tools::after,
+.sg-tete::after{
+  content:'';position:absolute;left:0;right:0;bottom:100%;height:24px;
+  background:var(--bg2);pointer-events:none;
 }
 .sheet-tools .grp{display:flex;gap:6px;align-items:center}
 .sbtn,
@@ -821,7 +923,7 @@ input,textarea{caret-color:var(--gold)}
 
    Repérées par leur aria-label et non par une classe de plus : elles sont
    neuf, chacune avec son nom (sheet-x, form-x, jaq-x...), et c'est cet
-   attribut-là — qu'elles doivent toutes porter de toute façon — qui dit
+   attribut-là - qu'elles doivent toutes porter de toute façon - qui dit
    vraiment ce qu'elles sont. */
 .sbtn[aria-label="Fermer"],.sg-x{color:#E38F89;border-color:rgba(227,143,137,.3)}
 .sbtn[aria-label="Fermer"]:hover,.sg-x:hover{color:#fff;background:#B4295C;border-color:#B4295C}
@@ -831,7 +933,7 @@ input,textarea{caret-color:var(--gold)}
    la flèche droite le fait venir de la droite. transform et opacity
    seulement, donc rien à recalculer : c'est la carte GPU qui travaille.
 
-   La jaquette part la première et le texte la suit d'un souffle — 55 ms,
+   La jaquette part la première et le texte la suit d'un souffle - 55 ms,
    de quoi lire un enchaînement plutôt qu'un remplacement. C'est ce décalage
    qui fait le mouvement : deux blocs qui glissent ensemble ne racontent
    rien, deux blocs qui se suivent donnent le sens de la marche. La jaquette
@@ -855,7 +957,7 @@ input,textarea{caret-color:var(--gold)}
 
 /* La flèche répond au geste : elle avance d'un cheveu dans le sens où elle
    emmène, et son halo s'allume le temps que le jeu arrive. Sans ça, le clic
-   ne renvoyait rien — le contenu bougeait, le bouton restait de marbre, et
+   ne renvoyait rien - le contenu bougeait, le bouton restait de marbre, et
    au clavier (flèches gauche/droite) on ne voyait même pas lequel des deux
    avait répondu.
 
@@ -871,13 +973,19 @@ input,textarea{caret-color:var(--gold)}
 }
 .sheet-nav.pousse{animation:nav-pousse-d .32s cubic-bezier(.2,.7,.3,1)}
 .sheet-nav.nav-prev.pousse{animation-name:nav-pousse-g}
-/* le temps de l'impulsion, la flèche prend la couleur qu'elle a au survol —
+/* le temps de l'impulsion, la flèche prend la couleur qu'elle a au survol -
    au clavier, c'est le seul endroit où le geste se voit */
 .sheet-nav.pousse{color:var(--gold);border-color:rgba(229,196,107,.45)}
 .sheet-cover{flex:0 0 216px}
+/* La boite de la jaquette, entre .sheet-cover et l'image. coverFiche()
+   remplace tout ce qu'elle trouve chez son hote a chaque changement de jeu :
+   sans ce cran, le bouton « Avis » pose dessous partait avec l'image du jeu
+   precedent. La boite prend la largeur de la colonne, la jaquette la
+   remplit comme avant. */
+.sheet-cover .cov-boite{position:relative;width:100%}
 /* La jaquette de la fiche n'est plus recréée d'un jeu à l'autre, seul son
    src change : un fondu court couvre alors la substitution. Quand l'image
-   est déjà en cache, la classe chargement n'est même pas posée — pas de
+   est déjà en cache, la classe chargement n'est même pas posée - pas de
    transition, pas de clignotement, l'image suivante est simplement là. */
 .sheet-cover .cov.xl{transition:opacity .22s ease}
 .sheet-cover .cov.xl.chargement{opacity:.45}
@@ -911,7 +1019,7 @@ input,textarea{caret-color:var(--gold)}
    doigt, où il n'y a pas de survol.
    La couleur est posée explicitement, comme sur .sheet-release : sur un jeu
    médaillé, le titre passe en color:transparent pour être peint par son
-   dégradé, et l'icône — dessinée en currentColor — disparaîtrait avec lui. */
+   dégradé, et l'icône - dessinée en currentColor - disparaîtrait avec lui. */
 .sheet-title .titre-copie{
   display:inline-flex;align-items:center;justify-content:center;
   width:24px;height:24px;border-radius:7px;
@@ -962,7 +1070,7 @@ input,textarea{caret-color:var(--gold)}
 .fact u{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;margin-bottom:3px}
 .fact b{font-family:var(--mono);font-weight:500;font-size:14px;font-variant-numeric:tabular-nums}
 /* Prix soldé : l'ancien barré, le prix du jour, puis la remise dans la même
-   pastille verte que sur la tuile — en plus petit, parce qu'ici elle n'a
+   pastille verte que sur la tuile - en plus petit, parce qu'ici elle n'a
    plus à se repérer de loin, elle accompagne un chiffre qu'on lit déjà. */
 .fact .fait-avant{opacity:.45;margin-right:9px;font-weight:400}
 .fact .fait-solde{
@@ -973,20 +1081,20 @@ input,textarea{caret-color:var(--gold)}
 .links{margin-top:22px;display:flex;gap:16px;font-size:12.5px;flex-wrap:wrap}
 /* ---------- transition tuile → fiche (View Transitions) ----------
    Le nom « jaquette-active » est posé en JS sur une seule jaquette à la
-   fois — voir nomVT(). Ici on ne règle que l'allure.
+   fois - voir nomVT(). Ici on ne règle que l'allure.
 
    Pas de fondu croisé entre l'ancienne et la nouvelle : c'est la même
    image, la faire disparaître pendant que l'autre apparaît n'en ferait
    qu'un fantôme dédoublé. Seule la boîte se déplace et grandit, ce qui
    donne l'impression que la vignette s'ouvre. */
 /* On ne capture QUE la jaquette. Par défaut le navigateur photographie
-   toute la page — deux fois, à la résolution de l'écran — et doit pour cela
+   toute la page - deux fois, à la résolution de l'écran - et doit pour cela
    rasteriser les deux bandeaux collants avec leur backdrop-filter, plus le
    mur entier. L'animation saccadait pour ça, pas pour la jaquette.
 
    Priver la racine de son nom retire cette photo : seul l'élément nommé
    est capturé, et le reste de la page bascule d'un coup. C'est exactement
-   l'effet recherché — ce qu'on veut voir bouger, c'est la vignette qui
+   l'effet recherché - ce qu'on veut voir bouger, c'est la vignette qui
    s'ouvre, pas le fond qui se fond. */
 :root{view-transition-name:none}
 
@@ -1045,7 +1153,7 @@ input,textarea{caret-color:var(--gold)}
 /* l'astérisque des champs obligatoires : la même teinte que les bordures
    d'erreur juste en dessous, pour qu'un coup d'œil relie les deux.
    .sg-oblig est la même chose dans la fenêtre de suggestion, où « Ton
-   message » est le seul champ exigé — le projet a toujours une valeur, la
+   message » est le seul champ exigé - le projet a toujours une valeur, la
    nature du message aussi. Deux noms parce que le balisage de la fenêtre
    vient de suggestion.js et ne connaît que ses classes `sg-`. */
 .req,.sg-oblig{color:#D9436E;margin-left:1px}
@@ -1055,10 +1163,19 @@ input,textarea{caret-color:var(--gold)}
   padding:0 12px;height:40px;outline:none;font-size:14px;font-family:var(--body);
   transition:border-color .15s;
 }
-.fld textarea,.sg-zone{height:auto;padding:10px 12px;line-height:1.5;resize:vertical;font-size:13.5px}
+/* resize:none : ces deux champs grandissent avec le texte plutot que de
+   porter une poignee a tirer (voir static/champs.js). min-height est le
+   plancher, max-height le plafond au-dela duquel le champ defile -- sans
+   plafond, un avis de trente lignes pousse « Enregistrer » sous le bas de
+   la fenetre et il faut remonter tout ce qu'on vient d'ecrire pour le
+   retrouver. */
+.fld textarea,.sg-zone{
+  height:auto;padding:10px 12px;line-height:1.5;resize:none;font-size:13.5px;
+  min-height:96px;max-height:min(340px,42vh);
+}
 .fld input:focus,.fld select:focus,.fld textarea:focus,
 .sg-select:focus,.sg-zone:focus{border-color:var(--gold)}
-/* le champ en faute au moment de valider — entouré plutôt que décrit dans
+/* le champ en faute au moment de valider - entouré plutôt que décrit dans
    un bloc de texte, qui poussait le reste du formulaire vers le bas */
 .fld.err input,.fld.err select,.fld.err textarea{border-color:#B4295C}
 .fld.err input:focus,.fld.err select:focus,.fld.err textarea:focus{
@@ -1179,7 +1296,16 @@ input,textarea{caret-color:var(--gold)}
 .ta-hl .minus{color:#F0A29C}
 /* le curseur doit rester visible alors que le texte, lui, est transparent ;
    la sélection dorée vient maintenant de la règle générale, tout en haut */
-#f_review{position:relative;z-index:1;background:transparent;color:transparent;caret-color:var(--gold)}
+/* `display:block` : un textarea est en ligne, et .ta-wrap lui reservait
+   donc six pixels de descente sous sa bordiere -- six pixels que le
+   calque, en inset:0, remplissait de sa couleur de fond. On lisait un
+   champ plus haut qu'il n'etait, avec une bande morte en bas. Sans
+   consequence tant que la hauteur ne bougeait pas ; depuis que le champ
+   suit le texte, cette bande le suit aussi. */
+#f_review{
+  display:block;position:relative;z-index:1;
+  background:transparent;color:transparent;caret-color:var(--gold);
+}
 .fld input:disabled{opacity:.45}
 .fld input::placeholder,.fld textarea::placeholder{color:var(--muted);opacity:.6}
 .fld select,.sg-select{appearance:none;
@@ -1275,6 +1401,130 @@ input,textarea{caret-color:var(--gold)}
 @media (prefers-reduced-motion:no-preference){
   .rsearch-orne::before{transition:opacity .15s}
 }
+/* ==========================================================================
+   L'identite d'un journal
+   « Journal de Jokrem » ecrit en petit dans la barre du haut ne disait
+   qu'une chose : le nom. Un journal appartient pourtant a quelqu'un, et
+   c'est ce quelqu'un qu'on vient lire -- d'ou sa banniere en fond, sa photo
+   par-dessus, et son nom en grand.
+
+   C'est aussi ce qui donne envie d'en mettre une : personne ne cherche un
+   reglage qu'il n'a jamais vu servir. En voir chez les autres, et voir la
+   place vide chez soi, vaut mieux qu'une case dans un menu.
+   ========================================================================== */
+/* La photo, partout ou elle apparait. Une seule regle, trois tailles : la
+   pastille de la barre du haut, celle du bandeau, et le repli en initiales
+   qui doit faire exactement la meme forme que l'image qu'il remplace. */
+.ava{
+  display:block;width:40px;height:40px;border-radius:50%;object-fit:cover;
+  background:var(--bg3);
+}
+.ava-vide{
+  display:grid;place-items:center;color:#fff;
+  font-family:var(--display);font-weight:700;font-size:14px;
+  /* la teinte vient du pseudo (voir teinteAvatar) : quelqu'un garde sa
+     couleur d'un ecran a l'autre, meme sans photo */
+  background:hsl(var(--h) 46% 32%);
+}
+.ava.xl{width:76px;height:76px;font-size:26px}
+
+/* La tete du journal : le nom, les quatre chiffres et la courbe des notes,
+   ecrits SUR la banniere.
+
+   Elle etait d'abord un bandeau decoratif de deux cents pixels, pose au
+   dessus des statistiques -- visible, mais paye au prix fort : deux cents
+   pixels de journal repousses vers le bas a chaque ouverture. En fond, elle
+   ne prend la place de rien et se voit davantage, puisqu'elle s'etend sur
+   toute la hauteur de ce qu'on lit en arrivant. */
+.jtete{
+  position:relative;isolation:isolate;
+  /* Elle remonte DERRIERE la barre du haut, translucide et floutee :
+     l'image transparait a travers elle, et la page commence a son premier
+     pixel plutot qu'au soixante-troisieme. La barre garde son z-index de 40
+     et passe donc devant sans qu'on ait rien a lui dire ; le padding rend
+     au contenu la place que la marge negative vient de lui prendre. */
+  margin-top:calc(-1 * var(--h-top));
+  padding-top:var(--h-top);
+}
+.jtete-fond{
+  position:absolute;inset:0;z-index:-1;
+  background-size:cover;background-position:center 32%;background-repeat:no-repeat;
+}
+/* Le voile. Trois degrades, et ils ne decorent pas : ils rendent lisible ce
+   qui s'ecrit dessus. Le premier couche le contraste a gauche, ou vivent le
+   nom et les libelles ; le deuxieme assombrit vers le bas, ou la courbe des
+   notes a besoin d'un fond calme ; le troisieme fond le bord dans la page,
+   pour que la banniere n'ait pas de fin franche au milieu de l'ecran. */
+.jtete-fond::after{
+  content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,rgba(23,19,31,.92) 0%,rgba(23,19,31,.66) 48%,rgba(23,19,31,.3) 100%),
+    linear-gradient(180deg,rgba(23,19,31,.4) 0%,rgba(23,19,31,.62) 45%,rgba(23,19,31,.86) 100%),
+    linear-gradient(180deg,transparent 82%,var(--bg) 100%);
+}
+/* Sans banniere : la place reste, et se voit. Un fond qui disparaitrait
+   faute d'image ne donnerait envie de rien -- c'est le vide, montre sans
+   reproche, qui appelle l'invitation posee a cote. */
+.jtete.sans-banniere .jtete-fond{
+  background:linear-gradient(115deg,var(--bg2) 0%,var(--bg3) 55%,var(--bg2) 100%);
+}
+.jtete.sans-banniere .jtete-fond::after{
+  background:linear-gradient(180deg,transparent 70%,var(--bg) 100%);
+}
+
+/* L'identite, serree en haut. Elle n'a plus a porter la banniere a elle
+   seule : celle-ci continue derriere les statistiques, donc cette ligne-ci
+   n'a besoin que de sa propre hauteur. */
+.ident-in{
+  position:relative;display:flex;align-items:center;gap:16px;
+  padding-top:18px;padding-bottom:16px;
+}
+.ident-in[hidden]{display:none}
+/* Le lisere autour de la photo : elle se pose sur une image quelconque, et
+   sans lui, une banniere claire mangeait son contour. */
+.ident-ava .ava{
+  border:3px solid var(--bg);box-shadow:0 6px 20px rgba(0,0,0,.45);
+}
+.ident-txt{flex:1 1 auto;min-width:0}
+.ident-txt h1{
+  margin:0;font-family:var(--display);font-weight:800;letter-spacing:-.03em;
+  font-size:clamp(24px,4.4vw,36px);line-height:1.05;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  text-shadow:0 2px 14px rgba(23,19,31,.8);
+}
+.ident-sous{
+  margin:5px 0 0;color:var(--muted);
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+}
+/* L'invitation, chez soi et seulement chez soi. Doree et pleine : c'est la
+   seule action de cette tete-la, elle a le droit de se voir. */
+.ident-cta{
+  flex:0 0 auto;align-self:center;
+  height:34px;padding:0 16px;border-radius:99px;
+  display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap;
+  background:var(--gold);color:#1B1526;
+  font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  transition:filter .15s,transform .15s;
+}
+.ident-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.ident-cta:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.ident-cta[hidden]{display:none}     /* voir .brand-moi[hidden] */
+.ident-cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.ident-cta:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+@media (max-width:640px){
+  /* Pas de remontee sous la barre ici : sur telephone elle s'enroule sur
+     deux rangees (voir .top-in juste au-dessus), sa hauteur n'est donc plus
+     celle de --h-top et la marge negative decalerait tout d'un cran. */
+  .jtete{margin-top:0;padding-top:0}
+  .ident-in{gap:13px;padding-top:14px;padding-bottom:12px;flex-wrap:wrap}
+  .ava.xl{width:58px;height:58px;font-size:20px}
+  .ident-ava .ava{border-width:2px}
+  /* L'invitation passe sous le nom : a cote, elle ne laissait plus de place
+     au titre, qui est ce qu'on est venu lire. */
+  .ident-cta{flex:1 1 100%;justify-content:center;align-self:stretch;margin-top:2px}
+}
+
 .rsearch-avatar{
   flex:0 0 auto;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
   font-family:var(--display);font-weight:700;font-size:13.5px;color:#fff;
@@ -1362,7 +1612,7 @@ input,textarea{caret-color:var(--gold)}
 /* Les trois cases à cocher sur une seule ligne. À deux colonnes, celle des
    jaquettes se retrouvait seule en dessous avec un trou à sa droite.
    auto-fit plutôt que repeat(3,1fr) : « Jaquettes manquantes » est le plus
-   long des trois libellés, et sous 190px il déborderait de sa pastille —
+   long des trois libellés, et sous 190px il déborderait de sa pastille -
    là, la grille repasse d'elle-même à deux colonnes avant d'en arriver là. */
 .igdb-in .fgrid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
 .igdb-info{font-size:13.5px;line-height:1.6;color:var(--muted);margin:0 0 18px}
@@ -1410,7 +1660,70 @@ input,textarea{caret-color:var(--gold)}
 .detail-in{padding:6px 28px 28px;display:flex;flex-direction:column;gap:20px}
 .detail-etat{margin:8px 0;font-size:13.5px;color:var(--muted);text-align:center}
 
-.detail-media{position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:var(--bg)}
+/* ---------- les deux actions de la fiche ----------
+   La fiche ne faisait que raconter le jeu. Elle est pourtant l'endroit ou
+   l'on decide : c'est la qu'on lit la description, les temps pour finir et
+   la note critique, donc la qu'on se dit « celui-la, je le veux » ou « et
+   les autres, ils en ont pense quoi ? ».
+
+   Elles vivent sur la ligne du titre, entre lui et la croix : c'est le jeu
+   qu'elles concernent, et le titre est ce qui le nomme. Posees plus bas,
+   elles flottaient au-dessus d'une description qui ne parle pas d'elles.
+
+   Les deux chemins existaient deja ailleurs -- le bouton sous la jaquette
+   d'une fiche du mur, et le « + Wishlist » des suggestions de decouverte.
+   Ils sont simplement branches ici.
+
+   `flex:1 0 auto` sur le groupe : c'est lui qui prend la place restante,
+   donc c'est le TITRE qui se coupe quand la ligne deborde -- et non les
+   boutons, qu'on ne saurait plus lire a moitie. Le `0` compte : avec un
+   flex-shrink de 1, un titre a rallonge ecrasait les deux boutons au lieu
+   de se couper lui-meme.
+
+   Et surtout `nowrap` : les deux actions se lisent comme une paire posee au
+   bout de la ligne du titre. En les laissant passer a la ligne, « Avis des
+   joueurs » et « + Wishlist » se retrouvaient l'un sous l'autre des qu'un
+   jeu portait un nom un peu long, et la barre doublait de hauteur pour un
+   titre qui, lui, savait tres bien se couper. */
+.sheet-tools .detail-actions{flex:1 0 auto;justify-content:flex-end;flex-wrap:nowrap}
+/* Ce qui coupe le titre. `min-width:0` sur son groupe : un conteneur flex
+   refuse par defaut de descendre sous la largeur de son contenu, et sans
+   cette ligne l'ellipse ci-dessous n'aurait jamais l'occasion de servir.
+   Reserve a la fiche detaillee -- ailleurs, `.fhead` nomme un formulaire
+   dont le titre est ecrit par nous et tient toujours. */
+.detail-sheet .sheet-tools .grp:first-child{min-width:0}
+.detail-sheet .fhead{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail-act{
+  display:inline-flex;align-items:center;gap:6px;
+  height:32px;padding:0 13px;border-radius:99px;
+  border:1px solid var(--line);background:var(--bg3);color:var(--muted);
+  font:inherit;font-size:12px;cursor:pointer;white-space:nowrap;
+  transition:color .15s,border-color .15s,background .15s,filter .15s;
+}
+.detail-act:hover{color:var(--gold);border-color:rgba(229,196,107,.45)}
+.detail-act:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* [hidden] vient de la feuille du navigateur : sans ce rappel, le
+   display:inline-flex ci-dessus le couvre et le bouton reste la sur un jeu
+   qu'on possede deja. Meme cas que .brand-moi[hidden] plus haut. */
+.detail-act[hidden]{display:none}
+/* « + Wishlist » ecrit quelque chose, et c'est le seul de la fenetre : plein
+   et dore, pendant que « Avis des joueurs » n'ouvre qu'une lecture de plus. */
+.detail-wish{background:var(--gold);border-color:var(--gold);color:#1B1526;font-weight:600}
+.detail-wish:hover{color:#1B1526;border-color:var(--gold);filter:brightness(1.08)}
+.detail-act:disabled{cursor:default;filter:none;opacity:.7}
+
+@media (max-width:640px){
+  /* Sous le pouce, la ligne du titre n'a plus la place de trois choses :
+     les libelles tombent, les icones restent. « Avis » garde la sienne ;
+     la wishlist, qui n'en a pas, garde son « + ». */
+  .detail-act{height:30px;padding:0 11px;font-size:11.5px}
+}
+
+/* isolation:isolate : le cadre video est compose a part par le navigateur,
+   et un <iframe> dans une boite a coins arrondis est un cas ou Firefox
+   deborde volontiers de la decoupe. Un contexte d'empilement a lui l'y
+   enferme, sans rien changer a ce qu'on voit quand tout va bien. */
+.detail-media{position:relative;isolation:isolate;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:var(--bg)}
 .detail-media iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
 .detail-desc{margin:0;font-size:13.5px;line-height:1.65;color:var(--muted)}
@@ -1445,7 +1758,7 @@ input,textarea{caret-color:var(--gold)}
 /* ---------- une capture en grand ----------
    Au-dessus de la fiche détaillée, qui est elle-même au-dessus du reste :
    c'est la dernière fenêtre qu'on ouvre, elle doit rester la plus haute.
-   Le fond est plus opaque qu'ailleurs — on vient regarder une image. */
+   Le fond est plus opaque qu'ailleurs - on vient regarder une image. */
 #detail{z-index:79}
 #zoom{z-index:80;background:rgba(9,7,13,.95)}
 .zoom-boite{position:relative;display:flex;align-items:center;justify-content:center;max-width:100%}
@@ -1453,14 +1766,24 @@ input,textarea{caret-color:var(--gold)}
   max-width:min(1280px,94vw);max-height:86vh;width:auto;height:auto;
   border-radius:12px;box-shadow:0 30px 90px rgba(0,0,0,.7);
 }
-/* les commandes se posent sur l'image, jamais autour : en négatif elles
-   sortiraient de l'écran dès que l'image occupe toute la largeur */
+/* Les fleches sortent de l'image et l'encadrent, comme celles de la fiche
+   du mur : elles ne parlent pas de ce qu'on regarde mais de ce qui l'entoure,
+   et posees dessus elles cachaient justement le coin de la capture qu'on
+   venait agrandir. Ce sont des .sheet-nav, sans rien en propre : le meme
+   rond, le meme chevron, le meme survol qu'a cote.
+
+   `#zoom` etant un `.sheet-back`, l'ecart de 16px et le centrage sont deja
+   la ; il ne reste qu'a rendre a l'image la largeur qu'elles prennent -
+   44px de marge du fond, 96 de ronds, 32 d'ecarts, et un peu de jeu. Et
+   seulement quand il y en a : une capture seule s'ouvre sans fleches (voir
+   `zoom-multi` dans ouvrirZoom) et garde toute la place. */
+#zoom.zoom-multi .zoom-boite img{max-width:min(1280px,calc(100vw - 190px))}
+/* la croix, elle, reste sur l'image : elle ferme ce qu'on regarde, pas ce
+   qui l'entoure - et en négatif elle sortirait de l'écran dès que l'image
+   occupe toute la largeur */
 .zoom-boite .sbtn{position:absolute;background:rgba(9,7,13,.72);border-color:transparent}
 .zoom-boite .sbtn:hover{background:var(--bg3);border-color:var(--line-strong)}
 .zoom-x{top:10px;right:10px}
-.zoom-prev,.zoom-next{top:50%;transform:translateY(-50%)}
-.zoom-prev{left:10px}
-.zoom-next{right:10px}
 .zoom-rang{
   position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
   padding:4px 12px;border-radius:99px;background:rgba(9,7,13,.72);
@@ -1468,11 +1791,11 @@ input,textarea{caret-color:var(--gold)}
 }
 
 /* ---------- les barres de défilement des fenêtres ----------
-   Celle du navigateur, large et claire, tranche avec le fond sombre — et
+   Celle du navigateur, large et claire, tranche avec le fond sombre - et
    la fiche détaillée en montre deux d'un coup (la fenêtre en hauteur, la
    bande de captures en largeur). Fine, sans flèches, de la couleur des
    bordures : elle se voit quand on la cherche et se tait le reste du
-   temps. La bordure transparente sert de marge — background-clip la
+   temps. La bordure transparente sert de marge - background-clip la
    retire du fond, ce qui donne le rail étroit sans rogner la zone
    cliquable. */
 .sheet,.sg-boite,.detail-galerie,.igdb-liste,.ac{
@@ -1527,7 +1850,7 @@ input,textarea{caret-color:var(--gold)}
   accent-color:var(--gold);cursor:pointer;
 }
 /* « Changer de jeu » : proposé uniquement quand le rapprochement n'est pas
-   sûr, donc discret — c'est une exception, pas l'usage courant */
+   sûr, donc discret - c'est une exception, pas l'usage courant */
 .igdb-fiche-btn{
   flex:0 0 auto;align-self:center;height:28px;padding:0 11px;border-radius:8px;
   border:1px solid var(--line);color:var(--muted);font-size:12px;white-space:nowrap;
@@ -1670,7 +1993,7 @@ input,textarea{caret-color:var(--gold)}
 
    Le balisage vient de static/suggestion.js et il est le même partout ;
    l'habillage appartient à chaque page. Ici, c'est celui des fiches : même
-   fond, même feuille, même barre d'outils collante, mêmes champs — la
+   fond, même feuille, même barre d'outils collante, mêmes champs - la
    plupart de ces sélecteurs ont donc simplement été ajoutés aux règles
    existantes plus haut. Ne restent ici que les morceaux qui n'ont pas
    d'équivalent dans la page.
@@ -1682,8 +2005,8 @@ input,textarea{caret-color:var(--gold)}
 .sg-boite{max-width:460px}
 .sg-titre{margin:0}
 /* Les deux natures du message : la même bascule que les deux modes de la
-   fenêtre de recherche (.rsearch-mode). C'est le même geste — choisir entre
-   deux lectures d'un seul champ — il se dessine donc pareil. Le rond natif
+   fenêtre de recherche (.rsearch-mode). C'est le même geste - choisir entre
+   deux lectures d'un seul champ - il se dessine donc pareil. Le rond natif
    est masqué et non retiré : il continue de porter le clavier, le nom du
    groupe et l'état coché, c'est juste l'étiquette qui se peint. */
 .sg-genres{display:flex;gap:6px;margin-bottom:16px}
@@ -1706,7 +2029,7 @@ input,textarea{caret-color:var(--gold)}
   letter-spacing:.03em;color:var(--muted);
 }
 .sg-err{margin:0 0 14px}
-/* Le message est parti, et la page n'avait pas de toast à prêter — c'est le
+/* Le message est parti, et la page n'avait pas de toast à prêter - c'est le
    cas du Quiz. Vert et non cramoisi : c'est la seule bonne nouvelle que
    cette fenêtre puisse annoncer. */
 .sg-ok{
@@ -1726,7 +2049,7 @@ input,textarea{caret-color:var(--gold)}
    Jusqu'ici l'écran étroit était traité par soustraction : l'en-tête
    passait en colonne, les grilles perdaient des colonnes, et le reste
    restait tel quel. Ça tenait dans la largeur, mais ça ne se parcourait
-   pas — l'en-tête empilé mangeait un tiers de l'écran avant la première
+   pas - l'en-tête empilé mangeait un tiers de l'écran avant la première
    tuile, « Ajouter un jeu » partait avec la barre d'outils dès qu'on
    descendait, et chaque champ de saisie faisait zoomer iOS.
 
@@ -1762,8 +2085,8 @@ input,textarea{caret-color:var(--gold)}
   .sg-select,.sg-zone{font-size:16px}
 
   /* ---------- la barre de titre ----------
-     Une seule rangée : retour, maison, titre, suggestion, réglages. Les
-     deux boutons de bout de barre perdent leur libellé — chacun prenait
+     Une seule rangée : retour, moi, titre, suggestion, réglages. Les
+     deux boutons de bout de barre perdent leur libellé - chacun prenait
      une ligne entière pour dire ce que son dessin dit déjà, soit deux
      lignes dépensées avant d'arriver au journal.
 
@@ -1775,7 +2098,7 @@ input,textarea{caret-color:var(--gold)}
     padding-top:9px;padding-bottom:0;position:static;
   }
   #abyssBtn{order:1}
-  .maison{order:2}
+  .brand-moi{order:2}
   .brand{order:3;flex:1 1 auto;min-width:0;align-items:center;gap:7px;padding:0}
   #suggBtn{order:4}
   .cog-wrap{order:5;position:relative;top:auto;right:auto}
@@ -1784,7 +2107,7 @@ input,textarea{caret-color:var(--gold)}
   /* Ronds et de 38 px : c'est la plus petite cible qu'un pouce trouve du
      premier coup, et la forme dit « icône » là où le rectangle disait
      « bouton avec du texte dedans ». */
-  .entete-action,.maison,.cog,.jnl-search{
+  .entete-action,.cog,.jnl-search{
     width:38px;height:38px;padding:0;border-radius:50%;
     flex:0 0 auto;margin:0;justify-content:center;
   }
@@ -1800,7 +2123,7 @@ input,textarea{caret-color:var(--gold)}
 
   /* ---------- les onglets : un sélecteur segmenté ----------
      Ils passent sur leur propre ligne et s'y partagent la largeur à parts
-     égales. Quatre au maximum — Tout, Année, En cours, Wishlist — donc la
+     égales. Quatre au maximum - Tout, Année, En cours, Wishlist - donc la
      rangée ne déborde jamais et n'a pas besoin de défiler ; ce qui
      tombe bien, un défilement horizontal ici rognerait le menu des années
      qui se déplie par-dessus. */
@@ -1840,7 +2163,7 @@ input,textarea{caret-color:var(--gold)}
      Dans la barre d'outils, il partait avec elle au premier geste de
      défilement : ajouter un jeu demandait de remonter tout le mur. Posé en
      bas à droite, il est là où la main tient déjà le téléphone, et il y
-     reste. Doré plein plutôt qu'en contour — c'est la seule action de la
+     reste. Doré plein plutôt qu'en contour - c'est la seule action de la
      page, elle a le droit de se voir. */
   .add{
     position:fixed;z-index:35;
@@ -1924,10 +2247,11 @@ input,textarea{caret-color:var(--gold)}
 
   /* La poignée, et elle s'attrape : la feuille se repousse vers le bas pour
      la refermer, comme elle est montée (voir poigneeFeuille() dans
-     static/gestes.js). touch-action:none pour cela — la barre est collée en
+     static/gestes.js). touch-action:none pour cela - la barre est collée en
      haut et ne défile pas, le doigt qui s'y pose ne peut vouloir que ça.
      Le corps de la feuille, lui, garde son défilement. */
-  .sheet-tools,.sg-tete{padding:17px 10px 6px;touch-action:none}
+  /* le pixel rendu au padding suit le top:-1px de la regle generale */
+  .sheet-tools,.sg-tete{padding:18px 10px 6px;touch-action:none}
   .sheet-tools::before,.sg-tete::before{
     content:'';position:absolute;top:7px;left:50%;transform:translateX(-50%);
     width:38px;height:4px;border-radius:99px;background:var(--line-strong);
@@ -1935,7 +2259,7 @@ input,textarea{caret-color:var(--gold)}
   .sbtn,.sg-x{width:38px;height:38px}
   .sbtn.wide{width:auto;padding:0 13px}
   /* Plus de place de chaque côté : la feuille prend toute la largeur. Les
-     flèches passent alors par-dessus ses bords, à mi-hauteur — hors du flux,
+     flèches passent alors par-dessus ses bords, à mi-hauteur - hors du flux,
      donc elles ne lui reprennent rien. absolute et non fixed : .sheet-back
      couvre déjà l'écran entier, et le repère est alors sûr quoi qu'il arrive
      à ses ancêtres. z-index 4 : au-dessus de .sheet-tools, qui est à 3. */
@@ -2009,11 +2333,15 @@ input,textarea{caret-color:var(--gold)}
      celles qui ont une barre d'outils à portée de pouce */
   #zoom{padding:12px;align-items:center}
   /* La capture se balaie : à gauche la suivante, vers le bas on la repose.
-     Rien à faire défiler ici, le doigt est libre — d'où touch-action:none,
+     Rien à faire défiler ici, le doigt est libre - d'où touch-action:none,
      qui empêche au passage le geste de retour du navigateur de partir
      pendant qu'on feuillette. Voir glissement() dans static/gestes.js. */
   .zoom-boite{touch-action:none}
+  /* Sous le pouce, les fleches repassent par-dessus les bords de la capture
+     - c'est la regle .sheet-nav ci-dessus qui les y met, et l'image reprend
+     alors la largeur qu'on lui reservait sur grand ecran. */
   .zoom-boite img{max-height:80vh}
+  #zoom.zoom-multi .zoom-boite img{max-width:94vw}
 
   /* ---------- les écrans d'attente ---------- */
   .gate{margin:34px auto 80px}
@@ -2024,7 +2352,7 @@ input,textarea{caret-color:var(--gold)}
 /* La feuille monte du bas de l'écran. Hors du bloc ci-dessus : une
    animation nommée dans une media query n'existe que tant que la requête
    est vraie, ce qui est le cas ici, mais la ranger dehors la garde avec
-   les autres — et .sheet-back.vt-entree .sheet, plus spécifique, continue
+   les autres - et .sheet-back.vt-entree .sheet, plus spécifique, continue
    de la couper quand c'est la jaquette qui voyage (voir ouvreFiche). */
 @keyframes monte-feuille{from{transform:translateY(100%)}to{transform:none}}
 
@@ -2032,7 +2360,7 @@ input,textarea{caret-color:var(--gold)}
    Il n'y a pas de survol sur un écran tactile : les effets accrochés à
    :hover s'y déclenchaient à l'appui, restaient allumés après, et la tuile
    qu'on venait de quitter gardait son relief au milieu du mur. Ils sont
-   éteints, et remplacés par le seul retour qu'un doigt attende — un bref
+   éteints, et remplacés par le seul retour qu'un doigt attende - un bref
    enfoncement pendant l'appui. */
 @media (hover:none){
   .tile:hover{transform:none;border-color:var(--line);box-shadow:none}
@@ -2052,7 +2380,7 @@ input,textarea{caret-color:var(--gold)}
   a,button,.tile,.tab,summary{-webkit-tap-highlight-color:transparent}
 }
 
-/* Le très petit écran — 360 px et moins, ce qui reste courant. Rien de
+/* Le très petit écran - 360 px et moins, ce qui reste courant. Rien de
    neuf ici, seulement le même dessin resserré d'un cran là où il commence
    à se toucher. */
 @media (max-width:380px){
@@ -2092,7 +2420,7 @@ input,textarea{caret-color:var(--gold)}
 /* ---------- l'accueil d'un visiteur ----------
    Personne n'est connecté : plutôt que d'ouvrir le journal d'un inconnu,
    la page dit à quoi elle sert et pose la recherche juste dessous. Elle
-   n'est pas derrière un bouton ici — c'est la seule chose qu'un visiteur
+   n'est pas derrière un bouton ici - c'est la seule chose qu'un visiteur
    puisse faire, et l'écran serait vide sans elle. */
 .accueil-rech{margin-top:34px;padding-top:26px;border-top:1px solid var(--line)}
 
@@ -2152,7 +2480,7 @@ input,textarea{caret-color:var(--gold)}
 /* ---------- le constructeur d'onglet ----------
    Un onglet ne se tape plus, il se compose : une forme, une ou deux années.
    C'est ce qui garantit que « Avant 2019 » et « A long long time ago » ne
-   peuvent plus cohabiter — la seconde n'est pas saisissable.
+   peuvent plus cohabiter - la seconde n'est pas saisissable.
 
    Les formes sont des pastilles, comme les onglets de la barre : c'est le
    même geste, choisir entre des états qui s'excluent. */
@@ -2177,8 +2505,8 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
 }
 
 /* --- .bkd-mois  (transcript du 2026-09-05T19:43:24) --- */
-/* Le mois, au bout de la rangée : l'année et lui disent la même chose —
-   quand — et se lisent ensemble. Il passe dessous quand la rangée déborde. */
+/* Le mois, au bout de la rangée : l'année et lui disent la même chose -
+   quand - et se lisent ensemble. Il passe dessous quand la rangée déborde. */
 .bkd-mois{display:flex;align-items:center;gap:9px;flex:0 0 auto;margin-left:auto}
 
 /* --- .bkd-plus  (transcript du 2026-09-05T19:43:24) --- */
@@ -2249,7 +2577,7 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
    Un encadré et non des cases comme .facts : ce n'est pas une donnée de
    plus sur ce jeu-là, c'est un aparté qui parle de deux classeurs à la
    fois. Deux lignes de même grille, pour que note, temps et date se lisent
-   en colonne — c'est la colonne qui fait la comparaison, pas le texte.
+   en colonne - c'est la colonne qui fait la comparaison, pas le texte.
    La ligne « Toi » est bordée d'or à gauche : c'est celle qu'on cherche. */
 .compare{
   margin-top:22px;padding:13px 15px 12px;border-radius:11px;
@@ -2301,33 +2629,6 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
 
 /* --- .rsearch-modes  (transcript du 2026-09-04T20:44:48) --- */
 .rsearch-modes{display:flex;gap:6px;margin-bottom:12px}
-
-/* --- .search-x  (transcript du 2026-09-02T21:47:41) --- */
-.search-x:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-
-/* --- .search-x  (transcript du 2026-09-05T09:07:28) --- */
-.search-x:hover{color:#fff;background:#B4295C}
-
-/* --- .search-x  (transcript du 2026-09-05T09:07:28) --- */
-/* Rouge comme toutes les croix du site — voir .sbtn[aria-label="Fermer"] :
-   ce qui efface ou ferme se reconnaît à sa couleur avant d'être lu. */
-.search-x{
-  flex:0 0 auto;width:20px;height:20px;border-radius:6px;border:none;background:none;
-  display:grid;place-items:center;cursor:pointer;padding:0;
-  font-family:var(--mono);font-size:15px;line-height:1;color:#E38F89;
-  transition:color .15s,background .15s;
-}
-
-/* --- .search-x  (transcript du 2026-09-05T10:51:12) --- */
-.search-x:hover{color:#fff;background:#8B4A52}
-
-/* --- .search-x  (transcript du 2026-09-05T10:51:12) --- */
-.search-x{
-  position:absolute;top:50%;right:8px;transform:translateY(-50%);
-  width:20px;height:20px;border-radius:6px;display:grid;place-items:center;padding:0;
-  font-family:'DM Mono';font-size:15px;line-height:1;color:#C97F7B;
-  transition:color .15s,background .15s;
-}
 
 /* --- .sheet-nav  (transcript du 2026-09-02T16:30:29) --- */
 .sheet-nav{
@@ -2414,7 +2715,7 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
 
 /* La jaquette qui voyage de la tuile vers la fiche emporte son nom de
    transition. Le liseré de note, lui, ne part pas avec elle : il appartient
-   à la tuile — c'est la note posée sur une vignette du mur — et le voir
+   à la tuile - c'est la note posée sur une vignette du mur - et le voir
    glisser en travers de l'écran, puis disparaître en arrivant dans la
    fiche, n'aurait aucun sens.
 

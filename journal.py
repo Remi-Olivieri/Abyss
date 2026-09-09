@@ -35,6 +35,7 @@ from flask import Blueprint, request
 
 import comptes
 import jaquettes
+import social
 from comptes import Refus, actuel, corps, cx, echec, maintenant, reponse
 
 PROJET = "jeux-videos"
@@ -266,9 +267,36 @@ def verifie_periode(page_id, periode) -> str:
 # --------------------------------------------------------------------------
 #   Pages
 # --------------------------------------------------------------------------
+# Le compte porte l'identite -- photo et banniere -- et la page porte le
+# journal. Les deux voyagent ensemble depuis que l'en-tete du journal montre
+# qui l'ecrit.
+#
+# L'identifiant du compte s'appelle `compte_id` et surtout pas `id` : `p.*`
+# ramene deja un `id`, celui de la PAGE, dont tout le fichier se sert. Deux
+# colonnes du meme nom sur une ligne sqlite3.Row, et l'une des deux gagne en
+# silence -- ici ce serait tout le journal qui lirait le mauvais numero.
+IDENTITE = ("p.*, u.pseudo, u.id AS compte_id, u.avatar, u.avatar_maj_le,"
+            " u.banniere, u.banniere_maj_le")
+
+
+def identite(page) -> dict:
+    """La photo et la banniere de qui tient ce journal, prets a afficher.
+
+    comptes.url_avatar et url_banniere lisent `id` sur la ligne qu'on leur
+    donne ; ici `id` est celui de la page. On leur passe donc les trois
+    colonnes qui les concernent, sous les noms qu'ils attendent -- meme
+    parade que _avatar() dans social.py, et pour la meme raison.
+    """
+    compte = {"id": page["compte_id"],
+              "avatar": page["avatar"], "avatar_maj_le": page["avatar_maj_le"],
+              "banniere": page["banniere"], "banniere_maj_le": page["banniere_maj_le"]}
+    return {"avatar": comptes.url_avatar(compte),
+            "banniere": comptes.url_banniere(compte)}
+
+
 def page_de(pseudo):
     return cx().execute(
-        "SELECT p.*, u.pseudo FROM page p JOIN utilisateur u ON u.id = p.utilisateur_id"
+        f"SELECT {IDENTITE} FROM page p JOIN utilisateur u ON u.id = p.utilisateur_id"
         " WHERE u.pseudo_norm = ? AND p.projet = ?",
         (comptes.normalise(pseudo), PROJET)).fetchone()
 
@@ -277,7 +305,7 @@ def ma_page(u):
     if u is None:
         return None
     return cx().execute(
-        "SELECT p.*, u.pseudo FROM page p JOIN utilisateur u ON u.id = p.utilisateur_id"
+        f"SELECT {IDENTITE} FROM page p JOIN utilisateur u ON u.id = p.utilisateur_id"
         " WHERE p.utilisateur_id = ? AND p.projet = ?", (u["id"], PROJET)).fetchone()
 
 
@@ -387,6 +415,12 @@ def contenu(page, u) -> dict:
         # titre. Un visiteur arrive donc sur l'onglet que son auteur a
         # choisi de montrer en premier.
         "ongletDefaut": page["onglet_defaut"],
+        # Qui tient ce journal : sa photo et sa banniere. L'en-tete de la
+        # page les affiche en grand, et elles voyagent donc avec le journal
+        # plutot que d'etre repechees dans l'annuaire -- lequel ne liste que
+        # les journaux PUBLICS, et laisserait donc son proprietaire arriver
+        # sans visage sur son propre journal prive.
+        **identite(page),
         "periodes": periodes_de(page["id"]),
         "jeux": [en_json(l) for l in jeux],
     }
@@ -532,8 +566,11 @@ def ajoute(page, periode, values, avis):
         donnees.append(val)
     c = cx()
     with c:
-        c.execute(f"INSERT INTO jeu({','.join(colonnes)})"
-                  f" VALUES({','.join('?' * len(colonnes))})", donnees)
+        cur = c.execute(f"INSERT INTO jeu({','.join(colonnes)})"
+                        f" VALUES({','.join('?' * len(colonnes))})", donnees)
+    # l'identifiant sert au fil du Social, qui annonce en direct les jeux
+    # termines (voir social.annonce_jeu)
+    return cur.lastrowid
 
 
 def modifie(jeu, page, periode, values, avis):
@@ -607,7 +644,12 @@ def liste():
     return reponse({"ok": True,
                     "journaux": annuaire(),
                     "connecte": u is not None,
-                    "moi": moi})
+                    "moi": moi,
+                    # la pastille de la cloche voyage avec l'annuaire : la
+                    # page demande deja cette reponse-la pour savoir quel
+                    # journal ouvrir, un second aller-retour pour un chiffre
+                    # serait un aller-retour de trop
+                    "notificationsNeuves": comptes.notifications_neuves(u)})
 
 
 @blueprint_journal.post("")
@@ -708,7 +750,14 @@ def rattrapage_fait():
 def ajouter():
     u, page = ma_page_ou_refus()
     d = corps()
-    ajoute(page, d.get("periode"), d.get("values") or {}, d.get("review") or "")
+    jeu_id = ajoute(page, d.get("periode"), d.get("values") or {},
+                    d.get("review") or "")
+    # Le fil du Social, en direct. Apres l'ecriture et jamais avant : on
+    # annonce ce qui est en base, pas ce qu'on s'apprete a y mettre. Un jeu
+    # ajoute en « En cours » ou en « Wishlist », ou dans un journal prive,
+    # n'annonce rien -- social.annonce_jeu repose la question de la
+    # visibilite et se tait si la reponse est non.
+    social.annonce_jeu(jeu_id)
     return reponse(contenu(page, u), 201)
 
 
@@ -716,8 +765,14 @@ def ajouter():
 def modifier(jeu_id):
     u, page = ma_page_ou_refus()
     d = corps()
+    # Avant l'ecriture : c'est la seule facon de savoir si la ligne ENTRE
+    # dans le fil ou en SORT. Terminer un jeu qui etait « En cours » est de
+    # loin la facon la plus courante d'arriver dans le fil -- on ne l'y
+    # ajoute pas, on l'y fait passer.
+    etait_visible = social.visible_dans_le_fil(jeu_id)
     modifie(jeu_a_moi(jeu_id, page), page, d.get("periode"),
             d.get("values") or {}, d.get("review"))
+    social.annonce_changement(jeu_id, etait_visible)
     return reponse(contenu(page, u))
 
 
@@ -812,9 +867,14 @@ def renomme_periode():
 def supprimer(jeu_id):
     u, page = ma_page_ou_refus()
     jeu = jeu_a_moi(jeu_id, page)
+    # avant la suppression, tant que la ligne existe encore : apres, plus
+    # personne ne peut dire si elle avait sa place dans le fil
+    etait_visible = social.visible_dans_le_fil(jeu_id)
     c = cx()
     with c:
         c.execute("DELETE FROM jeu WHERE id = ?", (jeu["id"],))
+    if etait_visible:
+        social.annonce_retrait(jeu_id)
     return reponse(contenu(page, u))
 
 

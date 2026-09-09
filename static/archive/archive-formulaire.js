@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-formulaire.js
+   Archive Jeux Vidéos - archive-formulaire.js
 
    Ajouter, modifier, supprimer un jeu.
 
@@ -14,7 +14,7 @@
    ======================================================================= */
 
 /* =======================================================================
-   Ajouter / modifier / supprimer — tout part vers le Google Sheet.
+   Ajouter / modifier / supprimer - tout part vers le Google Sheet.
    La page n'invente rien : elle renvoie au script les colonnes qu'elle a
    elle-même repérées à la lecture, donc elle réécrit exactement là où
    elle avait lu.
@@ -73,7 +73,7 @@ function formHTML(g){
           <u>Année <span class="req" aria-hidden="true">*</span></u>
           ${constructeurHTML('f', `<label class="bkd-mois" id="f_monthwrap">
             <span>Mois</span>
-            <select id="f_month"><option value="">—</option>${mois}</select></label>`)}
+            <select id="f_month"><option value="">-</option>${mois}</select></label>`)}
         </div>
         <label class="fld" id="f_ratingwrap"><u>Note sur 10</u>
           <input id="f_rating" type="text" inputmode="decimal" value="${esc(numText(g?g.rating:null))}"></label>
@@ -104,7 +104,7 @@ function formHTML(g){
 }
 
 /* Les deux cases s'excluent : un jeu qu'on a commencé n'est plus une envie.
-   Cocher l'une décoche l'autre, plutôt que d'interdire — on ne se bat pas
+   Cocher l'une décoche l'autre, plutôt que d'interdire - on ne se bat pas
    avec un formulaire qui refuse un clic sans rien dire. */
 function statutCoche(){ return $('f_encours').checked || $('f_wish').checked; }
 function cibleOnglet(){
@@ -125,7 +125,7 @@ function cibleOnglet(){
 
    Le champ libre d'avant laissait cohabiter « Avant 2025 », « A long long
    time ago » et « oui » : trois façons de dire une époque, dont deux que
-   rien ne sait relire — ni le tri, ni le mois, ni un futur filtre par date.
+   rien ne sait relire - ni le tri, ni le mois, ni un futur filtre par date.
    On ne peut plus les écrire ; celles qui existent déjà, elles, ne
    disparaissent pas (voir `garder` plus bas, et le renommage d'onglet).
 
@@ -155,7 +155,7 @@ function libellePeriode(forme, a1, a2){
 }
 
 /* L'inverse : d'un onglet existant vers la composition qui le produit, ou
-   null si personne ne saurait le recomposer — c'est exactement la
+   null si personne ne saurait le recomposer - c'est exactement la
    définition d'un onglet d'avant la règle. */
 function decomposePeriode(p){
   const t = String(p || '').trim();
@@ -184,7 +184,7 @@ function anneesPossibles(){
 
 /* `apres` : ce qu'on pose sur la même ligne que les années. Le formulaire y
    met le mois, pour que les deux listes déroulantes soient côte à côte et
-   alignées — l'une au-dessus de l'autre dans deux colonnes, elles ne se
+   alignées - l'une au-dessus de l'autre dans deux colonnes, elles ne se
    rejoignaient jamais, la première étant précédée des pastilles de forme.
    La fenêtre de renommage n'y met rien : un onglet n'a pas de mois. */
 /* ---------- le choix, en un clic ----------
@@ -192,7 +192,7 @@ function anneesPossibles(){
    l'année qui vient de commencer. Ça doit donc être UN clic sur une
    pastille, pas trois listes déroulantes à parcourir.
 
-   Les formes composées — avant, après, entre — sont rares : elles vivent
+   Les formes composées - avant, après, entre - sont rares : elles vivent
    derrière « Autre… », qui ne s'ouvre que si on le demande. Ce qu'on y
    compose vient s'ajouter aux pastilles, sélectionné : il y a toujours
    exactement une pastille allumée, et elle porte le nom qui sera écrit.
@@ -221,13 +221,13 @@ function constructeurHTML(p, apres){
 
 /* L'état d'un constructeur, par préfixe : deux peuvent vivre en même temps
    (le formulaire d'un jeu, la fenêtre de renommage). `valeur` est la seule
-   vérité — les pastilles et le panneau ne font que la poser. */
+   vérité - les pastilles et le panneau ne font que la poser. */
 const BKD = {};
 
 /* Les pastilles proposées, dans l'ordre du temps.
 
    Les onglets du journal d'abord : ce sont eux qu'on choisit presque
-   toujours. Puis l'année en cours si elle n'y est pas encore — commencer
+   toujours. Puis l'année en cours si elle n'y est pas encore - commencer
    une nouvelle année doit rester un clic. Puis la valeur composée, si elle
    n'est déjà nulle part.
 
@@ -349,7 +349,7 @@ function peintConstructeur(p){
 function syncStatut(){
   const sansFin = statutCoche();
   // le mois n'est plus dans cette liste : il vit maintenant DANS f_bucketwrap,
-  // sur la même ligne que l'année — le cacher deux fois ne le cache pas mieux
+  // sur la même ligne que l'année - le cacher deux fois ne le cache pas mieux
   ['f_bucketwrap','f_ratingwrap','f_timewrap','f_reviewwrap']
     .forEach(id => { $(id).hidden = sansFin; });
   $('f_paidwrap').hidden = $('f_wish').checked;
@@ -358,7 +358,7 @@ function syncStatut(){
 
 /* Un mois ne veut dire quelque chose que dans une année pleine : « mars »
    de « Avant 2019 » ne désigne aucun moment. Le champ se ferme donc, et se
-   vide — le laisser rempli mais grisé garderait à l'écran une valeur que
+   vide - le laisser rempli mais grisé garderait à l'écran une valeur que
    l'enregistrement effacera de toute façon (voir sans_mois dans journal.py,
    qui tient la même règle du côté qui compte).
 
@@ -384,7 +384,7 @@ function syncMois(){
 
 /* ---------- doublon ----------
    Le nom seul dit s'il y a doublon ; l'avis flotte pendant la frappe, et
-   submitForm() bloque l'ajout une première fois sur ce même repérage — un
+   submitForm() bloque l'ajout une première fois sur ce même repérage - un
    second clic confirme, pour ne pas empêcher un vrai replay d'un jeu déjà
    terminé (voir submitForm et le bouton "Ajouter quand même ?"). */
 function trouveDoublon(nom){
@@ -411,11 +411,11 @@ function majDoublon(){
 }
 /* ---------- validation ----------
    Un champ en faute s'entoure de rouge, et le premier motif part en toast
-   — plus lisible qu'un bloc de texte qui poussait le reste du formulaire.
+   - plus lisible qu'un bloc de texte qui poussait le reste du formulaire.
    L'entourage se dissipe dès que le champ est retouché : pas besoin de
    resoumettre pour voir l'erreur partir. */
 /* f_bucket n'y est plus : l'onglet se compose au lieu de se taper, et une
-   composition ne peut pas être en faute — c'est tout l'intérêt. */
+   composition ne peut pas être en faute - c'est tout l'intérêt. */
 const CHAMPS_VALIDES = ['f_name','f_rating','f_time','f_base','f_paid'];
 function champErr(id, actif){
   const champ = $(id);
@@ -426,7 +426,7 @@ function razErreurs(){
   CHAMPS_VALIDES.forEach(id => champErr(id, false));
 }
 /* vide = optionnel, ce n'est pas une erreur ; non vide mais illisible en
-   est une — c'était jusque-là avalé en silence et transformé en case vide */
+   est une - c'était jusque-là avalé en silence et transformé en case vide */
 function champInvalide(id, parseur, mini, maxi){
   const brut = clean($(id).value);
   if(!brut) return false;
@@ -444,7 +444,7 @@ function validerFormulaire(){
   /* Un ajout passe forcément par une fiche IGDB. C'est ce rattachement qui
      apporte la jaquette, la date de sortie, la plateforme, le développeur
      et les genres : un jeu tapé à la main n'a rien de tout ça et reste un
-     trou dans les statistiques — exactement ce qu'un rattrapage entier a
+     trou dans les statistiques - exactement ce qu'un rattrapage entier a
      servi à combler après coup.
      Seulement à l'ajout : une modification doit rester possible sur les
      jeux d'avant, qui n'ont jamais eu de fiche. */
@@ -454,7 +454,7 @@ function validerFormulaire(){
   // la note est sur 10 partout dans la page : 85 tapé pour 8,5 doit se
   // voir tout de suite, pas finir en 85/10 dans les stats sans un mot
   if(!sansFin && champInvalide('f_rating', toNum, 0, 10))
-    erreurs.push({champ:'f_rating', message:'Note illisible — un nombre entre 0 et 10, par exemple 8.5.'});
+    erreurs.push({champ:'f_rating', message:'Note illisible - un nombre entre 0 et 10, par exemple 8.5.'});
   if(!sansFin && champInvalide('f_time', toHours))
     erreurs.push({champ:'f_time', message:'Temps de jeu incorrect.'});
   if(champInvalide('f_base', toNum))
@@ -486,14 +486,14 @@ function openForm(g){
   const wish    = !!(g && estWishlist(g));
   $('f_encours').checked = enCours;
   $('f_wish').checked = wish;
-  // en ajout — et pour un jeu en cours ou convoité qu'on vient de terminer —
+  // en ajout - et pour un jeu en cours ou convoité qu'on vient de terminer -
   // on propose toujours l'année la plus récente, pas l'onglet affiché
   const defaut = (g && !enCours && !wish) ? g.bucket : derniereAnnee();
   // le mois suit la forme : il ne se remplit que dans une année pleine
   brancheConstructeur('f', defaut, syncMois);
   /* Le mois enregistré du jeu, et rien du tout pour un ajout. Le champ
      partait sur le mois courant : c'était vrai le jour où on ajoute un jeu
-     le jour où on le finit, et faux tout le reste du temps — un jeu terminé
+     le jour où on le finit, et faux tout le reste du temps - un jeu terminé
      en juin et rangé en août prenait « août » sans que personne ne le
      remarque, puisqu'un champ déjà rempli ne se relit pas. Vide, il se
      regarde : le mois est facultatif, et celui qui l'écrit le choisit. */
@@ -548,7 +548,7 @@ fermeSurFond('form', closeForm);
 
 function lireForm(){
   // en cours ou wishlist : note, mois et temps de jeu partent vides, quoi
-  // qu'il reste dans les champs cachés — la ligne du classeur doit dire la
+  // qu'il reste dans les champs cachés - la ligne du classeur doit dire la
   // même chose que l'écran. Le prix payé subit le même sort en wishlist.
   const sansFin = statutCoche();
   const wish = $('f_wish').checked;
@@ -565,7 +565,7 @@ function lireForm(){
   if(rel.value || isoDate(rel.dataset.orig) || !rel.dataset.orig) v.release = rel.value || null;
   // absent si aucune fiche IGDB n'a été retenue cette fois : un jeu déjà
   // rattaché garde son rattachement, la clé n'est envoyée que pour en poser
-  // un nouveau — c'est elle qui déclenche plateforme/développeur/genres
+  // un nouveau - c'est elle qui déclenche plateforme/développeur/genres
   // côté serveur (voir enrichit_igdb en Python).
   if(JEU_PICK && JEU_PICK.id) v.id_igdb = JEU_PICK.id;
   return v;   // ni support ni année : l'onglet suffit, et le Sheet garde ce qu'il a
@@ -592,8 +592,8 @@ async function submitForm(){
     return;
   }
   /* Un jeu du même nom existe déjà ailleurs dans le journal : bloqué une
-     première fois — c'est l'ajout tapé deux fois par mégarde qu'on veut
-     attraper — mais un second clic confirme que c'est voulu, pour ne pas
+     première fois - c'est l'ajout tapé deux fois par mégarde qu'on veut
+     attraper - mais un second clic confirme que c'est voulu, pour ne pas
      empêcher un vrai replay. armé retombe si le nom change entre-temps
      (voir majDoublon), pour ne jamais confirmer le mauvais jeu. */
   const doublon = !EDIT && trouveDoublon($('f_name').value);
@@ -611,7 +611,7 @@ async function submitForm(){
   }
   const charge = chargeUtile();
   /* La jaquette retenue dans le formulaire, relevée avant l'envoi : closeForm()
-     l'oublie, et le nom peut avoir été retouché depuis le choix — auquel cas
+     l'oublie, et le nom peut avoir été retouché depuis le choix - auquel cas
      elle ne vaut plus, on repart sur une recherche normale. */
   const retenue = (JEU_PICK && JEU_PICK.image
                    && norm(JEU_PICK.nom) === norm(charge.values.name)) ? JEU_PICK : null;
@@ -632,7 +632,7 @@ async function submitForm(){
     toast(ajout ? `« ${charge.values.name} » ajouté` : `« ${charge.values.name} » mis à jour`);
     /* Une jaquette désignée dans le formulaire l'emporte, même en
        modification : c'est un geste explicite, pas une récupération
-       automatique. Sinon, et seulement à l'ajout, on cherche — modifier un
+       automatique. Sinon, et seulement à l'ajout, on cherche - modifier un
        jeu ne doit pas écraser une jaquette déposée à la main. */
     if(retenue) poseJaquetteChoisie(charge.values.name, retenue.image, charge.values.id_igdb);
     else if(ajout) jaquetteAuto(charge.values.name, charge.values.release, false, charge.values.id_igdb);

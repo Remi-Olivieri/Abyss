@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-export.js
+   Archive Jeux Vidéos - archive-export.js
 
    Sortir un jeu de la page : export, fiche détaillée, captures.
 
@@ -17,7 +17,7 @@
    Export du journal
    Tout est déjà en mémoire (GAMES) : pas de requête, juste mettre en
    forme et déclencher un téléchargement. Disponible pour n'importe quel
-   journal affiché, comme le bilan en image — c'est déjà ce qu'on regarde,
+   journal affiché, comme le bilan en image - c'est déjà ce qu'on regarde,
    pas besoin d'en être le propriétaire pour en garder une copie.
    Nom et catégorie partent toujours ; le reste se choisit dans la fenêtre.
    ======================================================================= */
@@ -77,7 +77,7 @@ function exportHTML(){
   </div>`;
 }
 /* Le nombre de jeux qui partiraient avec la sélection actuelle des
-   catégories — un retour immédiat, plutôt que de le découvrir dans le
+   catégories - un retour immédiat, plutôt que de le découvrir dans le
    fichier téléchargé. */
 function majExportInfo(){
   const host = $('export');
@@ -109,8 +109,14 @@ function fermerExport(){
   host.hidden = true; host.innerHTML = '';
   verrouFond();
 }
-fermeSurFond('export', fermerExport);
-$('exportBtn').addEventListener('click', ouvrirExport);
+/* L'export appartient au journal : il met en forme GAMES, que la page
+   Social n'a pas. Ce fichier y est pourtant chargé, pour la fenêtre « Voir
+   plus d'informations » qu'ouvre la recherche - d'où ce test plutôt qu'un
+   faux bouton caché dans le balisage de l'autre page. */
+if($('exportBtn')){
+  fermeSurFond('export', fermerExport);
+  $('exportBtn').addEventListener('click', ouvrirExport);
+}
 
 function lancerExport(){
   const host = $('export');
@@ -137,7 +143,7 @@ function exporteJSON(jeux, champs){
 }
 /* Une valeur par cellule CSV : guillemets doublés, et la cellule entière
    entre guillemets dès qu'elle contient une virgule, un guillemet ou un
-   retour à la ligne — l'avis tient sur plusieurs lignes, entre autres. */
+   retour à la ligne - l'avis tient sur plusieurs lignes, entre autres. */
 function celluleCSV(v){
   if(v === null || v === undefined) return '';
   const s = String(v);
@@ -169,8 +175,17 @@ function detailHTML(g){
   return `<div class="sheet detail-sheet" role="dialog" aria-modal="true"
       aria-label="Plus d'informations sur ${esc(g.name)}">
     <div class="sheet-tools">
-      <span class="grp"><b class="fhead">${esc(g.name)}</b></span>
-      <span class="grp"><button class="sbtn detail-x" aria-label="Fermer">\u00D7</button></span>
+      <!-- Une infobulle sur le titre, parce qu'il se coupe quand il est trop
+           long pour la ligne (voir .detail-sheet .fhead) : le survol rend le
+           reste, et l'aria-label de la fenetre le donne entier a la voix. -->
+      <span class="grp"><b class="fhead" title="${esc(g.name)}">${esc(g.name)}</b></span>
+      <!-- Les deux actions, sur la ligne du titre : c'est le jeu qu'elles
+           concernent, et le titre est ce qui le nomme. Plus bas, elles
+           auraient flotté au-dessus d'une description qui ne parle pas
+           d'elles. Remplies par peintDetail() quand la fiche a répondu -
+           avant, on ne sait pas encore si le jeu existe. -->
+      <span class="grp detail-actions" id="detailActions"></span>
+      <span class="grp"><button class="sbtn detail-x" aria-label="Fermer">×</button></span>
     </div>
     <div class="detail-in" id="detailIn">
       <p class="detail-etat">Recherche des informations\u2026</p>
@@ -183,11 +198,17 @@ function detailHTML(g){
    dans la recherche par son identifiant IGDB. Rien d'autre ne les distingue
    \u2014 m\u00EAme attente, m\u00EAme dessin, m\u00EAme peinture \u2014 donc rien d'autre n'est
    \u00E9crit deux fois. */
-async function ouvreLaFiche(nom, demande){
+async function ouvreLaFiche(nom, demande, idIgdb){
   const host = $('detail');
-  const g = {name: nom};
+  /* L'identifiant IGDB voyage avec le nom depuis que la fiche porte deux
+     actions : « Avis des joueurs », qui rassemble les journaux sur ce
+     jeu-la, et « + Wishlist », qui l'ecrit dans le mien. Les deux le
+     veulent, et la reponse du serveur ne le rend pas -- elle decrit le jeu,
+     elle ne le nomme pas. */
+  const g = {name: nom, idIgdb: idIgdb || null};
   host.innerHTML = detailHTML(g);
   host.hidden = false;
+  auPremierPlan(host);      // elle peut s'ouvrir depuis les avis, ou l'inverse
   verrouFond();
   host.querySelector('.detail-x').onclick = fermerDetail;
 
@@ -212,7 +233,7 @@ function ouvrirDetail(g){
   return ouvreLaFiche(g.name, async ()=>{
     const r = await fetch(`/api/journal/jeu/${g.id}/detail`, {credentials: 'same-origin'});
     return r.json();
-  });
+  }, g.idIgdb);
 }
 
 /* Un jeu qu'on ne poss\u00E8de pas, d\u00E9sign\u00E9 par sa fiche IGDB : il n'y a rien
@@ -220,7 +241,7 @@ function ouvrirDetail(g){
    parce que HowLongToBeat ne conna\u00EEt pas les identifiants IGDB et ne sait
    chercher que par titre. */
 function ouvrirDetailIgdb(id, nom){
-  return ouvreLaFiche(nom, ()=> api('/api/jeu/detail', {id: id, nom: nom}));
+  return ouvreLaFiche(nom, ()=> api('/api/jeu/detail', {id: id, nom: nom}), id);
 }
 
 function fermerDetail(){
@@ -243,16 +264,176 @@ function detailTempsHTML(libelle, heures){
   if(heures === null || heures === undefined) return '';
   return `<div class="detail-temps"><b>${fr(heures, 1)}&#8239;h</b><span>${esc(libelle)}</span></div>`;
 }
+/* ---------- les deux actions de la fiche ----------
+   La fiche ne faisait que raconter le jeu. Elle est pourtant l'endroit ou
+   l'on decide : c'est la qu'on lit la description, les temps pour finir et
+   la note critique, donc la qu'on se dit « celui-la, je le veux » ou « et
+   les autres, ils en ont pense quoi ? ».
+
+   Les deux chemins existaient deja ailleurs -- le bouton sous la jaquette
+   d'une fiche du mur, et le « + Wishlist » des suggestions de decouverte.
+   Ils sont simplement branches ici. */
+const ICONE_AVIS = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"
+  aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>`;
+
+function detailActionsHTML(){
+  /* Le bouton wishlist part caché : savoir si le jeu est déjà chez nous
+     demande de lire notre journal, ce qui n'arrive pas dans la même
+     milliseconde. Il apparaît ensuite s'il a lieu d'être - plutôt que de
+     s'afficher puis de disparaître sous les doigts. */
+  return `<button type="button" class="detail-act" id="detailAvis"
+      >${ICONE_AVIS}<span>Avis des joueurs</span></button>
+    <button type="button" class="detail-act detail-wish" id="detailWish" hidden
+      ><span>+ Wishlist</span></button>`;
+}
+
+/* ---------- ce que j'ai déjà ----------
+   Les jeux de MON journal, où qu'ils soient rangés : terminés, en cours ou
+   convoités. Sert à ne pas proposer d'ajouter à la wishlist un jeu qu'on a
+   fini il y a trois ans, ou qui y est déjà.
+
+   Lu une seule fois, et seulement si l'on ouvre une fiche. Sur son propre
+   journal il n'y a même rien à demander : GAMES est déjà la réponse, et
+   c'est le cas le plus fréquent.
+
+   Deux clés, parce que deux journaux n'écrivent pas un titre pareil :
+   l'identifiant IGDB quand il existe - il ne se discute pas - et le titre
+   réduit à son slug sinon. Même règle que la page « Avis ». */
+let MES_JEUX = null;
+
+function indexeMesJeux(jeux){
+  const noms = new Set(), ids = new Set();
+  (jeux || []).forEach(j=>{
+    if(j.name) noms.add(slug(j.name));
+    if(j.idIgdb) ids.add(String(j.idIgdb));
+  });
+  return {noms: noms, ids: ids};
+}
+
+async function mesJeux(){
+  if(MES_JEUX) return MES_JEUX;
+  // mon journal est celui qu'on regarde : rien à demander
+  if(typeof CAN_WRITE !== 'undefined' && CAN_WRITE && typeof GAMES !== 'undefined'){
+    return (MES_JEUX = indexeMesJeux(GAMES));
+  }
+  if(!MOI.pseudo) return (MES_JEUX = indexeMesJeux([]));
+  try{
+    const r = await fetch('/api/journal/' + encodeURIComponent(MOI.pseudo),
+                          {credentials: 'same-origin'});
+    const d = await r.json();
+    return (MES_JEUX = indexeMesJeux(d.jeux));
+  }catch(e){
+    // pas mis en cache : un réseau qui a hoqueté ne doit pas cacher le
+    // bouton pour le reste de la visite
+    return indexeMesJeux([]);
+  }
+}
+
+function dejaChezMoi(index, nom, idIgdb){
+  if(idIgdb && index.ids.has(String(idIgdb))) return true;
+  return index.noms.has(slug(nom || ''));
+}
+
+/* Ajouter a MA wishlist, depuis n'importe quelle page qui ouvre cette
+   fenetre - le mur, la recherche, une discussion du Social.
+
+   Il n'y a donc ni CAN_WRITE ni classeur affiche sur quoi s'appuyer : le
+   serveur est seul juge, et c'est lui qui repond « connecte-toi » quand il
+   le faut. C'est aussi plus juste - on peut ajouter a sa wishlist depuis le
+   journal de quelqu'un d'autre, ce que la regle du mode editeur interdisait
+   pour de mauvaises raisons.
+
+   Le prix de base suit le meme chemin que dans les suggestions : la fiche
+   IGDB donne le lien Steam, qui donne le tarif. Un echec ne bloque rien --
+   « pas sur Steam » est une reponse, pas une panne. */
+async function ajouteALaWishlist(g, data, btn){
+  const avant = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span>Ajout…</span>';
+
+  let base = null;
+  if(g.idIgdb){
+    try{
+      const p = await api('/api/jeu/prix', {id: g.idIgdb});
+      if(p && p.etat === 'ok' && p.prix !== null && p.prix !== undefined) base = p.prix;
+    }catch(e){}
+  }
+  try{
+    /* socialAppel plutot que envoyer() : celui-ci exige le mode editeur sur
+       le journal affiche, et cette fenetre s'ouvre aussi la ou il n'y a
+       aucun journal affiche. Il vit dans archive-social.js, que les deux
+       pages chargent - et il rapporte le message du serveur, qui est
+       precisement ce qu'on veut montrer ici. */
+    const rep = await socialAppel('/api/journal/jeu', 'POST', {
+      periode: ongletWishlist(), review: '',
+      values: {
+        name: g.name, rating: null, month: null, hours: null,
+        base: base, paid: null, release: (data && data.iso) || null,
+        id_igdb: g.idIgdb || null,
+      },
+    });
+    btn.hidden = true;
+    /* Il est chez moi maintenant : l'index doit le savoir, sans quoi
+       rouvrir la fiche reproposerait de l'ajouter une seconde fois. */
+    if(MES_JEUX){
+      MES_JEUX.noms.add(slug(g.name || ''));
+      if(g.idIgdb) MES_JEUX.ids.add(String(g.idIgdb));
+    }
+    toast(`« ${g.name} » ajouté à la wishlist`);
+    /* C'est MON journal qui vient de changer. S'il est justement celui qu'on
+       regarde, le serveur vient de le relire en entier : on le remplace,
+       plutot que de laisser un mur qui ne connait pas encore ce jeu. */
+    if(typeof CAN_WRITE !== 'undefined' && CAN_WRITE && typeof applyData === 'function'){
+      cacheStore.set(source().url, rep);
+      applyData(rep, true);
+      render();
+    }
+  }catch(e){
+    btn.disabled = false; btn.innerHTML = avant;
+    toast('Ajout impossible - ' + (e.message || 'erreur inconnue'), true);
+  }
+}
+
+/* Les deux boutons de la ligne du titre, une fois la fiche revenue.
+
+   Ils vivent dans la barre d'outils, hors de `zone` : celle-ci est réécrite
+   à chaque jeu, eux non - d'où leur propre hôte, et leur propre câblage. */
+function brancheActions(g, data){
+  const hote = $('detailActions');
+  if(!hote) return;
+  hote.innerHTML = detailActionsHTML();
+  /* Les avis des autres sur ce jeu : la même fenêtre que le bouton sous la
+     jaquette d'une fiche du mur (voir ouvrirAvisSocial dans
+     archive-social.js), chargée par les deux pages. */
+  hote.querySelector('#detailAvis').onclick = ()=> ouvrirAvisSocial(g.name, g.idIgdb);
+  const wish = hote.querySelector('#detailWish');
+  wish.onclick = ()=> ajouteALaWishlist(g, data, wish);
+  /* Un jeu qu'on a déjà n'a rien à faire dans une wishlist. Le bouton ne se
+     grise pas, il s'en va : une action impossible qu'on laisse à l'écran
+     invite à cliquer pour découvrir qu'elle ne sert à rien. */
+  mesJeux().then(index=>{
+    if(!$('detailActions') || hote.querySelector('#detailWish') !== wish) return;
+    wish.hidden = dejaChezMoi(index, g.name, g.idIgdb);
+  });
+}
+
 function peintDetail(data, g){
   const zone = document.querySelector('#detail .detail-in');
   if(!zone) return;
+  /* Avant les refus qui suivent, et c'est voulu : ni les avis des joueurs
+     ni la wishlist ne dépendent d'IGDB. Un jeu qu'IGDB ne connaît pas peut
+     très bien avoir été terminé par trois personnes d'ici, et on doit
+     pouvoir le convoiter quand même. */
+  brancheActions(g, data);
   if(!data.ok){
     zone.innerHTML = `<p class="detail-etat">Informations injoignables : ${
       esc(data.message || data.raison || 'pas de r\u00E9ponse')}</p>`;
     return;
   }
   const hltb = data.hltb || null;
-  const rien = !data.plateforme && !data.developpeur && !data.genres && !data.themes && !data.description
+  const rien = !data.date && !data.plateforme && !data.developpeur && !data.genres
+    && !data.themes && !data.description
     && !(data.images || []).length && !data.trailer && !hltb
     && (data.note_critique === null || data.note_critique === undefined);
   if(rien){
@@ -261,6 +442,13 @@ function peintDetail(data, g){
   }
 
   const faits = [
+    /* La sortie en premier : c'est ce qui situe un jeu avant tout le reste.
+       « Un Zelda de 1998 » et « un Zelda de 2023 » ne se lisent pas pareil,
+       et la fiche racontait tout -- le studio, les genres, les temps pour
+       finir -- sans jamais dire de quand il datait.
+       `date` vient d'IGDB deja mise en francais (voir _date_fr dans
+       jaquettes.py) : la page n'a pas a savoir compter en secondes UTC. */
+    data.date        ? detailFaitHTML('Sortie',       data.date)        : '',
     data.plateforme  ? detailFaitHTML('Plateformes',  data.plateforme)  : '',
     data.developpeur ? detailFaitHTML('D\u00E9veloppeur',  data.developpeur) : '',
     data.genres      ? detailFaitHTML('Genres',       data.genres)      : '',
@@ -322,19 +510,38 @@ function peintDetail(data, g){
    flèches, rien à charger d'autre. On garde la liste entière plutôt que
    l'image seule, pour passer de l'une à l'autre sans revenir en arrière. */
 const ZOOM = {images: [], i: 0};
+/* Le meme chevron que les fleches de la fiche du mur (voir CHEVRON dans
+   archive-fiche.js) : les deux gestes sont le meme geste, ils doivent porter
+   le meme dessin. Recopie plutot que partagee parce que le Social ne charge
+   pas archive-fiche.js -- et ce fichier-ci doit tenir debout tout seul. */
+const CHEVRON_ZOOM = (d) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"
+  aria-hidden="true"><path d="${d}"/></svg>`;
+
 function ouvrirZoom(images, i){
   if(!images || !images.length) return;
   ZOOM.images = images;
   ZOOM.i = Math.max(0, Math.min(i || 0, images.length - 1));
   const host = $('zoom');
-  host.innerHTML = `<div class="zoom-boite" role="dialog" aria-modal="true" aria-label="Capture d'écran">
+  /* Les fleches encadrent la capture au lieu d'etre posees dessus, comme
+     celles de la fiche du mur : elles ne parlent pas de l'image qu'on
+     regarde mais de celles d'a cote. Elles sont donc voisines de la boite
+     et non dedans -- d'ou les querySelector sur `host` plus bas.
+     `zoom-multi` sur le fond dit a la feuille de style de leur reserver la
+     place ; une capture seule n'a pas de fleches et garde toute la largeur. */
+  const plusieurs = images.length > 1;
+  host.classList.toggle('zoom-multi', plusieurs);
+  host.innerHTML = `${plusieurs ? `<button class="sheet-nav nav-prev zoom-prev"
+        aria-label="Capture précédente">${CHEVRON_ZOOM('M15 5l-7 7 7 7')}</button>` : ''}
+    <div class="zoom-boite" role="dialog" aria-modal="true" aria-label="Capture d'écran">
       <img id="zoomImg" alt="">
       <button class="sbtn zoom-x" aria-label="Fermer">×</button>
-      ${images.length > 1 ? `<button class="sbtn zoom-prev" aria-label="Capture précédente">‹</button>
-        <button class="sbtn zoom-next" aria-label="Capture suivante">›</button>
-        <span class="zoom-rang"></span>` : ''}
-    </div>`;
+      ${plusieurs ? `<span class="zoom-rang"></span>` : ''}
+    </div>
+    ${plusieurs ? `<button class="sheet-nav nav-next zoom-next"
+      aria-label="Capture suivante">${CHEVRON_ZOOM('M9 5l7 7-7 7')}</button>` : ''}`;
   host.hidden = false;
+  auPremierPlan(host);      // la fiche qui l'ouvre peut être passée devant
   verrouFond();
   host.querySelector('.zoom-x').onclick = fermerZoom;
   const prev = host.querySelector('.zoom-prev'), next = host.querySelector('.zoom-next');
@@ -342,7 +549,7 @@ function ouvrirZoom(images, i){
   if(next) next.onclick = ()=> zoomBouge(1);
   /* Une galerie d'images plein écran est l'endroit où le doigt s'attend le
      plus à être écouté. À gauche la suivante, comme les flèches ; vers le
-     bas, on repose la capture — cette fenêtre-là n'a pas de poignée à
+     bas, on repose la capture - cette fenêtre-là n'a pas de poignée à
      tirer, elle n'est pas une feuille mais une image posée sur l'écran. */
   glissement(host.querySelector('.zoom-boite'), {
     gauche: ()=> zoomBouge(1),
@@ -371,3 +578,25 @@ function fermerZoom(){
   verrouFond();
 }
 fermeSurFond('zoom', fermerZoom);
+
+/* ---------- le clavier, pour les deux fenetres de ce fichier ----------
+   Ici et non dans archive-fiche.js, ou il vivait : « Plus d'informations »
+   et l'agrandissement d'une capture s'ouvrent aussi depuis le fil du
+   Social, qui ne charge pas le mur. Les fleches ne changeaient donc d'image
+   que sur le journal, et Echap n'y refermait rien.
+
+   Les deux pages chargent ce fichier avec ces deux fenetres : la regle et
+   ce qu'elle commande arrivent ensemble. archive-fiche.js s'arrete toujours
+   sur elles sans rien en faire, pour qu'une fleche ne compte pas double
+   la ou les deux fichiers sont charges. */
+document.addEventListener('keydown', e=>{
+  const zoom = document.getElementById('zoom');
+  if(zoom && !zoom.hidden){
+    if(e.key === 'Escape') fermerZoom();
+    else if(e.key === 'ArrowLeft') zoomBouge(-1);
+    else if(e.key === 'ArrowRight') zoomBouge(1);
+    return;
+  }
+  const det = document.getElementById('detail');
+  if(det && !det.hidden && e.key === 'Escape') fermerDetail();
+});

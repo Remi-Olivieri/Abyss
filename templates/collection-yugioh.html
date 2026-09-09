@@ -24,7 +24,7 @@
       <span>Retour à Abyss</span>
     </a>
     <!-- Ce qu'on cherche le plus souvent depuis le classeur de quelqu'un
-         d'autre : le sien. Masquée tant qu'on n'a pas de classeur à soi —
+         d'autre : le sien. Masquée tant qu'on n'a pas de classeur à soi -
          voir majVerrou(). -->
     <button class="maison" id="homeBtn" hidden aria-label="Ouvrir mon classeur">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -78,7 +78,7 @@
   <!-- Les trois écrans d'avant le classeur, dans l'ordre où on les
        rencontre : personne n'est connecté, connecté mais sans classeur, et
        le classeur demandé ne s'ouvre pas. Mêmes trois écrans que l'Archive
-       Jeux Vidéos, pour la même raison — atterrir par défaut sur le classeur
+       Jeux Vidéos, pour la même raison - atterrir par défaut sur le classeur
        d'un inconnu ne dit ni où l'on est, ni ce que la page sait faire. -->
   <section class="gate" id="gate" hidden>
     <h2 id="gTitle">Ce classeur ne répond pas</h2>
@@ -136,7 +136,7 @@
 </main>
 
 <!-- La fenêtre de recherche : quel classeur ouvrir. Vide tant qu'elle n'est
-     pas ouverte — son contenu est monté à l'ouverture et démonté après. -->
+     pas ouverte - son contenu est monté à l'ouverture et démonté après. -->
 <div class="voile-rech" id="recherche" hidden></div>
 
 <div id="scrim"></div>
@@ -170,7 +170,12 @@
 <script src="/static/gestes.js"></script>
 <!-- Le formulaire de suggestion, ouvert sur place plutôt que sur le hub :
      voir static/suggestion.js. Chargé avant le script de la page, qui le
-     branche — un defer arriverait après lui. -->
+     branche - un defer arriverait après lui. -->
+<!-- Les zones de texte grandissent en écrivant plutôt que de porter une
+     poignée à tirer : une taille de départ, la hauteur du texte ensuite,
+     et le défilement dans le champ passé un plafond. Voir
+     static/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
+<script src="/static/champs.js"></script>
 <script src="/static/suggestion.js"></script>
 
 <script>
@@ -188,7 +193,7 @@
    La page reprend donc le fonctionnement de l'Archive Jeux Vidéos, dont
    elle est la voisine : un annuaire des classeurs publics, une recherche
    pour aller chez les autres, une adresse /collection/<pseudo> qu'on peut
-   donner, et trois écrans avant le classeur — visiteur, connecté sans
+   donner, et trois écrans avant le classeur - visiteur, connecté sans
    classeur, classeur qui ne s'ouvre pas.
 
    Ce qui ne bouge pas, c'est le classeur lui-même : la reliure, les pages
@@ -218,7 +223,7 @@ const ETATS = [[3,'Bon'], [2,'Moyen'], [1,'Mauvais']];
 
    Les deux dernières sont nouvelles. `id` remplace le couple ligne/colonne
    de la feuille : c'est lui qu'on renvoie pour écrire. `fichier` remplace
-   tout un mécanisme — la page téléchargeait 570 Ko de noms français, en
+   tout un mécanisme - la page téléchargeait 570 Ko de noms français, en
    construisait un index de quatorze mille entrées, puis essayait .jpg, .png
    et .webp au hasard jusqu'à ce que l'une réponde. Le serveur le sait déjà,
    il le dit une fois par carte. */
@@ -262,7 +267,7 @@ function pos(i){
    Les versions précédentes gardaient ici des choses qui n'ont plus d'objet :
    un dossier d'images à deviner, l'extension qui avait fonctionné, un jeton
    par adresse de script, et des caches dont la clé était l'adresse d'un
-   Sheet — avec, dedans, des cartes qui finissaient par leur ligne et leur
+   Sheet - avec, dedans, des cartes qui finissaient par leur ligne et leur
    colonne de feuille. On jette tout d'un coup plutôt que de lire un vieux
    format qui ne veut plus rien dire. */
 const VERSION_CACHE = 'abyss-6';
@@ -328,9 +333,9 @@ async function chargeAnnuaire(){
 }
 
 /* ---------------- l'état de la connexion ----------------
-   Il tient tout entier dans la pastille de l'engrenage — verte en ligne,
+   Il tient tout entier dans la pastille de l'engrenage - verte en ligne,
    ambrée pendant une actualisation, rouge quand celle-ci a échoué, éteinte
-   hors ligne — et dans son aria-label pour qui ne voit pas la pastille.
+   hors ligne - et dans son aria-label pour qui ne voit pas la pastille.
 
    Il était aussi écrit en toutes lettres en tête du menu (« synchronisé à
    l'instant », « modifiable »), au-dessus d'un bouton « Rafraîchir ». Trois
@@ -341,7 +346,7 @@ function setSync(mode, txt){
   MODE = mode;
   const g = el('gear');
   g.dataset.etat = mode;
-  g.setAttribute('aria-label', 'Réglages — ' + txt);
+  g.setAttribute('aria-label', 'Réglages - ' + txt);
 }
 
 /* ---------------- normalisation des noms ----------------
@@ -495,8 +500,8 @@ async function charger(opts){
 /* ---------------- écriture ----------------
    Une requête JSON vers Flask, cookie de session compris. Le serveur ne
    renvoie que la carte touchée, et non le classeur entier : contrairement à
-   un jeu ajouté, rien d'autre ne bouge — ni l'ordre, ni les onglets, ni les
-   classeurs — et deux mille cartes à chaque clic sur une pochette feraient un
+   un jeu ajouté, rien d'autre ne bouge - ni l'ordre, ni les onglets, ni les
+   classeurs - et deux mille cartes à chaque clic sur une pochette feraient un
    aller-retour de plus à chaque geste. */
 async function poser(card, rarete, etat){
   if (!CAN_WRITE){
@@ -523,7 +528,7 @@ async function poser(card, rarete, etat){
   }
   /* La carte relue remplace la nôtre case par case, et non l'objet lui-même :
      c'est le même tableau qui est dans DATA.types, dans ZOOM et dans les
-     résultats de recherche — le remplacer ne mettrait à jour aucun des trois. */
+     résultats de recherche - le remplacer ne mettrait à jour aucun des trois. */
   const neuve = data.carte || [];
   for (let k = 0; k < neuve.length; k++) card[k] = neuve[k];
   ecrireCache(source().url, DATA);
@@ -565,8 +570,8 @@ function showApp(){
   fit();
 }
 
-/* Les deux boutons du bout de barre. Ils ne règlent que le classeur — l'état
-   de la connexion, les reflets de rareté — et n'ont donc rien à faire
+/* Les deux boutons du bout de barre. Ils ne règlent que le classeur - l'état
+   de la connexion, les reflets de rareté - et n'ont donc rien à faire
    au-dessus d'un écran qui n'en montre aucun. */
 function outils(visibles){
   el('gear').hidden = !visibles;
@@ -574,7 +579,7 @@ function outils(visibles){
 }
 
 /* Écran d'aide : le classeur demandé ne répond pas, ou le serveur a dit non.
-   `refus` distingue le second cas — classeur privé, pseudo inconnu. Un lien
+   `refus` distingue le second cas - classeur privé, pseudo inconnu. Un lien
    /collection/<pseudo> partagé tombe surtout là-dessus, et « ne répond pas »
    serait faux : il a répondu, c'est justement le problème. Pas de bouton
    « Réessayer » dans ce cas, il ne pourrait que faire redire non. */
@@ -604,7 +609,7 @@ function showInvite(){ ecranSansClasseur('invite'); }
 
 /* Personne n'est connecté : on n'ouvre le classeur de personne. La page
    tombait jusqu'ici sur SOURCES[0], c'est-à-dire le premier classeur public
-   venu — un visiteur atterrissait chez quelqu'un qu'il n'avait pas demandé,
+   venu - un visiteur atterrissait chez quelqu'un qu'il n'avait pas demandé,
    sans qu'aucun mot ne lui dise où il était. */
 function showAccueil(){
   ecranSansClasseur('accueil');
@@ -614,7 +619,7 @@ function showAccueil(){
 function ecranSansClasseur(quel){
   cacheTout();
   /* Aucun classeur n'est réellement affiché ici : SRC restait à 0, si bien
-     que la recherche marquait le premier classeur public comme déjà ouvert —
+     que la recherche marquait le premier classeur public comme déjà ouvert -
      cocher une coche sur laquelle cliquer ne fait rien, puisque
      choisirClasseur() ignore un clic sur ce qui est déjà « SRC ». -1
      n'existe dans aucune liste : rien ne coche, et le premier clic ouvre
@@ -645,7 +650,7 @@ function majEntete(){
 function majVerrou(){
   /* La maison ne se montre que si elle mène quelque part : il faut un
      classeur à soi, et ne pas déjà être dessus. Sinon elle resterait là à ne
-     rien faire — un bouton qui ne change rien à l'écran se lit comme une
+     rien faire - un bouton qui ne change rien à l'écran se lit comme une
      panne. */
   el('homeBtn').hidden = !MOI.pseudo || CAN_WRITE;
   el('unlock').hidden = CAN_WRITE;
@@ -662,7 +667,7 @@ function majVerrou(){
 /* =========================================================
    La recherche : quel classeur ouvrir
 
-   Elle se monte où on le lui demande — dans sa fenêtre quand on clique sur
+   Elle se monte où on le lui demande - dans sa fenêtre quand on clique sur
    « Rechercher », et à même l'écran d'accueil quand personne n'est connecté,
    où elle est tout ce qu'un visiteur peut faire et n'a donc pas à être
    derrière un bouton. D'où l'absence d'identifiants ici : deux exemplaires
@@ -688,7 +693,7 @@ function monteRecherche(hote){
 
   /* Un mot à la place de la liste plutôt qu'une liste vide : une liste qui
      reste vide sans rien dire laisse croire que la frappe n'a pas pris. Le
-     rôle part avec les résultats — une liste déroulante qui ne contient
+     rôle part avec les résultats - une liste déroulante qui ne contient
      qu'une phrase n'en est plus une, et un lecteur d'écran l'annoncerait
      comme une liste vide de choix. */
   function mot(texte){
@@ -708,7 +713,7 @@ function monteRecherche(hote){
       const s = x.s;
       const n = typeof s.cartes === 'number'
         ? s.cartes + ' carte' + (s.cartes > 1 ? 's' : '') : 'classeur public';
-      const sous = s.moi ? 'Ton classeur — ' + n : n.charAt(0).toUpperCase() + n.slice(1);
+      const sous = s.moi ? 'Ton classeur - ' + n : n.charAt(0).toUpperCase() + n.slice(1);
       const avatar = s.avatar
         ? '<img class="rsearch-avatar" src="' + esc(s.avatar) + '" alt="">'
         : '<span class="rsearch-avatar" style="--h:' + teinteAvatar(s.nom) + '">'
@@ -781,7 +786,7 @@ function choisirClasseur(i){
 
 /* Le cache s'affiche tout de suite, quitte à ne pas être à jour : la vraie
    requête part en même temps, en silence, et remplace dès qu'elle répond.
-   Sans cache, l'attente est nue — mais elle est courte, et le classeur ne se
+   Sans cache, l'attente est nue - mais elle est courte, et le classeur ne se
    dessine qu'une fois qu'il est là. */
 function ouvreClasseurAffiche(){
   const s = source();
@@ -810,7 +815,7 @@ function ouvrirLeMien(){
 }
 
 /* Créer son classeur : une seule requête, et le serveur renvoie le classeur
-   tout prêt — les mêmes pochettes que les autres, toutes vides (voir
+   tout prêt - les mêmes pochettes que les autres, toutes vides (voir
    cree_page dans collection.py). Rejouable sans dégât, il rend l'existant
    s'il y en a un. */
 async function creerMonClasseur(){
@@ -835,7 +840,7 @@ async function creerMonClasseur(){
     redrawAll();
     toast('Ton classeur est prêt. Range ta première carte.');
   } catch(e){
-    toast('Création impossible — ' + (e.message || 'erreur inconnue'), true);
+    toast('Création impossible - ' + (e.message || 'erreur inconnue'), true);
   }
   b.disabled = false;
 }
@@ -857,7 +862,7 @@ function pseudoDeURL(){
 /* Le rang d'un classeur dans SOURCES, en l'y ajoutant s'il n'y est pas.
    L'annuaire ne liste que les classeurs publics : un lien vers un classeur
    privé, ou vers un pseudo qui n'existe pas, n'y trouve rien. On l'ajoute
-   quand même pour tenter le chargement — c'est le serveur qui doit dire
+   quand même pour tenter le chargement - c'est le serveur qui doit dire
    « privé » ou « inconnu », pas un silence ici. */
 function rangDuClasseur(nom){
   const i = SOURCES.findIndex(x => norm(x.nom) === norm(nom));
@@ -867,7 +872,7 @@ function rangDuClasseur(nom){
 }
 
 /* L'adresse suit le classeur affiché : elle est copiable telle quelle à tout
-   moment, ce qui est tout l'intérêt. replaceState et non pushState — une
+   moment, ce qui est tout l'intérêt. replaceState et non pushState - une
    entrée d'historique par changement de classeur ferait du bouton Retour un
    « classeur précédent » que personne n'a demandé, et il doit continuer de
    ramener d'où l'on vient. */
@@ -1062,7 +1067,7 @@ function landSwap(){
   s.appliquer();
 }
 
-/* Bascule sur le classeur `c` — celui du bas de page, pas celui de la
+/* Bascule sur le classeur `c` - celui du bas de page, pas celui de la
    personne : un onglet qui déborde se poursuit dans un second classeur. On
    change donc de reliure, pas de page : une feuille qui pivote n'aurait
    aucun sens. Le classeur en cours sort dans le sens de lecture (`dir`), le
@@ -1506,7 +1511,7 @@ el('next').onclick = () => turn(1);
    s'ouvre à plat sous le pouce. On le feuillette donc comme un vrai : le
    doigt pousse la page vers la gauche pour aller à la suivante.
 
-   Les trois gestes doublent des boutons qui restent là — les flèches du
+   Les trois gestes doublent des boutons qui restent là - les flèches du
    classeur, celles de la carte agrandie, la croix du panneau. Rien ne
    devient inatteignable faute de les connaître. Voir static/gestes.js.
 
@@ -1583,7 +1588,7 @@ el('inviteCreate').onclick = creerMonClasseur;
 el('homeBtn').onclick = () => { closeMenu(); fermerRecherche(); ouvrirLeMien(); };
 el('unlock').onclick = () => {
   closeMenu();
-  /* Pas connecté : direction Abyss, sur sa fenêtre de connexion — atterrir
+  /* Pas connecté : direction Abyss, sur sa fenêtre de connexion - atterrir
      sur le hub laisserait le bouton à retrouver, un clic de plus pour la
      seule chose qu'on venait faire. Connecté avec un classeur : on l'ouvre.
      Connecté sans classeur : on lui en crée un et on l'y emmène. */
@@ -1765,8 +1770,8 @@ el('exportBtn').onclick = ouvrirExport;
 
 /* ---------------- suggestion / bug ----------------
    Le bouton menait à /abyss?suggestion=collection : signaler un bug du
-   classeur faisait quitter le classeur — avec la page où l'on était et la
-   carte qu'on regardait — pour revenir à la main une fois le message parti.
+   classeur faisait quitter le classeur - avec la page où l'on était et la
+   carte qu'on regardait - pour revenir à la main une fois le message parti.
    La fenêtre s'ouvre maintenant ici, habillée comme le reste de la page
    (voir .sg-* dans la feuille de style). Le lien reste dans le HTML et reste
    vrai : c'est ce qui se passe si le script n'arrive pas. */
@@ -1808,7 +1813,7 @@ majReflets();
 
   /* Une adresse /collection/<pseudo> passe avant tout le reste : elle dit
      exactement quel classeur ouvrir, et c'est pour ça qu'on l'a suivie. Elle
-     court-circuite donc l'écran d'accueil — un lien partagé doit montrer ce
+     court-circuite donc l'écran d'accueil - un lien partagé doit montrer ce
      qu'il promet, pas une invitation à se connecter. */
   const demande = pseudoDeURL();
   if (demande){

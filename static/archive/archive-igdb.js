@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-igdb.js
+   Archive Jeux Vidéos - archive-igdb.js
 
    La mise à jour du journal entier depuis IGDB.
 
@@ -17,7 +17,7 @@
 
 
 /* =======================================================================
-   Mise à jour depuis IGDB — tout le journal d'un coup
+   Mise à jour depuis IGDB - tout le journal d'un coup
 
    Le classeur vieillit : une date de sortie saisie de mémoire, un prix noté
    avant une baisse, une jaquette jamais récupérée. Ce module repasse sur
@@ -37,8 +37,8 @@
 
    L'écriture repasse par l'action « enregistrer » d'Apps Script, celle du
    formulaire : la ligne est réécrite en entier, avec les valeurs relues
-   ici. C'est le chemin déjà éprouvé — modifier un jeu à la main fait
-   exactement la même chose — plutôt qu'une action neuve qui écrirait deux
+   ici. C'est le chemin déjà éprouvé - modifier un jeu à la main fait
+   exactement la même chose - plutôt qu'une action neuve qui écrirait deux
    cellules mais qu'il faudrait déboguer sur trois cents lignes.
    ======================================================================= */
 const IGD = {
@@ -108,7 +108,7 @@ function fermerIgdb(){
 
 /* ---------- étape 1 : ce qu'on veut mettre à jour ---------- */
 /* Toutes les portées possibles : le journal entier, puis chaque onglet qui
-   contient quelque chose. La liste est la même où qu'on ouvre la fenêtre —
+   contient quelque chose. La liste est la même où qu'on ouvre la fenêtre -
    avant, seul l'onglet affiché était proposé, si bien que mettre à jour
    « 2024 » obligeait à aller s'y placer d'abord, alors que c'est
    précisément une opération qu'on lance de loin, depuis n'importe où.
@@ -131,7 +131,7 @@ function igdbReglages(){
     <div class="fgrid">
       <label class="fld full"><u>Années</u>
         <select id="igdb_portee">${portees.map((p,i)=>
-          `<option value="${i}"${p.bucket === S.bucket ? ' selected' : ''}>${esc(p.nom)} — ${p.jeux.length} jeu${p.jeux.length > 1 ? 'x' : ''}</option>`
+          `<option value="${i}"${p.bucket === S.bucket ? ' selected' : ''}>${esc(p.nom)} - ${p.jeux.length} jeu${p.jeux.length > 1 ? 'x' : ''}</option>`
         ).join('')}</select></label>
       <label class="fld fcheck">
         <input id="igdb_dates" type="checkbox"${IGD.opts.dates ? ' checked' : ''}>
@@ -237,7 +237,7 @@ async function igdbAnalyse(){
 }
 
 /* Ce qu'on retient d'un jeu : les écarts, et rien d'autre. Une valeur
-   identique n'est pas un changement — la liste ne montrerait que du bruit. */
+   identique n'est pas un changement - la liste ne montrerait que du bruit. */
 function igdbRapport(g, data){
   const l = {
     g: g,
@@ -265,7 +265,7 @@ function igdbRapport(g, data){
   /* Le rattachement à une fiche IGDB, et les quatre colonnes qui en
      découlent. Un jeu déjà rattaché à la même fiche et déjà rempli n'est
      pas un écart : ce sont les jeux d'avant cette fonctionnalité qu'on
-     cherche ici, ceux qui n'ont encore ni identifiant ni plateforme — et,
+     cherche ici, ceux qui n'ont encore ni identifiant ni plateforme - et,
      depuis la grille de connexions du Quiz, ceux à qui il manque le thème. */
   if(IGD.opts.detail && data.detail){
     const d = data.detail;
@@ -345,11 +345,11 @@ function igdbRevue(){
     </p>
     ${avec.length
       ? `<div class="igdb-liste">${avec.map(igdbLigneHTML).join('')}</div>`
-      : `<p class="igdb-note">Rien à corriger${nJaq ? ' — il reste les jaquettes.' : ' : le journal est déjà à jour.'}</p>`}
+      : `<p class="igdb-note">Rien à corriger${nJaq ? ' - il reste les jaquettes.' : ' : le journal est déjà à jour.'}</p>`}
     ${rates.length ? `<details class="igdb-repli">
       <summary>${rates.length} jeu${rates.length > 1 ? 'x' : ''} sans réponse d'IGDB</summary>
       ${igdbMotifsHTML(rates)}
-      <ul>${rates.map(l=>`<li>${esc(l.g.name)} <i>— ${esc(motifLigne(l))}</i></li>`).join('')}</ul>
+      <ul>${rates.map(l=>`<li>${esc(l.g.name)} <i>- ${esc(motifLigne(l))}</i></li>`).join('')}</ul>
     </details>` : ''}
     <div class="frow">
       ${avec.length ? '<button class="ghost" id="igdb_tous">Tout cocher</button><button class="ghost" id="igdb_aucun">Tout décocher</button>' : ''}
@@ -367,7 +367,7 @@ function igdbRevue(){
     c.checked = v; avec[+c.dataset.i].coche = v;
   });
   /* « Changer de jeu » : le bouton vit dans le <label> de la ligne, donc un
-     clic cocherait la case en passant — d'où le preventDefault. */
+     clic cocherait la case en passant - d'où le preventDefault. */
   igdbCorps().querySelectorAll('.igdb-fiche-btn').forEach(b=>{
     b.onclick = e=>{
       e.preventDefault(); e.stopPropagation();
@@ -392,7 +392,7 @@ function motifLigne(l){
   return l.raison || 'IGDB injoignable';
 }
 /* Les échecs regroupés par motif. Trente jeux qui échouent pour la même
-   raison, c'est un seul problème à régler — la liste nom par nom, elle, ne
+   raison, c'est un seul problème à régler - la liste nom par nom, elle, ne
    le montre pas. */
 function igdbMotifsHTML(rates){
   const compte = new Map();
@@ -407,8 +407,8 @@ function igdbMotifsHTML(rates){
 }
 
 /* ---------- désigner soi-même la bonne fiche ----------
-   Sur un titre que plusieurs jeux portent — « Doom », « God of War »,
-   « Tomb Raider » — ou qu'IGDB n'a pas reconnu, le rapprochement
+   Sur un titre que plusieurs jeux portent - « Doom », « God of War »,
+   « Tomb Raider » - ou qu'IGDB n'a pas reconnu, le rapprochement
    automatique se trompe. La date de sortie tranche presque toujours (elle
    suffit pour 96 % du journal), mais quand elle ne suffit pas, seul un
    œil humain peut décider. La grille des jaquettes sert déjà exactement à
@@ -459,7 +459,7 @@ function igdbBouton(){
 
 /* ---------- étape 4 : l'écriture ---------- */
 /* Ce qui part pour un jeu : les deux champs concernés, pas un de plus.
-   Le serveur ne touche qu'aux champs présents dans `values` — la note, le
+   Le serveur ne touche qu'aux champs présents dans `values` - la note, le
    mois, le temps de jeu, le prix payé et l'avis ne sont donc pas réécrits,
    pas même à l'identique. Ni `periode` ni `review` ici : les omettre est
    justement ce qui dit de ne pas y toucher. */
@@ -490,7 +490,7 @@ async function igdbEnvoyerPaquet(paquet){
   const echecs = [], utiles = [];
   paquet.forEach(l=>{
     try{ utiles.push({ligne: l, charge: igdbCharge(l)}); }
-    catch(e){ echecs.push(`${l.g.name} — ${e.message || 'erreur inconnue'}`); }
+    catch(e){ echecs.push(`${l.g.name} - ${e.message || 'erreur inconnue'}`); }
   });
   if(!utiles.length) return echecs;
   const compter = u => {
@@ -506,14 +506,14 @@ async function igdbEnvoyerPaquet(paquet){
     const rates = {};
     refuses.forEach(e=>{
       rates[e.i] = true;
-      echecs.push(`${e.jeu || '?'} — ${e.error}`);
+      echecs.push(`${e.jeu || '?'} - ${e.error}`);
     });
     utiles.forEach((u,k)=>{ if(!rates[k]) compter(u); });
     return echecs;
   }catch(e){
     // panne franche : le paquet entier n'est pas passé, on le dit
     const motif = e.message || 'erreur inconnue';
-    return echecs.concat(utiles.map(u => `${u.ligne.g.name} — ${motif}`));
+    return echecs.concat(utiles.map(u => `${u.ligne.g.name} - ${motif}`));
   }
 }
 
@@ -609,7 +609,7 @@ async function igdbPoser(btn, nom, choix, jeuId){
     IGD.compte.jaquettes++;
     poseJaquette(cle);
   }else{
-    toast('Téléchargement impossible' + (data && data.raison ? ' — ' + data.raison : ''), true);
+    toast('Téléchargement impossible' + (data && data.raison ? ' - ' + data.raison : ''), true);
   }
   IGD.fi++;
   igdbJaquette();

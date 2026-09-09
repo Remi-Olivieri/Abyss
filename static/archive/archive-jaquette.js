@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-jaquette.js
+   Archive Jeux Vidéos - archive-jaquette.js
 
    Choisir une jaquette, et compléter un nom depuis IGDB.
 
@@ -13,68 +13,25 @@
    ======================================================================= */
 
 /* =======================================================================
-   Jaquette automatique — uniquement à l'ajout d'un jeu.
+   Jaquette automatique - uniquement à l'ajout d'un jeu.
    C'est Flask qui va la chercher (jaquettes.py) : ni le navigateur ni
    Apps Script ne savent écrire dans static/Cover/. Rien n'atterrit sur le
    disque sans un clic : même quand une seule jaquette est trouvée, elle
-   est montrée d'abord. Si la route n'existe pas — vieux serveur, page
-   ouverte sans Flask — tout se tait et le jeu garde ses initiales.
+   est montrée d'abord. Si la route n'existe pas - vieux serveur, page
+   ouverte sans Flask - tout se tait et le jeu garde ses initiales.
    ======================================================================= */
-async function api(chemin, corps){
-  const r = await fetch(chemin, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(corps),
-  });
-  /* Le code de retour est accroché à l'erreur, pas seulement écrit dedans :
-     un 503 (nginx qui limite le débit de /api/) et un câble débranché
-     appellent deux réactions opposées, et seul l'appelant sait laquelle.
-     Sans ce champ les deux se ressemblaient sous un même « serveur
-     injoignable » — de quoi chercher la panne chez IGDB pendant des heures
-     alors que le refus venait de nginx, trois couches plus tôt. */
-  if(!r.ok){
-    const err = new Error('http ' + r.status);
-    err.statut = r.status;
-    throw err;
-  }
-  return r.json();
-}
-/* Ce que le navigateur affichera d'un appel qui n'a pas abouti. Nommer qui
-   a refusé, toujours : « injoignable » est le seul cas où personne n'a
-   répondu, et c'est le seul qui mérite ce mot. */
-function raisonReseau(e){
-  const s = e && e.statut;
-  if(s === 503 || s === 429) return 'trop de requêtes (limite de débit du serveur)';
-  if(s) return `refus du serveur (HTTP ${s})`;
-  return 'serveur injoignable';
-}
-/* nginx plafonne le débit de /api/ pour qu'un inconnu ne puisse pas griller
-   le quota IGDB depuis internet. Or une mise à jour du classeur, c'est un
-   appel par jeu à la file : elle tape dans ce plafond bien avant la fin.
-   Un refus de débit n'est pas une panne, il dit « pas tout de suite » —
-   alors on patiente et on redemande, plutôt que de faire tomber des
-   centaines de jeux d'affilée pendant que tout va bien. */
-const ATTENTE_DEBIT = [3000, 6000];
-async function apiPatient(chemin, corps){
-  for(let essai = 0; ; essai++){
-    try{
-      return await api(chemin, corps);
-    }catch(e){
-      if((e.statut === 503 || e.statut === 429) && essai < ATTENTE_DEBIT.length){
-        await new Promise(reprend => setTimeout(reprend, ATTENTE_DEBIT[essai]));
-        continue;
-      }
-      throw e;
-    }
-  }
-}
+/* Les trois aides HTTP - api(), raisonReseau() et apiPatient() - vivaient
+   ici, parce que la jaquette a été la première à parler à Flask. Elles n'ont
+   jamais rien eu de propre aux images, et deux autres pages les demandent
+   maintenant : elles sont passées dans archive-noyau.js, qui est justement
+   la boîte à outils que tout le monde charge. */
 /* la jaquette est arrivée : on la remet en jeu sous un nouveau numéro */
 function poseJaquette(cle){
   const f = cle;
   /* le manifeste est tenu à jour sur place : redemander la liste entière
      pour une seule image serait un aller-retour de plus pour rien. La date
      posée ici n'est pas exactement celle du fichier, mais elle ne sert qu'à
-     casser le cache — le prochain manifeste rétablira la vraie. */
+     casser le cache - le prochain manifeste rétablira la vraie. */
   if(f){
     if(!JAQUETTES) JAQUETTES = {};
     JAQUETTES[f] = Date.now();
@@ -105,16 +62,16 @@ async function jaquetteAuto(nom, sortie, force, idIgdb){
 
 /* On montre toujours ce qui a été trouvé, même une seule jaquette : c'est
    le clic qui télécharge. Les aperçus viennent directement d'IGDB, donc
-   refuser ne laisse rien derrière — il n'y a rien à supprimer. Quand
+   refuser ne laisse rien derrière - il n'y a rien à supprimer. Quand
    plusieurs fiches portent le même nom, la plus probable (celle dont
    l'année colle à la date de sortie) est en tête, en doré. */
 let JAQ_NOM = null, JAQ_SUITE = null, JAQ_IGDB = null;
 function jaqHTML(nom, propositions, retenir, opts){
   opts = opts || {};
   /* La barre de recherche n'apparaît que pour désigner un jeu : le titre
-     du classeur ne trouve pas toujours la bonne fiche — « Getting Over It »
+     du classeur ne trouve pas toujours la bonne fiche - « Getting Over It »
      ne ramène rien, « Getting Over It with Bennett Foddy » tombe dessus du
-     premier coup — et sans moyen de reformuler, ces cas-là resteraient
+     premier coup - et sans moyen de reformuler, ces cas-là resteraient
      impossibles à corriger. */
   const barre = opts.terme === undefined ? '' : `
       <div class="jaq-chercher">
@@ -144,7 +101,7 @@ function jaqHTML(nom, propositions, retenir, opts){
 }
 /* `suite` transforme la fenêtre en simple sélecteur : au lieu de télécharger,
    le clic rappelle cette fonction avec la fiche choisie. C'est ce que fait le
-   formulaire, où le fichier ne peut pas encore être nommé — le nom du jeu
+   formulaire, où le fichier ne peut pas encore être nommé - le nom du jeu
    n'est arrêté qu'à l'enregistrement. */
 function openJaq(nom, propositions, suite, idIgdb, opts){
   opts = opts || {};
@@ -205,7 +162,7 @@ async function choisirJaq(btn, choix){
     closeJaq(); poseJaquette(idIgdb ? String(idIgdb) : slug(nom)); toast('Jaquette enregistrée');
   }else{
     closeJaq();
-    toast('Téléchargement impossible' + (data && data.raison ? ' — ' + data.raison : ''), true);
+    toast('Téléchargement impossible' + (data && data.raison ? ' - ' + data.raison : ''), true);
   }
 }
 fermeSurFond('jaq', closeJaq);
@@ -219,7 +176,7 @@ async function poseJaquetteChoisie(nom, image, idIgdb){
   catch(e){ return; }
   if(data.etat === 'telechargee'){
     poseJaquette(idIgdb ? String(idIgdb) : slug(nom)); toast('Jaquette enregistrée'); }
-  else toast('Téléchargement impossible' + (data.raison ? ' — ' + data.raison : ''), true);
+  else toast('Téléchargement impossible' + (data.raison ? ' - ' + data.raison : ''), true);
 }
 
 /* =======================================================================
@@ -227,22 +184,22 @@ async function poseJaquetteChoisie(nom, image, idIgdb){
 
    Le champ « Nom du jeu » interroge Flask pendant la frappe : IGDB renvoie
    les fiches qui collent, avec leur date de sortie et leur jaquette. Un clic
-   remplit la date, va chercher le prix de base et retient la jaquette — qui
+   remplit la date, va chercher le prix de base et retient la jaquette - qui
    ne part sur le disque qu'à l'enregistrement, pas avant, parce que son nom
    de fichier dépend d'un champ qu'on peut encore retoucher.
 
    Le prix ne vient pas d'IGDB, qui n'en publie aucun : IGDB donne le lien
    vers la fiche Steam, et c'est Steam qui répond son prix fort en euros. Un
-   jeu absent de Steam — exclusivité Nintendo, PlayStation, jeu physique —
+   jeu absent de Steam - exclusivité Nintendo, PlayStation, jeu physique -
    laisse donc la case vide. C'est voulu : rien n'est deviné.
 
    Deux règles pour ne jamais écraser une saisie par accident : un champ
    rempli à la main ne bouge plus tant qu'on se contente de taper (data-auto
    le distingue d'un champ rempli par une fiche), et toute réponse arrivée
-   après un changement de fiche est jetée — la frappe est plus rapide que le
+   après un changement de fiche est jetée - la frappe est plus rapide que le
    réseau, l'inverse serait une loterie. Désigner une fiche dans la liste,
    en revanche, aligne date et prix dessus quoi qu'il y ait dans les cases,
-   et le dit — voir alignePick().
+   et le dit - voir alignePick().
    ======================================================================= */
 const AC = { minuteur:0, jeton:0, jetonPrix:0, jeux:[], i:-1 };
 let JEU_PICK = null;   // la fiche IGDB retenue : {nom, titre, image, apercu...}
@@ -261,18 +218,11 @@ function acFerme(){
   if(b){ b.hidden = true; b.innerHTML = ''; }
   if(champ) champ.setAttribute('aria-expanded', 'false');
 }
-function acHTML(jeux){
-  return jeux.map((j,i)=>`
-    <button type="button" class="ac-item" role="option" aria-selected="false" data-i="${i}">
-      ${j.apercu
-        ? `<img src="${esc(j.apercu)}" alt="" loading="lazy" decoding="async">`
-        : '<span class="ac-vide"></span>'}
-      <span class="ac-txt">
-        <b>${esc(j.titre)}</b>
-        <i>${esc(j.date || 'date inconnue')}${j.nature ? ' · ' + esc(j.nature) : ''}</i>
-      </span>
-    </button>`).join('');
-}
+/* acHTML - le dessin d'une ligne de résultat IGDB - est parti dans
+   archive-recherche.js, qui s'en sert aussi pour sa liste : c'est le même
+   service rendu, et il n'y a donc qu'un endroit à corriger le jour où IGDB
+   changera la forme de ses réponses. Il vit toujours dans la même portée
+   globale, acOuvre ci-dessous l'appelle sans rien savoir de son fichier. */
 function acOuvre(jeux){
   const b = $('f_ac');
   if(!b) return;
@@ -346,7 +296,7 @@ function posePick(fiche){
   if(!b) return;
   /* Rien à montrer tant qu'aucune fiche n'est retenue : la case reste
      vide. Un encart « Aucun jeu choisi » occupait la place pour ne rien
-     dire — la liste sous le nom du jeu se charge déjà d'en proposer une,
+     dire - la liste sous le nom du jeu se charge déjà d'en proposer une,
      et la validation refuse un ajout sans fiche avec son propre message. */
   if(!fiche || !fiche.image){ b.hidden = true; return; }
   $('f_pickimg').src = fiche.apercu;
@@ -357,7 +307,7 @@ function posePick(fiche){
 }
 /* Un champ rempli par une fiche peut être remplacé par la fiche suivante.
    Un champ rempli à la main, jamais : c'est ce que dit data-auto. `force`
-   passe outre — voir alignePick().
+   passe outre - voir alignePick().
 
    Renvoie true seulement si une valeur qui était là a été remplacée :
    remplir une case vide n'a rien qui mérite d'être annoncé, écraser une
@@ -381,7 +331,7 @@ function acChoisir(i){
   alignePick(j);           // la date et le prix suivent la fiche choisie
 }
 /* `force` : le prix est réécrit même s'il a été saisi à la main. Réservé au
-   choix explicite d'une fiche — voir alignePick(). Renvoie true si un prix
+   choix explicite d'une fiche - voir alignePick(). Renvoie true si un prix
    qui était déjà là a été remplacé, pour que l'appelant sache quoi annoncer ;
    une case vide qu'on remplit ne compte pas. */
 async function acPrix(j, force){
@@ -400,20 +350,20 @@ async function acPrix(j, force){
   if(data && data.etat === 'ok' && data.prix !== null && data.prix !== undefined){
     const txt = numText(data.prix);
     // remplacer un prix qu'on avait sous les yeux se dit ; remplir une case
-    // vide, non — même règle que acRemplit()
+    // vide, non - même règle que acRemplit()
     const remplace = cible.value !== '' && cible.value !== txt;
     cible.value = txt;
     cible.dataset.auto = '1';
 
     /* Le prix payé, proposé au moment où l'achat a lieu : à l'ajout d'un
        jeu, ou quand on sort de la wishlist un jeu qu'on vient d'acheter.
-       Jamais sur un vieux jeu qu'on retouche — ce que Steam demande
+       Jamais sur un vieux jeu qu'on retouche - ce que Steam demande
        aujourd'hui n'a rien à voir avec ce qu'on a déboursé il y a trois
        ans, et une somme fausse est pire qu'une case vide.
 
        C'est « actuel » et non « prix » : promotion comprise, c'est ce
        qu'on paie réellement. Et posé par acRemplit(), donc jamais en
-       force, même quand on vient de choisir une jaquette explicitement —
+       force, même quand on vient de choisir une jaquette explicitement -
        un montant saisi à la main ne se devine pas. */
     if((!EDIT || estWishlist(EDIT)) && data.actuel !== null && data.actuel !== undefined){
       acRemplit($('f_paid'), numText(data.actuel));
@@ -425,7 +375,7 @@ async function acPrix(j, force){
   return false;
 }
 
-/* Aligner la date et le prix sur la fiche qu'on vient de désigner — celle
+/* Aligner la date et le prix sur la fiche qu'on vient de désigner - celle
    d'une jaquette choisie, ou celle prise dans la liste sous le nom du jeu.
    Les deux gestes disent la même chose : « c'est ce jeu-là », et depuis le
    même écran. Deux règles :
@@ -435,14 +385,14 @@ async function acPrix(j, force){
        viennent de la base : aucun ne porte data-auto, donc la règle
        habituelle ne laisserait jamais rien changer. C'est ce qui faisait
        qu'un jeu rattaché à la mauvaise fiche gardait sa vieille date de
-       sortie — on choisissait bien 2016 dans la liste, la fiche repartait
+       sortie - on choisissait bien 2016 dans la liste, la fiche repartait
        avec plateforme, développeur et genres du bon jeu, mais la date de
        2023 restait.
      - une valeur absente chez IGDB ne vide rien. Un jeu hors Steam n'a pas
        de prix à donner : ce n'est pas une raison pour effacer le tien.
 
    Le toast est là parce qu'on vient d'écraser une valeur : il faut la voir
-   partir. Une case vide qu'on remplit ne le déclenche pas — à l'ajout d'un
+   partir. Une case vide qu'on remplit ne le déclenche pas - à l'ajout d'un
    jeu, tout se remplit, il n'y a rien à signaler. */
 async function alignePick(p){
   const change = [];

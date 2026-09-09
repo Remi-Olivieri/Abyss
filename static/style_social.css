@@ -1,0 +1,521 @@
+/* =======================================================================
+   Le Social de l'Archive - style_social.css
+
+   Se pose SUR style_jeuxvideos.css, chargee juste avant : la palette, la
+   remise a zero, .top, .wrap, .cta, .sbtn, .sheet et .pros viennent de la.
+   Ce n'est pas une seconde identite, c'est la meme -- avec de quoi tenir un
+   fil de discussion plutot qu'un mur de jaquettes.
+
+   Une carte reprend d'ailleurs le balisage de la fiche pour l'avis (.pros /
+   .pt.plus / .pt.minus) : un « + » doit se lire pareil qu'on soit sur le
+   mur, dans la fiche ou dans le fil. C'est le meme avis.
+
+   Chargee par templates/archive-feed.html et par templates/jeux-videos.html,
+   qui ouvre les memes fenetres depuis la fiche d'un jeu.
+   ======================================================================= */
+
+/* ---------- la colonne ----------
+   Etroite, et volontairement : un fil se lit en descendant. Sur la largeur
+   des 1120 px du mur, une carte devenait une banderole ou l'oeil devait
+   traverser l'ecran pour relier un pseudo a sa note. */
+.soc-colonne{max-width:680px;margin:0 auto;padding:22px 0 60px}
+/* Le titre de la page. La barre du haut n'ecrit plus « Social » : un mot
+   qui nommait la salle sans dire ce qu'on y trouve, et qui se lisait deux
+   fois a quarante pixels d'ecart. Celui-ci le dit, et se voit. */
+.soc-titre{
+  margin:0 0 6px;font-family:var(--display);font-weight:800;
+  letter-spacing:-.03em;font-size:clamp(26px,5.2vw,38px);line-height:1.05;
+}
+/* La phrase sous le titre : ce qu'on regarde, en une ligne. */
+.soc-quoi{color:var(--muted);font-size:13px;margin:0 0 20px;max-width:56ch}
+
+/* La place des onglets du journal, laissee vide. C'est `margin-left:auto`
+   qui fait tout le travail chez .tabs : il pousse la cloche et
+   « Suggestion / Bug » a droite. Sans ce cale, le titre et la cloche se
+   retrouvaient colles au milieu de la barre, et l'en-tete du Social n'avait
+   plus les memes appuis que celui du journal. */
+.soc-barre-vide{margin-left:auto}
+
+/* « Voir plus », et non un defilement infini : le fil a une fin, et on doit
+   pouvoir la sentir. Une page qui repousse son bas indefiniment ne se quitte
+   jamais franchement. Le .cta de l'Archive fait 100 % de large -- ici il
+   reprend sa largeur naturelle, comme partout ou il n'est pas seul. */
+.soc-plus{margin:18px 0 0;text-align:center}
+.soc-plus .cta{width:auto;padding:0 26px}
+
+/* ---------- une carte ---------- */
+.soc-liste{display:flex;flex-direction:column;gap:14px}
+.soc-post{
+  padding:15px 16px 11px;border-radius:14px;
+  background:var(--bg2);border:1px solid var(--line);
+  transition:border-color .15s,background .15s;
+}
+/* Cliquable d'un bout a l'autre, sauf sur ses propres boutons : une carte
+   de fil ouvre sa discussion, et viser un lien de trois mots au doigt sur
+   un telephone ne marche pas. */
+.soc-cliquable{cursor:pointer}
+.soc-cliquable:hover{border-color:var(--line-strong);background:var(--bg3)}
+/* Une carte qui vient d'arriver, en direct. Deux secondes de lisere dore
+   puis plus rien : une carte qui se pose en silence au-dessus de ce qu'on
+   lit passe inapercue, et le fil semble avoir bouge tout seul. La couleur
+   s'en va d'elle-meme -- au bout de trois cartes neuves, un marqueur qui
+   reste ne marque plus rien.
+
+   `prefers-reduced-motion` : le glissement disparait, le lisere reste. Ce
+   qu'il dit -- « ceci est nouveau » -- n'a rien a voir avec le mouvement. */
+@keyframes soc-arrivee{
+  from{opacity:0;transform:translateY(-8px)}
+  to{opacity:1;transform:none}
+}
+.soc-neuve{
+  animation:soc-arrivee .28s cubic-bezier(.2,.7,.3,1);
+  border-color:rgba(229,196,107,.55);
+  transition:border-color 1.2s ease .8s;
+}
+@media (prefers-reduced-motion:reduce){
+  .soc-neuve{animation:none}
+}
+
+.soc-tete{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.soc-ava{
+  flex:0 0 auto;width:34px;height:34px;border-radius:50%;object-fit:cover;
+  border:1px solid var(--line);
+}
+.soc-ava.p{width:27px;height:27px}
+/* Sans photo : les initiales, comme sur les tuiles sans jaquette. */
+.soc-ava-vide{
+  display:grid;place-items:center;background:var(--bg3);color:var(--muted);
+  font-family:var(--mono);font-size:11px;letter-spacing:.02em;
+}
+.soc-ava.p.soc-ava-vide{font-size:9.5px}
+
+/* ---------- aller chez quelqu'un ----------
+   La photo et le pseudo menent au journal de la personne. Ils ne se
+   peignent pas en lien pour autant : dans une pile de vingt cartes, vingt
+   pseudos dores diraient « clique ici » vingt fois et l'oeil ne saurait
+   plus ou se poser. Ils gardent donc la couleur du texte, et ne se
+   revelent qu'au survol -- ce qui suffit, puisque le curseur y est deja. */
+.soc-perso{color:inherit;text-decoration:none;transition:color .15s}
+/* Un seul signe pour les deux liens : le pseudo passe a l'or, que la souris
+   soit sur lui ou sur la photo. Cerner la photo d'un liseré revenait a
+   dessiner une deuxieme cible pour une seule destination -- et sur une
+   image ronde deja bordee, ca se lisait comme un defaut d'affichage.
+   Les deux selecteurs suivent le meme chemin dans les deux balisages ou la
+   paire existe : la carte d'un jeu, et un commentaire. */
+.soc-perso:hover,
+.soc-perso-ava:hover ~ .soc-qui .soc-perso,
+.soc-perso-ava:hover ~ .soc-msg-in .soc-perso{color:var(--gold)}
+/* Le halo du clavier reste, lui : au clavier il n'y a pas de curseur pour
+   dire ou l'on est, et c'est le seul endroit ou ca se voit. Rond sur la
+   photo, sans quoi il dessinerait un carre autour d'un disque. */
+.soc-perso:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px}
+/* `display:flex` rend au lien la taille de l'image qu'il entoure : un <a>
+   vide n'en a aucune. */
+.soc-perso-ava{display:flex;flex:0 0 auto;border-radius:50%}
+.soc-perso-ava:focus-visible{outline-offset:3px;border-radius:50%}
+/* Dans un commentaire, le pseudo est une ligne a lui au-dessus du texte :
+   c'est le <b> qui portait ce display, le lien qui l'entoure le reprend. */
+.soc-msg-in .soc-perso{display:block}
+.soc-qui{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;min-width:0;flex:1 1 auto}
+.soc-qui b{font-size:14.5px;font-weight:700}
+/* « a terminé un jeu » : la phrase, pas le sujet. Elle reste en gris pour
+   que le pseudo et le titre du jeu soient les deux seules choses qui
+   accrochent l'oeil dans une pile de vingt cartes. */
+.soc-qui i{font-style:normal;color:var(--muted);font-size:13px}
+.soc-qui u{
+  flex:1 1 100%;text-decoration:none;color:var(--muted);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;margin-top:2px;
+}
+.soc-note{
+  flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:23px;
+  line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+}
+
+.soc-corps{display:flex;gap:13px;align-items:flex-start}
+/* La jaquette en petit : elle situe le jeu, elle ne le montre pas. C'est le
+   titre et l'avis qu'on lit ici -- la grande image, c'est le mur. */
+.soc-cov{
+  flex:0 0 auto;width:62px;aspect-ratio:var(--cov-ratio);border-radius:8px;
+  object-fit:cover;border:1px solid var(--line);background:var(--bg3);
+}
+.soc-cov-vide{
+  display:grid;place-items:center;color:var(--c,var(--muted));
+  font-family:var(--mono);font-size:13px;
+}
+.soc-texte{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:9px}
+.soc-jeu{
+  font-family:var(--display);font-weight:700;font-size:16.5px;line-height:1.25;
+  letter-spacing:-.01em;
+  /* La cible s'arrete au titre, et c'est le sens de ces deux lignes.
+
+     `.soc-texte` est une colonne flex : ses enfants s'etirent sur toute la
+     largeur par defaut, si bien que le bouton du titre couvrait la ligne
+     entiere -- y compris les vingt centimetres de vide a droite d'un titre
+     court. Un clic pose la, dans une carte du fil qui mene par ailleurs a sa
+     discussion, ouvrait donc la fiche du jeu sans qu'on l'ait demandee.
+
+     `align-self:flex-start` rend au bouton la largeur de son texte ; le vide
+     qui reste appartient de nouveau a la carte, donc a la discussion. */
+  align-self:flex-start;max-width:100%;
+}
+/* La jaquette et le titre, dans la discussion ouverte : ils menent a la
+   fiche du jeu. Des boutons nus -- ni fond, ni bordure, ni padding -- pour
+   que rien ne bouge par rapport a la carte du fil, ou les memes elements ne
+   sont pas cliquables. Seul le survol les distingue. */
+.soc-vers-jeu{
+  border:none;background:none;padding:0;margin:0;font:inherit;color:inherit;
+  cursor:pointer;text-align:left;display:block;flex:0 0 auto;
+  transition:color .15s,border-color .15s;
+}
+/* Le bouton prend la place de l'image dans la rangee : c'est lui, desormais,
+   l'element du flex, et la largeur reglee sur .soc-cov ne suffit plus. */
+.soc-corps > .soc-vers-jeu{width:62px}
+/* Dans la fenetre « Avis », la jaquette et le titre ne menent nulle part :
+   toutes les cartes y sont le meme jeu, et le titre de la fenetre le nomme
+   deja (voir `memeJeu` dans socialCarteHTML). Le titre redevient donc un
+   simple <b>, qui doit garder la place et l'alignement qu'avait le bouton --
+   sans quoi la carte se dessinerait autrement d'une liste a l'autre, pour
+   une difference qui ne regarde que le clic. */
+.soc-jeu-fixe{display:block;text-align:left;cursor:default}
+/* Un seul signe pour les deux, comme pour le pseudo et sa photo : le titre
+   passe a l'or, que la souris soit sur lui ou sur la jaquette. Cerner
+   l'image d'un lisere dessinait une deuxieme cible pour une seule
+   destination, et ca se lisait comme un defaut d'affichage. */
+button.soc-vers-jeu:hover,
+.soc-corps > .soc-vers-jeu:hover ~ .soc-texte .soc-jeu{color:var(--gold)}
+.soc-vers-jeu:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}
+.soc-post .pt{font-size:12.5px;padding:3px 9px}
+/* Les points qu'on n'affiche pas dans une carte de fil. Ni « + » ni « − » :
+   ce n'est pas un avis de plus, c'est un compte. */
+.soc-reste{color:var(--muted);font-family:var(--mono);font-size:11px}
+.soc-muet{color:var(--muted);font-size:13px;margin:0}
+.soc-vide{text-align:center;padding:26px 16px}
+.soc-connexion{text-align:center;padding:14px}
+.soc-connexion a{color:var(--gold)}
+
+/* ---------- le pied d'une carte ---------- */
+.soc-pied{
+  display:flex;gap:6px;align-items:center;margin-top:12px;
+  padding-top:9px;border-top:1px solid var(--line);
+}
+.soc-act{
+  display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 10px;
+  border:none;background:none;border-radius:8px;cursor:pointer;
+  color:var(--muted);font-size:12.5px;font-family:inherit;
+  transition:color .15s,background .15s;
+}
+.soc-act:hover{color:var(--text);background:var(--bg3)}
+.soc-act span{font-variant-numeric:tabular-nums}
+/* Le coeur pris : plein, et rouge. Un coeur qui ne change que de couleur ne
+   se voit pas -- le remplissage, si. */
+.soc-aime.on{color:#E8607F}
+.soc-aime.on svg{fill:currentColor}
+.soc-act:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* Le meme dessin, sans le geste : dans la discussion ouverte, le compte des
+   reponses n'est plus un bouton (voir socialCarteHTML). */
+.soc-compteur{cursor:default}
+.soc-compteur:hover{color:var(--muted);background:none}
+
+/* ---------- la fenetre d'une discussion ----------
+   Meme coquille que les autres fenetres du site (.sheet), avec une largeur
+   de lecture : un commentaire n'a pas besoin de 900 px. */
+.soc-sheet{max-width:640px}
+.soc-in{padding:16px;overflow:auto}
+.soc-in .soc-post{border:none;background:none;padding:0}
+.soc-in .soc-post .soc-pied{margin-bottom:4px}
+.soc-retour{font-size:19px;line-height:1}
+/* Les chiffres d'un jeu, en tete de ses avis. Trois nombres et trois mots :
+   le chiffre est ce qu'on lit, le mot ne fait que dire de quoi il parle --
+   d'ou le contraste entre les deux. Le point separateur est un element a
+   lui pour qu'il ne prenne pas la couleur du nombre qui le precede. */
+.soc-compte{
+  display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:0 8px;
+  color:var(--muted);font-size:12.5px;margin:0 0 16px;text-align:center;
+}
+.soc-compte b{color:var(--text);font-variant-numeric:tabular-nums}
+.soc-compte i{font-style:normal;opacity:.45}
+
+.soc-fil{margin:4px 0 14px}
+.soc-msgs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+/* Un commentaire, ses reponses et la place du champ pour repondre : le bloc
+   qui les tient ensemble. C'est lui l'element de la liste maintenant, et non
+   plus le message -- une reponse doit rester accrochee a ce a quoi elle
+   repond, y compris quand la liste se redessine. */
+.soc-bloc{display:flex;flex-direction:column;gap:8px}
+.soc-msg{display:flex;gap:9px;align-items:flex-start}
+.soc-msg-in{
+  flex:1 1 auto;min-width:0;padding:8px 11px;border-radius:11px;
+  background:var(--bg3);border:1px solid var(--line);
+}
+/* La ligne du dessus : qui parle, la note qu'il a mise au jeu, et le rappel
+   que le message a ete retouche. Sur une seule ligne et alignes sur la base
+   du texte -- trois choses de tailles differentes qui doivent se lire comme
+   une phrase. */
+.soc-msg-tete{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 7px;min-width:0}
+.soc-msg-in b{display:block;font-size:12.5px;margin-bottom:2px}
+/* Le pseudo est dans la ligne du dessus maintenant : la marge qui l'ecartait
+   du texte appartient a la ligne entiere, pas a lui. */
+.soc-msg-tete .soc-perso b{margin-bottom:0}
+/* « Pseudo - 8,9 ». Le tiret est un element a lui pour qu'il ne prenne ni la
+   graisse du pseudo ni la couleur de la note : c'est une ponctuation, elle
+   doit s'effacer devant les deux choses qu'elle relie. Meme role que le
+   point separateur de .soc-compte plus haut. */
+.soc-msg-tiret{font-style:normal;color:var(--muted);opacity:.45}
+/* Sa note pour ce jeu, a cote de son pseudo. En chiffres du mono et de la
+   couleur de la note, comme partout ailleurs : c'est la meme note que celle
+   qui est en grand sur la carte, en petit parce qu'ici elle n'est qu'un
+   eclairage sur ce qu'il ecrit. */
+.soc-msg-note{
+  font-family:var(--mono);font-size:11.5px;font-weight:700;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em;
+}
+/* « Non note » et « Pas joue » : les deux autres reponses possibles, en gris.
+   Ce sont des constats et non des jugements -- les peindre de l'echelle des
+   notes leur donnerait un sens qu'ils n'ont pas, et « Pas joue » en rouge se
+   lirait comme un mauvais point. */
+.soc-msg-etat{
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);opacity:.8;
+}
+/* « modifie » : discret, et c'est tout ce qu'on lui demande. Il ne s'adresse
+   qu'a celui qui avait lu la version d'avant. */
+.soc-msg-maj{
+  font-style:normal;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);opacity:.65;
+}
+/* pre-wrap : un commentaire ecrit sur trois lignes en garde trois. Les
+   sauts de ligne sont la seule mise en forme qu'on laisse passer, et les
+   perdre transformerait une liste en pate de mots. */
+.soc-msg-in p{margin:0;font-size:13.5px;line-height:1.5;white-space:pre-wrap;
+  overflow-wrap:anywhere}
+/* [hidden] vient de la feuille du navigateur ; sans ce rappel, les regles
+   ci-dessus le couvrent et le texte reste a l'ecran pendant qu'on le
+   reecrit, sous le champ qui le remplace. */
+.soc-msg-in p[hidden],.soc-msg-pied[hidden]{display:none}
+
+/* ---------- les trois gestes d'un message ----------
+   Aimer, repondre, modifier. Nus et gris, sous le texte : ce sont des
+   propositions, pas des boutons -- une bulle de commentaire qui porterait
+   trois vrais boutons pese plus lourd que ce qu'elle dit. */
+.soc-msg-pied{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin-top:5px}
+.soc-mini{
+  display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 7px;
+  border:none;background:none;border-radius:7px;cursor:pointer;
+  color:var(--muted);font:inherit;font-size:11.5px;
+  transition:color .15s,background .15s;
+}
+.soc-mini:hover{color:var(--text);background:var(--bg2)}
+.soc-mini:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.soc-mini span{font-variant-numeric:tabular-nums}
+/* « Supprimer » : gris comme ses trois voisins au repos, rouge au survol.
+   Rouge en permanence, il aurait attire l'oeil sur la seule action de la
+   rangee qu'on ne veut justement pas faire par megarde -- et une bulle de
+   commentaire n'a pas a se lire comme un avertissement. */
+.soc-supprime:hover{color:#E8607F;background:rgba(232,96,127,.12)}
+/* Le second temps. Le rouge de .ghost.armed et de .cta.armed, celui de
+   toutes les confirmations du site : un bouton qui demande confirmation se
+   reconnait avant d'etre lu. */
+.soc-supprime.armed{color:#fff;background:#B4295C}
+.soc-supprime.armed:hover{color:#fff;background:#B4295C}
+/* Le coeur d'un message, plus petit que celui d'une carte : c'est le meme
+   geste sur une chose plus petite. */
+.soc-msg-aime svg{width:13px;height:13px}
+.soc-msg-aime.on{color:#E8607F}
+.soc-msg-aime.on svg{fill:currentColor}
+.soc-msg-aime.on:hover{color:#E8607F}
+
+/* ---------- les reponses ----------
+   Le retrait vaut EXACTEMENT la colonne de la photo du commentaire : 27 px
+   d'avatar plus les 9 px qui l'ecartent de sa bulle, soit 36. Les reponses
+   commencent donc pile sous le TEXTE de ce a quoi elles repondent, et pas a
+   un retrait choisi au juge -- c'est cet alignement-la qui fait lire la
+   grappe comme une conversation plutot que comme quatre messages a la
+   suite. Elles etaient decalees de 13 px : trop peu pour dire « ceci repond
+   a ceci », assez pour donner l'impression que la colonne etait de travers.
+
+   Un seul niveau (voir _parent_ou_refus dans social.py), donc un seul
+   retrait : personne ne finira par lire une colonne de trois mots au fond
+   d'un escalier. */
+.soc-reponses{
+  list-style:none;margin:0;padding:0 0 0 36px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.soc-reponses > li{position:relative}
+/* Le fil, qui descend du centre de la photo du commentaire au-dessus -- 13,
+   la moitie de ses 27. Un pseudo-element et non un `border-left` : la
+   bordure se serait posee au bord du bloc, a zero, et le trait serait parti
+   de nulle part.
+
+   Un morceau par reponse plutot qu'un seul trait sur la liste, et c'est ce
+   qui permet la ligne suivante : le dernier s'arrete au centre de sa propre
+   photo au lieu de pendre dans le vide sous le dernier message. */
+/* Les segments SE TOUCHENT, ils ne se recouvrent pas : `top:0` et
+   `bottom:-8px` font descendre chacun jusqu'a l'ecart qui le suit, ou
+   commence le suivant. En les faisant deborder des deux cotes, ils se
+   chevauchaient sur huit pixels -- et comme --line est une couleur
+   translucide, deux traits l'un sur l'autre donnent un trait deux fois plus
+   clair : le fil se lisait en pointille, clair-fonce-clair. */
+/* Pas de `border-radius` ici, et c'est deliberé : sur une barre de deux
+   pixels de large il arrondit AUSSI les deux bouts, donc chaque jointure
+   entre deux segments se pincait. Le trait se lisait en pointille alors
+   qu'il etait parfaitement continu. Seul le dernier garde un bout arrondi,
+   parce que lui s'arrete vraiment. */
+.soc-reponses > li::before{
+  content:'';position:absolute;left:-23px;top:0;bottom:-8px;
+  width:2px;background:var(--line-strong);
+}
+/* Le premier remonte chercher la bulle du commentaire au-dessus. */
+.soc-reponses > li:first-child::before{top:-10px}
+/* Le dernier s'arrete au centre de sa propre photo au lieu de pendre dans le
+   vide sous le message : 12 px, la moitie d'une photo de 23. */
+.soc-reponses > li:last-child::before{bottom:auto;height:12px;border-radius:0 0 2px 2px}
+/* Une reponse seule est a la fois la premiere et la derniere : elle part de
+   -10 et doit finir au meme endroit, d'ou les 10 px rendus a sa hauteur. */
+.soc-reponses > li:first-child:last-child::before{height:22px}
+.soc-reponses .soc-ava.p{width:23px;height:23px}
+/* Une reponse pese moins que ce a quoi elle repond : pas de contour, un fond
+   a peine pose. La hierarchie ne peut pas tenir au seul retrait -- deux
+   bulles identiques decalees de trente pixels se lisent comme deux
+   messages, pas comme une question et sa reponse.
+   `transparent` et non `border:none` : le pixel de bordure reste compte, et
+   rien ne se decale entre une reponse et un commentaire de tete. */
+.soc-reponses .soc-msg-in{
+  font-size:13px;
+  background:rgba(38,31,51,.5);
+  border-color:transparent;
+}
+
+/* Le champ pour repondre, aligne sur les reponses au-dessus : il ecrit au
+   meme endroit qu'elles, il part donc du meme bord. */
+.soc-repondre{margin-left:36px}
+.soc-repondre[hidden]{display:none}
+/* Repondre et modifier : le champ prend toute la largeur et ses deux boutons
+   passent dessous, a droite. Cote a cote comme la zone du bas, il ne restait
+   pas de place pour ecrire -- ces formulaires-la s'ouvrent deja en retrait.
+
+   Deux classes dans le selecteur, et ce n'est pas de la coquetterie : ce
+   formulaire est AUSSI un .soc-ecrire, qui se declare plus bas dans ce
+   fichier avec `align-items:flex-end`. A specificite egale, c'est le dernier
+   qui gagne -- le champ se retrouvait alors colle a droite, large de sa
+   largeur naturelle, une colonne de trois mots au bout de la ligne. */
+.soc-ecrire.soc-mini-form{
+  flex-direction:column;align-items:stretch;gap:7px;margin-top:6px;
+}
+.soc-mini-form .soc-champ{width:100%;font-size:13px}
+.soc-mini-actions{display:flex;gap:7px;justify-content:flex-end;align-items:center}
+.soc-mini-form .soc-envoi{height:32px;padding:0 15px;font-size:12.5px}
+
+
+.soc-ecrire{display:flex;gap:9px;align-items:flex-end}
+/* Une ligne au depart, et le champ pousse a mesure qu'on ecrit jusqu'a ce
+   plafond -- passe lui, c'est le champ qui defile et le bouton « Envoyer »
+   reste ou il est. Plus de poignee : voir static/champs.js. */
+.soc-champ{
+  flex:1 1 auto;min-height:44px;max-height:180px;resize:none;
+  padding:11px 12px;border-radius:11px;font:inherit;font-size:13.5px;
+  color:var(--text);background:var(--bg3);border:1px solid var(--line);outline:none;
+}
+.soc-champ:focus{border-color:var(--line-strong)}
+.soc-champ::placeholder{color:var(--muted)}
+.soc-envoi{width:auto;padding:0 20px;height:44px;flex:0 0 auto}
+
+/* ---------- la cloche ----------
+   Dans l'en-tete, a gauche de l'engrenage. Meme dessin que lui (.cog) : ce
+   sont deux boutons de la meme barre, ils n'ont pas a se ressembler a peu
+   pres. */
+.cloche-wrap{position:relative;display:inline-flex}
+.cloche{
+  position:relative;
+  width:34px;height:34px;border-radius:9px;border:1px solid var(--line);color:var(--muted);
+  display:grid;place-items:center;transition:color .15s,border-color .15s,background .15s;
+}
+.cloche:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
+.cloche[aria-expanded="true"]{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+.cloche:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* La pastille : un chiffre, pas un point. « 3 » dit s'il vaut la peine
+   d'ouvrir tout de suite ; un point ne dit que « quelque chose ». */
+.soc-pastille{
+  position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;
+  border-radius:9px;display:grid;place-items:center;
+  background:#B4295C;color:#fff;border:2px solid var(--bg);
+  font-family:var(--mono);font-size:9.5px;font-style:normal;line-height:1;
+}
+.soc-cloche-panneau{
+  position:absolute;top:calc(100% + 9px);right:0;z-index:60;
+  width:min(340px,calc(100vw - 24px));max-height:min(460px,70vh);overflow:auto;
+  border-radius:13px;background:var(--bg2);border:1px solid var(--line-strong);
+  box-shadow:0 18px 44px rgba(0,0,0,.5);
+}
+.soc-notifs{list-style:none;margin:0;padding:5px}
+.soc-notif{
+  display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:9px;
+  cursor:pointer;transition:background .15s;
+}
+.soc-notif:hover{background:var(--bg3)}
+.soc-notif-in{font-size:12.5px;line-height:1.45;color:var(--muted);min-width:0}
+.soc-notif-in b{color:var(--text);font-weight:600}
+.soc-notif-in u{text-decoration:none;color:var(--gold)}
+/* Le commentaire cite, quand il y en a un : on sait a quoi on repond avant
+   d'ouvrir le fil. Coupe a une ligne -- c'est un rappel, pas le message. */
+.soc-notif-in i{
+  display:block;margin-top:2px;font-style:italic;color:var(--muted);opacity:.75;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+/* Pas encore lue : un liseré, et rien de plus. Une ligne en gras dans une
+   liste de gras ne se distingue plus au bout de trois. */
+.soc-notif.neuve{background:rgba(229,196,107,.06);box-shadow:inset 2px 0 0 var(--gold)}
+
+/* ---------- le bouton « Avis » de la fiche ----------
+   Sous la jaquette, dans la colonne de gauche de la fiche : c'est la place
+   de ce qui parle de l'image au-dessus, et non du jeu en general. */
+.fiche-avis{
+  width:100%;margin-top:10px;height:36px;border-radius:9px;
+  border:1px solid var(--line-strong);background:var(--bg2);color:var(--text);
+  font:inherit;font-size:13px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.fiche-avis:hover{border-color:var(--gold);color:var(--gold);background:var(--bg3)}
+.fiche-avis:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* ---------- sous le pouce ----------
+   Le meme seuil que l'en-tete de l'Archive, qui se replie a 640 px et range
+   alors ses boutons par `order` (voir .top-in dans style_jeuxvideos.css). */
+@media (max-width:640px){
+  .soc-corps > .soc-vers-jeu{width:52px}
+  /* La cloche se glisse juste avant l'engrenage, a la place qu'elle occupe
+     en grand : sans ces trois lignes elle partait en fin de rangee, derriere
+     les onglets. Ronde et de 38 px comme ses voisines -- la plus petite
+     cible qu'un pouce trouve du premier coup. */
+  .cloche-wrap{order:5;flex:0 0 auto}
+  .cog-wrap{order:6}
+  .tabs{order:7}
+  .cloche{width:38px;height:38px;border-radius:50%}
+  /* La barre s'enroule ici : plus rien a pousser a droite, et ce cale sans
+     `order` passerait devant tout le monde -- son margin-left:auto
+     repousserait alors « Retour a Abyss » au milieu de la ligne. */
+  .soc-barre-vide{display:none}
+
+  .soc-colonne{padding:16px 0 80px}
+  .soc-post{padding:13px 13px 9px;border-radius:12px}
+  .soc-cov{width:52px}
+  .soc-note{font-size:20px}
+  .soc-in{padding:13px}
+  /* Le bouton d'envoi passe sous le champ : cote a cote, il ne restait plus
+     de place pour ecrire. */
+  .soc-ecrire{flex-direction:column;align-items:stretch}
+  .soc-envoi{width:100%}
+  /* Le retrait des reponses ne bouge pas : c'est la largeur d'une photo, et
+     une photo fait la meme taille ici qu'ailleurs. Le reduire aurait casse
+     l'alignement sous le texte du parent, qui est tout ce qui fait lire la
+     grappe comme une conversation. Il reste 296 px pour ecrire sur un
+     telephone de 390, soit une quarantaine de caracteres par ligne. */
+  /* Les boutons du petit formulaire gardent leur largeur : ils sont deux
+     cote a cote, et la regle generale ci-dessus les etirerait chacun sur
+     toute la ligne, l'un sous l'autre. */
+  .soc-mini-form .soc-envoi{width:auto}
+  .soc-cloche-panneau{
+    position:fixed;top:auto;bottom:12px;left:12px;right:12px;width:auto;
+    max-height:min(60vh,420px);
+  }
+}

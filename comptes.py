@@ -98,9 +98,9 @@ MOTIF_PSEUDO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{1,18}[A-Za-z0-9]$")
 # rendrait /jeux-videos/api ambigu.
 RESERVES = {
     "abyss", "admin", "api", "archive", "cartes", "collection", "compte",
-    "connexion", "cover", "deconnexion", "inscription", "index", "jaquettes",
-    "jeux-videos", "login", "moi", "profil", "quiz", "reinitialiser",
-    "static", "templates", "www", "yugiquiz",
+    "connexion", "cover", "deconnexion", "feed", "inscription", "index",
+    "jaquettes", "jeux-videos", "login", "moi", "profil", "quiz",
+    "reinitialiser", "social", "static", "templates", "www", "yugiquiz",
 }
 
 MDP_MINI = 8
@@ -405,10 +405,95 @@ CREATE TABLE carte(
 CREATE INDEX idx_carte_page ON carte(page_id, famille_id, classeur, rang);
 """
 
+# Migration 16 : le social. Voir social.py.
+#
+# Tout s'accroche a `jeu`, c'est-a-dire a UNE ligne du journal de quelqu'un
+# -- pas au titre du jeu. « Hollow Knight: Silksong » n'est pas un sujet de
+# discussion en soi : ce dont on parle, c'est de ce que Jokrem en a dit dans
+# son journal. Deux personnes qui finissent le meme jeu ouvrent donc deux
+# fils, et c'est la page « Avis » qui les rassemble.
+#
+# Consequence voulue du ON DELETE CASCADE : un jeu retire du journal emporte
+# ses j'aime, ses commentaires et les notifications qui les annoncaient. Un
+# fil sur une ligne qui n'existe plus n'a plus de sujet.
+SOCIAL = """
+CREATE TABLE jaime(
+  jeu_id         INTEGER NOT NULL REFERENCES jeu(id) ON DELETE CASCADE,
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  cree_le        TEXT NOT NULL,
+  -- la cle primaire EST la regle : on n'aime qu'une fois
+  PRIMARY KEY (jeu_id, utilisateur_id)
+);
+
+CREATE TABLE commentaire(
+  id             INTEGER PRIMARY KEY,
+  jeu_id         INTEGER NOT NULL REFERENCES jeu(id) ON DELETE CASCADE,
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  texte          TEXT NOT NULL,
+  cree_le        TEXT NOT NULL
+);
+CREATE INDEX idx_commentaire_jeu ON commentaire(jeu_id, cree_le);
+
+-- Les notifications sont ecrites au moment du geste, pas deduites apres
+-- coup. Deduire « on a commente un fil ou j'ai commente » demanderait de
+-- rejouer la table des commentaires a chaque ouverture de la cloche ; et
+-- surtout, une notification est un fait date : elle doit survivre au
+-- retrait du j'aime qui l'a provoquee.
+CREATE TABLE notification(
+  id              INTEGER PRIMARY KEY,
+  destinataire_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  auteur_id       INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  genre           TEXT NOT NULL,   -- 'jaime', 'commentaire', 'fil', 'reponse'
+  jeu_id          INTEGER NOT NULL REFERENCES jeu(id) ON DELETE CASCADE,
+  commentaire_id  INTEGER REFERENCES commentaire(id) ON DELETE CASCADE,
+  cree_le         TEXT NOT NULL,
+  lu              INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_notification ON notification(destinataire_id, lu, cree_le);
+"""
+
+# Migration 17 : une discussion qui se tient. Voir social.py.
+#
+# Trois manques du social de la migration 16, et ils vont ensemble : on ne
+# pouvait ni repondre a une reponse, ni l'aimer, ni corriger la faute qu'on
+# venait d'y laisser. Un commentaire etait une feuille posee au bas d'une
+# ligne de journal, sans rien autour.
+#
+# `parent_id` sur `commentaire` plutot qu'une table de fils : une reponse EST
+# un commentaire -- meme texte, meme auteur, meme suppression, meme debit --
+# et lui donner sa propre table aurait double chaque requete pour distinguer
+# deux choses que rien ne distingue vraiment.
+#
+# UN SEUL niveau, et c'est une decision : `parent_id` ne pointe jamais vers
+# une reponse, toujours vers un commentaire de tete (social.py le verifie,
+# voir _parent_ou_refus). Un fil qui s'indente a l'infini devient illisible
+# sur la largeur d'un telephone, et personne ne suit une conversation en
+# escalier -- on repond a un commentaire, pas a la reponse de la reponse.
+#
+# `maj_le` NULL veut dire « jamais retouche » : c'est ce qui permet a la page
+# d'ecrire « modifie » sous les seuls commentaires qui l'ont ete, sans
+# comparer deux dates a la seconde pres.
+DISCUSSION = """
+ALTER TABLE commentaire ADD COLUMN parent_id INTEGER
+  REFERENCES commentaire(id) ON DELETE CASCADE;
+ALTER TABLE commentaire ADD COLUMN maj_le TEXT;
+CREATE INDEX idx_commentaire_parent ON commentaire(parent_id);
+
+-- Aimer une reponse. Jumelle de `jaime`, qui fait la meme chose pour une
+-- ligne de journal : meme cle primaire en guise de regle (on n'aime qu'une
+-- fois), meme cascade (un commentaire efface emporte ses coeurs).
+CREATE TABLE jaime_commentaire(
+  commentaire_id INTEGER NOT NULL REFERENCES commentaire(id) ON DELETE CASCADE,
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  cree_le        TEXT NOT NULL,
+  PRIMARY KEY (commentaire_id, utilisateur_id)
+);
+"""
+
 MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
               SUGGESTIONS, BANNIERE, ONGLET_DEFAUT, PRIORITE,
               SUGGESTIONS_VUES, MONITORING, QUIZ_SOURCE, THEMES_JEU,
-              CLASSEUR]
+              CLASSEUR, SOCIAL, DISCUSSION]
 
 _local = threading.local()
 
@@ -1027,6 +1112,26 @@ def suggestions_neuves(u) -> int:
         return 0
 
 
+def notifications_neuves(u) -> int:
+    """La pastille de la cloche, dans la meme reponse que tout le reste.
+
+    L'import est tardif et c'est voulu : social.py importe ce module-ci, le
+    citer en tete ferait un cercle. Au moment ou cette fonction s'execute,
+    tout est charge depuis longtemps.
+
+    Le filet large sert les bases pas encore migrees et les tests qui
+    n'ouvrent pas le social : une pastille absente n'a jamais empeche
+    personne de se connecter.
+    """
+    if u is None:
+        return 0
+    try:
+        import social
+        return social.neuves(u)
+    except Exception:                     # noqa: BLE001 - la pastille n'est pas vitale
+        return 0
+
+
 def etat(u) -> dict:
     """Tout ce que la page doit savoir. Jamais l'empreinte du mot de passe."""
     return {
@@ -1038,7 +1143,10 @@ def etat(u) -> dict:
              # dans `utilisateur` et non a cote : c'est ce que les pages
              # promenent partout, et la pastille suit le bouton de compte
              # jusque dans son menu
-             "suggestionsNeuves": suggestions_neuves(u)},
+             "suggestionsNeuves": suggestions_neuves(u),
+             # la cloche du social, au meme endroit et pour la meme raison :
+             # une pastille suit le compte, pas la page ou on l'affiche
+             "notificationsNeuves": notifications_neuves(u)},
         "masques": [] if u is None else masques(u["id"]),
         # le reglage du Quiz voyage avec le reste : la page des mini-jeux le
         # lit dans la reponse qu'elle demande deja, sans un second appel

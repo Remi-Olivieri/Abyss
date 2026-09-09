@@ -1,5 +1,5 @@
 /* =======================================================================
-   Archive Jeux Vidéos — archive-noyau.js
+   Archive Jeux Vidéos - archive-noyau.js
 
    Les fondations : formats, échelle de couleur, jaquettes, tarifs.
 
@@ -38,7 +38,7 @@ const $ = id => document.getElementById(id);
 /* Ferme une fenêtre au clic sur son fond, mais pas quand ce clic est en
    fait la fin d'une sélection de texte commencée dans la fenêtre : le
    mousedown part du contenu, la souris dérape pendant le geste, et le
-   'click' qui suit atterrit sur le fond — sans ce garde-fou ça fermait la
+   'click' qui suit atterrit sur le fond - sans ce garde-fou ça fermait la
    fenêtre en pleine modification. On ne ferme que si le clic ET le
    mousedown qui le précède visaient tous les deux le fond lui-même. */
 function fermeSurFond(id, ferme){
@@ -52,7 +52,7 @@ function fermeSurFond(id, ferme){
   /* Sur un téléphone, la même fermeture au doigt : la feuille se repousse
      par sa poignée. C'est ici qu'on la branche parce que chaque fenêtre
      passe déjà par là pour dire « voici mon fond, voici comment je me
-     ferme » — les deux seules choses dont le geste a besoin. Voir
+     ferme » - les deux seules choses dont le geste a besoin. Voir
      static/gestes.js. */
   poigneeFeuille(fond, ferme);
 }
@@ -60,9 +60,9 @@ const esc = s => (s===null||s===undefined?'':String(s))
   .replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fr = (n,d=1) => n.toFixed(d).replace('.',',');
 
-function money(v){ return (v===null||v===undefined||v==='') ? '—' : EUR.format(v); }
+function money(v){ return (v===null||v===undefined||v==='') ? '-' : EUR.format(v); }
 function hoursFmt(h){
-  if(h===null||h===undefined) return '—';
+  if(h===null||h===undefined) return '-';
   const H = Math.floor(h), M = Math.round((h-H)*60);
   return M ? `${H} h ${String(M).padStart(2,'0')}` : `${H} h`;
 }
@@ -94,7 +94,7 @@ function toDate(v){
 }
 function dateFmt(d){
   const m=(d||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if(!m) return d || '—';
+  if(!m) return d || '-';
   return `${+m[3]} ${MONTHS[+m[2]-1]} ${m[1]}`;
 }
 function yearOf(d){ const m=(d||'').match(/(\d{4})/); return m ? +m[1] : null; }
@@ -102,7 +102,7 @@ function yearOf(d){ const m=(d||'').match(/(\d{4})/); return m ? +m[1] : null; }
 /* ---------- compte à rebours d'une sortie ----------
    Ce qu'on veut lire d'un jeu convoité : dans combien de temps il sort, ou
    depuis combien de temps il est sorti. Renvoie null quand la date est
-   inconnue ou illisible — une wishlist contient des jeux sans date
+   inconnue ou illisible - une wishlist contient des jeux sans date
    annoncée, et « dans NaN jours » vaut moins que rien.
 
    Le calcul porte sur des dates à minuit et pas sur des millisecondes :
@@ -141,14 +141,14 @@ function compteARebours(iso){
    identifiant IGDB ni plateforme/développeur/genres. Demander à chacun
    d'aller lancer la mise à jour à la main ne marche pas : personne ne le
    fait. La page s'en charge donc seule, une fois, à la première ouverture
-   qui suit — le serveur dit quand (voir contenu(), journal.py).
+   qui suit - le serveur dit quand (voir contenu(), journal.py).
 
    Deux garde-fous, parce que ça écrit dans le classeur de quelqu'un sans
    qu'il l'ait demandé :
 
      - seules les correspondances SÛRES sont écrites. « plusieurs fiches »
        et « à vérifier » sont précisément les cas où l'on risque d'attacher
-       le mauvais jeu — et un mauvais identifiant renomme aussi la jaquette.
+       le mauvais jeu - et un mauvais identifiant renomme aussi la jaquette.
        Ceux-là restent pour la mise à jour manuelle, qui les montre.
      - seul l'identifiant part. Ni date, ni prix : ces colonnes-là ont pu
        être corrigées à la main, et rien ne justifie de les écraser au dos
@@ -250,15 +250,47 @@ async function rattrapageIgdb(){
 }
 
 const FENETRES = ['sheet','form','jaq','bilan','igdb','recherche','export','renom','detail','zoom',
-                 'sgFond'];   // la fenêtre de suggestion, posée par static/suggestion.js
+                 'sgFond',    // la fenêtre de suggestion, posée par static/suggestion.js
+                 // le social, posé par archive-social.js : ces deux-là se
+                 // créent d'eux-mêmes et peuvent manquer, ce que la boucle
+                 // ci-dessous accepte déjà
+                 'socFil','socAvis'];
+/* ---------- la fenêtre du dessus ----------
+   Les fenêtres de l'Archive s'ouvrent les unes depuis les autres, et pas
+   toujours dans le même ordre : la fiche d'un jeu ouvre les avis des
+   joueurs, un avis ouvre sa discussion, et la discussion rouvre la fiche du
+   jeu. Aucun empilement écrit d'avance ne peut satisfaire ce cycle - c'est
+   ce qui faisait que « Avis des joueurs » semblait ne rien faire : la
+   fenêtre s'ouvrait bel et bien, mais sous celle qu'on regardait (#detail
+   est à 79, les fenêtres du social bien plus bas).
+
+   Celle qu'on vient d'ouvrir passe donc devant celles qui étaient déjà là,
+   et rien d'autre n'a besoin d'être décidé. */
+function auPremierPlan(el){
+  if(!el) return;
+  let haut = 60;
+  document.querySelectorAll('.sheet-back').forEach(f=>{
+    if(f === el || f.hidden) return;
+    const z = parseInt(getComputedStyle(f).zIndex, 10);
+    if(!isNaN(z) && z > haut) haut = z;
+  });
+  el.style.zIndex = haut + 1;
+}
+
+/* Qui je suis. Déclaré ici plutôt que dans archive-journal.js depuis que la
+   page Social s'en sert aussi : c'est le fichier que les deux chargent.
+   Rempli par chargeAnnuaire() sur le journal, par le démarrage de la page
+   sur le Social. */
+let MOI = { connecte: false, pseudo: null, avatar: null, notifs: 0 };
+
 function verrouFond(){
   const ouverte = FENETRES.some(id => { const e = $(id); return e && !e.hidden; });
   document.body.style.overflow = ouverte ? 'hidden' : '';
 }
 
 /* La croix d'effacement ne s'affiche que s'il y a quelque chose à effacer.
-   Appelée aussi après les vidages programmés du champ — changement de
-   classeur, retour à l'accueil — sinon elle resterait seule sur un champ
+   Appelée aussi après les vidages programmés du champ - changement de
+   classeur, retour à l'accueil - sinon elle resterait seule sur un champ
    déjà vide. */
 function majCroixQ(){
   const croix = document.getElementById('qClear');
@@ -293,7 +325,7 @@ function statutDe(g){
 /* La clé du tri chronologique : quand j'ai fini ce jeu-là.
 
    Ici et non auprès des autres filtres du mur, parce que la table TRIS
-   juste en dessous ne s'en sert pas plus tard — elle la range dans une
+   juste en dessous ne s'en sert pas plus tard - elle la range dans une
    case au moment même où elle se construit. Une fonction déclarée dans un
    fichier chargé après celui-ci n'existerait pas encore à cet instant :
    les déclarations ne remontent qu'en tête de LEUR fichier, pas en tête de
@@ -302,7 +334,7 @@ function statutDe(g){
 /* La clé du tri chronologique : quand j'ai fini ce jeu-là.
 
    Ici et non auprès des autres filtres du mur, parce que la table TRIS
-   juste en dessous ne s'en sert pas plus tard — elle la range dans une
+   juste en dessous ne s'en sert pas plus tard - elle la range dans une
    case au moment même où elle se construit. Une fonction déclarée dans un
    fichier chargé après celui-ci n'existerait pas encore à cet instant :
    les déclarations ne remontent qu'en tête de LEUR fichier, pas en tête de
@@ -325,7 +357,7 @@ function chronoKey(g){
    [clé, libellé, sens naturel, valeur comparée, départage].
    La valeur peut manquer (pas de note, pas de prix payé) : voir
    comparateur(), qui range ces jeux-là en fin de liste dans les deux sens.
-   Le départage, lui, ne se retourne jamais — il n'est là que pour donner
+   Le départage, lui, ne se retourne jamais - il n'est là que pour donner
    un ordre stable aux ex æquo, pas pour être lu. */
 const TRIS = [
   ['note',    'Note',                     'desc', x => x.rating],
@@ -343,7 +375,7 @@ const DEPART_NOM = (a,b)=>a.name.localeCompare(b.name,'fr');
 
 /* Les tris proposés selon la famille d'onglets. La wishlist a la sienne
    parce qu'elle ne se lit pas comme le reste : c'est un calendrier, et
-   rien n'y a été payé — le prix payé n'y dirait que des tirets. Le solde
+   rien n'y a été payé - le prix payé n'y dirait que des tirets. Le solde
    fait le chemin inverse : un jeu déjà terminé ou en cours n'est plus à
    vendre, ce tri n'a de sens que là où les prix bougent encore. */
 const TRIS_PAR_FAMILLE = {
@@ -362,6 +394,61 @@ const TRI_MEMO = {
   wishlist: { tri:'solde',   dir:'desc' },
 };
 
+/* ---------- parler à Flask ----------
+   Ces trois-là vivaient dans archive-jaquette.js, première venue à
+   interroger le serveur. Elles n'ont pourtant rien qui touche aux images,
+   et la page Social comme la recherche en ont besoin sans rien savoir des
+   jaquettes : leur place est ici, dans le fichier que tout le monde charge.
+   ======================================================================= */
+async function api(chemin, corps){
+  const r = await fetch(chemin, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(corps),
+  });
+  /* Le code de retour est accroché à l'erreur, pas seulement écrit dedans :
+     un 503 (nginx qui limite le débit de /api/) et un câble débranché
+     appellent deux réactions opposées, et seul l'appelant sait laquelle.
+     Sans ce champ les deux se ressemblaient sous un même « serveur
+     injoignable » - de quoi chercher la panne chez IGDB pendant des heures
+     alors que le refus venait de nginx, trois couches plus tôt. */
+  if(!r.ok){
+    const err = new Error('http ' + r.status);
+    err.statut = r.status;
+    throw err;
+  }
+  return r.json();
+}
+/* Ce que le navigateur affichera d'un appel qui n'a pas abouti. Nommer qui
+   a refusé, toujours : « injoignable » est le seul cas où personne n'a
+   répondu, et c'est le seul qui mérite ce mot. */
+function raisonReseau(e){
+  const s = e && e.statut;
+  if(s === 503 || s === 429) return 'trop de requêtes (limite de débit du serveur)';
+  if(s) return `refus du serveur (HTTP ${s})`;
+  return 'serveur injoignable';
+}
+/* nginx plafonne le débit de /api/ pour qu'un inconnu ne puisse pas griller
+   le quota IGDB depuis internet. Or une mise à jour du classeur, c'est un
+   appel par jeu à la file : elle tape dans ce plafond bien avant la fin.
+   Un refus de débit n'est pas une panne, il dit « pas tout de suite » -
+   alors on patiente et on redemande, plutôt que de faire tomber des
+   centaines de jeux d'affilée pendant que tout va bien. */
+const ATTENTE_DEBIT = [3000, 6000];
+async function apiPatient(chemin, corps){
+  for(let essai = 0; ; essai++){
+    try{
+      return await api(chemin, corps);
+    }catch(e){
+      if((e.statut === 503 || e.statut === 429) && essai < ATTENTE_DEBIT.length){
+        await new Promise(reprend => setTimeout(reprend, ATTENTE_DEBIT[essai]));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
 /* ---------- Jaquettes ---------- */
 
 // Le titre en minuscules, sans accents, les mots reliés par des underscores -> nom_du_jeu.webp
@@ -376,7 +463,7 @@ const IMG_DIR = CONFIG.imageDir.endsWith('/') ? CONFIG.imageDir : CONFIG.imageDi
    { slug: horodatage } pour chaque fichier réellement présent dans Cover/,
    servi par /api/jaquettes. Il évite de demander une image qui n'existe pas :
    sans lui, chaque jeu sans jaquette valait un 404 par rendu, et sa case
-   d'initiales n'arrivait qu'après l'échec réseau — d'où le clignotement.
+   d'initiales n'arrivait qu'après l'échec réseau - d'où le clignotement.
 
    Gardé en localStorage pour être là dès le premier pixel : la requête, si
    rapide soit-elle, arrive après le premier rendu, et c'est ce rendu-là
@@ -393,7 +480,7 @@ function retientManifeste(){
 }
 /* Relit le disque et redessine si quelque chose y a bougé depuis la
    dernière visite. En silence : si Flask ne répond pas, on garde ce qu'on
-   avait — au pire on retombe sur le comportement d'avant, un 404 par
+   avait - au pire on retombe sur le comportement d'avant, un 404 par
    jaquette manquante, ce qui reste une page qui marche. */
 async function chargeManifeste(){
   let data;
@@ -407,10 +494,21 @@ async function chargeManifeste(){
   JAQUETTES = data.jaquettes;
   retientManifeste();
   if(JSON.stringify(JAQUETTES) === avant) return;   // le disque n'a pas bougé
+  /* Le Social charge ce fichier sans le mur : ni renderWall ni paintSheet
+     n'y existent, et #sheet non plus. Les trois lignes qui suivent y
+     levaient donc « renderWall is not defined » à chaque chargement, ce qui
+     tuait la suite de la fonction - et avec elle la mise à jour du
+     manifeste, qui est justement ce qu'on était venu faire.
+
+     Rien à redessiner là-bas de toute façon : les jaquettes du fil sont
+     posées à la construction des cartes (voir socialCover), et les cartes
+     arrivent après. On s'arrête donc, au lieu d'échouer. */
+  if(typeof renderWall !== 'function') return;
   /* Redessiner ne coûte presque rien : les tuiles sont réutilisées, seules
      celles dont l'adresse de jaquette a changé sont refaites. */
   renderWall();
-  if(!document.getElementById('sheet').hidden && S.open !== null) paintSheet();
+  const feuille = document.getElementById('sheet');
+  if(feuille && !feuille.hidden && S.open !== null) paintSheet();
 }
 /* ---------- prix du jour des jeux convoités ----------
    { nom: {plein, actuel, remise} }. Rien de tout ça ne peut vivre dans le
@@ -419,7 +517,7 @@ async function chargeManifeste(){
    demande à Steam.
 
    Gardé en localStorage pour que les pastilles soient là dès l'ouverture,
-   et rafraîchi derrière — les deux caches côté serveur, l'appid un mois et
+   et rafraîchi derrière - les deux caches côté serveur, l'appid un mois et
    le tarif six heures, rendent ce rafraîchissement quasi gratuit. */
 const CLE_TARIFS = 'journal-de-jeu:tarifs';
 let TARIFS = {};
@@ -465,8 +563,8 @@ function remiseDe(x){
 }
 
 /* Le nom de fichier d'une jaquette : l'identifiant IGDB quand le jeu en a
-   un, son nom sinon. Deux jeux au titre identique — « God of War » de 2005
-   et celui de 2018, « Doom », « Tomb Raider » — tombaient jusqu'ici sur le
+   un, son nom sinon. Deux jeux au titre identique - « God of War » de 2005
+   et celui de 2018, « Doom », « Tomb Raider » - tombaient jusqu'ici sur le
    même fichier, donc sur une seule image pour les deux.
 
    Doit dire exactement la même chose que cle_jaquette() en Python : c'est
@@ -496,7 +594,7 @@ function initials(n){
 const PRIORITAIRES = 6;
 function coverTag(g, cls, prioritaire){
   /* Les premières partent tout de suite et en priorité haute. « lazy »
-     n'aurait pas retardé leur affichage — elles sont dans le champ — mais
+     n'aurait pas retardé leur affichage - elles sont dans le champ - mais
      leur requête, que le navigateur ne lance qu'une fois la mise en page
      connue. Les suivantes restent paresseuses : un mur de trois cents jeux
      chargé d'un bloc saturerait les connexions, et les premières

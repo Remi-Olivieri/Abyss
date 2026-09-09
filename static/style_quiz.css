@@ -1,5 +1,5 @@
 /* =======================================================================
-   Mini-Jeux / Quiz — la feuille de cette page-ci.
+   Mini-Jeux / Quiz - la feuille de cette page-ci.
 
    Elle se pose SUR style_jeuxvideos.css, chargée juste avant : la palette,
    la remise a zero, .top, .wrap, .cta, .sbtn, .gate et .ac viennent de la,
@@ -89,7 +89,7 @@
 }
 .qz-jeu:focus-visible{outline:2px solid var(--fam);outline-offset:3px}
 /* L'emblème en filigrane, débordant du coin : une illustration, pas une
-   icône — elle occupe la carte sans disputer la place au texte. */
+   icône - elle occupe la carte sans disputer la place au texte. */
 .qz-jeu svg.qz-embleme{
   position:absolute;right:-14px;bottom:-16px;width:104px;height:104px;
   color:var(--fam);opacity:.13;pointer-events:none;
@@ -108,7 +108,7 @@
 }
 /* Le chevron des liens qui sortent du site : on doit le savoir avant de
    cliquer, pas après. Plus aucune carte ne le porte depuis que Yu-Gi-Quiz
-   est une page d'ici — la règle reste pour le premier lien qui repartira
+   est une page d'ici - la règle reste pour le premier lien qui repartira
    vraiment ailleurs. */
 .qz-jeu .qz-sort{
   position:absolute;top:18px;right:20px;color:var(--muted);font-size:13px;
@@ -211,7 +211,7 @@
 
 /* ---------- la jaquette ----------
    Le flou est posé sur l'image, pas sur son cadre : le cadre reste net, et
-   c'est bien le contenu qu'on cherche à lire. `scale` avec — un flou
+   c'est bien le contenu qu'on cherche à lire. `scale` avec - un flou
    gaussien mange ses propres bords, et sans ce léger agrandissement on
    verrait un liseré transparent tout autour.
    --cov-ratio est la proportion des jaquettes de l'Archive : la même image,
@@ -294,6 +294,31 @@
 
 .qz-info{margin:14px 0 0;text-align:center;font-size:12.5px;color:var(--muted);min-height:1.5em}
 .qz-info b{color:var(--gold);font-variant-numeric:tabular-nums}
+
+/* ---------- sous la jaquette : ce qui est refuse, ce qui reste ----------
+   Deux lignes la ou il y avait une phrase. Voir info() dans la page pour
+   le pourquoi ; ici, seulement de quoi les tenir en place.
+
+   La hauteur est reservee pour les deux, meme quand il n'y en a qu'une :
+   sinon le compteur sauterait d'un cran a la premiere erreur, juste sous
+   une image qu'on est en train de regarder. */
+.qz-sous{min-height:3.3em}
+/* Le titre refuse. Barre, il n'a plus besoin qu'on lui dise « non » -- et
+   sur une ligne a lui, un titre a rallonge se coupe au lieu de pousser le
+   compteur hors de vue. */
+.qz-refus{
+  display:block;max-width:min(460px,100%);margin:0 auto 6px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  text-decoration:line-through;text-decoration-color:#E38F89;
+  text-decoration-thickness:1.5px;opacity:.8;
+}
+/* L'essai en cours et la mise. En mono et en petites capitales : c'est un
+   compteur, il se lit d'un coup d'oeil et ne se relit pas. */
+.qz-mise{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;
+}
 
 /* ---------- la fin ---------- */
 .qz-fin{text-align:center}
@@ -394,7 +419,7 @@
 /* ---------- l'en-tête ----------
    Le même bandeau que l'Archive, en plus court : pas d'onglets, pas
    d'engrenage. Le bouton de retour porte l'id d'Abyss pour hériter de sa
-   règle — au-delà de 1520 px il sort de la colonne, comme là-bas. */
+   règle - au-delà de 1520 px il sort de la colonne, comme là-bas. */
 .qz-marque{display:flex;align-items:baseline;gap:10px;flex:0 0 auto}
 .qz-marque b{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.02em}
 .qz-marque span{
@@ -402,7 +427,7 @@
   letter-spacing:.16em;text-transform:uppercase;
 }
 /* Le bouton de suggestion tient l'autre bout de la barre. Sans onglets pour
-   occuper le milieu, c'est cette marge qui l'y pousse — au-delà de 1520 px
+   occuper le milieu, c'est cette marge qui l'y pousse - au-delà de 1520 px
    la règle de l'Archive le sort de la colonne et celle-ci ne compte plus.
 
    Sous 640 px l'en-tête passe en colonne et les boutons s'étirent sur toute
@@ -583,7 +608,7 @@
    La barre de titre est celle de l'Archive : sous 640 px elle passe en une
    rangée d'icônes rondes avec un titre au milieu (voir style_jeuxvideos.css).
    .qz-marque prend la place que .brand occupe là-bas, il lui faut donc les
-   mêmes règles — sans quoi « Mini-Jeux / Quiz » et son sous-titre poussaient
+   mêmes règles - sans quoi « Mini-Jeux / Quiz » et son sous-titre poussaient
    le bouton de suggestion hors de l'écran.
    ======================================================================= */
 @media (max-width:640px){
@@ -638,13 +663,13 @@
 
    Seize cases en carré, et des bandes qui s'empilent au-dessus à mesure
    qu'on résout : le plateau rétrécit, ce qu'on a trouvé reste sous les yeux.
-   C'est la forme du jeu, et elle tient toute seule — il n'y a rien à faire
+   C'est la forme du jeu, et elle tient toute seule - il n'y a rien à faire
    défiler entre la grille et ce qu'on vient d'en tirer.
 
    Quatre couleurs pour quatre groupes, données dans l'ordre d'arrivée (que
    le serveur mélange exprès : la couleur ne dit jamais la nature du lien).
-   Elles sont choisies dans ce que la page utilise déjà — l'or du site, le
-   bleu de la wishlist, le vert des bonnes réponses — plutôt qu'inventées.
+   Elles sont choisies dans ce que la page utilise déjà - l'or du site, le
+   bleu de la wishlist, le vert des bonnes réponses - plutôt qu'inventées.
    ======================================================================= */
 .gc{max-width:760px;margin:0 auto}
 
@@ -670,7 +695,7 @@
   color:var(--text);
 }
 /* Dévoilée en perdant, pas trouvée : la teinte reste, pour qu'on relie la
-   bande à ce qu'on cherchait, mais elle s'éteint — ce n'est pas la même
+   bande à ce qu'on cherchait, mais elle s'éteint - ce n'est pas la même
    chose de l'avoir vue. */
 .gc-bande.ratee{opacity:.5}
 .gc-bande.ratee b::after{content:" · non trouvé";opacity:.7}
@@ -687,14 +712,14 @@
 .gc-plateau{
   display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
 }
-/* Le temps qu'une réponse s'anime, le plateau ne répond plus — ni au clic,
+/* Le temps qu'une réponse s'anime, le plateau ne répond plus - ni au clic,
    qui est déjà ignoré côté script, ni au survol, qui laissait croire le
    contraire. Voir gcAnime() dans templates/quiz.html. */
 .gc-plateau.fige{pointer-events:none}
 /* La case est d'abord une jaquette, le titre vient par-dessus. Elle était
    en filigrane à 17 % : on lisait seize titres, l'image ne servait qu'à
-   meubler. Une jaquette se reconnaît avant de se lire — c'est même tout le
-   propos de « Jaquette floue » deux jeux plus haut —, et un lien entre
+   meubler. Une jaquette se reconnaît avant de se lire - c'est même tout le
+   propos de « Jaquette floue » deux jeux plus haut -, et un lien entre
    quatre jeux saute bien plus vite aux yeux sur des images. D'où la case
    haute, l'image nette, et le titre posé en bas sur un voile. */
 .gc-case{
@@ -709,7 +734,7 @@
 }
 /* La jaquette, dans une couche à part et non en background de la case :
    c'est ce qui permet de poser le voile entre elle et le texte sans la
-   teinter — même procédé que les bannières de l'Archive. */
+   teinter - même procédé que les bannières de l'Archive. */
 .gc-case::before{
   content:'';position:absolute;inset:0;z-index:-2;
   background-image:var(--fond);background-size:cover;background-position:center;
@@ -718,7 +743,7 @@
 /* Le voile. Franc sous le titre, presque rien en haut : l'image reste
    lisible sur les deux tiers de la case, et le texte ne se bat jamais
    contre un ciel clair ou une armure blanche. Posé seulement quand il y a
-   une jaquette — sur une case nue il ne ferait qu'assombrir le vide. */
+   une jaquette - sur une case nue il ne ferait qu'assombrir le vide. */
 .gc-case.jaq::after{
   content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(to top,
@@ -732,8 +757,8 @@
 }
 /* ---------- survol, appui, sélection ----------
    Trois états, et une seule règle qui les tient : la jaquette ne disparaît
-   jamais. C'est elle qu'on compare — quatre images qu'on rapproche des
-   yeux —, et l'ancienne sélection la faisait tomber à 20 % d'opacité :
+   jamais. C'est elle qu'on compare - quatre images qu'on rapproche des
+   yeux -, et l'ancienne sélection la faisait tomber à 20 % d'opacité :
    désigner une case revenait à effacer ce sur quoi on était en train de
    réfléchir. Tout se dit donc autour et par-dessus, jamais à sa place.
 
@@ -767,7 +792,7 @@
 /* Désignée. La jaquette passe au contraire à pleine lumière, et la
    sélection se dit par un cerne d'or épais, une lueur autour, le titre en
    or et une coche dans le coin. Le fond doré ne se voit que sur les cases
-   sans jaquette — ailleurs l'image le couvre, ce qui est exactement ce
+   sans jaquette - ailleurs l'image le couvre, ce qui est exactement ce
    qu'on veut. */
 .gc-case.prise{
   border-color:var(--gold);
@@ -782,7 +807,7 @@
    et l'ombre portée du texte se renforce plutôt que de disparaître. */
 .gc-case.prise span{text-shadow:0 1px 4px rgba(0,0,0,.95)}
 
-/* La coche. Le cerne dit « celle-ci » ; la coche dit « elle est prise » —
+/* La coche. Le cerne dit « celle-ci » ; la coche dit « elle est prise » -
    et sur quatre cases d'un coup, c'est elle qu'on compte du regard sans
    relire les titres. Elle arrive en rebondissant : c'est ce qui accuse
    réception du clic, à l'endroit exact où l'on vient de cliquer. */
@@ -800,7 +825,7 @@
 
 /* Le groupe part : les quatre cases s'allument ensemble juste avant que la
    grille ne se redessine. Sans ce temps d'arrêt, il disparaîtrait sans
-   qu'on ait vu lesquelles — et on veut les revoir en vert, jaquettes
+   qu'on ait vu lesquelles - et on veut les revoir en vert, jaquettes
    comprises, pour comprendre le lien qu'on vient de trouver. */
 .gc-case.juste{
   border-color:#9BE3BE;
@@ -812,7 +837,7 @@
 .gc-case.juste .gc-coche{background:#9BE3BE;color:#0E2019}
 
 /* Raté : une secousse courte, la seule chose qu'on lise sans la lire.
-   L'image recule à moitié — la case vire au rouge sans pour autant
+   L'image recule à moitié - la case vire au rouge sans pour autant
    s'effacer, on doit pouvoir regarder ce qu'on vient de proposer. */
 .gc-case.faux{
   border-color:#B4295C;
@@ -825,7 +850,7 @@
 .gc-case.faux .gc-coche{background:#B4295C;color:#FFE8EE}
 /* L'échelle est reprise dans chaque étape : une animation remplace le
    transform de la case, et sans elle la case bondirait à sa taille pleine
-   le temps de la secousse — un sursaut vertical par-dessus l'horizontal. */
+   le temps de la secousse - un sursaut vertical par-dessus l'horizontal. */
 @keyframes gc-secousse{
   10%,90%{transform:scale(.965) translateX(-2px)}
   30%,70%{transform:scale(.965) translateX(3px)}
@@ -843,7 +868,7 @@
 /* Il rejoue son apparition à chaque essai, même quand il redit exactement
    la même chose : deux « Presque » de suite s'écrivaient au même endroit
    sans que rien ne bouge, et le jeu avait l'air de n'avoir pas entendu.
-   C'est gcDitMessage() qui repose la classe — voir templates/quiz.html. */
+   C'est gcDitMessage() qui repose la classe - voir templates/quiz.html. */
 .gc-message.dit{animation:gc-dit .3s cubic-bezier(.2,.8,.3,1)}
 @keyframes gc-dit{
   from{opacity:0;transform:translateY(-5px)}
@@ -871,7 +896,7 @@
 .gc-ok:disabled{opacity:.4;cursor:default;filter:none}
 
 @media (max-width:640px){
-  /* Le carré reste un carré — voir plus haut. Ce sont le texte et les
+  /* Le carré reste un carré - voir plus haut. Ce sont le texte et les
      écarts qui se resserrent, pas la grille qui se déplie. */
   .gc-plateau{gap:6px}
   .gc-case{min-height:104px;padding:6px 4px;font-size:10.5px;border-radius:10px}
@@ -889,7 +914,7 @@
 }
 /* Mouvement réduit : tout ce qui bouge s'arrête, rien de ce qui informe ne
    part. Le cerne, la couleur, la coche et le texte du message disent déjà
-   tout — la secousse, le rebond et le soulèvement n'étaient que la manière
+   tout - la secousse, le rebond et le soulèvement n'étaient que la manière
    de le dire. */
 @media (prefers-reduced-motion:reduce){
   .gc-case,.gc-case:hover:not(:disabled),.gc-case:active:not(:disabled),

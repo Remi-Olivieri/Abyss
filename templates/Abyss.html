@@ -160,8 +160,12 @@
 
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
-     /api/moi — un defer arriverait peut-être trop tard. -->
+     /api/moi - un defer arriverait peut-être trop tard. -->
 <script src="/static/compte.js"></script>
+<!-- Les zones de texte grandissent en écrivant, ici comme partout ailleurs
+     sur le site : une taille de départ, puis le champ suit le texte au lieu
+     de demander qu'on tire sa poignée. Voir static/champs.js. -->
+<script src="/static/champs.js"></script>
 <script>
 /* =========================================================
    LA SEULE PARTIE À MODIFIER
@@ -244,7 +248,7 @@ const el = (id) => document.getElementById(id);
    État de la session
    ========================================================= */
 /* Une seule source de vérité : ce que le serveur a répondu. Le front ne
-   décide jamais tout seul qu'il est connecté — un cookie HttpOnly n'est
+   décide jamais tout seul qu'il est connecté - un cookie HttpOnly n'est
    même pas lisible d'ici, et c'est très bien ainsi. */
 let MOI = { connecte: false, utilisateur: null, masques: [],
             inscriptions: { ouvertes: true, restantes: null, libre_a: null } };
@@ -288,7 +292,7 @@ function poseEtat(data) {
    ========================================================= */
 /* `admin: true` sur un projet le réserve à l'administration : un projet en
    chantier n'a pas à s'afficher chez les autres tant qu'il n'est pas prêt.
-   Ce n'est pas une protection — c'est l'API du projet qui refuse — juste de
+   Ce n'est pas une protection - c'est l'API du projet qui refuse - juste de
    quoi ne pas mettre une porte fermée sous les yeux de tout le monde. */
 function visibles() {
   const admin = MOI.connecte && MOI.utilisateur && MOI.utilisateur.admin;
@@ -331,12 +335,12 @@ function dessineGrille() {
    Le bouton et son menu sont dessinés par static/compte.js : même
    médaillon, mêmes entrées, dans le même ordre sur les quatre pages
    d'Abyss. Cette page-ci était la plus complète des trois copies qui
-   avaient fini par diverger — c'est elle qui a servi de modèle.
+   avaient fini par diverger - c'est elle qui a servi de modèle.
 
    Les deux réglages sont ce qui reste de propre à Abyss : c'est la seule
    page ouverte aux visiteurs, donc la seule où le bouton doit proposer
    « Se connecter », et la seule où se déconnecter ne veut pas dire partir
-   — on redescend en visiteur sur place, sans recharger. */
+   - on redescend en visiteur sur place, sans recharger. */
 function dessineCompte() {
   Compte.dessine(MOI, {
     surConnexion: () => ouvreAuth("connexion"),
@@ -374,7 +378,7 @@ function fermeTout() {
    Le formulaire demande d'être connecté : une suggestion anonyme ne peut
    pas s'écrire « Pseudo - Message », et surtout on ne saurait à qui
    revenir pour en discuter. Non connecté, le bouton ouvre donc la
-   connexion — pas un refus, juste l'étape d'avant. */
+   connexion - pas un refus, juste l'étape d'avant. */
 const SUGG_MAXI = 1000;
 function majCompteurSugg() {
   const reste = SUGG_MAXI - el("sMessage").value.length;

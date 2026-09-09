@@ -123,7 +123,7 @@ input,textarea{
    pas un lien souligné qui jure avec le reste des boutons de la barre.
    position + z-index : .compte est en position:relative pour ancrer son
    menu déroulant, ce qui le fait peindre par-dessus tout voisin statique
-   sur leur zone de recouvrement — invisible, mais le clic y reste pris.
+   sur leur zone de recouvrement - invisible, mais le clic y reste pris.
    Le bouton retour gagne toujours l'empilement, quoi qu'il arrive à côté. */
 .back{
   position:relative;z-index:1;
@@ -564,7 +564,12 @@ input,textarea{
   background:rgba(3,8,15,.66);
   transition:border-color .2s ease,box-shadow .2s ease;
 }
-.champ textarea{resize:vertical;min-height:96px;line-height:1.5}
+/* Pas de poignee : le champ grandit tout seul avec le texte, de ces 96 px
+   jusqu'a son plafond, apres quoi c'est lui qui defile. Voir
+   static/champs.js -- min-height est le plancher qu'il lit, max-height le
+   plafond, et les deux sont ici parce que c'est une decision de mise en
+   page et non de comportement. */
+.champ textarea{resize:none;min-height:96px;max-height:340px;line-height:1.5}
 .champ input:focus,.champ textarea:focus,.champ select:focus{
   outline:none;
   border-color:rgba(120,200,230,.55);

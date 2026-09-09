@@ -1,11 +1,11 @@
 /* =======================================================================
-   Gestes du doigt — static/gestes.js
+   Gestes du doigt - static/gestes.js
 
-   Deux gestes, et rien de plus : le balayage — un jeu, une page, une carte
-   plus loin — et la feuille qu'on repousse vers le bas pour la fermer.
+   Deux gestes, et rien de plus : le balayage - un jeu, une page, une carte
+   plus loin - et la feuille qu'on repousse vers le bas pour la fermer.
 
    Une règle tenue partout : aucun geste n'est le seul chemin vers son
-   action. Chacun double un bouton qui reste à l'écran — les flèches de la
+   action. Chacun double un bouton qui reste à l'écran - les flèches de la
    fiche, celles du classeur, la croix de fermeture. Un glissement ne
    s'annonce nulle part et personne ne le devine tout seul ; il fait gagner
    du temps à qui le trouve, il ne retire rien à qui l'ignore.
@@ -25,7 +25,7 @@
 const GESTE_HORS = 'input,textarea,select,[contenteditable],.geste-hors';
 
 /* Un balayage qui vient d'agir laisse derrière lui un « click », posé sur
-   ce qui se trouvait sous le doigt au départ — la tuile d'où l'on est
+   ce qui se trouvait sous le doigt au départ - la tuile d'où l'on est
    parti, qui ouvrirait sa fiche par-dessus la page qu'on vient de tourner.
    On mange celui-là, et lui seul : l'écoute est en capture, elle part au
    premier clic, et un minuteur la retire si aucun ne vient. */
@@ -41,7 +41,7 @@ function avaleClic(){
    directions absentes ne sont pas surveillées.
 
    Options : `seuil`, la distance à parcourir (55 px par défaut, soit un
-   bon centimètre de pouce — assez pour qu'un tremblement n'y arrive pas,
+   bon centimètre de pouce - assez pour qu'un tremblement n'y arrive pas,
    assez peu pour tenir dans un geste), et `quand`, consultée à chaque
    départ, pour les endroits où le geste n'a de sens que sur un téléphone. */
 function glissement(cible, actions){
@@ -89,7 +89,7 @@ function glissement(cible, actions){
   cible.addEventListener('pointerup', conclut, { passive: true });
   /* pointercancel : le navigateur a repris le doigt pour faire défiler.
      Le geste est fini pour nous, mais s'il avait déjà parcouru sa distance
-     sur le bon axe, il comptait quand même — l'abandonner ici donnerait un
+     sur le bon axe, il comptait quand même - l'abandonner ici donnerait un
      balayage qui marche une fois sur deux selon l'angle de la main. */
   cible.addEventListener('pointercancel', conclut, { passive: true });
 }
@@ -100,13 +100,13 @@ function glissement(cible, actions){
    d'où la feuille venait sans qu'on puisse l'attraper ; elle s'attrape.
 
    Le geste part de la barre du haut et d'elle seule. Le corps de la
-   feuille défile — y guetter un glissement vers le bas obligerait à
+   feuille défile - y guetter un glissement vers le bas obligerait à
    arbitrer entre les deux à chaque doigt posé, et à se tromper parfois sur
    une feuille qu'on était en train de lire. La barre, elle, ne défile pas :
    elle est collée en haut, toujours sous le pouce, et n'a rien d'autre à
    faire. C'est ce que dit `touch-action:none` sur .sheet-tools.
 
-   `fond` est le voile qui porte la feuille — le même qu'on donne à
+   `fond` est le voile qui porte la feuille - le même qu'on donne à
    fermeSurFond(), et il survit à toutes les ouvertures, d'où l'écoute
    déléguée. `ferme` est la fermeture de la fenêtre, exactement celle du
    clic sur le voile : repousser une feuille abandonne ce qu'on y avait
@@ -183,7 +183,7 @@ function poigneeFeuille(fond, ferme, opts){
     if(!boite) return;
     d = { y0: e.clientY, t0: e.timeStamp, t: e.timeStamp, dy: 0, boite: boite, pris: false };
     /* Le doigt quitte la poignée dès les premiers pixels : la suite du
-       geste s'écoute sur le document, sans capture de pointeur — celle-ci
+       geste s'écoute sur le document, sans capture de pointeur - celle-ci
        redirigerait aussi le « click » et avalerait l'appui sur la croix. */
     document.addEventListener('pointermove', bouge, { passive: true });
     document.addEventListener('pointerup', lache, { passive: true });

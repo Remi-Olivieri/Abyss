@@ -1,0 +1,2746 @@
+{
+	"cards": [
+		{
+			"id": 1,
+			"name": "Dresseur de Bêtes",
+			"type": "Bête",
+			"arrows": ["up", "down"],
+			"description": "▶ Invoquez 1 [Bête] dans une zone pointée : Piochez 1 carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "hand",
+							"target_filter": { "type": "Bête" },
+							"location": "pointed_zone"
+						},
+						{
+							"action": "draw",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 2,
+			"name": "Souris Escrimeuse",
+			"type": "Bête",
+			"arrows": ["up"],
+			"description": "▶ Renvoyez la carte pointée à la main : Si vous avez renvoyé un [Bête] : Invoquez la carte renvoyée.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "bounce_card",
+							"target": "pointed_card",
+							"location": "hand"
+						},
+						{
+							"condition": { "last_target.type": "Bête" },
+							"action": "summon_card",
+							"target": "last_target",
+							"location": "ally"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 3,
+			"name": "Tortue Protectrice",
+			"type": "Bête",
+			"arrows": ["down", "right"],
+			"description": "◆ Les [Bête] pointés sont inaffectés par les effets ennemis.",
+			"effects": [
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "add_unaffected",
+							"target": "pointed_card",
+							"target_filter": { "type": "Bête" },
+							"source": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 4,
+			"name": "Requin Pirate",
+			"type": "Bête",
+			"arrows": ["up", "down"],
+			"description": "▶ Invoquez 1 [Bête] dans une zone ennemie : Détruisez 1 carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "hand",
+							"target_filter": { "type": "Bête" },
+							"location": "enemy"
+						},
+						{
+							"action": "destroy_card",
+							"target": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 5,
+			"name": "Saut de Liane",
+			"type": "Bête",
+			"arrows": ["right"],
+			"description": "▶ Déplacez la carte pointée.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "pointed_card",
+							"location": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 6,
+			"name": "Grenouille Ninja",
+			"type": "Bête",
+			"arrows": ["up", "down", "left"],
+			"description": "Invocable dans une zone ennemie.\n◆ Les cartes pointées deviennent des [Bête] sans effet.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_area": "field"
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "pointed_card",
+							"type": "Bête"
+						},
+						{
+							"action": "remove_effect",
+							"target": "pointed_card"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 7,
+			"name": "Chat Préhistorique",
+			"type": "Bête",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "❶ Si cette carte pointe un [Bête] : Déplacez 1 carte d'1 zone.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"condition": { "pointed_card.type": "Bête" },
+							"action": "move_card",
+							"target": "field",
+							"location": "zone",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 8,
+			"name": "Yéti des Neiges",
+			"type": "Bête",
+			"arrows": ["down", "left"],
+			"description": "▶ Annulez l'effet d'1 carte.\n❶ Supprimez 1 flèche.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "remove_effect",
+							"target": "field"
+						}
+					]
+				},
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "remove_arrow",
+							"target": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 9,
+			"name": "Lézard Sournois",
+			"type": "Bête",
+			"arrows": ["left", "right"],
+			"description": "▶ Faites devenir [Bête] 1 carte.\n❶ Faites devenir cette carte d'un type sur le terrain.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "field",
+							"type": "Bête"
+						}
+					]
+				},
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "self",
+							"type": { "copy_from": "field" }
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 10,
+			"name": "Chèvre Messagère",
+			"type": "Bête",
+			"arrows": ["up", "left", "right"],
+			"description": "▶ Déplacez 1 carte ennemie dans une zone pointée.\n◆ Annulez les effets des cartes pointées.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "enemy",
+							"location": "pointed_zone"
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "remove_effect",
+							"target": "pointed_card"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 11,
+			"name": "Coq Enragé",
+			"type": "Bête",
+			"arrows": ["right"],
+			"description": "▶ Tournez 1 carte : Déplacez cette carte dans une zone ennemie.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "rotate_card",
+							"target": "field"
+						},
+						{
+							"action": "move_card",
+							"target": "self",
+							"location": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 12,
+			"name": "Sanglier Agressif",
+			"type": "Bête",
+			"arrows": ["up", "right"],
+			"description": "▶ Renvoyez 1 carte sur le dessus du deck.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "bounce_card",
+							"target": "field",
+							"location": "top_deck"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 13,
+			"name": "Roi Hibou",
+			"type": "Bête",
+			"arrows": ["left", "right"],
+			"description": "Invocable dans une zone ennemie.\n▶ Échangez de place cette carte avec une carte pointée.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_area": "field"
+				},
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "swap_card",
+							"target": "self",
+							"location": "pointed_card"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 14,
+			"name": "Tigre de la Terre",
+			"type": "Bête",
+			"arrows": ["up", "right"],
+			"description": "Invocable uniquement si vous possèdez une Chaîne-3 [Bête].\n◆ Inaffecté par les effets ennemis.\n◆ Si cette carte pointe \"Lion du Ciel\" : Vous gagnez la partie.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_condition": {
+						"control_chain": {
+							"controller": "ally",
+							"min_length": 3,
+							"type": "Bête"
+						}
+					}
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "add_unaffected",
+							"target": "self",
+							"source": "enemy"
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"condition": { "pointed_card.name": "Lion du Ciel" },
+							"action": "win_game"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 15,
+			"name": "Lion du Ciel",
+			"type": "Bête",
+			"arrows": ["down", "left"],
+			"description": "Invocable uniquement si l'ennemi possède plus de [Bête] que vous.\n◆ Inaffecté par les effets ennemis.\n◆ Si cette carte pointe \"Tigre de la Terre\" : Vous gagnez la partie.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_condition": {
+						"compare": {
+							"left": { "zone": "enemy", "type": "Bête" },
+							"operator": ">",
+							"right": { "zone": "ally", "type": "Bête" }
+						}
+					}
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "add_unaffected",
+							"target": "self",
+							"source": "enemy"
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"condition": { "pointed_card.name": "Tigre de la Terre" },
+							"action": "win_game"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 16,
+			"name": "Sentinelle des Profondeurs",
+			"type": "Océan",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "❶ Rajoutez 1 flèche qui pointe cette carte aux [Océan] pointés.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+					"repeat": true,
+
+					"actions": [
+						{
+							"action": "add_arrow",
+							"target": "pointed_card",
+							"target_filter": { "type": "Océan" },
+							"toward": "self"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 17,
+			"name": "Fée des Abysses",
+			"type": "Océan",
+			"arrows": ["up", "down"],
+			"description": "◆ Compte comme 2 cartes pour vos chaînes.",
+			"effects": [
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "set_chain_weight",
+							"target": "self",
+							"weight": 2
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 18,
+			"name": "Nécromancienne Aquatique",
+			"type": "Océan",
+			"arrows": ["right"],
+			"description": "▶ Invoquez la carte du dessous de votre deck dans la zone pointée.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "bottom_deck",
+							"location": "pointed_zone"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 19,
+			"name": "Attaque du Kraken",
+			"type": "Océan",
+			"arrows": ["down"],
+			"description": "▶ Déplacez 1 carte ennemie dans la zone pointée.\n◆ Les cartes pointées deviennent des [Océan] sans effet.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "enemy",
+							"location": "pointed_zone"
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "pointed_card",
+							"type": "Océan"
+						},
+						{
+							"action": "remove_effect",
+							"target": "pointed_card"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 20,
+			"name": "Déesse de l'Eau",
+			"type": "Océan",
+			"arrows": ["down", "left", "right"],
+			"description": "◆ Si vous possédez une Chaîne-3 [Océan] : Les cartes pointées sont inaffecté par les effets ennemis.",
+			"effects": [
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"condition": {
+								"control_chain": {
+									"controller": "ally",
+									"min_length": 3,
+									"type": "Océan"
+								}
+							},
+							"action": "add_unaffected",
+							"target": "pointed_card",
+							"source": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 21,
+			"name": "Esprit du Léviathan",
+			"type": "Océan",
+			"arrows": ["down", "left", "right"],
+			"description": "Invocable dans une zone ennemie.\n▶ Détruisez 1 carte pointée : Invoquez 1 carte à l'emplacement de la carte détruite.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_area": "field"
+				},
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "pointed_card"
+						},
+						{
+							"action": "summon_card",
+							"target": "hand",
+							"location": "last_target.zone"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 22,
+			"name": "Ver Torrentiel",
+			"type": "Océan",
+			"arrows": ["left", "right"],
+			"description": "❶ Si vous possédez une Chaîne-4 [Océan] : Détruisez 1 carte.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"condition": {
+								"control_chain": {
+									"controller": "ally",
+									"min_length": 4,
+									"type": "Océan"
+								}
+							},
+							"action": "destroy_card",
+							"target": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 23,
+			"name": "Crabe d'Eau",
+			"type": "Océan",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "Invocable uniquement dans une zone ennemie.\n◀ Invoquez cette carte dans une zone ennemie.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_area": "enemy"
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "self",
+							"location": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 24,
+			"name": "Noyade",
+			"type": "Océan",
+			"arrows": ["right"],
+			"description": "▶ Détruisez la carte pointée : Détruisez 1 carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "pointed_card"
+						},
+						{
+							"action": "destroy_card",
+							"target": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 25,
+			"name": "Sorcier Triton",
+			"type": "Océan",
+			"arrows": ["up"],
+			"description": "▶ Échangez de place la carte pointée avec une carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "swap_card",
+							"target": "pointed_card",
+							"location": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 26,
+			"name": "Sphère Aqua",
+			"type": "Océan",
+			"arrows": ["up", "left", "right"],
+			"description": "▶ Faites devenir [Océan] 1 carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "field",
+							"type": "Océan"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 27,
+			"name": "Méduse Électrique",
+			"type": "Océan",
+			"arrows": ["left", "right"],
+			"description": "◆ Les cartes pointées ne peuvent pas se déplacer.",
+			"effects": [
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "prevent_action",
+							"target": "pointed_card",
+							"action_type": "move_card"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 28,
+			"name": "Trésor du Naufrage",
+			"type": "Océan",
+			"arrows": ["down"],
+			"description": "▶ Détruisez la carte pointée : Piochez 1 carte pour chaque flèche qu'elle avait.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "pointed_card"
+						},
+						{
+							"action": "draw",
+							"amount": "last_target.arrows.length"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 29,
+			"name": "Paladin de Poséidon",
+			"type": "Océan",
+			"arrows": ["down", "right"],
+			"description": "◆ Si un [Océan] allié doit être détruit : Détruisez cette carte à la place.",
+			"effects": [
+				{
+					"trigger": "on_would_destroy",
+					"trigger_filter": { "type": "Océan", "controller": "ally" },
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "self"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 30,
+			"name": "Poséidon, Dieu des Océans",
+			"type": "Océan",
+			"arrows": ["up", "left", "right"],
+			"description": "Invocable uniquement si vous possédez une Chaîne-5 [Océan].\n◆ Si l'ennemi possède un [Océan] : Vous gagnez la partie.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_condition": {
+						"control_chain": {
+							"controller": "ally",
+							"min_length": 5,
+							"type": "Océan"
+						}
+					}
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"condition": {
+								"compare": {
+									"left":  { "zone": "enemy", "type": "Océan" },
+									"operator": ">",
+									"right": 0
+								}
+							},
+							"action": "win_game"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 31,
+			"name": "Fantôme Malicieux",
+			"type": "Horreur",
+			"arrows": ["up", "right"],
+			"description": "▶ Échangez de place cette carte avec une carte ennemie.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "swap_card",
+							"target": "self",
+							"location": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 32,
+			"name": "Ombre Manipulatrice",
+			"type": "Horreur",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "❶ Si cette carte pointe un [Horreur] : Déplacez 1 [Horreur] ennemi.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"condition": { "pointed_card.type": "Horreur" },
+							"action": "move_card",
+							"target": "enemy",
+							"target_filter": { "type": "Horreur" }
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 33,
+			"name": "Épouvantail Effrayant",
+			"type": "Horreur",
+			"arrows": ["up"],
+			"description": "Invocable dans une zone ennemie.\n▶ Déplacez la carte pointée d'1 zone.\n◆ Même si cette carte ne pointe rien, elle n'est pas détruite à la fin du tour.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_area": "field"
+				},
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "pointed_card",
+							"location": "zone",
+							"amount": 1
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "add_indestructible",
+							"target": "self",
+							"source": "game_rule"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 34,
+			"name": "Zombie Forgeron",
+			"type": "Horreur",
+			"arrows": ["down", "right"],
+			"description": "▶ Faites devenir [Horreur] une carte.\n◆ Les cartes pointées deviennent [Horreur].",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "field",
+							"type": "Horreur"
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "pointed_card",
+							"type": "Horreur"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 35,
+			"name": "Créature Souterraine",
+			"type": "Horreur",
+			"arrows": ["down", "left", "right"],
+			"description": "▶ Détruisez 1 carte : Déplacez cette carte à l'emplacement de la carte détruite.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "field",
+							"target_filter": { "not_name": "Créature Souterraine" }
+						},
+						{
+							"action": "move_card",
+							"target": "self",
+							"location": "last_target.zone"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 36,
+			"name": "Tisseuse d'Effroi",
+			"type": "Horreur",
+			"arrows": ["left", "right"],
+			"description": "Invocable dans une zone ennemie.\n◆ Si une carte est invoquée dans une zone alliée : Déplacez-la dans une zone pointée.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_area": "field"
+				},
+				{
+					"trigger": "on_card_summon",
+					"condition": { "location": "ally" },
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "triggered_card",
+							"location": "pointed_zone"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 37,
+			"name": "Retour des Morts",
+			"type": "Horreur",
+			"arrows": ["down"],
+			"description": "▶ Invoquez la carte du dessous de votre deck dans une zone pointée par un [Horreur].",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "bottom_deck",
+							"location": "pointed_zone_by_type",
+							"location_filter": { "type": "Horreur", "zone": "field" }
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 38,
+			"name": "Loup-Garou Affamé",
+			"type": "Horreur",
+			"arrows": ["down", "left", "right"],
+			"description": "❶ Déplacez cette carte dans une zone ennemie.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "self",
+							"location": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 39,
+			"name": "Squelette Enchanteur",
+			"type": "Horreur",
+			"arrows": ["up", "down"],
+			"description": "❶ Déplacez une carte pointée dans une zone ennemie.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "pointed_card",
+							"location": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 40,
+			"name": "Arbre des Morts",
+			"type": "Horreur",
+			"arrows": ["down", "right"],
+			"description": "◆ Si cette carte doit être détruite : Détruisez un Non-[Horreur] allié à la place.",
+			"effects": [
+				{
+					"trigger": "on_would_destroy",
+					"trigger_filter": { "name": "Arbre des Morts", "controller": "ally" },
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "ally",
+							"target_filter": { "not_type": "Horreur" }
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 41,
+			"name": "Entité des Ténèbres",
+			"type": "Horreur",
+			"arrows": ["up", "left", "right"],
+			"description": "Invocable dans une zone ennemie.\n◆ Supprimez les flèches des alliés Non-[Horreur] qui pointent un [Horreur].",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_area": "field"
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "remove_arrow",
+							"target": "ally",
+							"target_filter": { "not_type": "Horreur" },
+							"toward": { "type": "Horreur" }
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 42,
+			"name": "Démon Tricéphale",
+			"type": "Horreur",
+			"arrows": ["left", "right"],
+			"description": "▶ Piochez 3 cartes : Détruisez 1 carte de votre main : Invoquez 1 [Horreur] dans une zone ennemie.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "draw",
+							"amount": 3
+						},
+						{
+							"action": "destroy_card",
+							"target": "hand"
+						}, 
+						{
+							"action": "summon_card",
+							"target": "hand",
+							"location": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 43,
+			"name": "La Faucheuse",
+			"type": "Horreur",
+			"arrows": ["right"],
+			"description": "▶ Détruisez la carte pointée : Piochez autant de cartes que de [Horreur] ennemis.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "pointed_card"
+						},
+						{
+							"action": "draw",
+							"amount": { "count": { "zone": "enemy", "not_type": "Pyramide" } }
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 44,
+			"name": "Terreur d'Os",
+			"type": "Horreur",
+			"arrows": ["up", "left", "right"],
+			"description": "❷ Retirez 4 compteurs [Horreur] : Détruisez 1 carte.\n◆ Ajoutez 1 compteur [Horreur] à cette carte quand une carte est détruite.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 2,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "remove_counter",
+							"target": "self",
+							"amount": 4,
+							"counter_type": "Horreur"
+						},
+						{
+							"action": "destroy_card",
+							"target": "field"
+						}
+					]
+				},
+				{
+					"trigger": "on_card_destroy",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "add_counter",
+							"target": "self",
+							"amount": 1,
+							"counter_type": "Horreur"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 45,
+			"name": "Corbeau et Dragon Squelette",
+			"type": "Horreur",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "Invocable uniquement si l'ennemi possède une Chaîne-4 [Horreur].\n▶ Vous gagnez la partie.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_condition": {
+						"control_chain": {
+							"controller": "enemy",
+							"min_length": 4,
+							"type": "Horreur"
+						}
+					}
+				},
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "win_game"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 46,
+			"name": "Aéro, Mage de l'Air",
+			"type": "Magie",
+			"arrows": ["down", "left"],
+			"description": "▶ Invoquez \"Élémentaire d'Aéro\" du deck : Déplacez 1 carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "deck",
+							"target_filter": { "name": "Élémentaire d'Aéro"},
+							"location": "ally"
+						},
+						{
+							"action": "move_card",
+							"target": "field",
+							"location": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 47,
+			"name": "Pyro, Mage du Feu",
+			"type": "Magie",
+			"arrows": ["up", "right"],
+			"description": "▶ Invoquez \"Élémentaire de Pyro\" du deck : Détruisez 1 carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "deck",
+							"target_filter": { "name": "Élémentaire de Pyro"},
+							"location": "ally"
+						},                  
+						{
+							"action": "destroy_card",
+							"target": "field"
+						}
+						
+					]
+				}
+			]
+		},
+		{
+			"id": 48,
+			"name": "Aqua, Mage de l'Eau",
+			"type": "Magie",
+			"arrows": ["down", "right"],
+			"description": "▶ Invoquez \"Élémentaire d'Aqua\" du deck : Échangez de place 2 cartes.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "deck",
+							"target_filter": { "name": "Élémentaire d'Aqua"},
+							"location": "ally"
+						},
+						{
+							"action": "swap_card",
+							"target": "field",
+							"location": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 49,
+			"name": "Géo, Mage de la Terre",
+			"type": "Magie",
+			"arrows": ["up", "left"],
+			"description": "▶ Invoquez \"Élémentaire de Géo\" du deck : Annulez l'effet d'1 carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "deck",
+							"target_filter": { "name": "Élémentaire de Géo"},
+							"location": "ally"
+						},
+						{
+							"action": "remove_effect",
+							"target": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 50,
+			"name": "Élémentaire d'Aéro",
+			"type": "Magie",
+			"arrows": ["up", "right"],
+			"description": "❶ Détruisez cette carte : Piochez 1 carte.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "self"
+						},
+						{
+							"action": "draw",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 51,
+			"name": "Élémentaire de Pyro",
+			"type": "Magie",
+			"arrows": ["down", "left"],
+			"description": "❶ Détruisez cette carte : Piochez 1 carte.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "self"
+						},
+						{
+							"action": "draw",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 52,
+			"name": "Élémentaire d'Aqua",
+			"type": "Magie",
+			"arrows": ["up", "left"],
+			"description": "❶ Détruisez cette carte : Piochez 1 carte.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "self"
+						},
+						{
+							"action": "draw",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 53,
+			"name": "Élémentaire de Géo",
+			"type": "Magie",
+			"arrows": ["down", "right"],
+			"description": "❶ Détruisez cette carte : Piochez 1 carte.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "self"
+						},
+						{
+							"action": "draw",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 54,
+			"name": "Fulguro, Apprenti de la Foudre",
+			"type": "Magie",
+			"arrows": ["left"],
+			"description": "▶ Détruisez 1 carte alliée : Détruisez 1 carte ennemie.\n◀ Invoquez \"Aéro, Mage de l'Air\" du deck.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "ally"
+						},
+						{
+							"action": "destroy_card",
+							"target": "enemy"
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "deck",
+							"target_filter": { "name": "Aéro, Mage de l'Air" },
+							"location": "ally"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 55,
+			"name": "Métalo, Apprenti du Métal",
+			"type": "Magie",
+			"arrows": ["up"],
+			"description": "▶ Invoquez 1 \"Apprenti\" ou 1 \"Mage\" dans la zone pointée.\n◀ Invoquez \"Pyro, Mage du Feu\" du deck.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "hand",
+							"target_filter": { "$or": [ { "name_contains": "Mage" }, { "name_contains": "Apprenti" } ] },
+							"location": "pointed_zone"
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "deck",
+							"target_filter": { "name": "Pyro, Mage du Feu" },
+							"location": "ally"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 56,
+			"name": "Cryo, Apprentie de la Glace",
+			"type": "Magie",
+			"arrows": ["down"],
+			"description": "▶ Supprimez les flèches ennemies qui ne pointent rien.\n◀ Invoquez \"Aqua, Mage de l'Eau\" du deck.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "remove_arrow",
+							"target": "enemy",
+							"toward": "nothing"
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "deck",
+							"target_filter": { "name": "Aqua, Mage de l'Eau" },
+							"location": "ally"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 57,
+			"name": "Flora, Apprentie des Plantes",
+			"type": "Magie",
+			"arrows": ["right"],
+			"description": "▶ Piochez autant de cartes que le nombre de flèches de la carte pointée.\n◀ Invoquez \"Géo, Mage de la Terre\" du deck.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "draw",
+							"amount": "pointed_card.arrows.length"
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "deck",
+							"target_filter": { "name": "Géo, Mage de la Terre" },
+							"location": "ally"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 58,
+			"name": "Lucio, Dieu de la Lumière",
+			"type": "Magie",
+			"arrows": ["up", "left", "right"],
+			"description": "Invocable uniquement en détruisant 2 \"Mage\" alliés.\n❶ Détruisez cette carte dans votre main : Piochez 2 cartes.\n◆ Inaffecté par les effets ennemis.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_cost": {
+						"actions": [
+							{
+								"action": "destroy_card",
+								"target": "ally",
+								"target_filter": { "name_contains": "Mage" }
+							},
+							{
+								"action": "destroy_card",
+								"target": "ally",
+								"target_filter": { "name_contains": "Mage" }
+							}
+						]
+					}
+				},
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+					"hand_only": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "hand",
+							"target_filter": { "name": "Lucio, Dieu de la Lumière" }
+						},
+						{
+							"action": "draw",
+							"amount": 2
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "add_unaffected",
+							"target": "self",
+							"source": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 59,
+			"name": "Obscuro, Dieu des Ténèbres",
+			"type": "Magie",
+			"arrows": ["down", "left", "right"],
+			"description": "Invocable uniquement en détruisant 2 \"Apprenti\" alliés.\n❶ Détruisez cette carte dans votre main : Piochez 2 cartes.\n◆ Inaffecté par les effets ennemis.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_cost": {
+						"actions": [
+							{
+								"action": "destroy_card",
+								"target": "ally",
+								"target_filter": { "name_contains": "Apprenti" }
+							},
+							{
+								"action": "destroy_card",
+								"target": "ally",
+								"target_filter": { "name_contains": "Apprenti" }
+							}
+						]
+					}
+				},
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+					"hand_only": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "hand",
+							"target_filter": { "name": "Obscuro, Dieu des Ténèbres" }
+						},
+						{
+							"action": "draw",
+							"amount": 2
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "add_unaffected",
+							"target": "self",
+							"source": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 60,
+			"name": "Cosmo, Être Supérieur",
+			"type": "Magie",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "Invocable uniquement si vous possèdez \"Lucio, Dieu de la Lumière\" et \"Obscuro, Dieu des Ténèbres\".\n▶ Vous gagnez la partie.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_condition": {
+						"$and": [
+							{
+								"compare": {
+									"left": { "zone": "ally", "name": "Lucio, Dieu de la Lumière" },
+									"operator": ">",
+									"right": 0
+								}
+							},
+							{
+								"compare": {
+									"left": { "zone": "ally", "name": "Obscuro, Dieu des Ténèbres" },
+									"operator": ">",
+									"right": 0
+								}
+							}
+						]
+					}
+
+				},
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "win_game"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 61,
+			"name": "Pilleur de Tombes",
+			"type": "Pyramide",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "❶ Retirez les compteurs [Pyramide] des cartes pointées : Ajoutez le même nombre de compteurs à cette carte.\n◆ Si cette carte a 5+ compteurs [Pyramide] : Inaffecté par les effets ennemis.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+					"repeat": true,
+
+					"actions": [
+						{
+							"action": "remove_counter",
+							"target": "pointed_card",
+							"amount": "all",
+							"counter_type": "Pyramide"
+						},
+						{
+							"action": "add_counter",
+							"target": "self",
+							"amount": { "counters_of": "last_target" },
+							"counter_type": "Pyramide"
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"condition": {
+								"compare": {
+									"left": { "counters_of": "self", "counter_type": "Pyramide" },
+									"operator": ">",
+									"right": 4
+								}
+							},
+							"action": "add_unaffected",
+							"target": "self",
+							"source": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 62,
+			"name": "Anubis, Dieu Canin",
+			"type": "Pyramide",
+			"arrows": ["down", "right"],
+			"description": "❶ Ajoutez 1 compteur [Pyramide] à tous vos \"Dieu\".",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+					"repeat": true,
+
+					"actions": [
+						{
+							"action": "add_counter",
+							"target": "ally",
+							"target_filter": { "name_contains": "Dieu" },
+							"amount": 1,
+							"counter_type": "Pyramide"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 63,
+			"name": "Bastet, Dieu Félin",
+			"type": "Pyramide",
+			"arrows": ["down", "left"],
+			"description": "▶ Déplacez des [Pyramide] dans les zones pointées.\n❶ Déplacez 1 [Pyramide] : Ajoutez 2 compteur [Pyramide] à cette carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+					"repeat_choice": true,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "ally",
+							"target_filter": { "type": "Pyramide", "not_name": "Bastet, Dieu Félin" },
+							"location": "pointed_zone"
+						}
+					]
+				},
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "field",
+							"target_filter": { "type": "Pyramide" },
+							"location": "field"
+						},
+						{
+							"action": "add_counter",
+							"target": "self",
+							"amount": 2,
+							"counter_type": "Pyramide"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 64,
+			"name": "Horus, Dieu Faucon",
+			"type": "Pyramide",
+			"arrows": ["up", "right"],
+			"description": "▶ Gagne autant de compteurs [Pyramide] que de [Pyramide] alliés.\n❶ Ajoutez 1 compteur [Pyramide] aux cartes pointées.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "add_counter",
+							"target": "self",
+							"amount": { "count": { "zone": "ally", "type": "Pyramide" } },
+							"counter_type": "Pyramide"
+						}
+					]
+				},
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+					"repeat": true,
+
+					"actions": [
+						{
+							"action": "add_counter",
+							"target": "pointed_card",
+							"amount": 1,
+							"counter_type": "Pyramide"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 65,
+			"name": "Apophis, Dieu Serpent",
+			"type": "Pyramide",
+			"arrows": ["up", "left"],
+			"description": "▶ Gagne autant de compteurs [Pyramide] que de Non-[Pyramide] ennemis.\n❶ Ajoutez 1 compteur [Pyramide] aux Non-[Pyramide] alliés.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "add_counter",
+							"target": "self",
+							"amount": { "count": { "zone": "enemy", "not_type": "Pyramide" } },
+							"counter_type": "Pyramide"
+						}
+					]
+				},
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+					"repeat": true,
+
+					"actions": [
+						{
+							"action": "add_counter",
+							"target": "ally",
+							"target_filter": { "not_type": "Pyramide" },
+							"amount": 1,
+							"counter_type": "Pyramide"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 66,
+			"name": "Amon, Dieu Caché",
+			"type": "Pyramide",
+			"arrows": ["up"],
+			"description": "❶ Gagne autant de compteurs [Pyramide] que de \"Dieu\" alliés.\n◀ Invoquez 1 \"Dieu\" : Ajoutez à la carte invoquée autant de compteurs [Pyramide] que ceux de cette carte.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "add_counter",
+							"target": "self",
+							"amount": { "count": { "zone": "ally", "name_contains": "Dieu" } },
+							"counter_type": "Pyramide"
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "hand",
+							"target_filter": { "name_contains": "Dieu" },
+							"location": "ally"
+						},
+						{
+							"action": "add_counter",
+							"target": "last_target",
+							"amount": { "counters_of": "self" },
+							"counter_type": "Pyramide"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 67,
+			"name": "Djinn Guerrier",
+			"type": "Pyramide",
+			"arrows": ["left", "right"],
+			"description": "❶ Retirez 4 compteurs [Pyramide] alliés : Détruisez 1 carte.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "remove_counter",
+							"amount": 4,
+							"target": "ally",
+							"counter_type": "Pyramide"
+						},
+						{
+							"action": "destroy_card",
+							"target": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 68,
+			"name": "Pharaon des Sables",
+			"type": "Pyramide",
+			"arrows": ["right"],
+			"description": "❶ Retirez 3 compteurs [Pyramide] alliés : Invoquez 1 [Pyramide].\n◆ Les cartes pointées deviennent [Pyramide].",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "remove_counter",
+							"target": "ally",
+							"amount": 3,
+							"counter_type": "Pyramide"
+						},
+						{
+							"action": "summon_card",
+							"target": "hand",
+							"location": "ally"
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "pointed_card",
+							"type": "Pyramide"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 69,
+			"name": "Tornade de Sable",
+			"type": "Pyramide",
+			"arrows": ["up", "right"],
+			"description": "❸ Retirez 2 compteurs [Pyramide] alliés : Déplacez 1 carte d'1 zone.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 3,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "remove_counter",
+							"target": "ally",
+							"amount": 2,
+							"counter_type": "Pyramide"
+						},
+						{
+							"action": "move_card",
+							"target": "field",
+							"location": "zone",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 70,
+			"name": "Momie Légendaire",
+			"type": "Pyramide",
+			"arrows": ["down", "left", "right"],
+			"description": "◆ Si un [Pyramide] allié doit être détruit : Retirez 3 compteurs [Pyramide] alliés à la place.",
+			"effects": [
+				{
+					"trigger": "on_would_destroy",
+					"trigger_filter": { "type": "Pyramide", "controller": "ally" },
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "remove_counter",
+							"target": "ally",
+							"amount": 3,
+							"counter_type": "Pyramide"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 71,
+			"name": "Serviteur de Râ",
+			"type": "Pyramide",
+			"arrows": ["left", "right"],
+			"description": "❷ Retirez 3 compteurs [Pyramide] alliés : Piochez 1 carte.\n◆ Les [Pyramide] pointés sont indestructibles par les effets.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 2,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "remove_counter",
+							"target": "ally",
+							"amount": 3
+						},
+						{
+							"action": "draw",
+							"amount": 1
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "add_indestructible",
+							"target": "pointed_card",
+							"target_filter": { "type": "Pyramide" },
+							"source": "field"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 72,
+			"name": "Voleur d'Âme",
+			"type": "Pyramide",
+			"arrows": ["right"],
+			"description": "▶ Détruisez la carte pointée : Piochez 1 carte pour chaque compteur [Pyramide] qu'elle avait (max. 3).",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "pointed_card"
+						},
+						{
+							"action": "draw",
+							"amount": { "$min": [3, { "counters_of": "last_target", "counter_type": "Pyramide" } ] }
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 73,
+			"name": "Voyageur du Désert",
+			"type": "Pyramide",
+			"arrows": ["up", "down"],
+			"description": "Invocable dans une zone ennemie.\n◆ Les cartes pointées deviennent des [Pyramide] sans effet.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_area": "field"
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "pointed_card",
+							"type": "Pyramide"
+						},
+						{
+							"action": "remove_effect",
+							"target": "pointed_card"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 74,
+			"name": "Nuée de Scarabée",
+			"type": "Pyramide",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "▶ Faites devenir [Pyramide] 1 carte.\n◀ Détruisez 1 Non-[Pyramide] allié.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "field",
+							"type": "Pyramide"
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "ally",
+							"target_filter": { "not_type": "Pyramide" }
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 75,
+			"name": "Ankh Perdue",
+			"type": "Pyramide",
+			"arrows": ["down", "left", "right"],
+			"description": "Invocable uniquement si vous possédez 3+ [Pyramide].\n◆ Si vous possédez 25+ compteurs [Pyramide] : Vous gagnez la partie.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_condition": {
+						"compare": {
+							"left": { "zone": "ally", "type": "Pyramide" },
+							"operator": ">",
+							"right": 2
+						}
+					}
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"condition": {
+								"compare": {
+									"left": { "counters_of": "ally", "counter_type": "Pyramide" },
+									"operator": ">",
+									"right": 24
+								}
+							},
+							"action": "win_game"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 76,
+			"name": "Ensorceleur Végétal",
+			"type": "Sylvestre",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "▶ Piochez autant de cartes que de [Sylvestre] pointés : Détruisez cette carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "draw",
+							"amount": { "count": { "zone": "pointed_card", "type": "Sylvestre" } }
+						},
+						{
+							"action": "destroy_card",
+							"target": "self"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 77,
+			"name": "Mycéliquide l'Immortel",
+			"type": "Sylvestre",
+			"arrows": ["up", "right"],
+			"description": "Invocable dans une zone ennemie.\n▶ Annulez les effets d'1 Non-[Sylvestre] allié.\n◀ Renvoyez cette carte dans votre main.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_area": "field"
+				},
+				{
+					"trigger": "on_summon",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "remove_effect",
+							"target": "ally",
+							"target_filter": { "not_type": "Sylvestre" }
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "bounce_card",
+							"target": "self",
+							"location": "hand"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 78,
+			"name": "Tréant Millénaire",
+			"type": "Sylvestre",
+			"arrows": ["down", "left", "right"],
+			"description": "Invocable uniquement en détruisant 1 [Sylvestre] allié.\n❶ Invoquez 1 [Sylvestre].\n◀ Détruisez 1 [Sylvestre] allié.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_cost": {
+						"actions": [
+							{
+								"action": "destroy_card",
+								"target": "ally",
+								"target_filter": { "type": "Sylvestre" }
+							}
+						]
+					}
+				},
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "hand",
+							"target_filter": { "type": "Sylvestre" },
+							"location": "ally"
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "ally",
+							"target_filter": { "type": "Sylvestre" }
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 79,
+			"name": "L'Oeil de la Rose",
+			"type": "Sylvestre",
+			"arrows": ["down"],
+			"description": "▶ Regardez les 3 cartes du dessus de votre deck et replacez les dans l'ordre de votre choix : Piochez 1 carte.\n◀ Regardez les 3 cartes du dessus de votre deck.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "look_card",
+							"target": "top_deck",
+							"amount": 3,
+							"reorder": true
+						},
+						{
+							"action": "draw",
+							"amount": 1
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "look_card",
+							"target": "top_deck",
+							"amount": 3
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 80,
+			"name": "Druide Primordial",
+			"type": "Sylvestre",
+			"arrows": ["up", "right"],
+			"description": "❶ Déclarez un nom de carte : Dévoilez la carte du dessus de votre deck : Si la carte dévoilée est la même que celle déclarée : Invoquez la carte dévoilée.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "declare_card_name",
+							"store_as": "declared_card"
+						},
+						{
+							"action": "look_card",
+							"target": "top_deck",
+							"amount": 1,
+							"reveal": true,
+							"store_as": "revealed_card"
+						},
+						{
+							"condition": {
+								"compare": {
+									"left": "declared_card",
+									"operator": "==",
+									"right": "revealed_card"
+								}
+							},
+							"action": "summon_card",
+							"target": "top_deck",
+							"location": "ally"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 81,
+			"name": "Guérison de la Fôret",
+			"type": "Sylvestre",
+			"arrows": ["up", "down", "right"],
+			"description": "❶ Si un [Sylvestre] allié a été détruit ce tour : Invoquez la carte du dessous de votre deck.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"condition": { "destroyed_this_turn": { "zone": "ally", "type": "Sylvestre" } },
+							"action": "summon_card",
+							"target": "bottom_deck",
+							"location": "ally"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 82,
+			"name": "Maître des Ronces",
+			"type": "Sylvestre",
+			"arrows": ["up", "down"],
+			"description": "❶ Détruisez 1 [Sylvestre] allié : Faites devenir [Sylvestre] 1 carte.\n◆ Les cartes pointées deviennent des [Sylvestre] sans effet.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "ally",
+							"target_filter": { "type": "Sylvestre" }
+						},
+						{
+							"action": "change_type",
+							"target": "field",
+							"type": "Sylvestre"
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "change_type",
+							"target": "pointed_card",
+							"type": "Sylvestre"
+						},
+						{
+							"action": "remove_effect",
+							"target": "pointed_card"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 83,
+			"name": "Archer Enchanté",
+			"type": "Sylvestre",
+			"arrows": ["down", "left"],
+			"description": "▶ Renvoyez 1 autre carte à la main : Si vous avez renvoyé un [Sylvestre] : Invoquez 1 [Sylvestre].",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "bounce_card",
+							"target": "field",
+							"target_filter": { "not_name": "Archer Enchanté" },
+							"location": "hand"
+						},		
+						{
+							"condition": { "last_target.type": "Sylvestre" },
+							"action": "summon_card",
+							"target": "hand",
+							"location": "ally"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 84,
+			"name": "Limon Éthéré",
+			"type": "Sylvestre",
+			"arrows": ["left", "right"],
+			"description": "❶ Détruisez 1 [Sylvestre] : Piochez 2 cartes.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "field",
+							"target_filter": { "type": "Sylvestre" }
+						},
+						{
+							"action": "draw",
+							"amount": 2
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 85,
+			"name": "Roi des Insectes",
+			"type": "Sylvestre",
+			"arrows": ["up", "left"],
+			"description": "◀ Invoquez 1 [Sylvestre].",
+			"effects": [
+				{
+					"trigger": "on_destroy",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "hand",
+							"target_filter": { "type": "Sylvestre" },
+							"location": "ally"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 86,
+			"name": "Ronces Méphitiques",
+			"type": "Sylvestre",
+			"arrows": ["down"],
+			"description": "❶ Détruisez la carte pointée.\n◆ Même si cette carte ne pointe rien, elle n'est pas détruite à la fin du tour.\n◆ Si une carte est invoquée dans une zone alliée : Déplacez-la dans la zone pointée.",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "pointed_card"
+						}
+					]
+				},
+				{
+					"trigger": "continuous",
+					"mandatory": true,
+
+					"actions": [
+						{
+							"action": "add_indestructible",
+							"target": "self",
+							"source": "game_rule"
+						}
+					]
+				},
+				{
+					"trigger": "on_card_summon",
+					"condition": { "location": "ally" },
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "triggered_card",
+							"location": "pointed_zone"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 87,
+			"name": "Vénérable Chêne",
+			"type": "Sylvestre",
+			"arrows": ["down", "left"],
+			"description": "▶ Votre adversaire détruit 2 cartes de sa main : Votre adversaire pioche 1 carte.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "destroy_card",
+							"target": "hand",
+							"controller": "enemy"
+						},
+						{
+							"action": "destroy_card",
+							"target": "hand",
+							"controller": "enemy"
+						},
+						{
+							"action": "draw",
+							"amount": 1,
+							"controller": "enemy"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 88,
+			"name": "Dracorose",
+			"type": "Sylvestre",
+			"arrows": ["up"],
+			"description": "❶ Piochez 1 carte.\n◀ Piochez 1 carte",
+			"effects": [
+				{
+					"trigger": "activated",
+					"uses_per_turn": 1,
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "draw",
+							"amount": 1
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "draw",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 89,
+			"name": "Lutin des bois",
+			"type": "Sylvestre",
+			"arrows": ["down", "right"],
+			"description": "▶ Déplacez 2 cartes d'1 zone.\n◀ Invoquez cette carte en annulant ses effets.",
+			"effects": [
+				{
+					"trigger": "on_summon",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "move_card",
+							"target": "field",
+							"location": "zone",
+							"amount": 1
+						},
+						{
+							"action": "move_card",
+							"target": "field",
+							"location": "zone",
+							"amount": 1
+						}
+					]
+				},
+				{
+					"trigger": "on_destroy",
+					"mandatory": false,
+
+					"actions": [
+						{
+							"action": "summon_card",
+							"target": "self",
+							"location": "ally"
+						},
+						{
+							"action": "remove_effect",
+							"target": "last_target"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": 90,
+			"name": "Gardien du Bosquet",
+			"type": "Sylvestre",
+			"arrows": ["up", "down", "left", "right"],
+			"description": "Invocable uniquement si vous avez invoqué 3+ cartes ce tour.\n◆ Si un [Sylvestre] est détruit : Vous gagnez la partie.",
+			"effects": [
+				{
+					"trigger": "condition",
+					"summon_condition": {
+						"compare": {
+							"left": { "global_var": "cards_summoned_this_turn" },
+							"operator": ">",
+							"right": 2
+						}
+					}
+				},
+				{
+					"trigger": "on_card_destroy",
+					"condition": {
+						"type": "Sylvestre"
+					},
+					"mandatory": true,
+
+					"actions": [
+						{
+							"condition": {
+								"card_destroyed": "field",
+								"type": "Sylvestre"
+							},
+							"action": "win_game"
+						}
+					]
+				}
+			]
+		}
+	]
+}

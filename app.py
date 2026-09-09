@@ -14,6 +14,7 @@ import comptes
 import journal
 import monitoring
 import quiz
+import social
 import yugiquiz
 from jaquettes import blueprint_jaquettes
 from monitoring import blueprint_monitoring
@@ -30,6 +31,7 @@ COLLECTION = "collection-yugioh.html"
 SUGGESTIONS = "suggestions.html"
 MONITORING = "monitoring.html"
 QUIZ = "quiz.html"
+FEED = "archive-feed.html"
 # La cle qui signe les cookies de session Flask. Elle ne sert qu'au pseudo
 # d'invite du Yu-Gi-Quiz : les comptes Abyss, eux, ont leur propre cookie et
 # leur table de sessions (voir comptes.COOKIE). Gardee dans donnees/, qui
@@ -117,6 +119,11 @@ app.register_blueprint(collection.branche(STATIQUE / "Cards",
                                           STATIQUE / "cards_fr.json"))
 app.register_blueprint(blueprint_jaquettes(STATIQUE / "Cover"))
 app.register_blueprint(blueprint_suggestions)
+app.register_blueprint(social.blueprint_social)
+# Le temps reel du Social se branche sur le meme serveur SocketIO que le
+# Yu-Gi-Quiz, sur son propre namespace : un jeu termine apparait dans le fil
+# et une pastille de cloche bouge sans qu'on recharge. Voir social.NS.
+social.branche_temps_reel(socketio)
 app.register_blueprint(blueprint_monitoring)
 app.register_blueprint(quiz.branche(STATIQUE / "Cover"))
 # Deux blueprints, les pages et leur API : voir yugiquiz.branche.
@@ -232,6 +239,15 @@ def ancien_archive():
 @app.route("/archive", strict_slashes=False)
 def archive():
     return envoie(JEUX_VIDEOS)
+
+# Declaree avant /archive/<pseudo>, et surtout distincte de lui : Werkzeug
+# fait passer une regle en dur avant une regle a variable, donc l'ordre
+# n'est ici qu'une politesse de lecture -- mais personne ne pourra plus
+# prendre « feed » comme pseudo sans se voler sa propre page.
+@app.route("/archive/feed", strict_slashes=False)
+def archive_feed():
+    return envoie(FEED)
+
 
 @app.route("/archive/<pseudo>", strict_slashes=False)
 def archive_de(pseudo):

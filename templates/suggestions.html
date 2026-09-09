@@ -70,7 +70,7 @@
 
   /* ---------- une ligne ----------
      Une carte par ligne du fichier. Le bouton n'apparaît qu'au survol sur
-     grand écran : la liste se parcourt d'abord, on n'agit qu'ensuite — mais
+     grand écran : la liste se parcourt d'abord, on n'agit qu'ensuite - mais
      il reste toujours visible au clavier et au toucher, où il n'y a pas de
      survol pour le faire venir. */
   .sug-ligne{
@@ -90,7 +90,7 @@
     .sug-ligne.part{transition:opacity .28s ease,transform .28s ease}
   }
 
-  /* la pastille : ronde pour une envie, carrée pour un bug — reconnaissable
+  /* la pastille : ronde pour une envie, carrée pour un bug - reconnaissable
      sans lire, et sans dépendre de la seule couleur */
   .sug-pion{
     flex:none;width:9px;height:9px;margin-top:7px;border-radius:50%;
@@ -101,13 +101,13 @@
   }
 
   /* ---------- l'importance ----------
-     Trois niveaux et l'absence de niveau — une ligne que personne n'a
+     Trois niveaux et l'absence de niveau - une ligne que personne n'a
      encore jugée n'est pas « peu pressante », elle n'a rien reçu du tout,
      et elle garde donc exactement l'allure d'avant.
 
      Une ligne classée le dit trois fois : une barre allumée à gauche, sa
      pastille repeinte, et le mot en clair dans la méta. La couleur seule
-     ne dirait rien à qui ne la distingue pas — et un rouge et un vert de
+     ne dirait rien à qui ne la distingue pas - et un rouge et un vert de
      même clarté, c'est précisément la paire qui se confond le plus. */
   .sug-ligne.p1,.sug-filtre.p1{--n:#FF8A8A;--n-bord:rgba(255,138,138,.45);--n-fond:rgba(232,106,106,.13)}
   .sug-ligne.p2,.sug-filtre.p2{--n:#F2B25C;--n-bord:rgba(242,178,92,.45);--n-fond:rgba(232,163,74,.13)}
@@ -123,7 +123,7 @@
     border-color:var(--n);
     box-shadow:0 0 26px -12px var(--n);
   }
-  /* la barre : posée sur le bord de la carte, pas à côté — elle doit se
+  /* la barre : posée sur le bord de la carte, pas à côté - elle doit se
      lire comme la tranche allumée de la ligne, pas comme un objet de plus */
   .sug-ligne.p1::before,.sug-ligne.p2::before,.sug-ligne.p3::before{
     content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
@@ -140,7 +140,7 @@
   }
 
   /* le sélecteur : trois pastilles chiffrées, au même endroit et sous la
-     même règle que Copier et Résolu — on parcourt d'abord, on classe
+     même règle que Copier et Résolu - on parcourt d'abord, on classe
      ensuite. L'état, lui, reste lisible sans survol grâce à la barre. */
   .sug-niveaux{display:flex;gap:4px;align-items:center}
   .sug-niv{
@@ -249,7 +249,7 @@
 
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
-     /api/moi — un defer arriverait peut-être trop tard. -->
+     /api/moi - un defer arriverait peut-être trop tard. -->
 <script src="/static/compte.js"></script>
 <script>
 const el = (id) => document.getElementById(id);
@@ -264,9 +264,9 @@ let FILTRE = "tout";          // 'tout', 'bug', 'suggestion', 'p1'..'p3', ou un 
 /* Les trois niveaux d'importance. 0 n'y est pas : ce n'est pas un quatrième
    niveau mais l'absence de tri, et il n'a donc ni couleur ni nom. */
 const NIVEAUX = [
-  { n: 1, nom: "Urgent",    titre: "Urgent — à faire d'abord" },
-  { n: 2, nom: "Important", titre: "Important — mais ça peut attendre l'urgent" },
-  { n: 3, nom: "Plus tard", titre: "Plus tard — quand le reste sera fait" },
+  { n: 1, nom: "Urgent",    titre: "Urgent - à faire d'abord" },
+  { n: 2, nom: "Important", titre: "Important - mais ça peut attendre l'urgent" },
+  { n: 3, nom: "Plus tard", titre: "Plus tard - quand le reste sera fait" },
 ];
 const niveauDe = (l) => NIVEAUX.find((v) => v.n === l.priorite) || null;
 /* Les non classées ferment la marche : elles n'ont pas été jugées moins
@@ -306,7 +306,7 @@ function toast(message, mauvais) {
    arrivant depuis le hub, qu'on avait changé de site.
 
    Aucun réglage à passer : la page exige un compte, et se déconnecter
-   renvoie sur /abyss — le défaut de compte.js. */
+   renvoie sur /abyss - le défaut de compte.js. */
 
 /* =========================================================
    La liste
@@ -371,13 +371,13 @@ function dessine() {
   const vides = SECTIONS.every((s) => !s.lignes.length);
   if (vides) {
     zone.innerHTML = `<p class="sug-etat"><b>Rien en attente.</b>
-      Tout ce qui a été proposé est fait — ou le fichier est vide.</p>`;
+      Tout ce qui a été proposé est fait - ou le fichier est vide.</p>`;
     return;
   }
 
   let rendues = 0;
   zone.innerHTML = SECTIONS.map((s, si) => {
-    /* L'urgent remonte, dans chaque section séparément — classer une ligne
+    /* L'urgent remonte, dans chaque section séparément - classer une ligne
        n'a d'intérêt que si la page s'en sert pour dire par quoi commencer.
        Le fichier, lui, garde l'ordre d'arrivée : c'est un affichage, pas
        une réécriture. À niveau égal l'ordre du fichier tient (le tri de
@@ -442,7 +442,7 @@ function dessine() {
    devant, c'est du bruit dès qu'on colle ailleurs. Le texte copié est celui
    qu'on lit dans la carte, sans surprise.
 
-   navigator.clipboard demande un contexte sécurisé — https ou localhost.
+   navigator.clipboard demande un contexte sécurisé - https ou localhost.
    Les deux sont vrais ici, mais un navigateur peut aussi refuser la
    permission : le repli par <textarea> couvre ce cas plutôt que de laisser
    un bouton qui ne fait rien sans rien dire. */
@@ -481,7 +481,7 @@ async function copier(bouton) {
    Comme pour « Résolu », on attend le serveur : c'est le fichier qui décide,
    et une couleur posée puis reprise parce que l'écriture a échoué serait
    pire que la demi-seconde d'attente. Le texte de la ligne change avec son
-   niveau (la marque [!n] en fait partie) — d'où le renvoi du serveur, qui
+   niveau (la marque [!n] en fait partie) - d'où le renvoi du serveur, qui
    évite de recharger toute la page pour retrouver comment la désigner. */
 async function classer(bouton) {
   const carte = bouton.closest(".sug-ligne");

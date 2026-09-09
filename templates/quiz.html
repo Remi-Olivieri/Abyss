@@ -9,11 +9,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Karla:wght@400;500;600&family=Azeret+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- La feuille de l'Archive, et pas celle d'Abyss : les mini-jeux sont une
      pièce du même projet et en portent les couleurs. Jamais les deux à la
-     fois — elles définissent toutes deux :root, .menu, .cta et .gate. -->
+     fois - elles définissent toutes deux :root, .menu, .cta et .gate. -->
 <link rel="stylesheet" href="/static/style_jeuxvideos.css">
 <!-- Deux feuilles, et c'est voulu : celle de l'Archive donne la palette, la
      remise à zéro et les composants communs (.top, .wrap, .cta, .sbtn,
-     .ac), celle-ci ne fait que s'y poser. Rien n'y est redéfini — ce n'est
+     .ac), celle-ci ne fait que s'y poser. Rien n'y est redéfini - ce n'est
      pas une seconde identité, c'est la même avec de quoi tenir un salon de
      jeux plutôt qu'un classeur. -->
 <link rel="stylesheet" href="/static/style_quiz.css">
@@ -54,7 +54,7 @@
   <div id="corps" hidden>
     <!-- L'entrée est écrite en dur, pas construite en JavaScript : c'est la
          première chose à l'écran, elle n'a pas à attendre le serveur pour
-         exister. Elle s'efface dès qu'une partie commence — un titre de
+         exister. Elle s'efface dès qu'une partie commence - un titre de
          salon au-dessus d'une jaquette à deviner ne sert plus à rien. -->
     <header class="qz-hero" id="hero">
       <div class="wrap">
@@ -71,7 +71,12 @@
 
 <!-- Le formulaire de suggestion, ouvert sur place plutôt que sur le hub :
      voir static/suggestion.js. Chargé avant le script de la page, qui le
-     branche une fois la session connue — un defer arriverait après lui. -->
+     branche une fois la session connue - un defer arriverait après lui. -->
+<!-- Les zones de texte grandissent en écrivant plutôt que de porter une
+     poignée à tirer : une taille de départ, la hauteur du texte ensuite,
+     et le défilement dans le champ passé un plafond. Voir
+     static/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
+<script src="/static/champs.js"></script>
 <script src="/static/suggestion.js"></script>
 <script>
 const el = (id) => document.getElementById(id);
@@ -102,7 +107,7 @@ async function api(chemin, options) {
    gardé dans le compte : c'est une façon de jouer, elle ne change pas d'une
    partie à l'autre, et la redemander à chaque lancement serait une question
    à laquelle on répond toujours pareil. D'où le menu du salon plutôt qu'un
-   écran de réglages avant chaque partie — et plus d'écran du tout, cliquer
+   écran de réglages avant chaque partie - et plus d'écran du tout, cliquer
    sur un jeu le lance.
 
    La valeur arrive avec /api/moi et repart dans /api/preferences.
@@ -154,7 +159,7 @@ const FAMILLES = [
   { cle: "ygo", nom: "Yu-Gi-Oh!" },
 ];
 
-/* `cle` : ce qui se joue ici — la carte devient un bouton, et `lance` est la
+/* `cle` : ce qui se joue ici - la carte devient un bouton, et `lance` est la
    fonction qui démarre la partie. Les déclarations de fonction sont
    remontées, elle peut donc être écrite plus bas dans le fichier. */
 const JEUX = [
@@ -176,7 +181,7 @@ const JEUX = [
 ];
 
 /* Le sous-titre du bandeau : le nom du mini-jeu en cours, ou rien. Le nom
-   du site, lui, ne bouge jamais — il est écrit dans la page. */
+   du site, lui, ne bouge jamais - il est écrit dans la page. */
 const jeuDe = (cle) => JEUX.find((j) => j.cle === cle);
 
 function marque(sous) {
@@ -232,7 +237,7 @@ function quitte() {
 
 /* Une carte de jeu. Trois formes possibles, et la balise suit l'usage :
    un lien pour ce qui mène ailleurs, un bouton pour ce qui se joue ici, un
-   simple bloc pour ce qui n'existe pas encore — inerte, donc rien à
+   simple bloc pour ce qui n'existe pas encore - inerte, donc rien à
    désactiver. */
 function carteJeu(j) {
   const corps = `
@@ -257,12 +262,12 @@ function carteJeu(j) {
 
 /* ---------- le choix du vivier, dans l'en-tête de la famille ----------
    À sa place : c'est un réglage de la famille « Jeux Vidéos » tout entière,
-   pas d'une partie, et il n'apparaît qu'au salon — le seul endroit d'où l'on
+   pas d'une partie, et il n'apparaît qu'au salon - le seul endroit d'où l'on
    démarre.
 
    Deux valeurs, donc deux boutons côte à côte plutôt qu'une liste à
    dérouler. Le menu cachait la moitié d'un choix qui tient en deux mots et
-   demandait deux clics — un pour voir ce qu'il y avait, un pour choisir —
+   demandait deux clics - un pour voir ce qu'il y avait, un pour choisir -
    là où basculer entre deux états est le geste le plus courant de la page.
    Les deux possibilités se lisent maintenant d'un coup d'œil et un seul clic
    change de vivier. La forme est celle de la barre d'onglets de l'Archive :
@@ -367,7 +372,7 @@ function dessineMenu() {
    comment ça s'est fini.
    ========================================================= */
 /* Du meilleur au pire : la première tranche atteinte gagne. Le parfait a sa
-   propre marche — c'est la seule partie dont on se souvient. */
+   propre marche - c'est la seule partie dont on se souvient. */
 const MENTIONS = [
   { part: 1,  texte: "Parfait",          classe: "parfait" },
   { part: .8, texte: "Excellent",        classe: "haut" },
@@ -377,7 +382,7 @@ const MENTIONS = [
   { part: 0,  texte: "Aïe...",           classe: "bas" },
 ];
 
-/* `detail` : la phrase du dessous, propre à chaque jeu — ce qui a été trouvé
+/* `detail` : la phrase du dessous, propre à chaque jeu - ce qui a été trouvé
    et sur combien. Le reste se déduit du score et de son maximum.
 
    La jauge s'anime en CSS depuis une largeur nulle : la valeur part dans une
@@ -400,24 +405,24 @@ function bilanHTML(score, maxi, detail) {
    Une manche : une image, trois propositions. Les deux premières se tapent
    au clavier ; la troisième, et elle seule, affiche six titres à choisir.
    La manche donne donc sa chance à la mémoire avant de la donner à la
-   reconnaissance — et une manche perdue l'est après avoir vu la réponse
+   reconnaissance - et une manche perdue l'est après avoir vu la réponse
    passer sous les yeux, ce qui vaut mieux que d'en sortir sans jamais avoir
    eu de prise dessus.
 
-   Chaque erreur dévoile la jaquette d'un cran et fait tomber le gain —
+   Chaque erreur dévoile la jaquette d'un cran et fait tomber le gain -
    200, 100, 50, puis rien. Trois erreurs et la manche est perdue, la
    réponse s'affiche, on passe à la suivante.
 
    PARTIE.manches porte la bonne réponse : le serveur l'envoie avec la
    manche et c'est la page qui corrige. Le plus simple tant qu'aucun score
-   n'est enregistré — on ne triche pas contre soi-même. Le jour où un score
+   n'est enregistré - on ne triche pas contre soi-même. Le jour où un score
    comptera, il faudra l'inverse : la manche reste au serveur, qui ne reçoit
    que les propositions.
    ========================================================= */
 /* Trois paliers de netteté, du plus flou au presque net. Le dernier laisse
    volontairement de quoi douter : à zéro, la troisième proposition n'aurait
    plus rien d'un pari. L'écart entre deux paliers est resserré depuis que la
-   troisième donne six titres — l'image n'a plus à faire tout le travail. */
+   troisième donne six titres - l'image n'a plus à faire tout le travail. */
 const FLOUS = [26, 17, 10];
 
 let PARTIE = null;   // { manches, points, propositions, titres }
@@ -488,7 +493,7 @@ function brancheReponse() {
     champ.value = "";
     majValide();
     if (dit) juge(dit, null);
-    else avance("Passé. ");
+    else avance(null);
   });
   el("essai").addEventListener("input", () => { majValide(); acFrappe(); });
   el("essai").addEventListener("keydown", acTouche);
@@ -519,7 +524,7 @@ function dessineManche() {
 
       <div id="reponse">${zoneReponse()}</div>
 
-      <p class="qz-info" id="info"></p>
+      <p class="qz-info qz-sous" id="info"></p>
     </div>`;
   brancheReponse();
   info();
@@ -533,10 +538,13 @@ function majValide() {
   if (b && champ) b.textContent = champ.value.trim() ? "Valider" : "Passer";
 }
 
-/* Passer à la proposition suivante — après une erreur comme après un
+/* Passer à la proposition suivante - après une erreur comme après un
    « Passer », c'est exactement le même prix. La jaquette se dévoile d'un
-   cran, et la dernière troque le clavier contre six titres. */
-function avance(prefixe) {
+   cran, et la dernière troque le clavier contre six titres.
+
+   `refuse` : le titre qu'on vient de proposer pour rien, ou rien du tout
+   si on a passé son tour. */
+function avance(refuse) {
   ETAT.essai++;
   if (ETAT.essai >= PARTIE.propositions) {
     ETAT.resultats[ETAT.i] = { titre: manche().titre, points: 0, essai: 0 };
@@ -551,12 +559,34 @@ function avance(prefixe) {
   } else {
     el("essai").focus();
   }
-  info(prefixe);
+  info(refuse);
 }
 
-function info(prefixe) {
-  el("info").innerHTML = `${prefixe || ""}Proposition ${ETAT.essai + 1} sur ${
-    PARTIE.propositions} · <b>${PARTIE.points[ETAT.essai]} points</b> si tu trouves maintenant`;
+/* La ligne sous la jaquette : ce qu'on vient de proposer pour rien, et ce
+   qu'il reste à jouer.
+
+   Elle disait tout en toutes lettres et sur un seul souffle - « « We Were
+   Here Expeditions: The FriendShip », non. Proposition 2 sur 3 · 100 points
+   si tu trouves maintenant » - soit une phrase à relire en entier, à chaque
+   erreur, pour y retrouver deux chiffres.
+
+   Deux lignes plutôt qu'une, et rien qu'on ne lise déjà ailleurs :
+
+     - le titre refusé, barré. Barré, il n'a plus besoin qu'on lui dise
+       « non » ; et sur une ligne à lui, un titre à rallonge ne repousse
+       plus le reste hors de vue - il se coupe, il ne déborde pas ;
+     - l'essai en cours et la mise, en petit dessous. « pts » suffit là où
+       il y a déjà un chiffre, et le prix se lit sans qu'on rappelle à quoi
+       il sert : le seul moment où on le lit, c'est en cherchant.
+
+   La hauteur est réservée pour les deux lignes : sans ça le compteur
+   sauterait d'un cran à la première erreur, juste sous une image qu'on est
+   en train de regarder. */
+function info(refuse) {
+  el("info").innerHTML = `
+    ${refuse ? `<span class="qz-refus">${esc(refuse)}</span>` : ""}
+    <span class="qz-mise">Essai ${ETAT.essai + 1} / ${PARTIE.propositions}
+      <b>${PARTIE.points[ETAT.essai]} pts</b></span>`;
 }
 
 /* ---------- compléter le titre pendant la frappe ----------
@@ -567,7 +597,7 @@ function info(prefixe) {
    travers coûterait sinon une proposition sur trois, et il n'y a pas de
    retour en arrière dans une manche.
 
-   La comparaison passe par cle() — la même que celle qui juge la réponse :
+   La comparaison passe par cle() - la même que celle qui juge la réponse :
    ce qui s'affiche pendant qu'on tape et ce qui est accepté à la fin
    doivent suivre la même règle, sinon la liste promet ce que le jeu refuse. */
 const AC_MAXI = 8;
@@ -662,7 +692,7 @@ function acTouche(e) {
      - le titre avant OU après les deux-points suffit : « The Witcher 3 »
        et « Wild Hunt » pour « The Witcher 3: Wild Hunt », c'est ainsi que
        les gens les nomment. Le sous-titre ne compte qu'à partir de huit
-       lettres — « GO » ou « 2 » ouvriraient sinon toute une famille ;
+       lettres - « GO » ou « 2 » ouvriraient sinon toute une famille ;
      - quelques fautes de frappe, d'autant plus qu'un titre est long. Une
        marge fixe rendrait « Celeste » aussi permissif que « The Legend of
        Zelda: Breath of the Wild », donc trois lettres sur un titre court
@@ -725,11 +755,13 @@ function juge(dit, bouton) {
   }
 
   if (bouton) { bouton.classList.add("rate"); bouton.disabled = true; }
-  avance(bouton ? "Raté. " : `« ${esc(dit)} », non. `);
+  /* Un clic dans la grille n'arrive qu'à la dernière proposition : la manche
+     se termine, et c'est le verdict qui parle, pas cette ligne-là. */
+  avance(bouton ? null : dit);
 }
 
 /* Fin de manche : la jaquette se révèle, la réponse s'affiche dessus, et on
-   attend un clic. Pas d'enchaînement automatique — on vient peut-être de
+   attend un clic. Pas d'enchaînement automatique - on vient peut-être de
    découvrir un jeu, et se le faire arracher au bout d'une seconde serait le
    contraire du but. */
 function termine(gagne, gain) {
@@ -767,7 +799,7 @@ function termine(gagne, gain) {
 
 /* Le tableau de fin : les cinq jaquettes en ligne, nettes cette fois.
    Une liste de titres dirait la même chose, mais c'est d'images qu'on vient
-   de jouer — et une jaquette qu'on n'a pas reconnue, on la reconnaîtra la
+   de jouer - et une jaquette qu'on n'a pas reconnue, on la reconnaîtra la
    prochaine fois pour l'avoir vue ici en grand, pas pour avoir lu son nom.
    Celles qu'on a manquées restent en gris : le tableau se lit alors d'un
    regard, sans compter les pastilles. */
@@ -806,7 +838,7 @@ function dessineFin() {
    Chronologie
 
    Cinq jaquettes en ligne, le titre dessous, du plus ancien à gauche au plus
-   récent à droite. On les glisse pour les ranger, et on vérifie — un seul
+   récent à droite. On les glisse pour les ranger, et on vérifie - un seul
    essai, il n'y a pas de deuxième chance à négocier.
 
    « Vérifier » fait tout d'un coup : la frise se range dans l'ordre juste,
@@ -821,7 +853,7 @@ function dessineFin() {
    rien reconnu.
 
    L'ordre attendu vient des dates envoyées avec la partie : c'est la page
-   qui corrige, comme pour la jaquette floue, et pour la même raison — rien
+   qui corrige, comme pour la jaquette floue, et pour la même raison - rien
    n'est enregistré, on ne triche pas contre soi-même.
 
    Le glisser-déposer est écrit avec les événements de pointeur et non avec
@@ -830,7 +862,7 @@ function dessineFin() {
 
    Et sur un téléphone, justement, cinq jaquettes côte à côte feraient cinq
    timbres : la feuille de style repasse la frise en colonne sous 640 px.
-   Le glissement n'est donc écrit sur AUCUN axe en particulier — il lit celui
+   Le glissement n'est donc écrit sur AUCUN axe en particulier - il lit celui
    de la liste au moment où on attrape une carte, et tout le reste du calcul
    est le même. Ce qui change avec l'axe, c'est le doigt : en ligne, un
    glissement horizontal ne dispute rien au défilement de la page et toute la
@@ -930,7 +962,7 @@ function dessineChrono() {
 
 /* La liste est redessinée en entier plutôt que déplacée nœud par nœud :
    cinq cartes coûtent trois fois rien, et les rangs, les décalages en cours
-   et les écouteurs repartent tous de la même source — CHRONO.ordre. */
+   et les écouteurs repartent tous de la même source - CHRONO.ordre. */
 const RANGS = ["1re", "2e", "3e", "4e", "5e"];
 
 function dessineFrise() {
@@ -938,8 +970,8 @@ function dessineFrise() {
     const j = CHRONO.jeux[id];
     /* Une fois corrigé, la frise affiche l'ordre JUSTE : `p` est donc la
        vraie place du jeu, et c'est dans CHRONO.reponse qu'on lit celle qu'on
-       lui avait donnée. Une carte mal placée le dit en toutes lettres —
-       « placé en 4e » — plutôt que de laisser deviner d'où elle vient. */
+       lui avait donnée. Une carte mal placée le dit en toutes lettres -
+       « placé en 4e » - plutôt que de laisser deviner d'où elle vient. */
     const donne = CHRONO.fini ? CHRONO.reponse.indexOf(id) : p;
     const bon = donne === p;
     return `<li class="qz-piece${CHRONO.fini ? (bon ? " juste" : " faux") : ""}"
@@ -998,7 +1030,7 @@ function chronoPrend(e, li) {
   const axe = chronoAxe();
   /* En colonne, uniquement par la poignée : c'est le seul élément posé en
      touch-action:none, donc le seul endroit où glisser au doigt ne fait pas
-     défiler la page. En ligne, le glissement est horizontal — il ne dispute
+     défiler la page. En ligne, le glissement est horizontal - il ne dispute
      rien au défilement, et toute la carte s'attrape. */
   if (e.pointerType === "touch" && axe === "y" && !e.target.closest(".qz-grip")) return;
 
@@ -1072,13 +1104,13 @@ function chronoVerifie() {
 
 /* La correction, en un seul geste : la frise se range dans l'ordre juste, les
    dates apparaissent, chaque carte dit si on l'y avait mise, et le score
-   remplace le bouton. Rien à cliquer entre les deux — le résultat d'un jeu
+   remplace le bouton. Rien à cliquer entre les deux - le résultat d'un jeu
    d'un seul essai n'a pas à se mériter en deux temps.
 
    Les cartes glissent de leur ancienne place vers la nouvelle (technique dite
    FLIP : on mesure avant, on redessine, on remet les cartes à leur position
    d'avant, et on lâche). Sans ça elles se téléporteraient, et on ne verrait
-   pas ce qui a bougé — or c'est précisément ce qu'on vient de jouer. */
+   pas ce qui a bougé - or c'est précisément ce qu'on vient de jouer. */
 function chronoTermine() {
   const frise = el("frise");
   const avant = new Map();
@@ -1109,11 +1141,13 @@ function chronoTermine() {
   /* La croix d'abandon n'a plus rien à abandonner : la partie est finie, la
      flèche ramène au salon. */
   navRetour(dessineMenu, "Corrigé");
+  /* « jeu » fait « jeux », pas « jeus » : les noms en -eu prennent un x. Le
+     participe qui suit, lui, prend bien son s. */
   const s = CHRONO.bien > 1 ? "s" : "";
   el("apres").innerHTML = `
     <div class="qz-bilan">
       ${bilanHTML(CHRONO.score, CHRONO.jeux.length * CHRONO.parJeu, CHRONO.bien
-        ? `${CHRONO.bien} jeu${s} sur ${CHRONO.jeux.length} bien placé${s}`
+        ? `${CHRONO.bien} jeu${s ? "x" : ""} sur ${CHRONO.jeux.length} bien placé${s}`
         : "aucun jeu à sa place")}
       <div class="qz-boutons">
         <button type="button" class="cta" id="rejouer">Rejouer</button>
@@ -1139,21 +1173,21 @@ function chronoTermine() {
    des quatre catégories ne déborde sur les douze autres cases, et surtout
    aucun AUTRE paquet de quatre du plateau ne forme une catégorie que le jeu
    aurait pu proposer. Sans cette seconde condition, on voit quatre Donkey
-   Kong, on les propose, on a raison — et le jeu répond non.
+   Kong, on les propose, on a raison - et le jeu répond non.
 
    La page, elle, ne fait que corriger : les groupes arrivent avec la partie.
    C'est le parti pris des deux autres mini-jeux, et il vaut ici aussi tant
-   qu'aucun score n'est enregistré — voir l'avertissement en tête de quiz.py.
+   qu'aucun score n'est enregistré - voir l'avertissement en tête de quiz.py.
 
    « Presque : il n'en manquait qu'un » : quand trois des quatre cases
    désignées appartiennent au même groupe. Sans ce retour, une erreur ne
    dit rien, et on recommence la même à une case près sans savoir qu'on y
-   était. Il s'écrit dès la validation, pendant la secousse — et le plateau
+   était. Il s'écrit dès la validation, pendant la secousse - et le plateau
    se tait le temps de le laisser lire : voir gcAnime().
    ========================================================= */
 let GRILLE = null;   // { groupes, cases, choisies, trouves, erreurs, ... }
 
-/* Quatre couleurs, dans l'ordre où les groupes arrivent — que le serveur a
+/* Quatre couleurs, dans l'ordre où les groupes arrivent - que le serveur a
    mélangé exprès, pour que la couleur ne trahisse jamais la nature du lien. */
 const GC_COULEURS = ["or", "vert", "bleu", "violet"];
 
@@ -1188,7 +1222,7 @@ async function lanceGrille() {
   GRILLE = {
     groupes: groupes,
     /* Une case ne connaît que son groupe : c'est tout ce qu'il faut pour
-       corriger, et le titre suffit à l'identifier — le vivier est
+       corriger, et le titre suffit à l'identifier - le vivier est
        dédoublonné par titre côté serveur. */
     cases: melange(groupes.flatMap((g, i) =>
       g.jeux.map((j) => ({ titre: j.titre, image: j.image, groupe: i })))),
@@ -1234,7 +1268,7 @@ function dessineGrille() {
 }
 
 /* Tout est repeint depuis GRILLE à chaque geste : seize cases coûtent trois
-   fois rien, et les états — choisie, résolue, terminée — repartent tous de
+   fois rien, et les états - choisie, résolue, terminée - repartent tous de
    la même source plutôt que d'être rattrapés un par un. */
 function gcPeint() {
   const g = GRILLE;
@@ -1252,7 +1286,7 @@ function gcPeint() {
       const prise = g.choisies.indexOf(c.titre) >= 0;
       /* `jaq` plutôt qu'un test sur la variable CSS : c'est elle qui décide
          du voile sombre posé sous le titre, et une case sans jaquette n'a
-         rien à assombrir — elle serait juste plus terne que ses voisines. */
+         rien à assombrir - elle serait juste plus terne que ses voisines. */
       return `<button type="button" class="gc-case${prise ? " prise" : ""}${
               c.image ? " jaq" : ""}"
               data-titre="${esc(c.titre)}" aria-pressed="${prise}"
@@ -1283,8 +1317,8 @@ function gcPeint() {
    qu'il venait de répondre. Un lecteur d'écran, lui, ne réannonce même pas
    un aria-live dont le texte n'a pas changé.
 
-   D'où le numéro : chaque message en reçoit un neuf, et c'est lui — pas le
-   texte — qui décide de rejouer l'apparition. Le texte est vidé puis
+   D'où le numéro : chaque message en reçoit un neuf, et c'est lui - pas le
+   texte - qui décide de rejouer l'apparition. Le texte est vidé puis
    réécrit pour la même raison, du côté de ceux qui écoutent la page. */
 let GC_MSG_PEINT = 0;
 
@@ -1304,8 +1338,8 @@ function gcDitMessage() {
 
 /* Les bandes s'empilent, elles ne se refont pas.
 
-   Tout le reste de la grille est repeint à chaque geste — c'est voulu, seize
-   cases ne coûtent rien — mais les bandes arrivent en s'ouvrant
+   Tout le reste de la grille est repeint à chaque geste - c'est voulu, seize
+   cases ne coûtent rien - mais les bandes arrivent en s'ouvrant
    (gc-bande-entre dans la feuille de style), et une bande réécrite rejoue
    son animation. Désigner ou relâcher une case faisait donc reclignoter les
    groupes déjà trouvés, comme s'ils venaient d'être découverts : le seul
@@ -1334,7 +1368,7 @@ function gcEmpileBandes() {
 }
 
 /* Une bande de groupe résolu : son lien en toutes lettres, et les quatre
-   jeux dessous. `trouve` la sépare de celles qu'on dévoile en perdant —
+   jeux dessous. `trouve` la sépare de celles qu'on dévoile en perdant -
    même bande, mais éteinte : ce n'est pas la même chose de les avoir vues. */
 function gcBande(i, trouve) {
   const g = GRILLE.groupes[i];
@@ -1392,7 +1426,7 @@ const gcScore = () =>
   GRILLE.trouves.length * GRILLE.parGroupe
   + (GRILLE.erreursMax - GRILLE.erreurs) * GRILLE.parVie;
 /* Une grille parfaite vaut le même millier qu'une chronologie sans faute et
-   que cinq jaquettes trouvées du premier coup — le barème est calé pour ça
+   que cinq jaquettes trouvées du premier coup - le barème est calé pour ça
    côté serveur. C'est ce maximum que le bilan met en face du score : sans
    lui, 750 ne dit pas si on est passé près. */
 const gcMaxi = () =>
@@ -1414,7 +1448,7 @@ function gcTouche(titre) {
 
 /* Mélanger ne change rien à la partie : c'est un coup de pouce pour l'œil,
    qui finit par voir les cases à leur place plutôt que ce qu'elles disent.
-   La sélection en cours survit — on mélange justement pour regarder
+   La sélection en cours survit - on mélange justement pour regarder
    autrement ce qu'on hésitait à valider. */
 function gcMelange() {
   if (GRILLE.fini || GRILLE.anime) return;
@@ -1429,7 +1463,7 @@ function gcValide() {
 
   /* Le même quatuor proposé deux fois ne coûte pas deux vies. C'est le plus
      souvent un double appui sur « Valider » ; et quand c'est vraiment un
-     second essai, le redire vaut mieux que le punir — on n'apprend rien
+     second essai, le redire vaut mieux que le punir - on n'apprend rien
      d'une vie perdue sur une réponse qu'on a déjà eue.
      La clé est triée : l'ordre dans lequel on a désigné les quatre cases
      ne fait pas un essai différent. */
@@ -1462,7 +1496,7 @@ function gcValide() {
 
   g.erreurs += 1;
   /* Trois sur quatre : le seul retour utile qu'on puisse donner sans
-     désigner la case fautive — le dire coûterait le groupe entier.
+     désigner la case fautive - le dire coûterait le groupe entier.
      Le cas de la dernière vie ne se tait plus : il ne disait rien
      précisément là où l'on veut savoir sur quoi on a perdu. */
   g.message = combien === 3
@@ -1483,12 +1517,12 @@ function gcValide() {
 
    Le plateau est verrouillé pendant ce temps-là, ce qu'il n'était pas :
    cases et boutons restaient vivants sous l'animation. Un joueur qui
-   enchaîne — et on enchaîne, sur seize cases — effaçait le « Presque »
+   enchaîne - et on enchaîne, sur seize cases - effaçait le « Presque »
    avant qu'il ne s'affiche, ou repayait une vie en réappuyant sur
    « Valider ». Le verrou tient dans GRILLE.anime, que gcTouche, gcMelange
    et gcValide consultent ; les boutons, eux, s'éteignent tout de suite
-   plutôt qu'au repaint, sinon ils restent cliquables — et l'air
-   cliquables — pendant toute l'animation. */
+   plutôt qu'au repaint, sinon ils restent cliquables - et l'air
+   cliquables - pendant toute l'animation. */
 function gcAnime(classe, apres) {
   const g = GRILLE;
   const plateau = el("gcPlateau");
@@ -1508,7 +1542,7 @@ function gcAnime(classe, apres) {
 
 /* Clic droit sur une image de partie : bloque. « Ouvrir l'image dans un
    nouvel onglet » et « Rechercher l'image avec Google » donnaient la reponse
-   en deux clics — le flou est pose en CSS, le fichier derriere est net, et
+   en deux clics - le flou est pose en CSS, le fichier derriere est net, et
    il porte le titre du jeu dans son nom.
 
    C'est un garde-fou, pas une serrure : la meme image reste a portee d'un
@@ -1542,7 +1576,7 @@ document.addEventListener("contextmenu", (e) => {
   el("suggBtn").hidden = false;
   /* Le bouton menait à /abyss?suggestion=quiz : noter une idée de mini-jeu
      faisait quitter la partie en cours. La fenêtre s'ouvre ici, habillée
-     comme le reste de la page — elle reprend les .sg-* de l'Archive, dont
+     comme le reste de la page - elle reprend les .sg-* de l'Archive, dont
      cette page porte déjà la feuille de style.
 
      Le bouton reste visible pour un visiteur : la fenêtre lui dira elle-même
