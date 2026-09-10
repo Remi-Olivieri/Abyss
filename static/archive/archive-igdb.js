@@ -10,7 +10,7 @@
    C'est le seul module qui écrit en masse dans le classeur, d'où sa
    prudence : rien ne part sans avoir été montré.
 
-   Chargé par templates/jeux-videos.html, dans l'ordre : ces fichiers
+   Chargé par templates/archive/archive.html, dans l'ordre : ces fichiers
    partagent une seule portée globale, comme quand ils n'en faisaient
    qu'un. L'ordre des balises <script> est donc l'ordre des dépendances.
    ======================================================================= */

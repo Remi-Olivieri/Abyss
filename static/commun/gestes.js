@@ -1,5 +1,5 @@
 /* =======================================================================
-   Gestes du doigt - static/gestes.js
+   Gestes du doigt - static/commun/gestes.js
 
    Deux gestes, et rien de plus : le balayage - un jeu, une page, une carte
    plus loin - et la feuille qu'on repousse vers le bas pour la fermer.

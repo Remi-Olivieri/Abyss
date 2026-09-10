@@ -1,7 +1,7 @@
 /* =======================================================================
-   Le Social de l'Archive - style_social.css
+   Le Social de l'Archive - static/archive/social.css
 
-   Se pose SUR style_jeuxvideos.css, chargee juste avant : la palette, la
+   Se pose SUR archive.css, chargee juste avant : la palette, la
    remise a zero, .top, .wrap, .cta, .sbtn, .sheet et .pros viennent de la.
    Ce n'est pas une seconde identite, c'est la meme -- avec de quoi tenir un
    fil de discussion plutot qu'un mur de jaquettes.
@@ -10,7 +10,7 @@
    .pt.plus / .pt.minus) : un « + » doit se lire pareil qu'on soit sur le
    mur, dans la fiche ou dans le fil. C'est le meme avis.
 
-   Chargee par templates/archive-feed.html et par templates/jeux-videos.html,
+   Chargee par templates/archive/feed.html et par templates/archive/archive.html,
    qui ouvre les memes fenetres depuis la fiche d'un jeu.
    ======================================================================= */
 
@@ -409,7 +409,7 @@ button.soc-vers-jeu:hover,
 .soc-ecrire{display:flex;gap:9px;align-items:flex-end}
 /* Une ligne au depart, et le champ pousse a mesure qu'on ecrit jusqu'a ce
    plafond -- passe lui, c'est le champ qui defile et le bouton « Envoyer »
-   reste ou il est. Plus de poignee : voir static/champs.js. */
+   reste ou il est. Plus de poignee : voir static/commun/champs.js. */
 .soc-champ{
   flex:1 1 auto;min-height:44px;max-height:180px;resize:none;
   padding:11px 12px;border-radius:11px;font:inherit;font-size:13.5px;
@@ -480,7 +480,7 @@ button.soc-vers-jeu:hover,
 
 /* ---------- sous le pouce ----------
    Le meme seuil que l'en-tete de l'Archive, qui se replie a 640 px et range
-   alors ses boutons par `order` (voir .top-in dans style_jeuxvideos.css). */
+   alors ses boutons par `order` (voir .top-in dans archive.css). */
 @media (max-width:640px){
   .soc-corps > .soc-vers-jeu{width:52px}
   /* La cloche se glisse juste avant l'engrenage, a la place qu'elle occupe

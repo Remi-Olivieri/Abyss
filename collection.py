@@ -81,7 +81,7 @@ CARTES_MAXI = 20000        # par page : garde-fou contre un import qui s'emballe
 # --------------------------------------------------------------------------
 # Le fonds d'artworks est un dossier plat, un fichier par passcode, partage
 # avec le quiz. Une carte du classeur ne connait que son nom : il faut donc
-# passer par cards_fr.json, qui dit « passcode -> nom francais ».
+# passer par static/yugioh/cartes-fr.json, qui dit « passcode -> nom francais ».
 #
 # La page faisait ce travail elle-meme, et il lui coutait cher : 570 Ko de
 # noms a telecharger avant de pouvoir afficher la moindre illustration, un
@@ -245,7 +245,7 @@ def branche(dossier_cartes, fichier_noms, url_publique="/static/Cards/") -> Blue
 #   Traduction base <-> page
 # --------------------------------------------------------------------------
 def en_json(l, index=None) -> list:
-    """Une ligne SQL vers la carte que collection-yugioh.html manipule.
+    """Une ligne SQL vers la carte que collection/collection.html manipule.
 
     L'id en quatrieme case : c'est ce que la page renvoie pour ecrire, la ou
     elle renvoyait la ligne et la colonne du Sheet. Le fichier de
@@ -645,7 +645,7 @@ if __name__ == "__main__":
     import sys
 
     base = Path(__file__).parent.resolve()
-    branche(base / "static" / "Cards", base / "static" / "cards_fr.json")
+    branche(base / "static" / "Cards", base / "static" / "yugioh" / "cartes-fr.json")
     print(f"Vignettes de {DOSSIER_CARTES} -> {DOSSIER_CARTES / VIGNETTES}")
     faites, ratees = prechauffe()
     print(f"{faites} vignette(s) fabriquee(s), {ratees} illisible(s).")

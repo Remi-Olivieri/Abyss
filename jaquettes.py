@@ -204,7 +204,7 @@ def _dit(message):
 #   Nommage
 # --------------------------------------------------------------------------
 def slug(nom, sep="_"):
-    """Meme regle que le slug() de jeux-videos.html.
+    """Meme regle que le slug() de archive/archive.html.
 
     Minuscules, sans accents, toute suite de caracteres speciaux devient un
     seul separateur. sep="_" donne le nom de fichier (nom_du_jeu.webp) ;
@@ -1194,7 +1194,7 @@ def cle_jaquette(nom, id_igdb=None):
     Le repli sur le nom garde tout ce qui existe deja affiche : un jeu
     qu'IGDB ne connait pas n'a pas d'identifiant, et sa jaquette continue
     de s'appeler comme lui. La page applique la meme regle (voir
-    cleJaquette dans jeux-videos.html) : les deux doivent s'accorder, sans
+    cleJaquette dans archive/archive.html) : les deux doivent s'accorder, sans
     quoi la page demande un fichier que le serveur n'ecrit pas.
     """
     if id_igdb:

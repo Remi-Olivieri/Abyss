@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style_abyss.css">
+<link rel="stylesheet" href="/static/abyss/abyss.css">
 </head>
 <body>
 <canvas id="neige" aria-hidden="true"></canvas>
@@ -23,7 +23,7 @@
       Suggestions / Bugs
     </button>
     <span class="barre-espace"></span>
-    <div class="compte" id="compte"><!-- rempli par static/compte.js --></div>
+    <div class="compte" id="compte"><!-- rempli par static/commun/compte.js --></div>
   </div>
 
   <header class="entete">
@@ -161,11 +161,11 @@
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
      /api/moi - un defer arriverait peut-être trop tard. -->
-<script src="/static/compte.js"></script>
+<script src="/static/commun/compte.js"></script>
 <!-- Les zones de texte grandissent en écrivant, ici comme partout ailleurs
      sur le site : une taille de départ, puis le champ suit le texte au lieu
-     de demander qu'on tire sa poignée. Voir static/champs.js. -->
-<script src="/static/champs.js"></script>
+     de demander qu'on tire sa poignée. Voir static/commun/champs.js. -->
+<script src="/static/commun/champs.js"></script>
 <script>
 /* =========================================================
    LA SEULE PARTIE À MODIFIER
@@ -201,10 +201,12 @@ const PROJETS = [
         id: "chainz",
         nom: "L'Atelier Chainz",
         texte: "Le site de mon jeu vidéo Chainz.",
-        url: "https://chainz.zdimension.fr",
+        /* La page vivait sur son propre domaine et s'ouvrait dans un
+           nouvel onglet ; elle est maintenant servie ici, donc plus de
+           `externe` -- on reste dans le site, et le compte suit. */
+        url: "/chainz",
         accent: "var(--meduse)",
-        embleme: "eventail",
-        externe: true          // s'ouvre dans un nouvel onglet
+        embleme: "eventail"
     },
     {
         /* Une seule tuile pour tous les quiz du site. Yu-Gi-Quiz avait la
@@ -332,7 +334,7 @@ function dessineGrille() {
 /* =========================================================
    Menu du compte
    =========================================================
-   Le bouton et son menu sont dessinés par static/compte.js : même
+   Le bouton et son menu sont dessinés par static/commun/compte.js : même
    médaillon, mêmes entrées, dans le même ordre sur les quatre pages
    d'Abyss. Cette page-ci était la plus complète des trois copies qui
    avaient fini par diverger - c'est elle qui a servi de modèle.
@@ -670,6 +672,6 @@ function toast(message, mauvais) {
 })();
 
 </script>
-<script src="/static/neige.js" defer></script>
+<script src="/static/commun/neige.js" defer></script>
 </body>
 </html>

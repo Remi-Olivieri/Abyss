@@ -1,7 +1,7 @@
 /* =======================================================================
    Mini-Jeux / Quiz - la feuille de cette page-ci.
 
-   Elle se pose SUR style_jeuxvideos.css, chargée juste avant : la palette,
+   Elle se pose SUR ../archive/archive.css, chargée juste avant : la palette,
    la remise a zero, .top, .wrap, .cta, .sbtn, .gate et .ac viennent de la,
    et rien n'est redefini ici. Ce n'est donc pas une seconde identite, c'est
    la meme, avec de quoi tenir un salon de jeux plutot qu'un classeur.
@@ -199,7 +199,7 @@
 .qz-jalon.ici{box-shadow:0 0 0 2px rgba(229,196,107,.6)}
 
 /* ---------- les images d'une partie ----------
-   Le pendant tactile du blocage du clic droit (voir quiz.html) : sur
+   Le pendant tactile du blocage du clic droit (voir quiz/quiz.html) : sur
    telephone, un appui long ouvre le meme menu -- « enregistrer l'image »,
    « copier l'image » -- et donne la reponse de la meme facon. La selection
    part avec, sinon l'appui long selectionne l'image au lieu de rien faire,
@@ -606,7 +606,7 @@
    Le téléphone
 
    La barre de titre est celle de l'Archive : sous 640 px elle passe en une
-   rangée d'icônes rondes avec un titre au milieu (voir style_jeuxvideos.css).
+   rangée d'icônes rondes avec un titre au milieu (voir ../archive/archive.css).
    .qz-marque prend la place que .brand occupe là-bas, il lui faut donc les
    mêmes règles - sans quoi « Mini-Jeux / Quiz » et son sous-titre poussaient
    le bouton de suggestion hors de l'écran.

@@ -7,7 +7,7 @@
    quand on lit celui de quelqu'un d'autre, la transition depuis la tuile,
    le piège à focus et le feuilletage au clavier.
 
-   Chargé par templates/jeux-videos.html, dans l'ordre : ces fichiers
+   Chargé par templates/archive/archive.html, dans l'ordre : ces fichiers
    partagent une seule portée globale, comme quand ils n'en faisaient
    qu'un. L'ordre des balises <script> est donc l'ordre des dépendances.
    ======================================================================= */

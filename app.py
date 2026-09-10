@@ -24,14 +24,16 @@ BASE = Path(__file__).parent.resolve() # le dossier du projet
 STATIQUE = (BASE / "static").resolve() # images, css, json
 TEMPLATES = (BASE / "templates").resolve() # les pages html
 DONNEES = (BASE / "donnees").resolve() # la base sqlite : jamais servie
-ACCUEIL = "Abyss.html"
-PROFIL = "profil.html"
-JEUX_VIDEOS = "jeux-videos.html"
-COLLECTION = "collection-yugioh.html"
-SUGGESTIONS = "suggestions.html"
-MONITORING = "monitoring.html"
-QUIZ = "quiz.html"
-FEED = "archive-feed.html"
+ACCUEIL = "abyss/accueil.html"
+PROFIL = "abyss/profil.html"
+JEUX_VIDEOS = "archive/archive.html"
+COLLECTION = "collection/collection.html"
+SUGGESTIONS = "abyss/suggestions.html"
+MONITORING = "abyss/monitoring.html"
+QUIZ = "quiz/quiz.html"
+FEED = "archive/feed.html"
+REINITIALISER = "abyss/reinitialiser.html"
+CHAINZ = "chainz/chainz.html"
 # La cle qui signe les cookies de session Flask. Elle ne sert qu'au pseudo
 # d'invite du Yu-Gi-Quiz : les comptes Abyss, eux, ont leur propre cookie et
 # leur table de sessions (voir comptes.COOKIE). Gardee dans donnees/, qui
@@ -116,7 +118,7 @@ monitoring.menage()          # les visites d'il y a quatre mois ne servent plus
 app.register_blueprint(comptes.blueprint_comptes)
 app.register_blueprint(journal.blueprint_journal)
 app.register_blueprint(collection.branche(STATIQUE / "Cards",
-                                          STATIQUE / "cards_fr.json"))
+                                          STATIQUE / "yugioh" / "cartes-fr.json"))
 app.register_blueprint(blueprint_jaquettes(STATIQUE / "Cover"))
 app.register_blueprint(blueprint_suggestions)
 app.register_blueprint(social.blueprint_social)
@@ -148,8 +150,8 @@ def note_la_visite(r):
 def cibles(chemin: str):
     """Ou chercher `chemin`, dans l'ordre.
 
-    /static/Cards/123.jpg  ->  static/Cards/123.jpg
-    /collection-yugioh.html ->  templates/collection-yugioh.html
+    static/Cards/123.jpg   ->  static/Cards/123.jpg
+    abyss/accueil.html     ->  templates/abyss/accueil.html
     """
     if chemin.startswith("static/"):
         yield STATIQUE, chemin[len("static/"):]
@@ -228,6 +230,15 @@ def page_suggestions():
 def page_monitoring():
     return envoie(MONITORING)
 
+# Le lien arrive par mail, avec le jeton en parametre. Les deux adresses
+# servent la meme page : /reinitialiser.html a ete envoye pendant des mois
+# et peut encore dormir dans une boite -- une redirection perdrait le
+# ?jeton=, donc on sert, on ne redirige pas.
+@app.route("/abyss/reinitialiser")
+@app.route("/reinitialiser.html")
+def page_reinitialiser():
+    return envoie(REINITIALISER)
+
 @app.route("/jeux-videos.html")
 def ancien_archive():
     return redirect("/archive", code=301)
@@ -271,6 +282,12 @@ def archive_de(pseudo):
 @app.route("/quiz")
 def page_quiz():
     return envoie(QUIZ)
+
+# Chainz vivait sur chainz.zdimension.fr ; la page est maintenant ici,
+# avec ses cartes et ses artworks sous static/chainz/.
+@app.route("/chainz", strict_slashes=False)
+def page_chainz():
+    return envoie(CHAINZ)
 
 @app.route("/collection-yugioh.html")
 def ancienne_collection():

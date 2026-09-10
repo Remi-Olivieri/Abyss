@@ -140,7 +140,7 @@ main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 22px 12
    navigateur, l'horizontal nous revient entier - c'est ce qui laisse le
    doigt tourner les pages sans avoir à éviter le défilement, et ce qui
    empêche le geste de retour du navigateur de partir en même temps.
-   Voir la section « gestes du doigt » dans templates/collection-yugioh.html. */
+   Voir la section « gestes du doigt » dans templates/collection/collection.html. */
 .binder{position:relative;display:flex;perspective:3000px;width:max-content;max-width:100%;
   touch-action:pan-y}
 .page{flex:0 0 auto;width:calc(3 * var(--cw) + 2 * var(--gap) + 2 * var(--pad));
@@ -585,7 +585,7 @@ body.sansreflets .foil{display:none}
 /* =======================================================================
    La fenetre « Suggestion / Bug »
 
-   Le balisage vient de static/suggestion.js et il est le meme partout
+   Le balisage vient de static/commun/suggestion.js et il est le meme partout
    (classes `sg-`) ; l'habillage appartient a chaque page. Le bouton menait
    a /abyss?suggestion=collection : signaler un bug du classeur faisait
    quitter le classeur, avec la page ou l'on etait et la carte qu'on
@@ -639,7 +639,7 @@ body.sansreflets .foil{display:none}
 .sg-select{cursor:pointer}
 .sg-select option{background:#120E19;color:var(--ink)}
 /* Pas de poignee : le champ suit le texte, de ces 104 px a son plafond,
-   apres quoi il defile. Voir static/champs.js. */
+   apres quoi il defile. Voir static/commun/champs.js. */
 .sg-zone{min-height:104px;max-height:min(340px,42vh);line-height:1.5;resize:none}
 .sg-select:focus,.sg-zone:focus{border-color:var(--accent)}
 .sg-compteur{font-family:'DM Mono';font-size:10.5px;color:var(--ink-faint);margin:0 0 12px}
@@ -652,7 +652,7 @@ body.sansreflets .foil{display:none}
 .sg-go[disabled]{opacity:.5;cursor:progress}
 
 /* Au doigt, la fenetre monte du bas et se repousse par sa poignee -- la
-   barre de titre, que static/gestes.js reconnait a sa classe. */
+   barre de titre, que static/commun/gestes.js reconnait a sa classe. */
 @media (max-width:640px){
   .sg-fond{padding:0;align-items:flex-end}
   .sg-boite{width:100%;max-height:92dvh;border-radius:16px 16px 0 0;border-bottom:none;

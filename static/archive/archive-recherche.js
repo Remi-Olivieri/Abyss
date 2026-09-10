@@ -11,9 +11,9 @@
 
    Chargé par DEUX pages, et c'est pour ça qu'il est à part :
 
-     - templates/jeux-videos.html, où la fenêtre s'ouvre depuis l'adresse
+     - templates/archive/archive.html, où la fenêtre s'ouvre depuis l'adresse
        (?recherche=1) et se déplie à même l'écran d'accueil ;
-     - templates/archive-feed.html, où c'est la pastille de l'en-tête qui
+     - templates/archive/feed.html, où c'est la pastille de l'en-tête qui
        l'ouvre, à la place qu'occupe « Social » sur le journal.
 
    Ce qui change d'une page à l'autre n'est pas la fenêtre, c'est ce qu'un

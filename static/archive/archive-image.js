@@ -10,7 +10,7 @@
    Le découpage de l'histogramme vient de casiers(), dans
    archive-mur.js - l'image doit montrer ce qu'on avait sous les yeux.
 
-   Chargé par templates/jeux-videos.html, dans l'ordre : ces fichiers
+   Chargé par templates/archive/archive.html, dans l'ordre : ces fichiers
    partagent une seule portée globale, comme quand ils n'en faisaient
    qu'un. L'ordre des balises <script> est donc l'ordre des dépendances.
    ======================================================================= */

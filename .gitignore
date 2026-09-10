@@ -1,14 +1,21 @@
+# Les images : lourdes, jamais editees, deja sur le serveur.
+# Elles vivent dans le dossier de leur projet, comme le reste.
 static/Cards/
 static/CardsCropped/
 static/Cover/
-static/Avatars
-static/art
+static/Avatars/
+static/Bannieres/
+static/chainz/art/
 recuperation/
+
+# La base et sa cle : jamais versionnees, jamais servies.
 donnees/
+
 __pycache__/
 venv/
+*.pyc
+
 changements.txt
 tests.py
-*.pyc
 igdb.json
 .igdb-jeton.json

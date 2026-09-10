@@ -5,8 +5,8 @@
 
    Chargé par DEUX pages, et c'est tout l'intérêt :
 
-     - templates/archive-feed.html, la page Social, qui n'est presque que ça ;
-     - templates/jeux-videos.html, où la fiche d'un jeu ouvre les avis des
+     - templates/archive/feed.html, la page Social, qui n'est presque que ça ;
+     - templates/archive/archive.html, où la fiche d'un jeu ouvre les avis des
        autres et retombe exactement sur la même fenêtre de discussion.
 
    Un fil ouvert depuis le mur et un fil ouvert depuis le Social doivent se
@@ -457,7 +457,7 @@ function socialFilHTML(fil){
    moins cher que de faire taper trois lignes pour rien.
 
    `rows="1"` : le champ part sur une ligne et pousse à mesure qu'on écrit,
-   jusqu'au plafond de .soc-champ - voir static/champs.js. Il n'a plus de
+   jusqu'au plafond de .soc-champ - voir static/commun/champs.js. Il n'a plus de
    poignée à tirer, donc plus besoin de partir large « au cas où ». */
 function socialEcrireHTML(connecte){
   if(!connecte){

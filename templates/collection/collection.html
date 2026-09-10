@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Inter+Tight:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style_collection.css">
+<link rel="stylesheet" href="/static/collection/collection.css">
 </head>
 <body>
 
@@ -167,16 +167,16 @@
 <!-- Les gestes du doigt, partagés avec l'Archive Jeux Vidéos : ici le
      balayage tourne les pages du classeur et passe d'une carte à l'autre.
      Voir la section « gestes du doigt » plus bas. -->
-<script src="/static/gestes.js"></script>
+<script src="/static/commun/gestes.js"></script>
 <!-- Le formulaire de suggestion, ouvert sur place plutôt que sur le hub :
-     voir static/suggestion.js. Chargé avant le script de la page, qui le
+     voir static/commun/suggestion.js. Chargé avant le script de la page, qui le
      branche - un defer arriverait après lui. -->
 <!-- Les zones de texte grandissent en écrivant plutôt que de porter une
      poignée à tirer : une taille de départ, la hauteur du texte ensuite,
      et le défilement dans le champ passé un plafond. Voir
-     static/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
-<script src="/static/champs.js"></script>
-<script src="/static/suggestion.js"></script>
+     static/commun/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
+<script src="/static/commun/champs.js"></script>
+<script src="/static/commun/suggestion.js"></script>
 
 <script>
 /* =========================================================
@@ -1513,7 +1513,7 @@ el('next').onclick = () => turn(1);
 
    Les trois gestes doublent des boutons qui restent là - les flèches du
    classeur, celles de la carte agrandie, la croix du panneau. Rien ne
-   devient inatteignable faute de les connaître. Voir static/gestes.js.
+   devient inatteignable faute de les connaître. Voir static/commun/gestes.js.
 
    La feuille de style pose les touch-action qui vont avec : pan-y sur le
    classeur, pour que le doigt laisse le défilement vertical de la page au

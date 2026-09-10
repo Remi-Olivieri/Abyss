@@ -7,11 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Karla:wght@400;500;700&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style_jeuxvideos.css">
+<link rel="stylesheet" href="/static/archive/archive.css">
 <!-- Le social : les cartes du fil, la fenêtre d'une discussion, la cloche et
-     le bouton « Avis » de la fiche. Partagé avec templates/archive-feed.html,
+     le bouton « Avis » de la fiche. Partagé avec templates/archive/feed.html,
      qui charge exactement les deux mêmes feuilles. -->
-<link rel="stylesheet" href="/static/style_social.css">
+<link rel="stylesheet" href="/static/archive/social.css">
 </head>
 <body>
 
@@ -57,7 +57,7 @@
            côté du titre du journal, pas un champ de saisie.
 
            La recherche n'a pas disparu : elle est en haut de la page Social
-           (voir templates/archive-feed.html), et sa fenêtre s'ouvre toujours
+           (voir templates/archive/feed.html), et sa fenêtre s'ouvre toujours
            ici, à l'arrivée, quand l'adresse porte ?recherche=1. -->
       <a class="jnl-search" id="socialBtn" href="/archive/feed">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -244,22 +244,22 @@
 <!-- Les gestes du doigt, partagés avec le classeur Yu-Gi-Oh! : le balayage
      d'une fiche à l'autre et la feuille qu'on repousse vers le bas. Chargé
      en premier, avant tous ceux qui s'en servent. -->
-<script src="/static/gestes.js"></script>
+<script src="/static/commun/gestes.js"></script>
 <!-- Le formulaire de suggestion, ouvert sur place plutôt que sur le hub :
-     voir static/suggestion.js. Chargé avant le script de la page, qui le
+     voir static/commun/suggestion.js. Chargé avant le script de la page, qui le
      branche en s'installant - un defer arriverait après lui. -->
 <!-- Les zones de texte grandissent en écrivant plutôt que de porter une
      poignée à tirer : une taille de départ, la hauteur du texte ensuite,
      et le défilement dans le champ passé un plafond. Voir
-     static/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
+     static/commun/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
 <!-- Le canal du hub, monté pour le Yu-Gi-Quiz et partagé avec le Social :
      un jeu terminé apparaît dans le fil et la pastille de la cloche bouge
      sans qu'on recharge. La même version que le lobby du quiz - c'est le
      même serveur en face. Son absence ne casse rien : voir socialTempsReel
      dans archive-social.js. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
-<script src="/static/champs.js"></script>
-<script src="/static/suggestion.js"></script>
+<script src="/static/commun/champs.js"></script>
+<script src="/static/commun/suggestion.js"></script>
 <!-- La page tenait dans un seul bloc de six mille lignes de JavaScript,
      écrit à même le HTML. Il est découpé en onze fichiers de
      static/archive/, chargés ici dans l'ordre.

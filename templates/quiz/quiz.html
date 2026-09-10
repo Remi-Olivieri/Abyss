@@ -10,13 +10,13 @@
 <!-- La feuille de l'Archive, et pas celle d'Abyss : les mini-jeux sont une
      pièce du même projet et en portent les couleurs. Jamais les deux à la
      fois - elles définissent toutes deux :root, .menu, .cta et .gate. -->
-<link rel="stylesheet" href="/static/style_jeuxvideos.css">
+<link rel="stylesheet" href="/static/archive/archive.css">
 <!-- Deux feuilles, et c'est voulu : celle de l'Archive donne la palette, la
      remise à zéro et les composants communs (.top, .wrap, .cta, .sbtn,
      .ac), celle-ci ne fait que s'y poser. Rien n'y est redéfini - ce n'est
      pas une seconde identité, c'est la même avec de quoi tenir un salon de
      jeux plutôt qu'un classeur. -->
-<link rel="stylesheet" href="/static/style_quiz.css">
+<link rel="stylesheet" href="/static/quiz/quiz.css">
 </head>
 <body>
 
@@ -70,14 +70,14 @@
 </main>
 
 <!-- Le formulaire de suggestion, ouvert sur place plutôt que sur le hub :
-     voir static/suggestion.js. Chargé avant le script de la page, qui le
+     voir static/commun/suggestion.js. Chargé avant le script de la page, qui le
      branche une fois la session connue - un defer arriverait après lui. -->
 <!-- Les zones de texte grandissent en écrivant plutôt que de porter une
      poignée à tirer : une taille de départ, la hauteur du texte ensuite,
      et le défilement dans le champ passé un plafond. Voir
-     static/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
-<script src="/static/champs.js"></script>
-<script src="/static/suggestion.js"></script>
+     static/commun/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
+<script src="/static/commun/champs.js"></script>
+<script src="/static/commun/suggestion.js"></script>
 <script>
 const el = (id) => document.getElementById(id);
 const esc = (s) => String(s === null || s === undefined ? "" : s)

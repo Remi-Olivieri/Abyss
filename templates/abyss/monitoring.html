@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style_abyss.css">
+<link rel="stylesheet" href="/static/abyss/abyss.css">
 <style>
   /* cette barre-ci porte un retour à gauche en plus du compte à droite */
   .barre{justify-content:space-between}
@@ -182,7 +182,7 @@
         <path d="M19 12H5M12 19l-7-7 7-7"/>
       </svg>
     </a>
-    <div class="compte" id="compte"><!-- rempli par static/compte.js --></div>
+    <div class="compte" id="compte"><!-- rempli par static/commun/compte.js --></div>
   </div>
 
   <main id="corps" hidden>
@@ -232,7 +232,7 @@
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
      /api/moi - un defer arriverait peut-être trop tard. -->
-<script src="/static/compte.js"></script>
+<script src="/static/commun/compte.js"></script>
 <script>
 const el = (id) => document.getElementById(id);
 const echappe = (s) => String(s === null || s === undefined ? "" : s)
@@ -454,6 +454,6 @@ async function relis(silencieux) {
   setInterval(() => relis(true), CADENCE);
 })();
 </script>
-<script src="/static/neige.js" defer></script>
+<script src="/static/commun/neige.js" defer></script>
 </body>
 </html>

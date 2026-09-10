@@ -8,7 +8,7 @@
    par champ, et les deux fonctions d'appel à l'API (api / apiPatient) dont
    se servent aussi les modules suivants.
 
-   Chargé par templates/jeux-videos.html, dans l'ordre : ces fichiers
+   Chargé par templates/archive/archive.html, dans l'ordre : ces fichiers
    partagent une seule portée globale, comme quand ils n'en faisaient
    qu'un. L'ordre des balises <script> est donc l'ordre des dépendances.
    ======================================================================= */

@@ -59,7 +59,7 @@ SECTIONS = {
 # refuser un rapport de bug sur la seule page ou l'on peut en trouver.
 #
 # Le mecanisme reste : le prochain projet en chantier s'ajoute ici, et
-# static/suggestion.js porte la meme liste sous le nom `reserve`.
+# static/commun/suggestion.js porte la meme liste sous le nom `reserve`.
 RESERVEES = ()
 
 GENRES = ("suggestion", "bug")

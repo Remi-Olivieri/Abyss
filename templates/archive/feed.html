@@ -11,8 +11,8 @@
      de l'Archive, pas un projet à part. Tout ce qu'une carte affiche - la
      note en couleur, la jaquette, les « + » et les « − » d'un avis - vient
      de là et doit se lire exactement pareil ici. -->
-<link rel="stylesheet" href="/static/style_jeuxvideos.css">
-<link rel="stylesheet" href="/static/style_social.css">
+<link rel="stylesheet" href="/static/archive/archive.css">
+<link rel="stylesheet" href="/static/archive/social.css">
 </head>
 <body>
 
@@ -121,19 +121,19 @@
 
 <!-- Les gestes du doigt : la feuille d'une discussion se repousse vers le
      bas, comme toutes les fenêtres de l'Archive. -->
-<script src="/static/gestes.js"></script>
+<script src="/static/commun/gestes.js"></script>
 <!-- Les zones de texte grandissent en écrivant plutôt que de porter une
      poignée à tirer : une taille de départ, la hauteur du texte ensuite,
      et le défilement dans le champ passé un plafond. Voir
-     static/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
+     static/commun/champs.js -- il n'y a rien à brancher, le fichier suffit. -->
 <!-- Le canal du hub, monté pour le Yu-Gi-Quiz et partagé avec le Social :
      un jeu terminé apparaît dans le fil et la pastille de la cloche bouge
      sans qu'on recharge. La même version que le lobby du quiz - c'est le
      même serveur en face. Son absence ne casse rien : voir socialTempsReel
      dans archive-social.js. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
-<script src="/static/champs.js"></script>
-<script src="/static/suggestion.js"></script>
+<script src="/static/commun/champs.js"></script>
+<script src="/static/commun/suggestion.js"></script>
 <!-- Deux fichiers seulement, et c'est tout l'intérêt du découpage de
      l'Archive : archive-noyau.js ne connaît ni classeur ni mur - formats,
      couleur d'une note, manifeste des jaquettes - et archive-social.js
@@ -283,7 +283,7 @@ regleRecherche({
 });
 
 /* Le bouton « Suggestion / Bug » ouvre son formulaire sur place, comme
-   partout ailleurs : voir static/suggestion.js. Sans `estConnecte`, il
+   partout ailleurs : voir static/commun/suggestion.js. Sans `estConnecte`, il
    demande lui-même au serveur avant d'ouvrir. */
 if(window.Suggestion){
   Suggestion.branche({

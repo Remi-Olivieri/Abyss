@@ -140,7 +140,7 @@
 
     /* Et le meme geste au doigt : sur un telephone la fenetre monte du bas
        et se repousse par sa poignee. Sous condition, parce que ce script
-       vit sur des pages qui ne chargent pas static/gestes.js -- la fenetre
+       vit sur des pages qui ne chargent pas static/commun/gestes.js -- la fenetre
        s'y ferme par sa croix, comme avant. */
     if (typeof poigneeFeuille === "function") poigneeFeuille(FOND, ferme);
 

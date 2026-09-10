@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style_abyss.css">
+<link rel="stylesheet" href="/static/abyss/abyss.css">
 <style>
   /* cette barre-ci porte un retour à gauche en plus du compte à droite */
   .barre{justify-content:space-between}
@@ -135,7 +135,7 @@
         <path d="M19 12H5M12 19l-7-7 7-7"/>
       </svg>
     </a>
-    <div class="compte" id="compte"><!-- rempli par static/compte.js --></div>
+    <div class="compte" id="compte"><!-- rempli par static/commun/compte.js --></div>
   </div>
 
   <main id="corps" hidden>
@@ -264,9 +264,9 @@
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
      /api/moi - un defer arriverait peut-être trop tard. -->
-<script src="/static/compte.js"></script>
+<script src="/static/commun/compte.js"></script>
 <script>
-/* La liste des projets masquables : la meme qu'Abyss.html, juste ce qu'il
+/* La liste des projets masquables : la meme qu'abyss/accueil.html, juste ce qu'il
    faut pour dessiner la case a cocher de chacun - id, nom, accent. */
 const PROJETS = [
     { id: "jeux-videos", nom: "Jeux Vidéos", accent: "var(--algue)" },
@@ -352,7 +352,7 @@ document.querySelectorAll(".champ input[type=password]").forEach(posePasswordOei
    Le compte
    =========================================================
    Ce que la page sait de la personne connectée, et ce dont le bouton du
-   coin est dessiné - par static/compte.js, comme sur les trois autres
+   coin est dessiné - par static/commun/compte.js, comme sur les trois autres
    pages d'Abyss. Cette page en avait sa propre copie, et c'est elle qui
    avait le plus dérivé : une pastille verte à la place du médaillon, pas
    de chevron, et un menu amputé de « Mon profil » et de « Monitoring ».
@@ -364,7 +364,7 @@ let MOI = { connecte: false, utilisateur: null, masques: [] };
 
 /* =========================================================
    Modales - e-mail et mot de passe, ouvertes à la demande plutôt que
-   toujours dépliées sur la page (même mécanique qu'Abyss.html).
+   toujours dépliées sur la page (même mécanique qu'abyss/accueil.html).
    ========================================================= */
 let RENDRE_FOCUS = null;
 function ouvre(id, champ) {
@@ -688,6 +688,6 @@ el("formMdp").addEventListener("submit", async (e) => {
 })();
 
 </script>
-<script src="/static/neige.js" defer></script>
+<script src="/static/commun/neige.js" defer></script>
 </body>
 </html>

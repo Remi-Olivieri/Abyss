@@ -144,6 +144,17 @@ VISIBLE = (
 )
 VISIBLE_ARGS = (PROJET, *STATUTS)
 
+# L'ordre du fil : la date d'entree dans le fil, c'est-a-dire le jour ou le
+# jeu a ete TERMINE, et non celui ou sa ligne a ete creee. On ajoute souvent
+# un jeu bien avant de le finir -- range en « Wishlist » en janvier, termine
+# en septembre -- et l'ordre des identifiants l'aurait alors pose au milieu du
+# fil, sous des dizaines de jeux plus recents.
+#
+# COALESCE parce que `entre_le` peut manquer sur une ligne ancienne que la
+# migration 18 n'aurait pas vue : `cree_le` est alors ce que le fil montrait
+# jusqu'ici, ce qui est la bonne reponse par defaut.
+ENTREE = "COALESCE(j.entre_le, j.cree_le)"
+
 
 def _avatar(ligne):
     """L'adresse de la photo de profil de l'auteur d'une ligne.
@@ -244,21 +255,28 @@ def _habille(lignes, u) -> list:
 def fil(u, avant=None, limite=FEED_LOT) -> dict:
     """Le fil : les derniers jeux termines, du plus recent au plus ancien.
 
-    Le curseur est un identifiant de ligne et non une date. `jeu.id` est
-    attribue a l'insertion, donc l'ordre des identifiants EST l'ordre
-    d'arrivee -- modifier un vieux jeu touche `maj_le`, jamais `cree_le` ni
-    l'identifiant. Un entier se compare sans ambiguite la ou deux lignes
-    importees a la meme seconde auraient partage la meme date.
+    « Recent » se compte a la date d'entree dans le fil (voir ENTREE), et
+    l'identifiant departage les jeux termines la meme seconde -- deux lignes
+    importees ensemble en ont beaucoup.
+
+    Le curseur reste un identifiant de ligne, et non le couple date+id qui
+    fait l'ordre : un entier tient dans une adresse, ne se reencode pas et ne
+    se perime pas. C'est la requete qui va relire la date de cette ligne-la,
+    et la comparaison porte sur le couple entier -- comparer la seule date
+    aurait saute les jeux termines a la meme seconde que le dernier affiche.
     """
     conditions = [VISIBLE]
     args = list(VISIBLE_ARGS)
     if avant:
-        conditions.append(" j.id < ?")
+        conditions.append(
+            f" ({ENTREE}, j.id) <"
+            " (SELECT COALESCE(entre_le, cree_le), id FROM jeu WHERE id = ?)")
         args.append(int(avant))
     lignes = cx().execute(
         f"SELECT {CHAMPS_POST}{DE_LA_LIGNE}"
         f" WHERE {' AND '.join(conditions)}"
-        f" ORDER BY j.id DESC LIMIT ?", (*args, int(limite) + 1)).fetchall()
+        f" ORDER BY {ENTREE} DESC, j.id DESC LIMIT ?",
+        (*args, int(limite) + 1)).fetchall()
 
     # une ligne de plus que demande : sa presence dit qu'il y a une suite,
     # sans avoir a compter tout le fil pour le savoir

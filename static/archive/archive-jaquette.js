@@ -7,7 +7,7 @@
    jeu » : deux façons de désigner la même chose, une fiche IGDB précise,
    qui alignent ensuite la date de sortie et le prix sur elle.
 
-   Chargé par templates/jeux-videos.html, dans l'ordre : ces fichiers
+   Chargé par templates/archive/archive.html, dans l'ordre : ces fichiers
    partagent une seule portée globale, comme quand ils n'en faisaient
    qu'un. L'ordre des balises <script> est donc l'ordre des dépendances.
    ======================================================================= */

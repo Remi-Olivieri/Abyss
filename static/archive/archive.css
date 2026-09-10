@@ -18,6 +18,12 @@
   /* hauteur de l'en-tête collant : .top-in fait 62px, plus son liseré du
      bas. C'est là-dessous que se pose la barre d'outils. */
   --h-top:63px;
+  /* De combien une tuile se soulève au survol. C'est une variable parce que
+     deux règles éloignées en dépendent : .tile:hover, qui la soulève, et le
+     vide laissé en haut de #out, qui lui donne la place de le faire sans
+     passer sous la barre d'outils. Changer l'une sans l'autre remet le
+     rognage. */
+  --tuile-levee:5px;
 }
 *{box-sizing:border-box}
 /* l'attribut hidden l'emporte sur les display: flex/grid déclarés plus bas */
@@ -571,7 +577,7 @@ input,textarea{caret-color:var(--gold)}
    La croix d'effacement du champ de recherche, la notre : Firefox n'en
    dessine aucune dans un <input type="search">, et celle de Chrome n'est
    pas stylable. Voir le commentaire du <label class="search"> dans
-   templates/jeux-videos.html.
+   templates/archive/archive.html.
 
    Elle etait arrivee en quatre retouches empilees, dont les deux dernieres
    se contredisaient : la troisieme en faisait un enfant du flex, la
@@ -666,7 +672,14 @@ input,textarea{caret-color:var(--gold)}
 .grouphead:first-child{margin-top:4px}
 .grouphead::after{content:"";flex:1;height:1px;background:var(--line)}
 .wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px}
-#out{padding-bottom:70px}
+/* Le vide du haut donne à la première rangée la place de se soulever. La
+   barre d'outils est collante et opaque (fond translucide + flou) : sans ce
+   vide, le mur commence pile sous son bord, et survoler une tuile de la
+   première rangée la faisait glisser de 5 px SOUS la barre -- on y perdait
+   le haut de la jaquette et le liseré doré du survol, c'est-à-dire
+   précisément ce que le survol est censé montrer. Un pixel de rab pour le
+   liseré de la tuile. */
+#out{padding-top:calc(var(--tuile-levee) + 1px);padding-bottom:70px}
 /* Pas de content-visibility:auto ici, et c'est délibéré. Il demandait une
    hauteur estimée (contain-intrinsic-size), or une tuile n'en a pas de
    fixe : les colonnes s'étirent en minmax(158px,1fr), donc à 1120 px la
@@ -684,7 +697,7 @@ input,textarea{caret-color:var(--gold)}
 }
 .tile:hover{
   border-color:rgba(229,196,107,.5);
-  transform:translateY(-5px);
+  transform:translateY(calc(-1 * var(--tuile-levee)));
   box-shadow:0 16px 34px rgba(0,0,0,.5);
 }
 .tile:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -849,7 +862,7 @@ input,textarea{caret-color:var(--gold)}
 .deco-plus[disabled]{opacity:.5;cursor:progress}
 
 /* ---------- fiche par-dessus ----------
-   La fenêtre de suggestion (static/suggestion.js, la même sur toutes les
+   La fenêtre de suggestion (static/commun/suggestion.js, la même sur toutes les
    pages qui portent le bouton) reprend ces sélecteurs-ci plutôt que d'en
    recopier les déclarations : elle doit se dessiner comme la page où elle
    s'ouvre, sinon elle s'y lit comme un morceau de site étranger posé
@@ -1164,7 +1177,7 @@ input,textarea{caret-color:var(--gold)}
   transition:border-color .15s;
 }
 /* resize:none : ces deux champs grandissent avec le texte plutot que de
-   porter une poignee a tirer (voir static/champs.js). min-height est le
+   porter une poignee a tirer (voir static/commun/champs.js). min-height est le
    plancher, max-height le plafond au-dela duquel le champ defile -- sans
    plafond, un avis de trente lignes pousse « Enregistrer » sous le bas de
    la fenetre et il faut remonter tout ce qu'on vient d'ecrire pour le
@@ -1991,7 +2004,7 @@ input,textarea{caret-color:var(--gold)}
 /* =======================================================================
    La fenêtre de suggestion
 
-   Le balisage vient de static/suggestion.js et il est le même partout ;
+   Le balisage vient de static/commun/suggestion.js et il est le même partout ;
    l'habillage appartient à chaque page. Ici, c'est celui des fiches : même
    fond, même feuille, même barre d'outils collante, mêmes champs - la
    plupart de ces sélecteurs ont donc simplement été ajoutés aux règles
@@ -2239,7 +2252,7 @@ input,textarea{caret-color:var(--gold)}
   /* La fiche d'un jeu, et elle seule : le vertical au navigateur,
      l'horizontal à nous, c'est ce qui laisse le balayage passer d'un jeu au
      suivant sans que le doigt ait à éviter le défilement. Voir
-     glissement() dans static/gestes.js.
+     glissement() dans static/commun/gestes.js.
      Nommément #sheet et pas toutes les feuilles : touch-action vaut aussi
      pour la descendance, et pan-y sur la fenêtre « plus d'informations »
      bloquerait le défilement horizontal de sa galerie de captures. */
@@ -2247,7 +2260,7 @@ input,textarea{caret-color:var(--gold)}
 
   /* La poignée, et elle s'attrape : la feuille se repousse vers le bas pour
      la refermer, comme elle est montée (voir poigneeFeuille() dans
-     static/gestes.js). touch-action:none pour cela - la barre est collée en
+     static/commun/gestes.js). touch-action:none pour cela - la barre est collée en
      haut et ne défile pas, le doigt qui s'y pose ne peut vouloir que ça.
      Le corps de la feuille, lui, garde son défilement. */
   /* le pixel rendu au padding suit le top:-1px de la regle generale */
@@ -2335,7 +2348,7 @@ input,textarea{caret-color:var(--gold)}
   /* La capture se balaie : à gauche la suivante, vers le bas on la repose.
      Rien à faire défiler ici, le doigt est libre - d'où touch-action:none,
      qui empêche au passage le geste de retour du navigateur de partir
-     pendant qu'on feuillette. Voir glissement() dans static/gestes.js. */
+     pendant qu'on feuillette. Voir glissement() dans static/commun/gestes.js. */
   .zoom-boite{touch-action:none}
   /* Sous le pouce, les fleches repassent par-dessus les bords de la capture
      - c'est la regle .sheet-nav ci-dessus qui les y met, et l'image reprend
@@ -2734,7 +2747,7 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
 .vt-entree .sheet{animation:none}
 
 /* ==========================================================================
-   La fenetre « Suggestion / Bug », posee par static/suggestion.js.
+   La fenetre « Suggestion / Bug », posee par static/commun/suggestion.js.
 
    Elle n'a pas de feuille a elle : le script construit la fenetre, chaque
    page l'habille. Ces regles avaient disparu avec la feuille, et le

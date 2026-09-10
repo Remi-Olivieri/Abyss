@@ -24,7 +24,7 @@ nom du tiroir, comme elle le faisait des noms d'onglets.
 Les noms different des deux cotes : la base parle francais, le JavaScript
 garde les noms qu'il tenait des feuilles (name, base, paid...). La traduction
 tient en deux fonctions ci-dessous, ce qui evite de renommer un millier
-d'occurrences dans jeux-videos.html.
+d'occurrences dans archive/archive.html.
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ JEUX_MAXI = 5000        # par page : garde-fou contre un script qui s'emballe
 #   Traduction base <-> page
 # --------------------------------------------------------------------------
 def en_json(l) -> dict:
-    """Une ligne SQL vers l'objet que jeux-videos.html manipule."""
+    """Une ligne SQL vers l'objet que archive/archive.html manipule."""
     return {
         "id": l["id"],
         "bucket": l["periode"],
@@ -170,7 +170,7 @@ def annee_de(periode):
 #     Entre 2015 et 2019    un intervalle, la seconde annee apres la premiere
 #
 # La page ne les fait pas taper : elle les fait choisir (voir le
-# constructeur d'onglet dans jeux-videos.html). Ces motifs sont la pour que
+# constructeur d'onglet dans archive/archive.html). Ces motifs sont la pour que
 # le serveur ne depende pas d'elle -- une ecriture directe sur l'API doit
 # obeir aux memes regles.
 MOTIF_ANNEE = re.compile(r"^\d{4}$")
@@ -558,9 +558,13 @@ def ajoute(page, periode, values, avis):
         raise Refus("nom", "Il faut au moins un nom de jeu.")
     sans_mois(periode, v)
     enrichit_igdb(v)
-    colonnes = ["page_id", "periode", "annee", "avis", "rang", "cree_le", "maj_le"]
+    colonnes = ["page_id", "periode", "annee", "avis", "rang", "cree_le", "maj_le",
+                "entre_le"]
     donnees = [page["id"], periode, annee_de(periode), (avis or "")[:AVIS_MAXI],
-               rang_suivant(page["id"], periode), maintenant(), maintenant()]
+               rang_suivant(page["id"], periode), maintenant(), maintenant(),
+               # la date d'entree dans le fil du Social, ou rien tant que le
+               # jeu n'est pas termine (voir entre_dans_le_fil)
+               maintenant() if periode not in STATUTS else None]
     for col, val in v.items():
         colonnes.append(col)
         donnees.append(val)
@@ -571,6 +575,25 @@ def ajoute(page, periode, values, avis):
     # l'identifiant sert au fil du Social, qui annonce en direct les jeux
     # termines (voir social.annonce_jeu)
     return cur.lastrowid
+
+
+def entre_dans_le_fil(jeu, periode, v) -> None:
+    """Date -- ou efface -- le passage du jeu dans le fil du Social.
+
+    Le fil se lit du plus recemment TERMINE au plus ancien, et non du plus
+    recemment ajoute : un jeu range en « Wishlist » en janvier et fini en
+    septembre doit se poser en haut du fil, pas a la place de janvier que lui
+    donnait son identifiant. C'est cette date-la qui l'y met.
+
+    Elle ne bouge qu'aux frontieres : passer de « En cours » ou « Wishlist »
+    a une annee la pose, le chemin inverse l'efface, et deplacer un jeu deja
+    termine d'une annee a l'autre n'y touche pas -- corriger l'annee de fin
+    n'est pas refinir le jeu.
+    """
+    if periode in STATUTS:
+        v["entre_le"] = None
+    elif jeu["periode"] in STATUTS:
+        v["entre_le"] = maintenant()
 
 
 def modifie(jeu, page, periode, values, avis):
@@ -588,6 +611,7 @@ def modifie(jeu, page, periode, values, avis):
             v["periode"] = periode
             v["annee"] = annee_de(periode)
             v["rang"] = rang_suivant(page["id"], periode)
+            entre_dans_le_fil(jeu, periode, v)
     if peut_toucher_au_mois(periode, v):
         sans_mois(periode if periode is not None else jeu["periode"], v)
     if avis is not None:

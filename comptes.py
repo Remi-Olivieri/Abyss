@@ -87,7 +87,7 @@ INSCRIPTIONS_PAR_JOUR = 20
 FENETRE_INSCRIPTIONS = timedelta(hours=24)
 
 # Les identifiants de projets masquables. Ils doivent correspondre aux `id`
-# du tableau PROJETS dans Abyss.html.
+# du tableau PROJETS dans abyss/accueil.html.
 PROJETS = ("jeux-videos", "collection", "chainz", "quiz")
 
 # 3 a 20 caracteres, ni tiret ni souligne aux extremites : le pseudo finira
@@ -490,10 +490,33 @@ CREATE TABLE jaime_commentaire(
 );
 """
 
+
+# Migration 18 : la date d'entree dans le fil. Voir social.py.
+#
+# Le fil se lisait dans l'ordre des identifiants, c'est-a-dire dans l'ordre
+# ou les jeux ont ete AJOUTES au journal. Or on ajoute souvent un jeu bien
+# avant de le finir : range en « Wishlist » en janvier, termine en septembre,
+# il gardait son identifiant de janvier et se posait au milieu du fil, sous
+# des dizaines de jeux plus recents -- personne ne le voyait arriver.
+#
+# `entre_le` date le passage dans le fil, pas la creation de la ligne : elle
+# est posee le jour ou le jeu quitte « En cours » ou « Wishlist » pour un
+# onglet de jeux termines, et effacee s'il y retourne. Deplacer un jeu d'une
+# annee a l'autre n'y touche pas : il etait deja fini, il n'entre pas une
+# seconde fois.
+#
+# Les lignes deja terminees heritent de leur `cree_le` : c'est exactement
+# l'ordre que le fil montrait jusqu'ici, donc rien ne bouge pour elles.
+FIL = """
+ALTER TABLE jeu ADD COLUMN entre_le TEXT;
+UPDATE jeu SET entre_le = cree_le WHERE periode NOT IN ('En cours', 'Wishlist');
+CREATE INDEX idx_jeu_fil ON jeu(entre_le);
+"""
+
 MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
               SUGGESTIONS, BANNIERE, ONGLET_DEFAUT, PRIORITE,
               SUGGESTIONS_VUES, MONITORING, QUIZ_SOURCE, THEMES_JEU,
-              CLASSEUR, SOCIAL, DISCUSSION]
+              CLASSEUR, SOCIAL, DISCUSSION, FIL]
 
 _local = threading.local()
 
@@ -743,7 +766,11 @@ def demande_reinitialisation(identifiant) -> None:
         c.execute("DELETE FROM reinitialisation WHERE utilisateur_id = ?", (u["id"],))
         c.execute("INSERT INTO reinitialisation(empreinte, utilisateur_id, expire_le)"
                   " VALUES(?,?,?)", (_empreinte(jeton), u["id"], dans(DUREE_REINIT)))
-    lien = f"{request.host_url}reinitialiser.html?jeton={jeton}"
+    # /abyss/reinitialiser, et non plus /reinitialiser.html : la page a
+    # rejoint templates/abyss/ avec les autres pages du hub. L'ancienne
+    # adresse reste servie (voir app.py), sinon les liens deja partis
+    # dans une boite mail tomberaient sur un 404.
+    lien = f"{request.host_url}abyss/reinitialiser?jeton={jeton}"
     corps = (
         f"Bonjour {u['pseudo']},\n\n"
         "Quelqu'un (toi, on espere) a demande a reinitialiser le mot de passe "
@@ -997,7 +1024,7 @@ def enregistre_masques(uid, projets) -> list:
     """Remplace la liste entiere. Rejouable sans effet de bord.
 
     Les identifiants inconnus sont ignores : le jour ou tu retires un projet
-    d'Abyss.html, les vieilles preferences ne doivent pas tout faire echouer.
+    d'abyss/accueil.html, les vieilles preferences ne doivent pas tout faire echouer.
     """
     gardes = sorted({p for p in (projets or []) if p in PROJETS})
     c = cx()

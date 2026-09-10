@@ -10,7 +10,7 @@
 
    Premier de la chaîne, donc, et le seul qu'on puisse lire seul.
 
-   Chargé par templates/jeux-videos.html, dans l'ordre : ces fichiers
+   Chargé par templates/archive/archive.html, dans l'ordre : ces fichiers
    partagent une seule portée globale, comme quand ils n'en faisaient
    qu'un. L'ordre des balises <script> est donc l'ordre des dépendances.
    ======================================================================= */
@@ -53,7 +53,7 @@ function fermeSurFond(id, ferme){
      par sa poignée. C'est ici qu'on la branche parce que chaque fenêtre
      passe déjà par là pour dire « voici mon fond, voici comment je me
      ferme » - les deux seules choses dont le geste a besoin. Voir
-     static/gestes.js. */
+     static/commun/gestes.js. */
   poigneeFeuille(fond, ferme);
 }
 const esc = s => (s===null||s===undefined?'':String(s))
@@ -250,7 +250,7 @@ async function rattrapageIgdb(){
 }
 
 const FENETRES = ['sheet','form','jaq','bilan','igdb','recherche','export','renom','detail','zoom',
-                 'sgFond',    // la fenêtre de suggestion, posée par static/suggestion.js
+                 'sgFond',    // la fenêtre de suggestion, posée par static/commun/suggestion.js
                  // le social, posé par archive-social.js : ces deux-là se
                  // créent d'eux-mêmes et peuvent manquer, ce que la boucle
                  // ci-dessous accepte déjà

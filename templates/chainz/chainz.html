@@ -432,16 +432,25 @@
     }
 
     /* ===================== CHARGEMENT ===================== */
+    /* Tout ce que Chainz charge vit sous static/chainz/ : les cartes, la
+       carte des images, et les deux dossiers d'artworks. Les chemins etaient
+       relatifs a la page ; ils ne le sont plus, parce que la page est servie
+       a la fois sur /chainz et sur /chainz/ -- une barre oblique de plus, et
+       'art/old/1.jpg' n'allait plus au meme endroit.
+       images.json, lui, garde ses chemins relatifs au projet : c'est un
+       fichier genere, autant qu'il ignore ou le site le publie. */
+    const BASE = '/static/chainz/';
+
     async function loadAllData() {
-      const resp = await fetch('cards.json');
+      const resp = await fetch(BASE + 'cartes.json');
       if (!resp.ok) throw new Error(`Erreur HTTP ${resp.status}`);
       const raw = await resp.json();
       allCards = Array.isArray(raw) ? raw : Object.values(raw).find(Array.isArray);
-      if (!allCards) throw new Error("cards.json mal structuré.");
+      if (!allCards) throw new Error("cartes.json mal structuré.");
 
       let imagesMap = null;
       try {
-        const imgResp = await fetch('images.json?t=' + Date.now());
+        const imgResp = await fetch(BASE + 'images.json?t=' + Date.now());
         if (imgResp.ok) {
           imagesMap = await imgResp.json();
         } else {
@@ -457,8 +466,8 @@
         enrichedCards = allCards.map(card => {
           const id = card.id ?? card.index;
           if (id == null) return null;
-          const hasOld = imagesMap.old?.[id] || null;
-          const hasNew = imagesMap.new?.[id] || null;
+          const hasOld = imagesMap.old?.[id] ? BASE + imagesMap.old[id] : null;
+          const hasNew = imagesMap.new?.[id] ? BASE + imagesMap.new[id] : null;
           const reservedBy = reservedMap[id] || null;
           const newArtist = artistsMap[id] || null;
           return {
@@ -497,8 +506,8 @@
       const promises = allCards.map(async card => {
         const id = card.id ?? card.index;
         if (id == null) return null;
-        const oldSrc = await findImg('art/old/', id);
-        const newSrc = await findImg('art/new/', id);
+        const oldSrc = await findImg(BASE + 'art/old/', id);
+        const newSrc = await findImg(BASE + 'art/new/', id);
         return { ...card, id, oldSrc, newSrc, hasNewArt: !!newSrc, reservedBy: null, newArtist: null };
       });
       enrichedCards = (await Promise.all(promises)).filter(c => c !== null);

@@ -12,7 +12,7 @@
  *
  * Ce fichier est desormais le seul : les quatre pages l'appellent, aucune
  * ne redessine le bouton de son cote. Le style, lui, a toujours ete commun
- * -- voir « Le bouton de compte » dans static/style_abyss.css.
+ * -- voir « Le bouton de compte » dans static/abyss/abyss.css.
  *
  * Une page l'utilise ainsi :
  *

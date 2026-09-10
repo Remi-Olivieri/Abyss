@@ -236,11 +236,11 @@ def normalize(text):
     text = re.sub(r"[^a-z0-9 ]", " ", text)
     return text.strip()
 
-with open(STATIC / "cards_fr.json", encoding="utf-8") as f:
+with open(STATIC / "yugioh" / "cartes-fr.json", encoding="utf-8") as f:
     cards_fr = json.load(f)
-with open(STATIC / "cards_en.json", encoding="utf-8") as f:
+with open(STATIC / "yugioh" / "cartes-en.json", encoding="utf-8") as f:
     cards_en = json.load(f)
-with open(STATIC / "cards_views.json", encoding="utf-8") as f:
+with open(STATIC / "yugioh" / "cartes-vues.json", encoding="utf-8") as f:
     cards_views = json.load(f)
     
 # Une carte n'est jouable que si ses DEUX images existent : l'artwork
@@ -344,7 +344,7 @@ def tire_carte(vivier, sauf=None):
 def jeton_pour(gs, card_id):
     """Range une carte derriere un jeton opaque, et rend le jeton.
 
-    L'identifiant d'une carte, c'est son passcode -- et static/cards_fr.json,
+    L'identifiant d'une carte, c'est son passcode -- et static/yugioh/cartes-fr.json,
     que la Collection telecharge en clair, dit quel nom porte quel passcode.
     Servir l'artwork sous /static/CardsCropped/<passcode>.jpg revenait donc a
     donner la reponse dans l'URL de l'enigme : l'onglet reseau suffisait.
@@ -494,7 +494,7 @@ def game_loop(room_id):
 def salon():
     if not pseudo_courant():
         return redirect(url_for('yugiquiz.connexion'))
-    return render_template('yugiquiz-lobby.html')
+    return render_template('yugiquiz/lobby.html')
 
 
 @blueprint_yugiquiz.get('/connexion')
@@ -508,7 +508,7 @@ def connexion():
     """
     if pseudo_courant():
         return redirect(url_for('yugiquiz.salon'))
-    return render_template('yugiquiz-connexion.html')
+    return render_template('yugiquiz/connexion.html')
 
 
 @blueprint_yugiquiz.route('/jeu/<room_id>')
@@ -526,7 +526,7 @@ def jeu(room_id):
         room = rooms.get(room_id)
         if not room or not any(p['pseudo'] == qui for p in room['players']):
             return redirect(url_for('yugiquiz.salon'))
-    return render_template('yugiquiz-jeu.html', room_id=room_id)
+    return render_template('yugiquiz/jeu.html', room_id=room_id)
 
 
 # --------------------------------------------------------------------------
@@ -580,7 +580,7 @@ def get_card(room_id):
     sortent plus qu'a la fin de la manche, dans mancheFinie.
 
     Les images ne viennent plus non plus sous leur passcode (voir
-    jeton_pour) : il aurait suffi de le lire dans cards_fr.json.
+    jeton_pour) : il aurait suffi de le lire dans static/yugioh/cartes-fr.json.
     """
     qui = pseudo_courant()
     with VERROU:

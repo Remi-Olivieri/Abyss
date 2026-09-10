@@ -158,7 +158,7 @@ input,textarea{
 
 /* ---------- Le bouton de compte ----------
    Un seul dessin pour toutes les pages : le medaillon, le pseudo, le
-   chevron. Le HTML est fabrique par static/compte.js, qui explique
+   chevron. Le HTML est fabrique par static/commun/compte.js, qui explique
    pourquoi il ne vit plus dans chaque page.
 
    Le medaillon touche presque le bord arrondi -- d'ou le padding gauche
@@ -566,7 +566,7 @@ input,textarea{
 }
 /* Pas de poignee : le champ grandit tout seul avec le texte, de ces 96 px
    jusqu'a son plafond, apres quoi c'est lui qui defile. Voir
-   static/champs.js -- min-height est le plancher qu'il lit, max-height le
+   static/commun/champs.js -- min-height est le plancher qu'il lit, max-height le
    plafond, et les deux sont ici parce que c'est une decision de mise en
    page et non de comportement. */
 .champ textarea{resize:none;min-height:96px;max-height:340px;line-height:1.5}
