@@ -17,12 +17,25 @@
 
 
 /* =======================================================================
-   Mise à jour depuis IGDB - tout le journal d'un coup
+   Mise à jour depuis IGDB - l'entretien de la base
 
    Le classeur vieillit : une date de sortie saisie de mémoire, un prix noté
    avant une baisse, une jaquette jamais récupérée. Ce module repasse sur
    chaque ligne, demande à Flask ce qu'IGDB en dit (/api/jeu/maj), et montre
    la liste des écarts.
+
+   Réservé à l'administration, et pour une raison qui a changé la nature de
+   l'outil : ce ne sont plus seulement les colonnes d'un classeur qu'il
+   remplit, ce sont celles dont le reste du site se sert. Le Quiz tire ses
+   grilles de connexions des genres et des thèmes de TOUS les journaux ; un
+   jeu d'avant les fiches IGDB en manque, et personne n'allait le compléter
+   chez lui pour un mini-jeu qu'il ne voit même pas. L'entretien revient donc
+   à qui tient la base, et il porte sur la base entière - la portée « Toute
+   la base » est la première du menu, avant le journal affiché.
+
+   Le serveur ne s'en remet pas à cette fenêtre : /api/journal/admin/jeux et
+   /api/journal/admin/lot répondent 404 à qui n'est pas administrateur, et le
+   second n'accepte que les colonnes qu'IGDB fournit (voir CHAMPS_IGDB).
 
    Trois précautions, parce qu'écrire trois cents lignes d'un coup ne se
    rattrape pas :
@@ -35,22 +48,25 @@
      - les jaquettes se choisissent une par une, comme ailleurs dans la
        page. Aucune image ne part sur le disque sans un clic.
 
-   L'écriture repasse par l'action « enregistrer » d'Apps Script, celle du
-   formulaire : la ligne est réécrite en entier, avec les valeurs relues
-   ici. C'est le chemin déjà éprouvé - modifier un jeu à la main fait
-   exactement la même chose - plutôt qu'une action neuve qui écrirait deux
-   cellules mais qu'il faudrait déboguer sur trois cents lignes.
+   L'écriture passe par /api/journal/admin/lot, par paquets de vingt. Elle
+   n'écrit que les colonnes qu'IGDB fournit - la date, le prix, la fiche
+   détaillée - et le serveur refuse les autres plutôt que de s'en remettre à
+   ce que la page veut bien lui envoyer : une note ou un avis sont l'œuvre de
+   qui tient le journal, un entretien de base n'a rien à y faire.
    ======================================================================= */
 const IGD = {
   jeton: 0,        // incrémenté à l'annulation : les boucles en vol s'arrêtent
   stop: false,     // « Interrompre » : on s'arrête mais on garde le résultat
   etape: '',
   liste: [],       // les jeux à interroger
+  site: null,      // tous les jeux du site, lus une fois à l'ouverture
   lignes: [],      // un rapport par jeu, une fois l'analyse finie
   file: [],        // les jaquettes à proposer, une par nom de fichier
   fi: 0,
   t0: 0,
-  dernier: null,   // dernière réponse d'écriture : le classeur relu
+  ecrit: false,    // une écriture au moins est passée : le classeur affiché
+                   // n'est plus à jour, il faudra le relire
+  filtre: false,   // la relecture ne montre que les jeux à vérifier
   compte: {dates:0, prix:0, jaquettes:0, detail:0, echecs:0},
   echecs: [],
   opts: {dates:true, prix:true, jaquettes:true, detail:true},
@@ -67,14 +83,15 @@ function igdbEntete(txt){ const b = $('igdbTitre'); if(b) b.textContent = txt; }
 
 function ouvrirIgdb(){
   closeMenu();
-  if(!CAN_WRITE){ toast("Passe en mode éditeur pour mettre le journal à jour.", true); return; }
-  if(!GAMES.length){ toast("Le journal est vide : rien à mettre à jour.", true); return; }
+  if(!MOI.admin){ toast("L'entretien de la base est réservé à l'administration.", true); return; }
   IGD.jeton++;
   IGD.stop = false;
-  // le script a pu être redéployé depuis la dernière fois : on lui laisse
-  // sa chance à chaque ouverture plutôt qu'une seule fois par onglet
-  IGD.lignes = []; IGD.file = []; IGD.fi = 0; IGD.dernier = null;
-  IGD.compte = {dates:0, prix:0, jaquettes:0, echecs:0};
+  IGD.lignes = []; IGD.file = []; IGD.fi = 0; IGD.ecrit = false; IGD.filtre = false;
+  /* Les cinq compteurs, et pas quatre : `detail` manquait ici alors que le
+     bilan l'affiche. L'écriture le remettait à zéro au passage, ce qui
+     masquait l'oubli - sauf quand il n'y a rien à écrire et qu'on va
+     directement aux jaquettes, où le bilan annonçait « undefined ». */
+  IGD.compte = {dates:0, prix:0, jaquettes:0, detail:0, echecs:0};
   IGD.echecs = [];
   const host = $('igdb');
   host.innerHTML = `<div class="sheet igdb-sheet" role="dialog" aria-modal="true" aria-label="Mise à jour depuis IGDB">
@@ -87,6 +104,37 @@ function ouvrirIgdb(){
   host.hidden = false;
   verrouFond();
   host.querySelector('.igdb-x').onclick = fermerIgdb;
+  igdbOuvreReglages();
+}
+/* La base est relue à chaque ouverture, jamais gardée d'une fois sur
+   l'autre : entre deux passages, des jeux ont été ajoutés, et une liste
+   d'hier proposerait d'en corriger qui n'existent plus. Le temps d'attente
+   est celui d'une requête ; les réglages s'affichent derrière. */
+async function igdbOuvreReglages(){
+  const jeton = IGD.jeton;
+  igdbEntete('Lecture de la base');
+  igdbCorps().innerHTML = '<p class="igdb-info">Lecture des journaux du site...</p>';
+  let souci = '';
+  try{
+    const d = await envoiBrut('GET', '/api/journal/admin/jeux');
+    IGD.site = d.jeux || [];
+  }catch(e){ souci = e.message || 'erreur inconnue'; }
+  if(jeton !== IGD.jeton) return;        // fermée pendant la lecture
+  /* Sans cette liste il n'y a plus rien à proposer : les journaux, leurs
+     onglets et tous les comptes en sortent. On le dit et on offre de
+     recommencer, plutôt que d'afficher une fenêtre vide qui laisserait
+     croire que la base ne contient rien. */
+  if(souci){
+    igdbEntete('Base illisible');
+    igdbCorps().innerHTML = `
+      <div class="ferr">La liste des journaux n'a pas pu être lue - ${esc(souci)}</div>
+      <div class="frow"><span class="spacer"></span>
+        <button class="ghost" id="igdb_annuler">Fermer</button>
+        <button class="cta auto" id="igdb_encore">Réessayer</button></div>`;
+    $('igdb_annuler').onclick = fermerIgdb;
+    $('igdb_encore').onclick = igdbOuvreReglages;
+    return;
+  }
   igdbReglages();
 }
 function fermerIgdb(){
@@ -95,44 +143,84 @@ function fermerIgdb(){
   IGD.jeton++;                  // ce qui répondra après nous ne sert plus
   host.hidden = true; host.innerHTML = '';
   verrouFond();
-  /* des écritures ont pu passer avant l'interruption : le classeur relu
-     qu'elles ont renvoyé est plus à jour que ce que le mur affiche */
-  if(IGD.dernier){
-    const s = source();
-    if(s) cacheStore.set(s.url, IGD.dernier);
-    applyData(IGD.dernier, true);
-    IGD.dernier = null;
-    render();
-  }
+  igdbRelitLeClasseur();
+}
+/* Des écritures ont pu passer : ce que le mur affiche date d'avant.
+   Le classeur est relu au lieu d'être recollé à la main - l'écriture ne
+   renvoie plus le journal, elle ne le peut plus : elle a pu toucher autant
+   de journaux qu'il y a de propriétaires, et la page n'en montre qu'un. */
+function igdbRelitLeClasseur(){
+  if(!IGD.ecrit) return;
+  IGD.ecrit = false;
+  if(typeof source === 'function' && source()) charger({silencieux: true});
 }
 
-/* ---------- étape 1 : ce qu'on veut mettre à jour ---------- */
-/* Toutes les portées possibles : le journal entier, puis chaque onglet qui
-   contient quelque chose. La liste est la même où qu'on ouvre la fenêtre -
-   avant, seul l'onglet affiché était proposé, si bien que mettre à jour
-   « 2024 » obligeait à aller s'y placer d'abord, alors que c'est
-   précisément une opération qu'on lance de loin, depuis n'importe où.
+/* ---------- étape 1 : ce qu'on veut mettre à jour ----------
+   Deux questions, dans cet ordre : quel journal, puis quel onglet.
 
-   L'onglet courant reste préselectionné : la commodité d'avant est gardée,
-   elle n'est simplement plus la seule option. */
-function igdbPortees(){
-  const portees = [{nom: 'Tout le journal', bucket: 'all', jeux: GAMES.slice()}];
-  BUCKETS.forEach(b=>{
-    const jeux = GAMES.filter(x => x.bucket === b);
-    if(jeux.length) portees.push({nom: `Onglet « ${b} »`, bucket: b, jeux: jeux});
+   La première liste tout le site - « Toute la base », puis chaque personne
+   qui tient un journal. La seconde n'apparaît qu'une fois quelqu'un choisi,
+   et ne propose que SES onglets : « 2024 » n'a pas le même contenu chez
+   deux personnes, et une liste d'onglets qui ne dirait pas de qui ils sont
+   ne voudrait rien dire.
+
+   Tout vient de la lecture faite à l'ouverture (IGD.site) : les journaux,
+   leurs onglets et le compte de chacun sont déduits de la même liste de
+   jeux, sans une requête de plus. C'est aussi pourquoi la fenêtre ne parle
+   plus du classeur affiché - elle ne dépend plus de l'endroit d'où on
+   l'ouvre, ce qui était justement la gêne : mettre à jour le journal de
+   quelqu'un d'autre obligeait à aller s'y placer d'abord. */
+function igdbJournaux(){
+  const par = new Map();
+  (IGD.site || []).forEach(g=>{
+    const qui = g.pseudo || '?';
+    if(!par.has(qui)) par.set(qui, {pseudo: qui, jeux: [], onglets: [], rang: {}});
+    const j = par.get(qui);
+    j.jeux.push(g);
+    /* Les onglets dans l'ordre où les jeux arrivent, c'est-à-dire celui du
+       serveur (periode croissante). Ce n'est pas tout à fait l'ordre
+       chronologique du classeur - « Avant 2019 » se range après « 2019 » -
+       mais c'est un ordre stable et lisible, et la fenêtre n'a pas à
+       refaire le tri que la page fait déjà chez elle. */
+    if(!(g.bucket in j.rang)){
+      j.rang[g.bucket] = j.onglets.length;
+      j.onglets.push({nom: g.bucket, jeux: []});
+    }
+    j.onglets[j.rang[g.bucket]].jeux.push(g);
   });
-  return portees;
+  const tous = [...par.values()];
+  // le mien d'abord : c'est celui qu'on entretient le plus souvent, et la
+  // page range déjà ses journaux comme ça partout ailleurs
+  const i = tous.findIndex(j => MOI.pseudo && norm(j.pseudo) === norm(MOI.pseudo));
+  if(i > 0) tous.unshift(tous.splice(i, 1)[0]);
+  return tous;
 }
+const igdbPluriel = n => n > 1 ? 'x' : '';
+
 function igdbReglages(){
   IGD.etape = 'reglages';
   igdbEntete('Mise à jour depuis IGDB');
-  const portees = igdbPortees();
+  const journaux = igdbJournaux();
+  if(!journaux.length){
+    igdbCorps().innerHTML = `
+      <p class="igdb-note">Aucun jeu à mettre à jour : la base est vide.</p>
+      <div class="frow"><span class="spacer"></span>
+        <button class="cta auto" id="igdb_annuler">Fermer</button></div>`;
+    $('igdb_annuler').onclick = fermerIgdb;
+    return;
+  }
+  const total = (IGD.site || []).length;
   igdbCorps().innerHTML = `
     <div class="fgrid">
-      <label class="fld full"><u>Années</u>
-        <select id="igdb_portee">${portees.map((p,i)=>
-          `<option value="${i}"${p.bucket === S.bucket ? ' selected' : ''}>${esc(p.nom)} - ${p.jeux.length} jeu${p.jeux.length > 1 ? 'x' : ''}</option>`
-        ).join('')}</select></label>
+      <label class="fld full"><u>Journal</u>
+        <select id="igdb_qui">
+          <option value="*">Toute la base du site - ${total} jeu${igdbPluriel(total)}</option>
+          ${journaux.map((j,i)=>
+            `<option value="${i}">Journal de ${esc(j.pseudo)} - ${j.jeux.length} jeu${igdbPluriel(j.jeux.length)}</option>`
+          ).join('')}
+        </select></label>
+      <label class="fld full" id="igdb_ongletChamp" hidden><u>Onglet</u>
+        <select id="igdb_onglet"></select></label>
       <label class="fld fcheck">
         <input id="igdb_dates" type="checkbox"${IGD.opts.dates ? ' checked' : ''}>
         <span>Dates de sortie</span></label>
@@ -149,6 +237,23 @@ function igdbReglages(){
     <div class="frow"><span class="spacer"></span>
       <button class="ghost" id="igdb_annuler">Annuler</button>
       <button class="cta auto" id="igdb_go">Analyser</button></div>`;
+
+  /* Le second menu suit le premier : caché tant qu'on parle de toute la
+     base, rempli des onglets de la personne dès qu'on en choisit une. */
+  const majOnglets = ()=>{
+    const j = igdbChoisi(journaux);
+    const champ = $('igdb_ongletChamp');
+    champ.hidden = !j;
+    if(!j) return;
+    $('igdb_onglet').innerHTML =
+      `<option value="*">Tous ses onglets - ${j.jeux.length} jeu${igdbPluriel(j.jeux.length)}</option>` +
+      j.onglets.map((o,i)=>
+        `<option value="${i}">${esc(o.nom)} - ${o.jeux.length} jeu${igdbPluriel(o.jeux.length)}</option>`
+      ).join('');
+  };
+  $('igdb_qui').onchange = majOnglets;
+  majOnglets();
+
   $('igdb_annuler').onclick = fermerIgdb;
   $('igdb_go').onclick = ()=>{
     IGD.opts = {
@@ -161,10 +266,23 @@ function igdbReglages(){
       toast("Coche au moins une chose à mettre à jour.", true);
       return;
     }
-    const p = portees[+$('igdb_portee').value] || portees[0];
-    IGD.liste = p.jeux.slice();
+    IGD.liste = igdbSelection(journaux);
+    if(!IGD.liste.length){ toast("Rien à analyser dans ce choix.", true); return; }
     igdbAnalyse();
   };
+}
+/* Le journal choisi, ou null pour « toute la base ». */
+function igdbChoisi(journaux){
+  const v = $('igdb_qui') ? $('igdb_qui').value : '*';
+  return v === '*' ? null : (journaux[+v] || null);
+}
+/* Les jeux que les deux menus désignent. */
+function igdbSelection(journaux){
+  const j = igdbChoisi(journaux);
+  if(!j) return (IGD.site || []).slice();
+  const o = $('igdb_onglet') ? $('igdb_onglet').value : '*';
+  if(o === '*') return j.jeux.slice();
+  return (j.onglets[+o] ? j.onglets[+o].jeux : []).slice();
 }
 
 /* ---------- la jauge, commune à l'analyse et à l'écriture ---------- */
@@ -209,24 +327,48 @@ async function igdbAnalyse(){
   $('igdb_stop').onclick = ()=>{ IGD.stop = true; };
 
   const total = IGD.liste.length;
+  /* Le même jeu revient d'un journal à l'autre : sur toute la base, « Elden
+     Ring » c'est douze lignes et une seule question à IGDB. La réponse est
+     donc gardée le temps de l'analyse, sous le couple (nom, date connue) -
+     le couple et pas le nom seul, parce que c'est la date qui départage
+     « Doom » de 1993 de celui de 2016, et que deux lignes qui ne la donnent
+     pas pareil n'ont aucune raison de tomber sur la même fiche.
+
+     Les échecs ne sont pas gardés : une coupure réseau sur une ligne n'est
+     pas une réponse sur ce jeu, et la suivante mérite sa chance. */
+  const vues = new Map();
   for(let i = 0; i < total; i++){
     if(jeton !== IGD.jeton) return;      // la fenêtre a été fermée
     if(IGD.stop) break;                  // interrompu : on garde ce qu'on a
     const g = IGD.liste[i];
     igdbAvance(i, total, g.name);
-    let data;
-    try{
-      data = await apiPatient('/api/jeu/maj', {
-        nom: g.name,
-        sortie: g.release || '',
-        prix: IGD.opts.prix,
-        detail: IGD.opts.detail,
-        // Flask attend un mot, pas un booléen : « aucune » lui évite de
-        // rassembler des propositions dont personne ne veut
-        jaquettes: IGD.opts.jaquettes ? 'manquantes' : 'aucune',
-      });
-    }catch(e){
-      data = {etat:'injoignable', raison: raisonReseau(e)};
+    // l'identifiant fait partie de la clé : c'est lui qui décide sous quel
+    // nom de fichier le serveur va chercher la jaquette, donc deux lignes
+    // qui ne le portent pas pareil n'ont pas la même réponse
+    const cle = norm(g.name) + '|' + (g.release || '') + '|' + (g.idIgdb || '');
+    let data = vues.get(cle);
+    if(!data){
+      try{
+        data = await apiPatient('/api/jeu/maj', {
+          nom: g.name,
+          sortie: g.release || '',
+          /* Le rattachement du jeu, quand il en a un. Sans lui, le serveur
+             cherchait la jaquette sous « nom_du_jeu.webp » alors qu'un jeu
+             rattaché range la sienne sous « 113112.webp » : il ne la
+             trouvait jamais, répondait « absente », et l'analyse proposait
+             de récupérer une image déjà là - pour tous les jeux du site à
+             la fois. Voir cle_jaquette dans jaquettes.py. */
+          id_igdb: g.idIgdb || null,
+          prix: IGD.opts.prix,
+          detail: IGD.opts.detail,
+          // Flask attend un mot, pas un booléen : « aucune » lui évite de
+          // rassembler des propositions dont personne ne veut
+          jaquettes: IGD.opts.jaquettes ? 'manquantes' : 'aucune',
+        });
+      }catch(e){
+        data = {etat:'injoignable', raison: raisonReseau(e)};
+      }
+      if(data.etat === 'ok' || data.etat === 'introuvable') vues.set(cle, data);
     }
     if(jeton !== IGD.jeton) return;
     IGD.lignes.push(igdbRapport(g, data));
@@ -286,19 +428,58 @@ function igdbAChanger(l){
   return !!(l.date || l.prix || l.detail || l.rattache);
 }
 
-/* Les jaquettes à proposer, dédoublonnées par nom de fichier : le même jeu
-   rejoué dans deux onglets n'a qu'une seule image sur le disque. */
+/* L'identifiant sous lequel l'image du jeu sera rangée APRÈS l'écriture.
+   Celui du jeu s'il en a déjà un, sinon celui de la fiche que l'écriture
+   s'apprête à lui donner : un jeu qu'on rattache voit son fichier passer de
+   « nom_du_jeu.webp » à « 113112.webp », et c'est ce dernier nom qui compte
+   pour savoir si l'image manque vraiment. */
+function igdbIdFinal(l){
+  return l.g.idIgdb || ((l.detail || l.rattache) && l.fiche ? l.fiche.id : null);
+}
+function igdbCleFinale(l){
+  const id = igdbIdFinal(l);
+  return id ? String(id) : slug(l.g.name);
+}
+
+/* Les jaquettes à proposer : celles qui manquent, et rien d'autre.
+
+   Deux dédoublonnages, tous deux par nom de fichier final, parce que les
+   jaquettes ne vivent pas dans un journal mais sur le disque, en un seul
+   exemplaire pour tout le site :
+
+     - le même jeu rejoué dans deux onglets, ou joué par deux personnes,
+       ne se demande qu'une fois ;
+     - un jeu que l'analyse a trouvé illustré chez quelqu'un n'est pas
+       proposé chez le voisin qui, lui, ne l'a pas encore rattaché : c'est
+       le même fichier, et il est déjà là.
+
+   Le second cas ne se voyait pas tant que la fenêtre ne parlait que d'un
+   classeur ; sur la base entière, il vaut des dizaines de propositions
+   inutiles. */
 function igdbFileJaquettes(){
   if(!IGD.opts.jaquettes) return [];
-  const file = [], vus = {};
+  // ce que l'analyse a vu de présent sur le disque, sous le nom de fichier
+  // qu'elle a justement demandé au serveur de regarder
+  const presentes = new Set();
+  IGD.lignes.forEach(l=>{
+    if(l.etat === 'ok' && l.jaquette === 'presente') presentes.add(cleJaquette(l.g));
+  });
+  /* Et le manifeste par-dessus : c'est la liste des fichiers réellement
+     présents dans Cover/, celle qui décide déjà si le mur affiche une
+     jaquette ou des initiales. Un jeu dont l'image est là n'a rien à
+     proposer, qu'une autre ligne de l'analyse l'ait rencontrée ou non. */
+  const dejaLa = cle => presentes.has(cle) || !!(JAQUETTES && (cle in JAQUETTES));
+
+  const file = [], vus = new Set();
   IGD.lignes.forEach(l=>{
     if(l.etat !== 'ok' || !l.propositions.length) return;
     // déjà illustré : le bouton de la tuile sert à en changer, un par un
     if(l.jaquette !== 'absente') return;
-    const cle = cleJaquette(l.g);
-    if(!cle || vus[cle]) return;
-    vus[cle] = true;
-    file.push({nom: l.g.name, jeuId: l.g.id, propositions: l.propositions});
+    const cle = igdbCleFinale(l);
+    if(!cle || vus.has(cle) || dejaLa(cle)) return;
+    vus.add(cle);
+    file.push({nom: l.g.name, jeuId: l.g.id, idIgdb: igdbIdFinal(l),
+               propositions: l.propositions});
   });
   return file;
 }
@@ -316,7 +497,8 @@ function igdbLigneHTML(l, i){
   return `<label class="igdb-ligne">
     <input type="checkbox" data-i="${i}"${l.coche ? ' checked' : ''}>
     <span class="igdb-corps">
-      <b class="igdb-nom">${esc(l.g.name)} <em>${esc(l.g.bucket)}</em></b>
+      <b class="igdb-nom">${esc(l.g.name)} <em>${esc(
+        l.g.pseudo ? l.g.pseudo + ' · ' + l.g.bucket : l.g.bucket)}</em></b>
       <span class="igdb-match">${meme ? '' : esc(f.titre) + ' · '}${esc(f.date || 'date inconnue')} <i
         class="igdb-tag ${l.surete}">${esc(SURETE[l.surete] || '')}</i></span>
       ${l.date ? igdbDelta('Date', l.date.avant ? dateFmt(l.date.avant) : 'aucune', dateFmt(l.date.apres)) : ''}
@@ -328,44 +510,74 @@ function igdbLigneHTML(l, i){
       `<button type="button" class="igdb-fiche-btn" data-corr="${i}">Changer de jeu</button>`}
   </label>`;
 }
+/* Les jeux dont le rapprochement n'est pas sûr. Ce sont les seuls qui
+   demandent un œil : sur toute la base, la liste des changements se compte
+   en centaines de lignes, dont l'immense majorité sont des dates que
+   personne ne relira une par une. Les douteuses, elles, arrivent décochées
+   et il faut bien aller les chercher - d'où le filtre. */
+function igdbAVerifier(l){
+  return l.surete !== 'sure';
+}
 function igdbRevue(){
   IGD.etape = 'revue';
   IGD.file = igdbFileJaquettes();
   const avec  = IGD.lignes.filter(igdbAChanger);
   const rates = IGD.lignes.filter(l => l.etat !== 'ok');
+  const flous = avec.filter(igdbAVerifier);
+  // le filtre ne survit pas à une liste qui n'a plus rien de douteux : il
+  // laisserait une liste vide sans que rien ne dise pourquoi
+  if(!flous.length) IGD.filtre = false;
   igdbEntete('Ce qui va changer');
 
   const nJaq = IGD.file.length;
   igdbCorps().innerHTML = `
     <p class="igdb-info">
       <b>${IGD.lignes.length}</b> jeu${IGD.lignes.length > 1 ? 'x' : ''} analysé${IGD.lignes.length > 1 ? 's' : ''} :
-      <b>${avec.length}</b> à corriger${nJaq ? `, <b>${nJaq}</b> jaquette${nJaq > 1 ? 's' : ''} à proposer` : ''}.
+      <b>${avec.length}</b> à corriger${flous.length ? `, dont <b>${flous.length}</b> à vérifier` : ''}${
+        nJaq ? `, <b>${nJaq}</b> jaquette${nJaq > 1 ? 's' : ''} à proposer` : ''}.
       ${avec.length ? `Seules les cellules « Date de sortie », « Prix de base »${
         IGD.opts.detail ? ' et la fiche détaillée (plateforme, développeur, genres, thèmes)' : ''} sont touchées.` : ''}
     </p>
+    ${flous.length ? `<label class="fld fcheck igdb-filtre">
+      <input type="checkbox" id="igdb_flous"${IGD.filtre ? ' checked' : ''}>
+      <span>N'afficher que les ${flous.length} jeu${igdbPluriel(flous.length)} à vérifier</span></label>` : ''}
     ${avec.length
-      ? `<div class="igdb-liste">${avec.map(igdbLigneHTML).join('')}</div>`
-      : `<p class="igdb-note">Rien à corriger${nJaq ? ' - il reste les jaquettes.' : ' : le journal est déjà à jour.'}</p>`}
+      ? `<div class="igdb-liste">${avec.map((l,i)=>
+          (!IGD.filtre || igdbAVerifier(l)) ? igdbLigneHTML(l, i) : '').join('')}</div>`
+      : `<p class="igdb-note">Rien à corriger${nJaq ? ' - il reste les jaquettes.' : " : tout est déjà à jour."}</p>`}
     ${rates.length ? `<details class="igdb-repli">
       <summary>${rates.length} jeu${rates.length > 1 ? 'x' : ''} sans réponse d'IGDB</summary>
       ${igdbMotifsHTML(rates)}
-      <ul>${rates.map(l=>`<li>${esc(l.g.name)} <i>- ${esc(motifLigne(l))}</i></li>`).join('')}</ul>
+      <ul>${rates.map(l=>`<li>${esc(l.g.name)}${l.g.pseudo ? ` <em>${esc(l.g.pseudo)}</em>` : ''} <i>- ${esc(motifLigne(l))}</i></li>`).join('')}</ul>
     </details>` : ''}
     <div class="frow">
-      ${avec.length ? '<button class="ghost" id="igdb_tous">Tout cocher</button><button class="ghost" id="igdb_aucun">Tout décocher</button>' : ''}
+      ${avec.length ? `<button class="ghost" id="igdb_tous">Cocher ${IGD.filtre ? 'la liste' : 'tout'}</button>
+        <button class="ghost" id="igdb_aucun">Décocher ${IGD.filtre ? 'la liste' : 'tout'}</button>` : ''}
       <span class="spacer"></span>
       <button class="ghost" id="igdb_annuler">Annuler</button>
       <button class="cta auto" id="igdb_ok"></button>
     </div>`;
 
-  /* data-i pointe dans `avec`, pas dans IGD.lignes : c'est la liste affichée
-     qui est indexée, et elle ne contient que les jeux à corriger */
+  /* data-i pointe dans `avec`, pas dans IGD.lignes : c'est la liste des jeux
+     à corriger qui est indexée. Elle n'est pas forcément affichée en entier -
+     le filtre peut n'en montrer qu'une partie - mais l'index, lui, reste
+     celui de `avec` : une case cochée doit désigner le même jeu que le
+     filtre soit mis ou non. */
   igdbCorps().querySelectorAll('.igdb-ligne input').forEach(c=>{
     c.onchange = ()=>{ avec[+c.dataset.i].coche = c.checked; igdbBouton(); };
   });
+  /* Cocher ce qui est SOUS LES YEUX, et non tout le rapport : filtrer sur
+     les jeux à vérifier puis « Décocher la liste » écarte d'un geste tout ce
+     dont on n'est pas sûr, en laissant passer le reste. C'est justement la
+     raison d'être du filtre, et c'est pourquoi les deux boutons changent de
+     nom quand il est mis. */
   const cocher = v => igdbCorps().querySelectorAll('.igdb-ligne input').forEach(c=>{
     c.checked = v; avec[+c.dataset.i].coche = v;
   });
+  if($('igdb_flous')) $('igdb_flous').onchange = e=>{
+    IGD.filtre = e.target.checked;
+    igdbRevue();               // la liste se redessine, les cases gardent leur état
+  };
   /* « Changer de jeu » : le bouton vit dans le <label> de la ligne, donc un
      clic cocherait la case en passant - d'où le preventDefault. */
   igdbCorps().querySelectorAll('.igdb-fiche-btn').forEach(b=>{
@@ -475,12 +687,14 @@ function igdbCharge(l){
   return { id: l.g.id, values: values };
 }
 
-/* Écriture par paquets : une seule relecture du journal pour vingt jeux au
-   lieu d'une par jeu. C'est la relecture qui coûte, pas l'écriture.
+/* Écriture par paquets : un aller-retour pour vingt jeux au lieu de vingt.
+   C'est le voyage qui coûte, pas l'écriture - et sur toute la base, vingt
+   lignes à la fois font la différence entre une minute et vingt.
 
-   Le repli « un par un » de l'époque Apps Script a disparu : il servait aux
-   scripts pas encore redéployés avec l'action « lot ». Flask, lui, sait
-   toujours traiter un paquet. */
+   Vingt et pas cent (ce que le serveur accepte, voir LOT_MAXI) : chaque jeu
+   rattaché à une fiche neuve fait relire cette fiche à IGDB, et un paquet
+   trop gros finirait par tenir la requête ouverte plus longtemps que ne le
+   supporte le proxy. */
 const IGDB_LOT = 20;
 
 /* Écrit un paquet et renvoie les motifs d'échec, un par jeu. Les compteurs
@@ -500,15 +714,24 @@ async function igdbEnvoyerPaquet(paquet){
   };
 
   try{
-    IGD.dernier = await envoyer('PUT', '/api/journal/lot',
+    /* La route d'administration, pas celle du propriétaire : le paquet peut
+       tenir les jeux de dix journaux différents. Elle ne renvoie pas le
+       classeur relu - il y en aurait dix - mais seulement ce qui a raté ;
+       la page relit le journal affiché une fois l'écriture finie. */
+    const dit = await envoiBrut('PUT', '/api/journal/admin/lot',
                                 {modifs: utiles.map(u => u.charge)});
-    const refuses = ((IGD.dernier.fait || {}).echecs) || [];
+    const refuses = ((dit.fait || {}).echecs) || [];
     const rates = {};
     refuses.forEach(e=>{
       rates[e.i] = true;
-      echecs.push(`${e.jeu || '?'} - ${e.error}`);
+      /* Le nom vient d'ici et non de la réponse : l'écriture n'envoie que
+         les colonnes d'IGDB, donc pas le nom du jeu, et le serveur n'a rien
+         à citer dans son motif d'échec. */
+      const rate = utiles[e.i];
+      echecs.push(`${(rate && rate.ligne.g.name) || e.jeu || '?'} - ${e.error}`);
     });
     utiles.forEach((u,k)=>{ if(!rates[k]) compter(u); });
+    if(refuses.length < utiles.length) IGD.ecrit = true;
     return echecs;
   }catch(e){
     // panne franche : le paquet entier n'est pas passé, on le dit
@@ -525,7 +748,7 @@ async function igdbEcriture(){
   IGD.compte.dates = 0; IGD.compte.prix = 0; IGD.compte.detail = 0; IGD.compte.echecs = 0;
   IGD.echecs = [];
   const aFaire = IGD.lignes.filter(l => l.coche && igdbAChanger(l));
-  igdbEntete('Écriture dans le classeur');
+  igdbEntete('Écriture en base');
   igdbCorps().innerHTML = `
     <p class="igdb-info">Seules la date de sortie, le prix de base${
       IGD.opts.detail ? ' et la fiche détaillée' : ''} sont touchés.</p>
@@ -550,15 +773,10 @@ async function igdbEcriture(){
   if(jeton !== IGD.jeton) return;
   igdbAvance(aFaire.length, aFaire.length, '');
 
-  /* le classeur relu par la dernière écriture remplace ce qu'on affiche :
-     une seule fois, à la fin, plutôt qu'un rendu complet par ligne */
-  if(IGD.dernier){
-    const s = source();
-    if(s) cacheStore.set(s.url, IGD.dernier);
-    applyData(IGD.dernier, true);
-    IGD.dernier = null;
-    render();
-  }
+  /* Le classeur affiché est relu une seule fois, à la fin, plutôt qu'un
+     rendu complet par paquet - et seulement s'il a pu changer. Les autres
+     journaux touchés se reliront tout seuls chez leurs propriétaires. */
+  igdbRelitLeClasseur();
   if(IGD.file.length) igdbJaquette();
   else igdbFini();
 }
@@ -587,18 +805,20 @@ function igdbJaquette(){
   $('igdb_stop').onclick = igdbFini;
   $('igdb_passer').onclick = ()=>{ IGD.fi++; igdbJaquette(); };
   igdbCorps().querySelectorAll('.jaq-item').forEach(b=>{
-    b.onclick = ()=> igdbPoser(b, e.nom, e.propositions[+b.dataset.i], e.jeuId);
+    b.onclick = ()=> igdbPoser(b, e, e.propositions[+b.dataset.i]);
   });
 }
-async function igdbPoser(btn, nom, choix, jeuId){
+async function igdbPoser(btn, entree, choix){
+  const nom = entree.nom;
   const jeton = ++IGD.jeton;
   igdbCorps().querySelectorAll('.jaq-item').forEach(b=>{ b.disabled = true; });
   btn.classList.add('pris');
-  /* Le jeu est relu dans GAMES plutôt que pris dans le rapport : l'écriture
-     vient de passer juste avant, et c'est elle qui a pu lui donner son
-     identifiant IGDB. Le rapport, lui, date d'avant. */
-  const jeu = GAMES.find(x => x.id === jeuId);
-  const idIgdb = jeu ? jeu.idIgdb : null;
+  /* Le jeu est d'abord relu dans GAMES : l'écriture vient de passer, et
+     c'est elle qui a pu lui donner son identifiant IGDB. À défaut - un jeu
+     d'un autre journal, que la page n'affiche pas - c'est celui que la file
+     a retenu à la relecture. */
+  const jeu = GAMES.find(x => x.id === entree.jeuId);
+  const idIgdb = (jeu && jeu.idIgdb) || entree.idIgdb || null;
   const cle = idIgdb ? String(idIgdb) : slug(nom);
   let data;
   try{ data = await api('/api/jaquette/choisir',
@@ -630,7 +850,7 @@ function igdbFini(){
       <span class="igdb-chiffre"><b>${c.detail}</b> <u>fiche${plu(c.detail)} détaillée${plu(c.detail)}</u></span>
     </div>
     ${(!c.dates && !c.prix && !c.jaquettes && !c.detail)
-      ? '<p class="igdb-note">Rien à changer : le journal était déjà à jour.</p>' : ''}
+      ? '<p class="igdb-note">Rien à changer : tout était déjà à jour.</p>' : ''}
     ${c.echecs ? `<div class="ferr">${c.echecs} ligne${c.echecs > 1 ? 's n\'ont' : " n'a"} pas pu être écrite${c.echecs > 1 ? 's' : ''} :<br>${IGD.echecs.map(esc).join('<br>')}</div>` : ''}
     <div class="frow"><span class="spacer"></span>
       <button class="cta auto" id="igdb_fin">Fermer</button></div>`;

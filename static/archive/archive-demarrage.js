@@ -133,6 +133,49 @@ document.getElementById('sortDir').addEventListener('click', ()=>{
 });
 window.addEventListener('resize', ()=>{ document.getElementById('tip').classList.remove('show'); });
 
+/* ---------- Échap, quand aucune fenêtre n'est ouverte ----------
+   La fenêtre du dessus, s'il y en a une, est servie par archive-noyau.js :
+   elle s'y est inscrite en disant comment elle se ferme (voir FERMETURES).
+   Ce qui suit ne joue donc que sur une page nue, et dans cet ordre - du plus
+   posé par-dessus au plus enfoui :
+
+     le menu contextuel d'un onglet, le menu de l'engrenage, celui des
+     périodes, le panneau de la cloche, puis la tranche de notes retenue
+     sur l'histogramme.
+
+   Aucun des quatre premiers n'est une fenêtre : ils pendent sous leur bouton
+   - ou sous le curseur - et ne comptent pas dans la pile. Chacun avait
+   pourtant son écoute d'Échap, ou pas d'écoute du tout : l'engrenage et les
+   périodes dans archive-journal.js, la cloche dans monteCloche, la tranche
+   dans la cascade d'archive-fiche.js, et le menu contextuel nulle part. Les
+   unes se déclenchaient TOUTES sur la même touche, dans l'ordre où les
+   fichiers sont chargés : refermer la cloche d'un Échap effaçait du même
+   coup la tranche de notes derrière elle, la chaîne suivante voyant un
+   panneau déjà fermé et se croyant sur une page nue.
+
+   Un `return` après chaque geste, et un seul écouteur pour les cinq : c'est
+   la seule façon pour qu'Échap n'en fasse qu'un à la fois. Ici, parce que ce
+   fichier est le seul à les connaître tous.
+
+   La cloche vient d'archive-social.js, la tranche et le menu contextuel de
+   archive-mur.js : tous sont là sur cette page, mais `typeof` garde la
+   chaîne lisible comme ce qu'elle est - une liste de gestes facultatifs. */
+ECHAP_SANS_FENETRE = function(){
+  /* Le menu contextuel d'un onglet d'abord : il s'ouvre PAR-DESSUS les
+     autres - on fait un clic droit sur une ligne de la liste des années - et
+     c'est donc lui qu'Échap doit reprendre en premier. Il se fermait déjà au
+     premier clic ailleurs, mais pas à la touche. */
+  if(document.getElementById('ongletMenu')){ fermeMenuOnglet(); return; }
+  const menu = document.getElementById('menu');
+  if(menu && !menu.hidden){ closeMenu(); return; }
+  const per = document.getElementById('perMenu');
+  if(per && !per.hidden){ closePer(); return; }
+  if(typeof socialClocheOuverte === 'function' && socialClocheOuverte()){
+    socialClocheFerme(); return;
+  }
+  if(S.range) viderTranche();
+};
+
 /* ---------- « Suggestion / Bug » ----------
    Le bouton menait à /abyss?suggestion=jeux-videos : signaler un bug de
    l'Archive faisait quitter l'Archive, avec la recherche en cours et la

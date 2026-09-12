@@ -170,13 +170,10 @@
 /* Le bouton prend la place de l'image dans la rangee : c'est lui, desormais,
    l'element du flex, et la largeur reglee sur .soc-cov ne suffit plus. */
 .soc-corps > .soc-vers-jeu{width:62px}
-/* Dans la fenetre « Avis », la jaquette et le titre ne menent nulle part :
-   toutes les cartes y sont le meme jeu, et le titre de la fenetre le nomme
-   deja (voir `memeJeu` dans socialCarteHTML). Le titre redevient donc un
-   simple <b>, qui doit garder la place et l'alignement qu'avait le bouton --
-   sans quoi la carte se dessinerait autrement d'une liste a l'autre, pour
-   une difference qui ne regarde que le clic. */
-.soc-jeu-fixe{display:block;text-align:left;cursor:default}
+/* Dans la fenetre « Avis », ni l'un ni l'autre n'est dessine : toutes les
+   cartes y sont le meme jeu, montre une fois en tete de fenetre (voir
+   `sansJeu` dans socialCarteHTML). Il n'y a donc plus de titre fixe a
+   habiller ici -- il n'y a plus de titre du tout. */
 /* Un seul signe pour les deux, comme pour le pseudo et sa photo : le titre
    passe a l'or, que la souris soit sur lui ou sur la jaquette. Cerner
    l'image d'un lisere dessinait une deuxieme cible pour une seule
@@ -221,16 +218,60 @@ button.soc-vers-jeu:hover,
    de lecture : un commentaire n'a pas besoin de 900 px. */
 .soc-sheet{max-width:640px}
 .soc-in{padding:16px;overflow:auto}
-.soc-in .soc-post{border:none;background:none;padding:0}
-.soc-in .soc-post .soc-pied{margin-bottom:4px}
-.soc-retour{font-size:19px;line-height:1}
-/* Les chiffres d'un jeu, en tete de ses avis. Trois nombres et trois mots :
-   le chiffre est ce qu'on lit, le mot ne fait que dire de quoi il parle --
-   d'ou le contraste entre les deux. Le point separateur est un element a
-   lui pour qu'il ne prenne pas la couleur du nombre qui le precede. */
+/* La carte de tete d'une discussion : nue, parce qu'elle n'est pas un
+   element d'une liste mais le sujet de la fenetre -- lui dessiner un cadre
+   dans une fenetre qui en est deja un ferait une boite dans une boite.
+
+   `>` et non un descendant quelconque, et c'est la difference avec la
+   fenetre « Avis » : la carte de tete est posee directement dans .soc-in,
+   pendant que les avis sont ranges dans .soc-liste. Sans cette precision,
+   la regle les atteignait aussi et leur retirait le cadre qui, justement,
+   les donne a lire comme une pile de choses cliquables -- une par personne.
+   Dix avis se suivaient alors sans rien pour dire ou l'un finit et ou
+   l'autre commence. */
+.soc-in > .soc-post{border:none;background:none;padding:0}
+.soc-in > .soc-post .soc-pied{margin-bottom:4px}
+
+/* ---------- la fenetre « Avis » ----------
+   Le jeu une fois, en haut, puis les gens. Voir socialAvisTeteHTML. */
+.soc-avis-tete{
+  display:flex;gap:15px;align-items:center;
+  padding-bottom:15px;border-bottom:1px solid var(--line);
+}
+/* Plus grande qu'en carte : c'est la seule de la fenetre, elle a la place,
+   et elle a maintenant un vrai role -- reconnaitre le jeu d'un regard en
+   arrivant, ce qu'une vignette de 62 px repetee dix fois ne faisait pas. */
+.soc-avis-tete .soc-cov{width:78px}
+.soc-avis-ident{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:8px}
+.soc-avis-jeu{
+  font-family:var(--display);font-weight:800;font-size:20px;line-height:1.2;
+  letter-spacing:-.02em;
+}
+/* La ligne qui separe l'en-tete de la liste : combien de joueurs, et donc
+   ce qui suit. En petites capitales de la fonte a chasse fixe, comme les
+   autres intertitres du site -- elle annonce, elle ne se lit pas. */
+.soc-avis-sous{
+  margin:16px 0 11px;color:var(--muted);font-family:var(--mono);
+  font-weight:400;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+}
+/* Une carte de la fenetre « Avis » : sans jaquette ni titre, son corps n'est
+   plus qu'une colonne de texte, et l'en-tete n'a plus une vignette de 62 px
+   a surplomber. Les douze pixels qui les separaient etaient regles sur cette
+   hauteur-la ; il en faut moins pour poser un avis sous un pseudo. */
+.soc-post-nu .soc-tete{margin-bottom:9px}
+
+/* Les chiffres d'un jeu, a cote de sa jaquette en tete de ses avis. Trois
+   nombres et trois mots : le chiffre est ce qu'on lit, le mot ne fait que
+   dire de quoi il parle -- d'ou le contraste entre les deux. Le point
+   separateur est un element a lui pour qu'il ne prenne pas la couleur du
+   nombre qui le precede.
+
+   A gauche et non centres : ils sont desormais poses sous le titre du jeu,
+   dans la meme colonne que lui, et deux blocs d'une meme colonne qui ne
+   partent pas du meme bord se lisent comme deux choses sans rapport. */
 .soc-compte{
-  display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:0 8px;
-  color:var(--muted);font-size:12.5px;margin:0 0 16px;text-align:center;
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;
+  color:var(--muted);font-size:12.5px;margin:0;
 }
 .soc-compte b{color:var(--text);font-variant-numeric:tabular-nums}
 .soc-compte i{font-style:normal;opacity:.45}
@@ -483,6 +524,11 @@ button.soc-vers-jeu:hover,
    alors ses boutons par `order` (voir .top-in dans archive.css). */
 @media (max-width:640px){
   .soc-corps > .soc-vers-jeu{width:52px}
+  /* La jaquette de l'en-tete « Avis » retrecit aussi, mais reste la plus
+     grande de la fenetre : c'est la seule image qu'on y regarde. */
+  .soc-avis-tete{gap:12px;padding-bottom:13px}
+  .soc-avis-tete .soc-cov{width:64px}
+  .soc-avis-jeu{font-size:18px}
   /* La cloche se glisse juste avant l'engrenage, a la place qu'elle occupe
      en grand : sans ces trois lignes elle partait en fin de rangee, derriere
      les onglets. Ronde et de 38 px comme ses voisines -- la plus petite

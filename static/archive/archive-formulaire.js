@@ -30,12 +30,38 @@ function toast(txt, mauvais){
   toast._t = setTimeout(()=>{ t.classList.remove('show'); }, 3000);
 }
 function isoDate(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d||'') ? d : ''; }
+function numText(n){ return (n===null||n===undefined||n==='') ? '' : String(n).replace('.',','); }
+/* Le temps de jeu tel qu'il se pose dans la case du formulaire - et non tel
+   qu'il s'affiche sur une fiche, ce qui est le travail de hoursFmt.
+
+   Un nombre, et rien d'autre : « 25 », « 25,5 ». Ni « 25h », puisque
+   l'etiquette de la case dit deja « Temps de jeu (h) » et que l'unite s'y
+   ecrivait donc deux fois ; ni « 25h30 », qui melait un separateur horaire
+   a un champ ou les trois voisins - note, prix de base, prix paye - sont
+   des decimaux a virgule. Trois cases qui se ressemblent doivent se saisir
+   pareil, et une demi-heure s'ecrit ici « ,5 » comme un demi-euro.
+
+   Deux decimales au plus : un quart d'heure fait 0,25 tout rond, mais un
+   tiers d'heure ne tombe pas juste et 25,333333333333332 dans une case
+   n'aide personne. Ce qu'on perd a l'arrondi vaut une vingtaine de
+   secondes, et seulement pour qui reenregistre un temps qu'il n'a pas
+   touche. toHours relit tout ca sans broncher - et relit encore « 25h30 »
+   ou « 25:30 » pour qui prefere les taper. */
 function timeText(h){
   if(h===null||h===undefined) return '';
-  const H = Math.floor(h), M = Math.round((h-H)*60);
-  return M ? `${H}h${String(M).padStart(2,'0')}` : `${H}h`;
+  return numText(Math.round(h * 100) / 100);
 }
-function numText(n){ return (n===null||n===undefined||n==='') ? '' : String(n).replace('.',','); }
+
+/* Le chevron qui descend : « va-t'en en bas ». Le même dessin que les
+   menus déroulants de la page, retourné par l'usage plutôt que par un
+   second tracé - on le reconnaît sans l'apprendre. */
+const ICONE_REDUIRE = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+  aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+/* Et le même, retourné pour de bon, sur la pastille : elle fait remonter. */
+const ICONE_AGRANDIR = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+  aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>`;
 
 function formHTML(g){
   const mois = MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
@@ -43,7 +69,12 @@ function formHTML(g){
   return `<div class="sheet form-sheet" role="dialog" aria-modal="true">
     <div class="sheet-tools">
       <span class="grp"><b class="fhead">${g ? 'Modifier un jeu' : 'Ajouter un jeu'}</b></span>
-      <span class="grp"><button class="sbtn form-x" aria-label="Fermer">×</button></span>
+      <!-- Réduire, puis fermer. Dans cet ordre parce que c'est celui du
+           risque : la flèche met de côté, la croix jette. -->
+      <span class="grp">
+        <button class="sbtn form-reduire" aria-label="Réduire, pour aller voir le journal"
+          title="Réduire - le formulaire attend en bas à droite">${ICONE_REDUIRE}</button>
+        <button class="sbtn form-x" aria-label="Fermer">×</button></span>
     </div>
     <div class="form-in">
       <div class="fgrid">
@@ -78,7 +109,8 @@ function formHTML(g){
         <label class="fld" id="f_ratingwrap"><u>Note sur 10</u>
           <input id="f_rating" type="text" inputmode="decimal" value="${esc(numText(g?g.rating:null))}"></label>
         <label class="fld" id="f_timewrap"><u>Temps de jeu (h)</u>
-          <input id="f_time" type="text" value="${esc(timeText(g?g.hours:null))}"></label>
+          <input id="f_time" type="text" inputmode="decimal"
+                 value="${esc(timeText(g?g.hours:null))}"></label>
         <label class="fld"><u>Prix de base (€)</u>
           <input id="f_base" type="text" inputmode="decimal" value="${esc(numText(g?g.base:null))}"></label>
         <label class="fld" id="f_paidwrap"><u>Prix payé (€)</u>
@@ -89,9 +121,22 @@ function formHTML(g){
              porte la valeur entre le choix d'une jaquette et l'enregistrement. -->
         <input id="f_release" type="hidden" value="${esc(isoDate(g?g.release:''))}"
                data-orig="${esc(g&&g.release?g.release:'')}">
-        <label class="fld full" id="f_reviewwrap"><u>Avis (Commencer par + ou -)</u>
+        <!-- Un <div> et non un <label> comme les autres champs : il y a
+             maintenant deux commandes ici, l'avis et la case « spoiler ». Un
+             label qui en enveloppe deux ne sait plus laquelle il désigne, et
+             cliquer sur « Avis » aurait coché la case. D'où l'attribut
+             for= explicite, comme pour le nom du jeu (.acw plus haut). -->
+        <div class="fld full" id="f_reviewwrap">
+          <div class="favis-tete">
+            <label for="f_review"><u>Avis (Commencer par + ou -)</u></label>
+            <!-- La case vit sur la ligne du titre, contre le champ qu'elle
+                 qualifie : c'est de CET avis qu'elle parle, pas du jeu. -->
+            <label class="fspoil" title="Les autres verront l'avis flouté, sauf s'ils ont déjà terminé le jeu">
+              <input id="f_spoiler" type="checkbox"${g && g.spoiler ? ' checked' : ''}>
+              <span>Marquer en tant que spoiler</span></label>
+          </div>
           <span class="ta-wrap"><span class="ta-hl" id="f_review_hl" aria-hidden="true"></span
-            ><textarea id="f_review" rows="5">${esc(avis)}</textarea></span></label>
+            ><textarea id="f_review" rows="5">${esc(avis)}</textarea></span></div>
       </div>
       <div class="frow">
         ${g ? '<button class="ghost danger" id="f_del">Supprimer ce jeu</button>' : ''}
@@ -454,7 +499,7 @@ function validerFormulaire(){
   // la note est sur 10 partout dans la page : 85 tapé pour 8,5 doit se
   // voir tout de suite, pas finir en 85/10 dans les stats sans un mot
   if(!sansFin && champInvalide('f_rating', toNum, 0, 10))
-    erreurs.push({champ:'f_rating', message:'Note illisible - un nombre entre 0 et 10, par exemple 8.5.'});
+    erreurs.push({champ:'f_rating', message:'Note incorrecte.'});
   if(!sansFin && champInvalide('f_time', toHours))
     erreurs.push({champ:'f_time', message:'Temps de jeu incorrect.'});
   if(champInvalide('f_base', toNum))
@@ -477,6 +522,17 @@ function majAvis(){
   hl.scrollTop = ta.scrollTop;
 }
 function openForm(g){
+  /* Un formulaire replié attend en bas à droite : on ne l'écrase pas sous un
+     autre. « Modifier » ou « + Ajouter un jeu » le font revenir, et c'est
+     tout - le rouvrir sur un autre jeu jetterait sans un mot ce qui y était
+     tapé, exactement ce que la pastille sert à éviter. Pour passer à autre
+     chose, il y a sa croix. */
+  if(formEstReduit()){
+    const memeJeu = !!EDIT && !!g && EDIT.id === g.id;
+    rouvrirForm();
+    if(!memeJeu) toast('Un formulaire est déjà en cours - termine-le ou abandonne-le.', true);
+    return;
+  }
   EDIT = g || null;
   const host = $('form');
   host.innerHTML = formHTML(g);
@@ -508,8 +564,9 @@ function openForm(g){
     if($('f_wish').checked) $('f_encours').checked = false;
     syncStatut();
   };
-  host.querySelector('.form-x').onclick = closeForm;
-  $('f_cancel').onclick = closeForm;
+  host.querySelector('.form-x').onclick = demandeFermerForm;
+  host.querySelector('.form-reduire').onclick = reduireForm;
+  $('f_cancel').onclick = demandeFermerForm;
   $('f_ok').onclick = submitForm;
   const del = $('f_del');
   if(del) del.onclick = ()=>{
@@ -532,19 +589,292 @@ function openForm(g){
     const champ = $(id);
     if(champ) champ.addEventListener('input', ()=> champErr(id, false));
   });
+  /* Le formulaire devient « sale » au premier geste, et le reste : c'est ce
+     qui décide si la croix pose une question. Posé sur la boîte entière et
+     en capture, une fois - une écoute par champ serait à tenir à jour à
+     chaque champ ajouté, et les cases à cocher, les listes déroulantes et
+     les pastilles d'onglet n'émettent pas toutes `input`. */
+  FORM_SALE = false;
+  ['input', 'change', 'click'].forEach(quoi=>
+    host.addEventListener(quoi, e=>{
+      /* La barre d'outils n'est pas une modification : réduire ou fermer ne
+         doit pas rendre sale un formulaire qu'on n'a fait qu'ouvrir. */
+      if(e.target.closest('.sheet-tools')) return;
+      if(quoi === 'click' && !e.target.closest('.bkd-p,.fcheck,.fpick,.ac-item')) return;
+      FORM_SALE = true;
+    }, true));
   $('f_name').focus();
 }
-function closeForm(){
+/* ---------- fermer, ou mettre de côté ----------
+   Le formulaire est le seul endroit de la page où l'on ÉCRIT. Tout le reste
+   se lit, et s'y referme sans conséquence ; ici, un clic à côté du cadre
+   effaçait dix lignes d'avis sans un mot. Deux réponses à ça, et elles ne
+   règlent pas la même chose :
+
+     - la croix demande confirmation quand quelque chose a été tapé. Deux
+       clics, comme « Supprimer ce jeu » juste en dessous : c'est le même
+       geste irréversible, il doit se défendre pareil.
+     - la flèche ne ferme rien du tout. Elle replie le formulaire en une
+       pastille, en bas à droite, et rend le journal - on va relire les
+       notes des trois jeux d'à côté avant de décider de celle-ci, puis on
+       reprend là où on s'était arrêté. C'est le geste qui manquait : noter
+       un jeu, c'est le comparer, et il fallait jusqu'ici fermer pour
+       comparer, donc choisir entre voir et garder.
+
+   `FORM_SALE` ne regarde pas si la valeur a réellement changé, seulement si
+   on a touché au formulaire. Comparer champ par champ à l'état de départ
+   coûterait plus et se tromperait plus souvent qu'une question de trop. */
+let FORM_SALE = false;
+let FORM_ARME = 0;                 // quand la croix a été refusée une fois
+const FORM_ARME_MS = 5000;
+
+function formArmeRaz(){
+  FORM_ARME = 0;
+  const x = document.querySelector('#form .form-x');
+  if(x){
+    x.classList.remove('armed');
+    x.textContent = '×';
+    x.setAttribute('aria-label', 'Fermer');
+  }
+  const annule = $('f_cancel');
+  if(annule && annule.classList.contains('armed')){
+    annule.classList.remove('armed');
+    annule.textContent = 'Annuler';
+  }
+}
+
+/* Le geste de qui ferme : la croix, « Annuler », Échap, le clic sur le fond,
+   la feuille repoussée au doigt. Tous passent par ici - c'est ce qui fait
+   qu'aucun d'eux ne peut effacer un avis en silence. closeForm(), elle,
+   reste inconditionnelle : elle sert après un enregistrement réussi, après
+   une suppression, et aux écrans d'accueil, où il n'y a plus rien à
+   sauver et rien à demander. */
+function demandeFermerForm(){
   const host = $('form');
   if(host.hidden) return;
+  if(!FORM_SALE || Date.now() - FORM_ARME < FORM_ARME_MS){ closeForm(); return; }
+  /* La croix s'ouvre et se nomme, là où l'on vient de cliquer : « Abandonner ? »
+     en rouge plein. Pas de bandeau en bas de l'écran pour l'expliquer - le
+     bouton qui a refusé est le bon endroit pour poser la question, et il
+     répond du même clic. « Annuler », en pied de formulaire, prend le même
+     mot : les deux ferment, les deux doivent demander pareil.
+
+     Et aucune secousse sur la feuille. Elle en avait une, pour signaler le
+     refus au doigt - la feuille repoussée revient d'un coup à sa place, et
+     le mouvement rendait ce retour lisible. Mais il partait vers le BAS
+     avant de remonter, ce qui se lisait comme un tremblement, et il écrasait
+     `animation` sur .sheet - donc le retirer relançait l'animation d'entrée
+     `rise` et faisait clignoter tout le formulaire. Deux ennuis pour un
+     détail : le bouton rouge dit la même chose sans bouger. */
+  const arme = FORM_ARME = Date.now();
+  const x = host.querySelector('.form-x');
+  if(x){
+    x.classList.add('armed');
+    x.textContent = 'Abandonner ?';
+    x.setAttribute('aria-label', 'Abandonner les modifications');
+  }
+  const annule = $('f_cancel');
+  if(annule){ annule.classList.add('armed'); annule.textContent = 'Abandonner ?'; }
+  /* Le relevé exact, et non « cinq secondes se sont-elles écoulées » : la
+     minuterie se réveille pile à l'échéance, où la soustraction tombait
+     tantôt à 4999 tantôt à 5000 - un désarmement sur deux ne se faisait
+     pas, et la croix restait rouge indéfiniment. */
+  setTimeout(()=>{ if(FORM_ARME === arme) formArmeRaz(); }, FORM_ARME_MS);
+}
+
+function closeForm(){
+  const host = $('form');
+  /* Replié, le formulaire est caché mais bien là, avec tout ce qu'on y a
+     tapé : c'est la pastille qui dit qu'il existe encore. Sans ce relevé,
+     `host.hidden` faisait sortir d'ici sans rien nettoyer, et un formulaire
+     replié survivait à un enregistrement ou à un retour à l'accueil. */
+  const reduit = !!pastille();
+  pastilleEnleve();
+  if(host.hidden && !reduit) return;
   // ce qui est encore en vol ne concerne plus personne : la liste, le prix
   // et la jaquette retenue partent avec le formulaire
   oublieAuto();
   host.hidden = true; host.innerHTML = '';
+  /* La réouverture d'une pastille remonte le formulaire au-dessus de ce qui
+     s'était ouvert entre-temps (voir rouvrirForm), ce qui lui laisse un
+     z-index en dur. On le rend, sinon la prochaine ouverture hériterait du
+     rang d'une pile qui n'existe plus. */
+  host.style.zIndex = '';
   EDIT = null;
+  FORM_SALE = false;
+  FORM_ARME = 0;
   verrouFond();
 }
-fermeSurFond('form', closeForm);
+fermeSurFond('form', demandeFermerForm);
+
+/* ---------- la pastille, en bas à droite ----------
+   Le formulaire replié. Pas une notification - on ne l'informe de rien : un
+   travail en cours, posé là où il ne gêne pas la lecture du mur, et qui se
+   rouvre d'un clic. La croix qu'elle porte est la même que celle du
+   formulaire, confirmation comprise : abandonner depuis la pastille ne doit
+   pas être plus facile qu'abandonner depuis le cadre.
+
+   Trois coins sont déjà pris en bas de l'écran : le toast au centre, la
+   bannière de rattrapage à gauche (voir .rattrapage). Le dernier est libre,
+   et c'est celui où l'on va chercher ce genre de chose. */
+const FORM_REDUIT_MS = 300, FORM_ROUVRE_MS = 340;
+let FORM_ANIME = false;
+const sansMouvement = ()=>
+  window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Ce que la pastille annonce : le jeu dont il s'agit. Le nom tapé plutôt que
+   celui du classeur, parce qu'en pleine frappe c'est celui-là qu'on vient
+   d'écrire - et « Nouveau jeu » tant qu'il n'y a rien, ce qui vaut mieux
+   qu'une pastille anonyme. */
+function formTitreCourt(){
+  const tape = clean(($('f_name') || {}).value || '');
+  if(tape) return tape;
+  if(EDIT && EDIT.name) return EDIT.name;
+  return 'Nouveau jeu';
+}
+
+function pastille(){ return document.getElementById('formPastille'); }
+function pastilleEnleve(){
+  const p = pastille();
+  if(p) p.remove();
+}
+function pastilleMonte(){
+  pastilleEnleve();
+  const p = document.createElement('div');
+  p.id = 'formPastille';
+  p.className = 'form-pastille mesure';
+  p.innerHTML = `<button type="button" class="fp-ouvre"
+      aria-label="Reprendre la modification">
+      <span class="fp-fleche">${ICONE_AGRANDIR}</span>
+      <span class="fp-txt">
+        <b></b>
+        <i>${EDIT ? 'Modification en cours' : 'Ajout en cours'}</i>
+      </span>
+    </button>
+    <button type="button" class="fp-x" aria-label="Abandonner les modifications">×</button>`;
+  // textContent et non le gabarit : un titre de jeu vient d'un champ libre
+  p.querySelector('.fp-txt b').textContent = formTitreCourt();
+  document.body.appendChild(p);
+  /* `()=>` et non la fonction nue : onclick passe l'événement en premier
+     argument, qui serait pris pour le `apres` de rouvrirForm. */
+  p.querySelector('.fp-ouvre').onclick = ()=> rouvrirForm();
+  p.querySelector('.fp-x').onclick = ()=>{
+    /* Le formulaire est replié : la confirmation a besoin de lui à l'écran
+       pour armer sa croix et se laisser voir. On le rouvre donc d'abord, et
+       la question se pose dans le cadre - là où sont les mots qu'on risque
+       de perdre. Rien n'a été tapé : ça se ferme sans rien demander. */
+    if(!FORM_SALE){ closeForm(); return; }
+    rouvrirForm(()=> demandeFermerForm());
+  };
+  return p;
+}
+
+/* Le vol de la feuille vers la pastille, et le retour. On mesure les deux
+   boîtes plutôt que de pousser la feuille dans une direction choisie à
+   l'avance : elle atterrit alors exactement sur la pastille, et le
+   mouvement dit où le formulaire est parti - ce qui est toute la raison de
+   l'animer. Les trois nombres partent en variables CSS, les images-clés
+   s'en servent (voir .form-sheet.part / .revient). */
+function poseVolForm(feuille, p){
+  const a = feuille.getBoundingClientRect(), b = p.getBoundingClientRect();
+  if(!a.width || !b.width) return;
+  feuille.style.setProperty('--dx', Math.round((b.left + b.width/2) - (a.left + a.width/2)) + 'px');
+  feuille.style.setProperty('--dy', Math.round((b.top + b.height/2) - (a.top + a.height/2)) + 'px');
+  /* Le rapport des largeurs, mais plafonne : une pastille et une feuille
+     n'ont pas la meme forme - l'une est large et plate, l'autre haute - donc
+     aucune echelle unique ne colle aux deux. Celle des largeurs vise juste
+     sur grand ecran ; sur telephone la pastille prend toute la largeur et le
+     rapport frolait 1, si bien que la feuille glissait sans retrecir et que
+     le geste ne disait plus « ca se replie ». Le plafond de .55 lui rend son
+     sens partout. */
+  const ds = Math.min(0.55, Math.max(0.12, b.width / a.width));
+  feuille.style.setProperty('--ds', ds.toFixed(3));
+}
+
+/* ---------- pourquoi la feuille garde sa classe ----------
+   `.sheet` porte son animation d'entrée dans la feuille de style :
+   `animation:rise .22s`. Toute classe qui écrase cette propriété - et
+   `.part` comme `.revient` n'ont pas le choix, c'est par elle qu'on anime -
+   devient donc la seule à valoir... jusqu'à ce qu'on la retire. À cet
+   instant `animation` redevient `rise`, et changer de nom d'animation
+   DÉMARRE l'animation : le formulaire rejouait son entrée - opacité zéro,
+   quatorze pixels plus bas - après avoir fini de s'agrandir. C'était tout
+   le clignotement, et il venait de la ligne de ménage qui semblait la plus
+   innocente.
+
+   Alors on ne nettoie pas. La feuille porte `.part` tant qu'elle est
+   repliée et `.revient` tant qu'elle est ouverte, et l'on passe de l'une à
+   l'autre - un nom d'animation remplacé par un autre, jamais rendu. Un
+   formulaire fraîchement ouvert, lui, est un élément neuf sans aucune de
+   ces classes : il joue `rise` comme toutes les autres fenêtres du site.
+
+   `.part` tient son état d'arrivée (`forwards`), `.revient` non, et la
+   feuille de style dit pourquoi : une animation finie qui tient son état
+   l'emporte sur le style en ligne, et c'est par le style en ligne que le
+   doigt pousse la feuille vers le bas pour la refermer. */
+function reduireForm(){
+  const host = $('form');
+  const feuille = host.querySelector('.form-sheet');
+  if(host.hidden || !feuille || FORM_ANIME) return;
+  FORM_ANIME = true;
+  formArmeRaz();       // une croix armée n'a plus de question en attente
+  const p = pastilleMonte();
+  poseVolForm(feuille, p);
+  const vite = sansMouvement();
+  if(!vite){
+    feuille.classList.remove('revient');
+    feuille.classList.add('part');
+    host.classList.add('part');
+  }
+  setTimeout(()=>{
+    host.hidden = true;
+    /* Le voile, lui, peut rendre son animation : il est caché à cette
+       seconde même, et le `fade` que ça relance ne se voit donc pas - c'est
+       d'ailleurs celui qu'on veut à la réouverture. */
+    host.classList.remove('part');
+    verrouFond();                       // le journal redevient défilable
+    p.classList.remove('mesure');
+    if(!vite) p.classList.add('arrive');
+    FORM_ANIME = false;
+  }, vite ? 0 : FORM_REDUIT_MS);
+}
+
+/* `apres` : ce qu'on vient faire une fois le formulaire revenu - la croix de
+   la pastille s'en sert pour poser sa question dans le cadre. */
+function rouvrirForm(apres){
+  const host = $('form');
+  const feuille = host.querySelector('.form-sheet');
+  const p = pastille();
+  if(!feuille || FORM_ANIME) return;
+  FORM_ANIME = true;
+  const vite = sansMouvement();
+  host.hidden = false;
+  /* Au-dessus de ce qui s'est ouvert pendant qu'il attendait : on est allé
+     lire la fiche d'un autre jeu, elle est peut-être encore là. C'est le
+     même arbitrage que pour toutes les fenêtres qui s'ouvrent les unes sur
+     les autres (voir auPremierPlan dans archive-noyau.js). */
+  auPremierPlan(host);
+  verrouFond();
+  if(p){
+    poseVolForm(feuille, p);
+    p.classList.remove('arrive');
+    if(vite) p.remove(); else { p.classList.add('repart'); setTimeout(()=> p.remove(), 200); }
+  }
+  if(!vite){
+    /* L'une remplace l'autre dans le même souffle : `form-part` cède la
+       place à `form-revient`, et c'est ce changement de nom qui démarre le
+       retour. Pas de `void offsetWidth` à forcer ici - il servait à rejouer
+       la MÊME animation, ce qui n'est pas le cas. Et surtout pas de retrait
+       au bout : voir le commentaire de reduireForm. */
+    feuille.classList.remove('part');
+    feuille.classList.add('revient');
+  }
+  setTimeout(()=>{
+    FORM_ANIME = false;
+    if(typeof apres === 'function') apres();
+  }, vite ? 0 : FORM_ROUVRE_MS);
+}
+const formEstReduit = ()=> !!pastille();
 
 function lireForm(){
   // en cours ou wishlist : note, mois et temps de jeu partent vides, quoi
@@ -560,6 +890,10 @@ function lireForm(){
     base:     toNum($('f_base').value),
     paid:     wish ? null : toNum($('f_paid').value),
   };
+  /* Le marquage suit l'avis : un jeu remis « en cours » perd le sien (voir
+     chargeUtile), il n'a donc plus rien à cacher. Envoyé à chaque fois, y
+     compris à faux - c'est ainsi qu'on décoche. */
+  v.spoiler = !statutCoche() && $('f_spoiler').checked;
   const rel = $('f_release');
   // si la date d'origine n'était pas lisible par le champ, on n'y touche pas
   if(rel.value || isoDate(rel.dataset.orig) || !rel.dataset.orig) v.release = rel.value || null;

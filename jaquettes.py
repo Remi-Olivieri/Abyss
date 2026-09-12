@@ -990,17 +990,18 @@ def images_larges(ids):
 #   Fiche detaillee : au-dela du strict necessaire pour choisir une jaquette
 # --------------------------------------------------------------------------
 CHAMPS_DETAIL = ("platforms.name, involved_companies.company.name, "
-                  "involved_companies.developer, genres.name, summary, "
+                  "involved_companies.developer, genres.name, themes.name, summary, "
                   "screenshots.image_id, videos.video_id, aggregated_rating, "
                   "first_release_date, url, "
                   "external_games.category, external_games.uid, external_games.url")
 CAPTURES_MAX = 8
 
-# La plateforme, le developpeur et les genres d'un jeu ne changent jamais ;
+# La plateforme, le developpeur, les genres et les themes d'un jeu ne
+# changent jamais ;
 # sa description et ses captures, presque jamais. Ce cache sert surtout au
 # rattachement en masse (voir la mise a jour depuis IGDB) : l'analyse
 # demande la fiche de chaque jeu, l'ecriture la redemanderait aussitot pour
-# en tirer les trois colonnes. Une heure suffit a couvrir l'aller-retour,
+# en tirer les quatre colonnes. Une heure suffit a couvrir l'aller-retour,
 # et rend au passage immediate la reouverture d'une meme fiche detaillee.
 _DETAIL = {}
 DUREE_DETAIL = 3600
@@ -1024,8 +1025,8 @@ def detail_complet(id_igdb):
     pour choisir une jaquette. Renvoie (detail, souci).
 
     Sert a deux choses : ecrire une fois pour toutes la plateforme, le
-    developpeur et les genres d'un jeu qu'on vient de rattacher a une fiche
-    (voir journal.py), et nourrir la fenetre « Voir plus d'informations » a
+    developpeur, les genres et les themes d'un jeu qu'on vient de rattacher
+    a une fiche (voir journal.py), et nourrir la fenetre « Voir plus d'informations » a
     chaque ouverture -- description, captures, bande-annonce et note
     critique ne sont eux jamais stockes en base, pour ne jamais montrer une
     image ou un avis perime.
@@ -1049,6 +1050,12 @@ def detail_complet(id_igdb):
     developpeurs = [c["company"]["name"] for c in (jeu.get("involved_companies") or [])
                     if c.get("developer") and (c.get("company") or {}).get("name")]
     genres = [g.get("name") for g in (jeu.get("genres") or []) if g.get("name")]
+    # Le theme dit ce dont le jeu parle la ou le genre dit comment il se
+    # joue : « Horror » et « Survival », pas « Shooter ». Le Quiz en tire ses
+    # grilles de connexions (voir quiz.py), et la colonne l'attendait depuis
+    # la migration 14 -- elle n'etait simplement jamais demandee a IGDB, si
+    # bien qu'un jeu rattache repartait avec un theme vide.
+    themes = [t.get("name") for t in (jeu.get("themes") or []) if t.get("name")]
     # deux tailles par capture : la vignette de la bande, et le format
     # d'affichage quand on clique dessus pour la voir en grand
     images = [{"apercu": f"{IGDB_IMG}/{TAILLE_CAPTURE}/{s['image_id']}.webp",
@@ -1062,9 +1069,10 @@ def detail_complet(id_igdb):
     # de plus, la ou le prix demanderait en plus d'aller interroger Steam
     appid = _appid_dans(jeu.get("external_games"))
     detail = {
-        "plateforme": ", ".join(plateformes) or None,
-        "developpeur": ", ".join(developpeurs) or None,
-        "genres": ", ".join(genres) or None,
+        "plateforme": _colonne(plateformes),
+        "developpeur": _colonne(developpeurs),
+        "genres": _colonne(genres),
+        "themes": _colonne(themes),
         "description": jeu.get("summary") or None,
         "images": images[:CAPTURES_MAX],
         "trailer": f"https://www.youtube.com/embed/{trailer}" if trailer else None,
@@ -1475,16 +1483,21 @@ def blueprint_jaquettes(dossier, url_publique="/static/Cover/"):
                 valeur, appid, souci_prix = prix_du_jeu(choix["id"])
 
             # La fiche detaillee sert au rattachement en masse : la page
-            # compare ces trois champs a ce qu'elle a deja et n'envoie a
+            # compare ces quatre champs a ce qu'elle a deja et n'envoie a
             # l'ecriture que les jeux qui en manquent. L'appel remplit au
             # passage le cache de detail_complet, si bien que l'ecriture
             # qui suivra ne redemandera rien a IGDB.
+            #
+            # Le theme est du lot, et pas seulement les trois autres : la
+            # page le comparait deja, mais ne le recevait pas -- tout jeu
+            # ayant un theme se declarait donc a corriger a chaque analyse,
+            # indefiniment, puisque l'ecriture ne pouvait rien y changer.
             fiche_detail = None
             if veut_detail and choix:
                 complet, _souci_detail = detail_complet(choix["id"])
                 if complet:
                     fiche_detail = {cle: complet[cle] for cle in
-                                    ("plateforme", "developpeur", "genres")}
+                                    ("plateforme", "developpeur", "genres", "themes")}
 
             return jsonify(
                 etat="ok",

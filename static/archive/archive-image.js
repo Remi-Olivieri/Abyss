@@ -572,7 +572,12 @@ async function ficheCanvas(g){
   y = Math.max(y + ch, ry) + 48;
 
   /* --- ce que j'en ai pensé --- */
-  const points = enCours ? [] : (g.review || []).filter(Boolean);
+  /* Un avis marqué « spoiler » ne part pas dans l'image quand c'est celui
+     de quelqu'un d'autre. Ailleurs on le floute et un clic le découvre ;
+     dans un PNG qu'on va poster, il n'y a pas de clic - on ne peut que le
+     laisser lisible ou ne pas l'écrire. `flou` vaut faux sur son propre
+     journal : le résumé de SES jeux reste complet. */
+  const points = (enCours || g.flou) ? [] : (g.review || []).filter(Boolean);
   if(points.length){
     bilFilet(c, y); y += 46;
     bilEcrire(c, 'AVIS', M, y, {f:`500 16px ${BIL.mono}`, c:BIL.doux, ls:'.22em'});

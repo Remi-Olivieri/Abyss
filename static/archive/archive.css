@@ -1079,6 +1079,38 @@ input,textarea{caret-color:var(--gold)}
 .pt{font-size:13.5px;padding:4px 10px;border-radius:6px;background:var(--bg3);border:1px solid var(--line)}
 .pt.plus{color:#9BE3BE}
 .pt.minus{color:#F0A29C}
+/* ---------- un avis qui raconte la fin ----------
+   Le voile et le bouton qui l'enleve. Le meme habillage sur la fiche d'un
+   jeu et sur une carte du fil : c'est la meme chose qu'on cache, et la
+   reconnaitre d'un endroit a l'autre vaut mieux que deux inventions.
+   Voir spoilerHTML dans archive-noyau.js.
+
+   `overflow:hidden` parce qu'un flou deborde de sa boite : sans lui, les
+   sept pixels de bavure venaient salir la case du dessous. Le rayon suit
+   celui des pastilles d'avis qu'il recouvre. */
+.spoil{position:relative;overflow:hidden;border-radius:8px}
+/* la hauteur d'un bouton : un avis d'une seule ligne ne doit pas obliger
+   celui-ci a deborder de ce qu'il masque */
+.spoil.spoil-ferme{min-height:44px}
+.spoil-dedans{transition:filter .2s,opacity .2s}
+/* Le flou, et rien qui laisse lire au travers : la selection est coupee -
+   sans quoi un glissement de souris copiait le texte intact - et les
+   pastilles ne repondent plus au clic, qui appartient au bouton. */
+.spoil.spoil-ferme .spoil-dedans{
+  filter:blur(7px);opacity:.7;user-select:none;pointer-events:none;
+}
+.spoil-x{
+  position:absolute;inset:0;width:100%;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);background:rgba(9,7,13,.28);
+  transition:color .15s,background .15s;
+}
+.spoil-x:hover{color:var(--gold);background:rgba(9,7,13,.42)}
+.spoil-x:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;border-radius:8px}
+/* decouvert : le bouton s'en va pour de bon, il n'a plus rien a proposer */
+.spoil:not(.spoil-ferme) .spoil-x{display:none}
+
 .facts{display:flex;flex-wrap:wrap;gap:20px 26px;margin-top:20px}
 .fact u{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;margin-bottom:3px}
 .fact b{font-family:var(--mono);font-weight:500;font-size:14px;font-variant-numeric:tabular-nums}
@@ -1194,6 +1226,35 @@ input,textarea{caret-color:var(--gold)}
 .fld.err input:focus,.fld.err select:focus,.fld.err textarea:focus{
   border-color:#B4295C;box-shadow:0 0 0 3px rgba(180,41,92,.16);
 }
+
+/* ---------- la ligne de titre du champ « Avis » ----------
+   Le libellé à gauche, la case « spoiler » à droite, sur la même ligne : la
+   case qualifie ce champ-là et rien d'autre, elle doit se lire avec son
+   titre. `align-items:baseline` aligne les deux textes et non les deux
+   boîtes, dont l'une porte une case à cocher et pas l'autre.
+
+   Elle se replie sous le titre quand la fenêtre est étroite - le libellé
+   d'origine est déjà long, et les deux côte à côte ne tiennent pas sous
+   400 px. */
+.favis-tete{
+  display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;
+  gap:4px 14px;margin-bottom:6px;
+}
+/* Le <u> porte déjà la marge du bas de tous les libellés (.fld u) : dans
+   cette ligne c'est le conteneur qui la donne. La lui laisser aurait
+   rallongé le titre par le bas, et les deux textes ne reposeraient plus
+   sur la même ligne de base. */
+.favis-tete > label > u{margin-bottom:0}
+.fspoil{
+  display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+  font-size:12px;color:var(--muted);transition:color .15s;
+}
+.fspoil:hover{color:var(--text)}
+.fspoil input[type="checkbox"]{
+  width:14px;height:14px;flex:0 0 auto;padding:0;border:none;border-radius:0;
+  background:none;accent-color:var(--gold);cursor:pointer;
+}
+.fspoil:has(input:checked){color:var(--gold)}
 
 /* ---------- complétion du nom ----------
    La liste flotte au-dessus du reste du formulaire : sans position:absolute
@@ -1339,6 +1400,176 @@ input,textarea{caret-color:var(--gold)}
 .ghost[disabled]{opacity:.45;cursor:default}
 .ghost[disabled]:hover{color:var(--muted);border-color:var(--line);background:none}
 .cta.auto{width:auto;padding:0 22px;height:40px}
+
+/* =======================================================================
+   Le formulaire replie
+
+   Noter un jeu, c'est le comparer : on veut relire les trois jeux d'a cote
+   avant de se decider. Il fallait pour ca fermer le formulaire, donc perdre
+   ce qu'on y avait tape -- choisir entre voir et garder. La fleche de la
+   barre le replie plutot que de le fermer : la feuille file vers une
+   pastille en bas a droite, le journal redevient lisible et defilable, et
+   un clic sur la pastille la fait remonter avec tout son contenu.
+
+   Le vol est mesure en JavaScript (voir poseVolForm) et arrive ici en trois
+   variables : --dx, --dy vers le centre de la pastille, --ds son rapport de
+   taille. La feuille atterrit donc exactement dessus, ce qui est toute la
+   raison de l'animer -- un mouvement qui dit ou la chose est partie.
+   ======================================================================= */
+@keyframes form-part{
+  from{transform:none;opacity:1}
+  to{transform:translate(var(--dx,0),var(--dy,0)) scale(var(--ds,.2));opacity:0}
+}
+/* Une courbe qui part vite et finit lentement : la feuille se jette vers le
+   coin, puis se pose. Egale de bout en bout, ca se lisait comme un glissement
+   mecanique plutot que comme un rangement.
+
+   `forwards`, et la classe n'est jamais retiree : elle tient l'etat replie
+   tant que la feuille est cachee, et cede directement la place a `.revient`
+   (voir reduireForm). Rendre `animation` a .sheet relancait son `rise`
+   d'entree, ce qui faisait clignoter le formulaire. */
+.form-sheet.part{
+  animation:form-part .3s cubic-bezier(.45,0,.6,.25) forwards;
+  transform-origin:center center;pointer-events:none;
+}
+@keyframes form-revient{
+  from{transform:translate(var(--dx,0),var(--dy,0)) scale(var(--ds,.2));opacity:0}
+  to{transform:none;opacity:1}
+}
+/* Et l'inverse au retour, avec un rebond tres court en fin de course : la
+   feuille arrive et se cale. C'est ce demi-pixel qui fait la difference
+   entre « ca s'affiche » et « ca revient ».
+
+   Elle reste posee, elle aussi, une fois le retour fini - c'est ce qui evite
+   de rendre `animation` a .sheet et de rejouer son `rise`. Mais SANS
+   remplissage, contrairement a `.part` : une animation terminee qui tient son
+   etat d'arrivee l'emporte sur le style en ligne, et c'est par le style en
+   ligne que le doigt pousse la feuille vers le bas pour la refermer (voir
+   poigneeFeuille dans static/commun/gestes.js). Elle tiendrait donc
+   `transform:none` contre le doigt, et la feuille ne suivrait plus. Sans
+   remplissage, l'animation ne s'applique plus une fois finie : la feuille est
+   a sa place naturelle, et de nouveau libre de bouger.
+
+   `.part`, lui, garde son `forwards` sans dommage : il ne vaut que pendant
+   le vol et pendant que la feuille est cachee. */
+.form-sheet.revient{animation:form-revient .34s cubic-bezier(.2,.85,.25,1.04)}
+/* Le voile s'en va avec elle. L'id l'emporte sur l'animation `fade` que
+   .sheet-back joue a l'ouverture, sans quoi les deux se disputeraient. */
+@keyframes form-fond-part{from{opacity:1}to{opacity:0}}
+#form.part{animation:form-fond-part .3s ease forwards}
+
+/* ---------- la croix qui demande ----------
+   Armee, elle s'ouvre et se nomme : « Abandonner ? », rouge plein, a
+   l'endroit meme ou l'on vient de cliquer. Il y avait a la place un bandeau
+   en bas de l'ecran pour l'expliquer, et une secousse de la feuille pour
+   signaler le refus -- le bandeau etait loin du geste, et la secousse
+   partait vers le bas avant de remonter, ce qui se lisait comme un
+   tremblement. Le bouton dit la meme chose sans rien deplacer.
+
+   `.sbtn[aria-label="Fermer"]` ne l'atteint plus : son libelle change avec
+   son texte, ce qui est aussi ce qu'un lecteur d'ecran doit entendre. D'ou
+   la couleur reprise ici, celle de .ghost.armed juste au-dessus -- un seul
+   rouge pour tout ce qui confirme une perte. */
+.sbtn.armed{
+  width:auto;padding:0 12px;
+  font-family:var(--body);font-size:12.5px;letter-spacing:0;white-space:nowrap;
+  color:#fff;background:#B4295C;border-color:#B4295C;
+}
+.sbtn.armed:hover{color:#fff;background:#C63164;border-color:#C63164}
+
+/* ---------- la pastille ----------
+   Trois coins du bas sont deja pris : le toast au centre, la banniere de
+   rattrapage a gauche (voir .rattrapage). Celui-ci est libre, et c'est celui
+   ou l'on va chercher un travail mis de cote.
+
+   z-index 85 : au-dessus de toutes les fenetres (60 a 80), parce qu'on
+   replie justement pour aller ouvrir la fiche d'un autre jeu et qu'il faut
+   pouvoir revenir de la. Sous le toast (90), qui doit rester lisible.
+
+   Doree, et c'est le seul objet flottant de la page qui le soit : elle ne
+   dit pas « voici une information » mais « il te reste quelque chose a
+   finir ». Le meme or que les boutons qui ecrivent. */
+.form-pastille{
+  position:fixed;z-index:85;
+  right:max(18px,env(safe-area-inset-right,0px));
+  bottom:max(18px,env(safe-area-inset-bottom,0px));
+  display:flex;align-items:stretch;gap:2px;
+  max-width:min(300px,calc(100vw - 36px));
+  padding:5px;border-radius:14px;
+  background:var(--bg2);border:1px solid rgba(229,196,107,.42);
+  box-shadow:0 14px 38px rgba(0,0,0,.55);
+}
+/* Pendant la mesure : dans la page pour avoir une boite, invisible pour ne
+   pas apparaitre avant que la feuille soit partie. */
+.form-pastille.mesure{opacity:0;pointer-events:none}
+.fp-ouvre{
+  display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto;
+  padding:6px 4px 6px 8px;border-radius:10px;text-align:left;
+  transition:background .15s;
+}
+.fp-ouvre:hover{background:var(--bg3)}
+.fp-ouvre:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.fp-fleche{
+  flex:0 0 auto;display:grid;place-items:center;width:26px;height:26px;
+  border-radius:8px;background:rgba(229,196,107,.12);color:var(--gold);
+  transition:transform .15s;
+}
+/* La fleche se souleve d'un pixel au survol : elle fait remonter, autant
+   qu'elle le montre. */
+.fp-ouvre:hover .fp-fleche{transform:translateY(-2px)}
+.fp-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+/* Le titre du jeu se coupe plutot que d'elargir la pastille : elle vit dans
+   un coin, elle n'a pas a grandir avec le nom qu'on tape. */
+.fp-txt b{
+  font-size:13px;font-weight:600;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.fp-txt i{
+  font-style:normal;color:var(--muted);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+}
+/* La meme croix rouge que celle des fenetres, en plus petit : c'est le meme
+   geste, et il pose la meme question (voir demandeFermerForm). */
+.fp-x{
+  flex:0 0 auto;width:26px;border-radius:9px;border:1px solid transparent;
+  color:#E38F89;font-family:var(--mono);font-size:15px;line-height:1;
+  display:grid;place-items:center;transition:color .15s,background .15s,border-color .15s;
+}
+.fp-x:hover{color:#fff;background:#B4295C;border-color:#B4295C}
+.fp-x:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* Elle arrive une fois la feuille posee : un court depassement d'echelle,
+   comme quelque chose qu'on lache dans un coin. */
+@keyframes fp-arrive{
+  0%{transform:translateY(12px) scale(.55);opacity:0}
+  62%{transform:translateY(0) scale(1.05);opacity:1}
+  100%{transform:none;opacity:1}
+}
+.form-pastille.arrive{animation:fp-arrive .34s cubic-bezier(.2,.9,.25,1.25) both}
+@keyframes fp-repart{
+  from{transform:none;opacity:1}
+  to{transform:translateY(6px) scale(.7);opacity:0}
+}
+.form-pastille.repart{animation:fp-repart .2s ease-in forwards;pointer-events:none}
+/* Sur un telephone la pastille prend la largeur : un coin de 300 px sur 360
+   laisse une bande inutile a cote, et le nom du jeu s'y coupait pour rien. */
+@media (max-width:560px){
+  .form-pastille{
+    left:max(12px,env(safe-area-inset-left,0px));
+    right:max(12px,env(safe-area-inset-right,0px));
+    bottom:max(12px,env(safe-area-inset-bottom,0px));
+    max-width:none;
+  }
+}
+/* Le mouvement n'est pas ce que ces deux gestes disent - « c'est parti la »,
+   « c'est revenu ». Sans lui, ils se font d'un coup et le disent quand meme,
+   par la pastille qui apparait et la feuille qui reparait. Le JavaScript
+   saute alors les attentes correspondantes (voir sansMouvement). */
+@media (prefers-reduced-motion:reduce){
+  .form-sheet.part,.form-sheet.revient,
+  #form.part,
+  .form-pastille.arrive,.form-pastille.repart{animation:none}
+}
+
 .toast{
   position:fixed;left:50%;bottom:26px;z-index:90;transform:translate(-50%,14px);
   background:var(--bg3);border:1px solid var(--line-strong);border-radius:99px;
@@ -1616,9 +1847,14 @@ input,textarea{caret-color:var(--gold)}
 .bilan-actions .cta.auto[disabled]{cursor:progress}
 
 /* ---------- mise à jour depuis IGDB ----------
-   Au-dessus du choix de jaquette (75) : la grille des jaquettes est
-   affichée *dans* cette fenêtre, elle n'a pas à passer devant. En dessous
-   du bilan en image (78), qui reste la fenêtre la plus haute. */
+   Au-dessus du choix de jaquette (75) : l'étape des jaquettes est affichée
+   *dans* cette fenêtre, elle n'a pas à passer devant. En dessous du bilan
+   en image (78), qui reste la fenêtre la plus haute.
+
+   « Changer de jeu », lui, ouvre la vraie fenêtre #jaq, et celle-là doit
+   passer devant : c'est auPremierPlan() qui l'y met à l'ouverture, ce que
+   cet empilement écrit d'avance ne saurait faire - les deux fenêtres
+   s'ouvrent dans les deux sens. */
 #igdb{z-index:76}
 .igdb-sheet{max-width:720px}
 .igdb-in{padding:6px 28px 26px}
@@ -1844,6 +2080,17 @@ input,textarea{caret-color:var(--gold)}
    le temps restant hors de la fenêtre */
 .igdb-encours span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .igdb-encours em{flex:0 0 auto;font-style:normal;opacity:.7}
+
+/* Le filtre « à vérifier » : la pastille à cocher des réglages, réemployée
+   telle quelle (.fld.fcheck) - c'est la même chose, une case qui se coche,
+   elle n'a pas à s'inventer une apparence à elle.
+
+   `inline-flex` et non `flex` : hors de la grille des réglages, elle est
+   seule sur sa ligne et s'étirerait sur toute la largeur de la fenêtre pour
+   six mots. La double classe lui donne le même poids que `.fld.fcheck`, et
+   comme elle vient après, c'est elle qui tranche. */
+.fld.igdb-filtre{display:inline-flex;height:36px;margin:0 0 12px}
+.fld.igdb-filtre span{font-size:13px}
 
 /* la liste des changements proposés */
 .igdb-liste{

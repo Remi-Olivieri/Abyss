@@ -169,6 +169,15 @@ function applyData(data, frais){
      chercher : dans les deux cas c'est ici qu'on sait quel classeur est à
      l'écran. Rien ne l'attend - une fiche déjà ouverte se repeindra. */
   chargeMaBiblio();
+  /* L'index « ce que j'ai déjà » de la fiche détaillée (voir mesJeux dans
+     archive-export.js) est calculé une fois par visite. Or c'est de MON
+     classeur qu'il parle : quand c'est lui qu'on vient de relire, il a pu
+     changer, et le bouton « + Wishlist » restait alors caché sur un jeu
+     qu'on venait de retirer. On l'oublie, il se refait au prochain besoin -
+     et sans requête, puisqu'il repart de GAMES quand le classeur est le
+     mien. Chez quelqu'un d'autre on n'y touche pas : le relire coûterait
+     un aller-retour pour un journal qui n'a pas bougé. */
+  if(CAN_WRITE) MES_JEUX = null;
   /* Le serveur ne dit « rattrapage » qu'au propriétaire d'un classeur
      rempli avant que les fiches IGDB existent. On laisse la page finir de
      s'afficher avant de lancer quoi que ce soit : le rattrapage est long
@@ -185,6 +194,16 @@ function applyData(data, frais){
    main ce qu'elle vient d'envoyer. */
 async function envoyer(methode, chemin, charge){
   if(!CAN_WRITE) throw new Error('lecture seule : connecte-toi sur Abyss');
+  return envoiBrut(methode, chemin, charge);
+}
+/* Le même envoi, sans le garde-fou : CAN_WRITE dit « le classeur affiché est
+   le mien », ce qui est la bonne question pour toutes les écritures sauf
+   celles de l'administration - la mise à jour depuis IGDB écrit chez les
+   autres, et refuser au motif qu'on regarde le journal d'un tiers serait
+   refuser précisément ce qu'elle vient faire. Le droit d'écrire est vérifié
+   par le serveur, ici comme ailleurs ; ce garde-fou-ci n'évite qu'un
+   aller-retour perdu. */
+async function envoiBrut(methode, chemin, charge){
   const opts = {method: methode, credentials: 'same-origin'};
   if(charge !== undefined){
     // application/json : un formulaire posté depuis un autre site ne peut
@@ -208,7 +227,14 @@ function closeMenu(){
 }
 function toggleMenu(){
   const m = document.getElementById('menu'), ouvert = m.hidden;
-  if(ouvert){ fermerRecherche(); closePer(); }   // un seul menu ouvert à la fois
+  // un seul menu ouvert à la fois. La cloche en fait partie : elle est dans
+  // la même barre, à un bouton d'ici, et son panneau se posait par-dessus
+  // celui-ci. `typeof` parce qu'elle vient d'archive-social.js, que la page
+  // charge après ce fichier-ci.
+  if(ouvert){
+    fermerRecherche(); closePer();
+    if(typeof socialClocheFerme === 'function') socialClocheFerme();
+  }
   m.hidden = !ouvert;
   document.getElementById('cog').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
 }
@@ -225,12 +251,12 @@ document.addEventListener('click', e=>{
   if(HORS_COG && !document.getElementById('menu').hidden && !e.target.closest('.cog-wrap')) closeMenu();
   if(HORS_TAB && !e.target.closest('.tab-wrap')) closePer();
 });
-document.addEventListener('keydown', e=>{
-  if(e.key === 'Escape'){
-    if(!document.getElementById('menu').hidden) closeMenu();
-    closePer();
-  }
-});
+/* Échap n'est plus traité ici. Ces deux panneaux ne sont pas des fenêtres
+   de la pile - ils pendent sous leur bouton - donc ils passent par la chaîne
+   « aucune fenêtre ouverte » d'archive-demarrage.js, avec la cloche et la
+   tranche de notes. Une écoute à eux tout seuls se déclenchait en même temps
+   que les autres sur la même touche, et ce qui venait après refermait, sous
+   le panneau qu'on venait de fermer, quelque chose qu'on ne regardait pas. */
 
 /* ---------- changer de classeur ----------
    Plus un menu déroulant sous le titre, mais une recherche façon réseau
@@ -260,6 +286,13 @@ function majEntete(){ majIdentite(); }
 function majMoi(){
   const bouton = document.getElementById('moiBtn');
   const titre = document.getElementById('brand-title');
+  /* L'entretien de la base ne dépend pas non plus du journal affiché : il
+     se pose ici, avec le reste de ce qui parle de moi. majVerrou() le
+     redira à chaque classeur ouvert, mais l'administration qui arrive sur
+     l'écran d'accueil - sans journal ouvert, donc sans majVerrou - doit
+     pouvoir l'ouvrir quand même : c'est de la base qu'il s'agit, pas d'un
+     classeur en particulier. */
+  document.getElementById('igdbBtn').hidden = !MOI.admin;
   bouton.hidden = !MOI.pseudo;
   // sans compte, la barre porte le nom du site : elle ne peut pas rester nue
   titre.hidden = !!MOI.pseudo;
@@ -367,6 +400,16 @@ function choisirClasseur(i){
      dans le classeur affiché. render() ne ferme plus rien de lui-même, donc
      c'est ici que ça se dit. */
   closeSheet();
+  /* Et le formulaire avec, s'il attendait replié en bas à droite : il écrit
+     dans le classeur qu'on vient de quitter, et l'enregistrer depuis
+     celui-ci ne voudrait rien dire. C'est le seul chemin par lequel il peut
+     survivre à un changement de journal - ouvert, il est modal, on ne peut
+     pas atteindre la recherche derrière lui. Dit à voix haute plutôt que
+     défait en silence : il y avait peut-être un avis dedans. */
+  if(formEstReduit()){
+    closeForm();
+    toast('Formulaire abandonné - tu as changé de journal.', true);
+  }
   PREMIERE_FOIS = true; S.bucket = 'all'; S.q = ''; S.range = null; S.open = null;
   document.getElementById('q').value = ''; majCroixQ();
   majEntete();
@@ -553,9 +596,12 @@ function majVerrou(){
   document.getElementById('unlock').hidden = chezMoi;
   document.getElementById('relock').hidden = true;   // plus de retour arrière à faire
   document.getElementById('addBtn').hidden = !chezMoi;
-  // la mise à jour de masse écrit dans le journal : en lecture seule elle
-  // n'aurait rien à proposer d'autre qu'un refus, autant ne pas la montrer
-  document.getElementById('igdbBtn').hidden = !chezMoi;
+  /* La mise à jour de masse n'est plus l'entretien de SON classeur mais
+     celui de la base : elle repasse sur les jeux de tout le site, et elle
+     est donc réservée à l'administration. Le serveur le redit à chacune de
+     ses routes (voir /admin dans journal.py) - ici on évite seulement de
+     montrer une porte qui ne s'ouvrira pas. */
+  document.getElementById('igdbBtn').hidden = !MOI.admin;
   document.getElementById('unlock').textContent =
     MOI.connecte ? 'Ouvrir mon journal' : 'Se connecter sur Abyss';
 }
@@ -604,7 +650,10 @@ async function chargeAnnuaire(){
           avatar: d.moi ? d.moi.avatar : null,
           // la pastille de la cloche arrive avec l'annuaire, pas par un
           // appel à elle (voir liste() dans journal.py)
-          notifs: d.notificationsNeuves || 0 };
+          notifs: d.notificationsNeuves || 0,
+          // la mise à jour depuis IGDB ne s'ouvre que pour l'administration :
+          // elle repasse sur la base entière, journaux des autres compris
+          admin: d.admin === true };
   SOURCES = (d.journaux || []).map(j => ({
     nom: j.pseudo,
     titre: j.titre,

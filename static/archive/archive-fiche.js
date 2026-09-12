@@ -127,13 +127,27 @@ function corpsFiche(g){
         aria-label="Copier le nom du jeu">${ICONE_COPIE}</button>${
       g.release ? `<span class="sheet-release">${dateFmt(g.release)}</span>` : ''}</h3>
     ${rangHTML(rang, med)}
-    ${enCours ? '' : (plus.length+minus.length+other.length)
-      ? `<div class="pros">${plus.join('')}${minus.join('')}${other.join('')}</div>`
-      : `<div class="pros"><span class="pt" style="opacity:.6">Pas d'avis écrit pour ce jeu.</span></div>`}
+    ${enCours ? '' : avisFiche(g, plus, minus, other)}
     <div class="facts">${facts.map(([u,b,brut])=>
       `<div class="fact"><u>${u}</u><b>${brut || esc(b)}</b></div>`).join('')}</div>
     ${compareHTML(g)}
     <button type="button" class="detail-btn">Voir plus d'informations</button>`;
+}
+
+/* L'avis, flouté quand il raconte la fin d'un jeu qu'on n'a pas fini.
+   `flou` vient du serveur, qui a déjà écarté les deux cas où la question ne
+   se pose pas : chez soi, et chez quelqu'un d'autre sur un jeu qu'on a
+   terminé (voir censeur dans social.py). Ici on ne décide rien - on pose le
+   voile et le bouton qui l'enlève (voir spoilerHTML dans archive-noyau.js).
+
+   « Pas d'avis écrit » ne se floute jamais : il n'y a rien à cacher, et le
+   flouter annoncerait un secret là où il n'y en a pas. */
+function avisFiche(g, plus, minus, other){
+  if(!(plus.length + minus.length + other.length)){
+    return `<div class="pros"><span class="pt" style="opacity:.6">Pas d'avis écrit pour ce jeu.</span></div>`;
+  }
+  const bloc = `<div class="pros">${plus.join('')}${minus.join('')}${other.join('')}</div>`;
+  return g.flou ? spoilerHTML(bloc) : bloc;
 }
 
 /* ---------- « et toi, tu en avais pensé quoi ? » ----------
@@ -211,9 +225,9 @@ function monteFiche(host){
              sous la jaquette et non dans le corps de la fiche, parce qu'il
              parle du jeu lui-même - pas de la ligne qu'on est en train de
              lire, dont tout le reste de la fiche s'occupe.
-             Caché pour un jeu en cours ou convoité : il n'y a pas encore
-             d'avis à comparer. -->
-        <button type="button" class="fiche-avis" hidden>
+             Sur tous les jeux, y compris « En cours » et « Wishlist » :
+             voir paintSheet. -->
+        <button type="button" class="fiche-avis">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>
@@ -389,9 +403,19 @@ function paintSheet(sens){
   const boite = host.querySelector('.sheet');
   boite.setAttribute('aria-label', g.name);
   boite.querySelector('.sheet-edit').hidden = !CAN_WRITE;
-  // rien à comparer tant que le jeu n'est pas fini : ni « En cours » ni
-  // « Wishlist » n'ont d'avis derrière eux
-  boite.querySelector('.fiche-avis').hidden = estStatut(g);
+  /* « Avis des joueurs » sur tous les jeux, sans exception.
+
+     Il partait caché sur « En cours » et « Wishlist », au motif qu'un jeu
+     pas fini n'a pas d'avis derrière lui. C'était confondre deux choses :
+     la fenêtre ne montre pas ce que MOI j'en ai pensé - le reste de la
+     fiche s'en charge - mais ce que les autres en ont écrit, et eux l'ont
+     terminé. Le manque se faisait justement sentir là où le bouton
+     n'était pas : sur un jeu convoité, « les autres en ont pensé quoi ? »
+     est la question qu'on se pose avant de l'acheter.
+
+     La fenêtre du détail (« Voir plus d'informations ») le proposait déjà
+     sans condition, ce qui rendait l'écart d'autant plus visible : deux
+     chemins vers le même jeu, un seul menait aux avis. */
   host.querySelector('.nav-prev').disabled = i <= 0;
   host.querySelector('.nav-next').disabled = i >= SHEET_LIST.length - 1;
   coverFiche(g);
@@ -580,55 +604,22 @@ function closeSheet(){
   rendreFocus();
 }
 fermeSurFond('sheet', fermeFiche);
+
+/* ---------- les flèches du clavier ----------
+   Échap n'est plus ici : c'est archive-noyau.js qui ferme la fenêtre du
+   dessus, quelle qu'elle soit, et la fiche s'y est inscrite par la ligne
+   ci-dessus. Ce fichier tenait à la place une cascade de dix `if` - « si le
+   zoom est ouvert..., sinon si le détail..., sinon la fiche » - où trois
+   fenêtres arrivées après elle ne figuraient pas. Voir FERMETURES.
+
+   Restent les flèches, qui elles ne concernent que cette fenêtre-ci : elles
+   feuillettent le mur d'un jeu au suivant. Et seulement quand c'est bien la
+   fiche qu'on regarde - avec les avis des joueurs ouverts par-dessus, elles
+   changeaient le jeu DESSOUS, sous une fenêtre qui continuait de parler du
+   premier. Le zoom d'une capture pose la même question de son côté (voir
+   archive-export.js). */
 document.addEventListener('keydown', e=>{
-  /* L'ordre suit la pile : la fenêtre du dessus prend Échap et rend la
-     main. Une fenêtre oubliée ici laisserait Échap traverser jusqu'à celle
-     du dessous et fermer la mauvaise - c'est ce qui arrivait au détail
-     d'un jeu, qui refermait la fiche derrière lui. */
-  /* Le zoom et le detail d'un jeu s'arretent ici sans etre traites : ils
-     ont leur propre ecoute dans archive-export.js, la ou vivent leurs deux
-     fenetres, parce que le Social les ouvre aussi et ne charge pas ce
-     fichier-ci. On garde les deux gardes pour que la fleche ne parte pas,
-     par-dessous, changer le jeu de la fiche du mur. */
-  if(!document.getElementById('zoom').hidden) return;
-  if(!document.getElementById('detail').hidden) return;
-  if(!document.getElementById('export').hidden){
-    if(e.key === 'Escape') fermerExport();
-    return;
-  }
-  if(!document.getElementById('recherche').hidden){
-    if(e.key === 'Escape') fermerRecherche();
-    return;
-  }
-  // la mise à jour depuis IGDB occupe l'écran seule : rien ne s'ouvre
-  // par-dessus, donc rien d'autre ne prend Échap tant qu'elle est là
-  if(!document.getElementById('igdb').hidden){
-    if(e.key === 'Escape') fermerIgdb();
-    return;
-  }
-  // le bilan en image est au-dessus de tout, y compris le choix de jaquette
-  if(!document.getElementById('bilan').hidden){
-    if(e.key === 'Escape') fermerBilan();
-    return;
-  }
-  if(!document.getElementById('jaq').hidden){
-    if(e.key === 'Escape') closeJaq();
-    return;
-  }
-  if(!document.getElementById('form').hidden){
-    if(e.key === 'Escape') closeForm();
-    return;
-  }
-  if(document.getElementById('sheet').hidden){
-    // rien d'ouvert : Échap enlève la tranche de notes choisie
-    const per = document.getElementById('perMenu');
-    if(e.key === 'Escape' && S.range
-       && document.getElementById('menu').hidden
-       && document.getElementById('recherche').hidden
-       && (!per || per.hidden)) viderTranche();
-    return;
-  }
-  if(e.key === 'Escape'){ fermeFiche(); }
-  else if(e.key === 'ArrowLeft') ficheVoisine(-1);
-  else if(e.key === 'ArrowRight') ficheVoisine(1);
+  if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if(!estDuDessus('sheet')) return;
+  ficheVoisine(e.key === 'ArrowLeft' ? -1 : 1);
 });

@@ -513,10 +513,27 @@ UPDATE jeu SET entre_le = cree_le WHERE periode NOT IN ('En cours', 'Wishlist');
 CREATE INDEX idx_jeu_fil ON jeu(entre_le);
 """
 
+# Migration 19 : l'avis marque comme spoiler.
+#
+# Un avis raconte souvent la fin. Chez soi ce n'est pas un probleme -- on
+# sait ce qu'on a ecrit -- mais dans le fil du Social et sur la page de
+# quelqu'un d'autre, il se lit avant qu'on ait choisi de le lire.
+#
+# La colonne ne porte que l'intention de l'auteur : « cet avis raconte ».
+# Qui doit le voir flou se decide a la lecture et non ici (voir censeur dans
+# social.py), parce que ca depend du visiteur -- celui qui a deja termine le
+# jeu ne peut plus etre spoile, et l'auteur encore moins.
+#
+# INTEGER et non BOOLEAN : SQLite n'a pas de booleen, et 0/1 est ce que le
+# reste du schema utilise deja (utilisateur.admin).
+SPOILER = """
+ALTER TABLE jeu ADD COLUMN spoiler INTEGER NOT NULL DEFAULT 0;
+"""
+
 MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
               SUGGESTIONS, BANNIERE, ONGLET_DEFAUT, PRIORITE,
               SUGGESTIONS_VUES, MONITORING, QUIZ_SOURCE, THEMES_JEU,
-              CLASSEUR, SOCIAL, DISCUSSION, FIL]
+              CLASSEUR, SOCIAL, DISCUSSION, FIL, SPOILER]
 
 _local = threading.local()
 

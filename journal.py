@@ -51,6 +51,10 @@ PROJET = "jeux-videos"
 # enrichit_igdb() ci-dessous, pour qu'aucune ecriture ne puisse les inventer.
 CHAMPS = {
     "name": "nom",
+    # « cet avis raconte la fin » : une intention de l'auteur, au meme titre
+    # que sa note. Ce qu'on en fait a la lecture se decide ailleurs, et pas
+    # par lui -- voir censeur() dans social.py.
+    "spoiler": "spoiler",
     "rating": "note",
     "month": "mois",
     "hours": "heures",
@@ -93,6 +97,10 @@ def en_json(l) -> dict:
         # le theme part avec le reste : la mise a jour groupee compare ce
         # champ pour savoir quels jeux d'avant lui manquent encore
         "themes": l["themes"],
+        # le marquage de l'auteur, pour que le formulaire rouvre sur la case
+        # telle qu'il l'a laissee. Le floutage, lui, se decide par visiteur :
+        # voir `flou` dans contenu().
+        "spoiler": bool(l["spoiler"]),
     }
 
 
@@ -145,6 +153,12 @@ def valeurs_propres(values: dict) -> dict:
             propres[colonne] = nombre(v, 0, 100000)
         elif cle == "id_igdb":
             propres[colonne] = None if v in (None, "") else int(nombre(v, 1, None))
+        elif cle == "spoiler":
+            # une case cochee, donc 0 ou 1 et rien d'autre : la colonne est
+            # NOT NULL, et un None y ecrirait une erreur SQL plutot qu'un
+            # « non ». `bool` accepte le booleen du JSON comme le 0/1 d'un
+            # appel direct.
+            propres[colonne] = 1 if bool(v) else 0
         else:                                   # prix_base, prix_paye
             propres[colonne] = nombre(v, 0, 100000)
     return propres
@@ -396,6 +410,7 @@ def contenu(page, u) -> dict:
     jeux = cx().execute(
         "SELECT * FROM jeu WHERE page_id = ? ORDER BY periode, rang, id",
         (page["id"],)).fetchall()
+    flou = social.censeur(u)
     return {
         "ok": True,
         "pseudo": page["pseudo"],
@@ -422,7 +437,14 @@ def contenu(page, u) -> dict:
         # sans visage sur son propre journal prive.
         **identite(page),
         "periodes": periodes_de(page["id"]),
-        "jeux": [en_json(l) for l in jeux],
+        # `flou` s'ajoute ici et non dans en_json : il ne decrit pas le jeu
+        # mais la rencontre entre ce jeu et CE visiteur. Chez soi il est
+        # toujours faux, chez quelqu'un d'autre il ne l'est que pour les
+        # jeux qu'on a deja termines (voir censeur dans social.py).
+        "jeux": [dict(en_json(l),
+                      flou=flou(l["spoiler"], l["nom"], l["id_igdb"],
+                                page["utilisateur_id"]))
+                 for l in jeux],
     }
 
 
@@ -669,6 +691,13 @@ def liste():
                     "journaux": annuaire(),
                     "connecte": u is not None,
                     "moi": moi,
+                    # La mise a jour depuis IGDB est reservee a
+                    # l'administration : elle repasse sur les jeux de tout
+                    # le site, journaux des autres compris. La page a besoin
+                    # de le savoir des l'annuaire pour ne montrer l'entree
+                    # de menu qu'a qui peut s'en servir -- le refus, lui,
+                    # est tenu par les routes /admin ci-dessous.
+                    "admin": u is not None and bool(u["admin"]),
                     # la pastille de la cloche voyage avec l'annuaire : la
                     # page demande deja cette reponse-la pour savoir quel
                     # journal ouvrir, un second aller-retour pour un chiffre
@@ -902,26 +931,195 @@ def supprimer(jeu_id):
     return reponse(contenu(page, u))
 
 
+def nom_demande(m):
+    """Le nom du jeu tel que la requete l'annonce, ou None.
+
+    Sert au rapport d'echec, et seulement a lui : une entree mal formee ne
+    doit pas casser le message qui dit justement qu'elle est mal formee.
+    D'ou les deux isinstance plutot qu'un `.get` direct.
+    """
+    if not isinstance(m, dict):
+        return None
+    v = m.get("values")
+    return v.get("name") if isinstance(v, dict) else None
+
+
+LOT_MAXI = 100          # un paquet, pas un import : la page en envoie vingt
+
+
+def modifs_du_corps() -> list:
+    """La liste de modifications de la requete, ou un refus si elle n'en est pas une."""
+    modifs = corps().get("modifs") or []
+    if not isinstance(modifs, list) or len(modifs) > LOT_MAXI:
+        raise Refus("format",
+                    f"Liste de modifications attendue ({LOT_MAXI} au plus).")
+    return modifs
+
+
+def applique_lot(modifs, une) -> list:
+    """Applique chaque modification, et rend la liste de celles qui ont rate.
+
+    Un jeu qui echoue n'annule pas les autres : c'est toute la raison d'etre
+    d'un lot. Chaque entree est verifiee avant d'etre lue -- `{"modifs":
+    [1, 2]}` est une liste valide de choses qui ne sont pas des
+    modifications, et `m.get` levait alors une AttributeError qui faisait
+    tomber la requete entiere en 500 au lieu de figurer dans `echecs`.
+    """
+    echecs = []
+    for i, m in enumerate(modifs):
+        try:
+            if not isinstance(m, dict):
+                raise Refus("format", "Modification illisible.")
+            une(m)
+        except Refus as err:
+            echecs.append({"i": i, "jeu": nom_demande(m), "error": err.message})
+        except (TypeError, ValueError, AttributeError):
+            echecs.append({"i": i, "jeu": None, "error": "identifiant illisible"})
+    return echecs
+
+
 @blueprint_journal.put("/lot")
 def lot():
-    """Modifications groupees, pour la mise a jour IGDB.
+    """Modifications groupees dans MON journal.
 
     Vingt jeux en une requete au lieu de vingt. Un jeu qui echoue n'annule
     pas les autres : ses motifs remontent dans `echecs`, comme le faisait
     l'ancienne action « lot » du script.
+
+    L'entretien depuis IGDB ne passe plus par ici -- il est devenu une
+    affaire d'administration, voir /admin/lot plus bas. Cette route-ci reste
+    le lot du proprietaire, sur ses jeux et sur toutes ses colonnes.
     """
     u, page = ma_page_ou_refus()
-    modifs = corps().get("modifs") or []
-    if not isinstance(modifs, list) or len(modifs) > 100:
-        return echec("format", "Liste de modifications attendue (100 au plus).", 400)
-    echecs = []
-    for i, m in enumerate(modifs):
-        try:
-            jeu = jeu_a_moi(int(m.get("id", 0)), page)
-            modifie(jeu, page, m.get("periode"), m.get("values") or {}, m.get("review"))
-        except Refus as err:
-            echecs.append({"i": i, "jeu": (m.get("values") or {}).get("name"),
-                           "error": err.message})
-        except (TypeError, ValueError):
-            echecs.append({"i": i, "jeu": None, "error": "identifiant illisible"})
+    modifs = modifs_du_corps()
+
+    def une(m):
+        valeurs = m.get("values")
+        jeu = jeu_a_moi(int(m.get("id", 0)), page)
+        modifie(jeu, page, m.get("periode"),
+                valeurs if isinstance(valeurs, dict) else {}, m.get("review"))
+
+    echecs = applique_lot(modifs, une)
     return reponse(dict(contenu(page, u), fait={"echecs": echecs}))
+
+
+# ==========================================================================
+#   Administration : la mise a jour generale depuis IGDB
+#
+#   Elle ne parle plus d'un journal mais de la base entiere. Un jeu enregistre
+#   avant que les fiches IGDB existent n'a ni identifiant, ni plateforme, ni
+#   themes -- et ces colonnes-la ne servent pas qu'a sa fiche : le Quiz tire
+#   ses grilles de connexions dessus, pour tous les journaux a la fois. Les
+#   completer journal par journal supposait que chacun y pense ; personne n'y
+#   pensait, et le trou restait.
+#
+#   D'ou le deplacement : ce n'est plus un entretien que chacun fait chez lui,
+#   c'est un entretien de la base, et il revient a qui la tient. Les deux
+#   routes ci-dessous repondent donc 404 a tout le monde d'autre -- meme
+#   parade que suggestions.py, repondre « interdit » confirmerait qu'il y a
+#   quelque chose derriere.
+# ==========================================================================
+def admin_ou_refus():
+    u = actuel()
+    if u is None or not u["admin"]:
+        raise Refus("introuvable", "Page inconnue.", 404)
+    return u
+
+
+def page_par_id(page_id):
+    return cx().execute(
+        f"SELECT {IDENTITE} FROM page p JOIN utilisateur u ON u.id = p.utilisateur_id"
+        " WHERE p.id = ?", (page_id,)).fetchone()
+
+
+def jeu_ou_qu_il_soit(jeu_id):
+    """Le jeu et la page qui le porte, sans regarder a qui elle est.
+
+    Reserve aux deux routes ci-dessous, qui ont deja verifie
+    l'administration : partout ailleurs, c'est jeu_a_moi ou jeu_visible.
+    """
+    l = cx().execute("SELECT * FROM jeu WHERE id = ?", (jeu_id,)).fetchone()
+    if l is None:
+        raise Refus("introuvable", "Ce jeu n'existe pas.", 404)
+    page = page_par_id(l["page_id"])
+    if page is None:
+        raise Refus("introuvable", "Ce jeu n'a plus de journal.", 404)
+    return l, page
+
+
+def pour_igdb(l) -> dict:
+    """Une ligne, telle que l'analyse IGDB la lit : avec son pseudo, sans avis.
+
+    L'avis est la seule chose du journal qu'on ecrive a la main et pour soi.
+    L'entretien ne le lit ni ne l'ecrit ; le faire voyager quand meme, pour
+    tous les journaux du site a la fois, serait sortir des textes prives
+    d'une base pour rien.
+    """
+    jeu = en_json(l)
+    jeu.pop("review", None)
+    jeu["pseudo"] = l["pseudo"]
+    return jeu
+
+
+@blueprint_journal.get("/admin/jeux")
+def jeux_du_site():
+    """Tous les jeux de tous les journaux, prets pour l'analyse IGDB.
+
+    Deux segments dans le chemin : /<pseudo> n'en prend qu'un, il n'y a donc
+    pas de journal qui puisse se faire passer pour cette route-la.
+
+    Les journaux prives en font partie. C'est voulu : leurs jeux ont les
+    memes colonnes a completer que les autres, et ils nourrissent le Quiz
+    comme les autres. C'est aussi pourquoi la route est fermee -- elle
+    donne a lire ce qu'un journal prive ne montre a personne.
+
+    `pseudo` accompagne chaque jeu : la relecture affiche de qui est la
+    ligne qu'elle propose de corriger. Sans lui, trois « Elden Ring » de
+    suite ne se distinguent pas.
+    """
+    admin_ou_refus()
+    lignes = cx().execute(
+        "SELECT jeu.*, u.pseudo FROM jeu"
+        " JOIN page p ON p.id = jeu.page_id"
+        " JOIN utilisateur u ON u.id = p.utilisateur_id"
+        " WHERE p.projet = ?"
+        " ORDER BY u.pseudo, jeu.periode, jeu.rang, jeu.id", (PROJET,)).fetchall()
+    return reponse({"ok": True, "jeux": [pour_igdb(l) for l in lignes]})
+
+
+# Ce qu'une mise a jour generale a le droit de reecrire, et rien d'autre :
+# les colonnes qu'IGDB fournit. La note, les heures, le prix paye et l'avis
+# sont l'oeuvre de qui tient le journal -- une route d'administration n'a
+# aucune raison de pouvoir les toucher, et le garde-fou vit ici plutot que
+# dans la confiance faite au navigateur.
+CHAMPS_IGDB = ("release", "base", "id_igdb")
+
+
+@blueprint_journal.put("/admin/lot")
+def lot_general():
+    """Le meme lot que ci-dessus, mais sur les jeux de n'importe qui.
+
+    Trois differences avec /lot, toutes tenues par le serveur :
+
+      - le jeu est cherche partout, pas dans ma seule page ;
+      - seules les colonnes d'IGDB sont acceptees (voir CHAMPS_IGDB) ;
+      - ni periode ni avis : un entretien de la base ne deplace pas un jeu
+        d'un onglet a l'autre et ne touche pas a ce qu'on en a ecrit.
+
+    La reponse ne contient pas le journal relu : il y en a autant que de
+    proprietaires touches, et la page n'en affiche qu'un. Elle le relit
+    elle-meme une fois l'ecriture finie.
+    """
+    admin_ou_refus()
+    modifs = modifs_du_corps()
+
+    def une(m):
+        valeurs = m.get("values")
+        valeurs = valeurs if isinstance(valeurs, dict) else {}
+        inconnus = [k for k in valeurs if k not in CHAMPS_IGDB]
+        if inconnus:
+            raise Refus("champ", f"Champ hors mise a jour IGDB : {inconnus[0]}.")
+        jeu, page = jeu_ou_qu_il_soit(int(m.get("id", 0)))
+        modifie(jeu, page, None, valeurs, None)
+
+    return reponse({"ok": True, "fait": {"echecs": applique_lot(modifs, une)}})

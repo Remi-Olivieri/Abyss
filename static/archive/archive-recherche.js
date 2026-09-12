@@ -251,11 +251,13 @@ let RECHERCHE_OPTS = null;
 function regleRecherche(opts){ RECHERCHE_OPTS = opts; }
 
 function ouvrirRecherche(){
-  /* Ces deux-là n'existent que sur la page du journal : elle a un menu
+  /* Les deux premiers n'existent que sur la page du journal : elle a un menu
      d'engrenage et un sélecteur de période à refermer, le Social n'a ni
-     l'un ni l'autre. */
+     l'un ni l'autre. La cloche, elle, est sur les deux pages - mais pas
+     avant qu'on soit connecté. */
   if(typeof closeMenu === 'function') closeMenu();
   if(typeof closePer === 'function') closePer();
+  if(typeof socialClocheFerme === 'function') socialClocheFerme();
   const host = document.getElementById('recherche');
   host.innerHTML = `<div class="sheet recherche-sheet" role="dialog" aria-modal="true" aria-label="Rechercher">
     <div class="sheet-tools">

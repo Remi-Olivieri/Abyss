@@ -55,7 +55,77 @@ function fermeSurFond(id, ferme){
      ferme » - les deux seules choses dont le geste a besoin. Voir
      static/commun/gestes.js. */
   poigneeFeuille(fond, ferme);
+  /* Et c'est aussi ce qui suffit à Échap : le fond dit quelle fenêtre, la
+     fonction dit comment la fermer. On retient les deux (voir FERMETURES
+     plus bas) plutôt que de tenir ailleurs une liste des fenêtres et de
+     leurs fermetures - une liste pareille était écrite à la main dans
+     archive-fiche.js, et trois fenêtres y manquaient. */
+  FERMETURES.set(id, ferme);
 }
+/* ---------- Échap ferme la fenêtre du dessus ----------
+   Rempli par fermeSurFond ci-dessus : toute fenêtre qui se ferme au clic
+   sur son fond y est, et aucune ne peut être oubliée - c'est le même appel
+   qui l'inscrit. La fenêtre de suggestion n'y est pas et n'a pas à y être :
+   elle prend Échap pour son compte, en capture (voir
+   static/commun/suggestion.js).
+
+   Il y avait à la place une cascade de dix `if` dans archive-fiche.js, à
+   tenir à jour à la main - « si le zoom est ouvert..., sinon si le détail
+   est ouvert..., sinon la fiche ». Trois fenêtres arrivées après elle n'y
+   figuraient pas : le renommage d'un onglet (rattrapé), puis les avis des
+   joueurs et une discussion. D'où le dégât : les avis ouverts par-dessus
+   une fiche, Échap tombait sur la dernière branche et refermait LA FICHE
+   DESSOUS - et les avis avec, par l'écoute d'archive-social.js. Une touche
+   qui ferme deux fenêtres dont une qu'on ne visait pas.
+
+   La pile n'a de toute façon pas d'ordre écrit d'avance : la fiche ouvre
+   les avis, un avis ouvre sa discussion, la discussion rouvre la fiche du
+   jeu, et c'est auPremierPlan() qui tranche au moment où ça arrive. Échap
+   lit donc la même chose que l'œil - qui est devant - au lieu d'une liste
+   qui prétend le savoir. */
+const FERMETURES = new Map();
+/* La plus haute des fenêtres visibles. À z-index égal, la dernière dans le
+   document : c'est déjà l'ordre dans lequel le navigateur les peint, donc
+   celle qu'on voit. Le cas ne se présente guère - tout ce qui peut
+   s'empiler passe par auPremierPlan - mais le départage doit dire vrai. */
+function fenetreDuDessus(){
+  let haut = null, z = -1;
+  document.querySelectorAll('.sheet-back').forEach(el=>{
+    if(el.hidden || !FERMETURES.has(el.id)) return;
+    const v = parseInt(getComputedStyle(el).zIndex, 10);
+    const n = isNaN(v) ? 0 : v;
+    if(n >= z){ z = n; haut = el; }
+  });
+  return haut;
+}
+/* « Est-ce moi qu'on regarde ? » - la question des flèches. Feuilleter la
+   fiche du mur ou les captures d'un jeu ne doit se faire que sur la fenêtre
+   du dessus : les flèches changeaient le jeu de la fiche pendant qu'on
+   lisait les avis posés par-dessus, sous une fenêtre qui continuait, elle,
+   de parler du premier. */
+const estDuDessus = id => { const el = fenetreDuDessus(); return !!el && el.id === id; };
+function fermeFenetreDuDessus(){
+  const el = fenetreDuDessus();
+  if(!el) return false;
+  const ferme = FERMETURES.get(el.id);
+  if(ferme) ferme();
+  return true;
+}
+/* Ce qu'Échap fait quand il n'y a AUCUNE fenêtre ouverte : refermer un
+   panneau de la barre du haut, ou enlever la tranche de notes choisie. La
+   page du journal pose sa chaîne ici, depuis archive-demarrage.js qui est
+   le seul à connaître tout le monde ; le Social n'a rien à y mettre.
+
+   Dans le même écouteur que la fenêtre du dessus, et c'est tout l'intérêt :
+   deux écouteurs séparés se déclenchaient l'un après l'autre sur la même
+   touche, et le second défaisait, derrière la fenêtre qu'on venait de
+   fermer, quelque chose qu'on ne regardait pas. */
+let ECHAP_SANS_FENETRE = null;
+document.addEventListener('keydown', e=>{
+  if(e.key !== 'Escape') return;
+  if(fermeFenetreDuDessus()) return;
+  if(ECHAP_SANS_FENETRE) ECHAP_SANS_FENETRE();
+});
 const esc = s => (s===null||s===undefined?'':String(s))
   .replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fr = (n,d=1) => n.toFixed(d).replace('.',',');
@@ -281,7 +351,7 @@ function auPremierPlan(el){
    page Social s'en sert aussi : c'est le fichier que les deux chargent.
    Rempli par chargeAnnuaire() sur le journal, par le démarrage de la page
    sur le Social. */
-let MOI = { connecte: false, pseudo: null, avatar: null, notifs: 0 };
+let MOI = { connecte: false, pseudo: null, avatar: null, notifs: 0, admin: false };
 
 function verrouFond(){
   const ouverte = FENETRES.some(id => { const e = $(id); return e && !e.hidden; });
@@ -321,15 +391,6 @@ const estStatut = g => estStatutNom(g.bucket);
 function statutDe(g){
   return estWishlist(g) ? WISHLIST : (estEnCours(g) ? EN_COURS : '');
 }
-
-/* La clé du tri chronologique : quand j'ai fini ce jeu-là.
-
-   Ici et non auprès des autres filtres du mur, parce que la table TRIS
-   juste en dessous ne s'en sert pas plus tard - elle la range dans une
-   case au moment même où elle se construit. Une fonction déclarée dans un
-   fichier chargé après celui-ci n'existerait pas encore à cet instant :
-   les déclarations ne remontent qu'en tête de LEUR fichier, pas en tête de
-   la page. */
 
 /* La clé du tri chronologique : quand j'ai fini ce jeu-là.
 
@@ -530,6 +591,13 @@ async function majTarifs(){
   const jeux = GAMES.filter(estWishlist).map(x => ({nom:x.name, sortie:x.release || ''}));
   if(!jeux.length) return;
   tarifsEnVol = true;
+  /* Ce qui n'est plus dans la wishlist n'a plus de tarif à afficher. Sans
+     ce ménage, un jeu acheté - donc sorti de la liste - gardait sa ligne
+     pour toujours, et le localStorage enflait d'une visite à l'autre
+     jusqu'à saturer son quota. Fait ici, une fois, avant les écritures
+     ci-dessous : elles enregistrent alors la version déjà propre. */
+  const vivants = new Set(jeux.map(j => j.nom));
+  Object.keys(TARIFS).forEach(nom => { if(!vivants.has(nom)) delete TARIFS[nom]; });
   try{
     /* Par paquets, et redessiné après chacun : la première visite paie la
        recherche IGDB pour chaque jeu, autant voir les pastilles apparaître
@@ -561,6 +629,48 @@ function remiseDe(x){
   const t = estWishlist(x) && TARIFS[x.name];
   return t && t.remise > 0 ? t.remise : 0;
 }
+
+/* =======================================================================
+   Les avis qui racontent la fin
+
+   Un avis marqué « spoiler » par la personne qui l'a écrit arrive flouté
+   chez les autres, avec un bouton pour le découvrir. Le serveur a déjà
+   tranché avant nous - `flou` sur le jeu comme sur la carte du fil (voir
+   censeur dans social.py) : chez soi il est toujours faux, et chez
+   quelqu'un d'autre il l'est aussi dès qu'on a terminé le jeu. La page ne
+   redécide rien, elle habille.
+
+   Ici plutôt que dans archive-fiche.js ou archive-social.js parce que les
+   deux en ont besoin, et que ce fichier-ci est le seul que la page du
+   journal et celle du Social chargent toutes les deux - c'est déjà la
+   raison qui a fait descendre `api` et `MOI` jusqu'ici.
+   ======================================================================= */
+function spoilerHTML(dedans){
+  return `<div class="spoil spoil-ferme">
+    <div class="spoil-dedans">${dedans}</div>
+    <button type="button" class="spoil-x">Spoiler - cliquer pour afficher</button>
+  </div>`;
+}
+/* Une seule écoute pour toute la page, et en capture.
+
+   En capture parce que dans le fil, la carte entière mène à la discussion :
+   posée en remontée, l'écoute du conteneur aurait déjà ouvert le fil avant
+   que celle-ci ne voie le clic - le bouton aurait « marché », mais sous une
+   fenêtre qui venait de s'ouvrir par-dessus. Prendre le clic à la descente
+   et l'arrêter là est le seul endroit d'où l'on peut le lui reprendre.
+
+   Rien à retenir d'un avis découvert : la classe part du DOM, et le
+   prochain rendu de la liste le refera flou. C'est voulu - la question
+   « veux-tu vraiment lire ça ? » se repose à chaque fois qu'on retombe
+   dessus, et rien n'est écrit nulle part sur ce qu'on a lu. */
+document.addEventListener('click', e=>{
+  const b = e.target.closest && e.target.closest('.spoil-x');
+  if(!b) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const boite = b.closest('.spoil');
+  if(boite) boite.classList.remove('spoil-ferme');
+}, true);
 
 /* Le nom de fichier d'une jaquette : l'identifiant IGDB quand le jeu en a
    un, son nom sinon. Deux jeux au titre identique - « God of War » de 2005

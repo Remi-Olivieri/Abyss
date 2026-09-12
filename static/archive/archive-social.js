@@ -130,8 +130,8 @@ function socialCover(p){
    lignes ferait défiler trois écrans pour une seule carte. Le fil ouvert,
    lui, les montre tous. */
 const SOC_POINTS_COURT = 4;
-function socialAvisHTML(avis, court){
-  const lignes = avis || [];
+function socialAvisHTML(p, court){
+  const lignes = (p && p.avis) || [];
   if(!lignes.length) return '';
   const garde = court ? lignes.slice(0, SOC_POINTS_COURT) : lignes;
   const reste = lignes.length - garde.length;
@@ -140,8 +140,14 @@ function socialAvisHTML(avis, court){
     const texte = cls ? t.slice(1).trim() : t.trim();
     return `<span class="pt ${cls}">${esc(texte)}</span>`;
   };
-  return `<div class="pros">${garde.map(pt).join('')}${
+  const bloc = `<div class="pros">${garde.map(pt).join('')}${
     reste > 0 ? `<span class="pt soc-reste">+${reste} autre${reste > 1 ? 's' : ''}</span>` : ''}</div>`;
+  /* La carte entière plutôt que l'avis seul : c'est le serveur qui a décidé
+     (voir censeur dans social.py), la page ne fait que poser le voile. Le
+     « +3 autres » du fil part flou avec le reste - il compte des lignes
+     qu'on ne montre pas, mais il dit combien il y en a, et c'est déjà
+     quelque chose qu'on n'a pas demandé à savoir. */
+  return (p && p.flou) ? spoilerHTML(bloc) : bloc;
 }
 
 /* ---------- une carte ----------
@@ -156,10 +162,17 @@ function socialAvisHTML(avis, court){
    le reste de la carte reste à la discussion. C'est le partage qu'on trouve
    partout - le titre mène au sujet, la carte mène au fil.
 
-   `memeJeu` retire la seconde destination, et ne sert qu'à un endroit : la
+   `sansJeu` retire la jaquette ET le titre, et ne sert qu'à un endroit : la
    fenêtre « Avis », où toutes les cartes SONT le même jeu - c'est ce qu'elle
-   rassemble, et son propre titre le nomme déjà en haut. La jaquette y menait
-   donc à l'endroit où l'on était déjà, ce qui faisait tourner en rond :
+   rassemble, et son en-tête le montre une fois pour toutes. Les répéter à
+   chaque personne, c'était écrire dix fois la même jaquette et le même titre
+   dans une colonne de dix avis : soixante pixels de large et deux lignes de
+   haut pris à chaque carte pour redire ce qu'on savait en arrivant, et les
+   avis - la seule chose qui change d'une carte à l'autre - repoussés dans
+   ce qui restait.
+
+   Ils n'y menaient déjà nulle part, d'ailleurs : la jaquette rouvrait la
+   fiche du jeu où l'on était déjà, ce qui faisait tourner en rond :
 
      Plus d'informations -> Avis des joueurs -> clic sur la jaquette
        -> Plus d'informations du même jeu -> Avis des joueurs -> ...
@@ -167,32 +180,39 @@ function socialAvisHTML(avis, court){
    à chaque tour une fenêtre de plus par-dessus la précédente, un z-index de
    plus, et une requête IGDB + HowLongToBeat relancée pour réafficher la
    fiche qu'on venait de quitter. Le garde-fou n'est pas dans l'empilement :
-   c'est le lien lui-même qui n'avait rien à proposer. */
-function socialCarteHTML(p, court, memeJeu){
+   c'est le lien lui-même qui n'avait rien à proposer, et maintenant plus
+   rien à occuper.
+
+   « a terminé un jeu » tombe avec eux, et pour la même raison : sous un
+   en-tête qui nomme le jeu, la phrase ne dit plus rien qu'on ignore. Reste
+   ce qui distingue vraiment une carte de sa voisine - qui, quand, en
+   combien d'heures, avec quelle note, et ce qu'il en a écrit. */
+function socialCarteHTML(p, court, sansJeu){
   const aime = p.aime === true;
   /* Le nom et l'identifiant IGDB voyagent sur la carte : c'est par eux que
      la jaquette et le titre ouvrent la fiche du jeu, et les trois listes qui
      empilent des cartes n'ont alors rien d'autre à retenir que du HTML. */
-  return `<article class="soc-post${court ? ' soc-cliquable' : ''}" data-id="${p.id}"
+  return `<article class="soc-post${court ? ' soc-cliquable' : ''}${
+      sansJeu ? ' soc-post-nu' : ''}" data-id="${p.id}"
     data-jeu="${esc(p.nom)}" data-igdb="${p.idIgdb || ''}">
     <header class="soc-tete">
       ${socialAvatarLien(p.pseudo, p.avatar)}
       <span class="soc-qui">
-        ${socialNomLien(p.pseudo)}<i>a terminé un jeu</i>
+        ${socialNomLien(p.pseudo)}${sansJeu ? '' : '<i>a terminé un jeu</i>'}
         <u>${esc(socialSous(p))}</u>
       </span>
       ${p.note === null || p.note === undefined ? '' :
         `<span class="soc-note" style="color:${noteColor(p.note)}">${fr(p.note, 1)}</span>`}
     </header>
     <div class="soc-corps">
-      ${memeJeu ? socialCover(p)
+      ${sansJeu ? ''
         : `<button type="button" class="soc-vers-jeu" data-act="jeu">${socialCover(p)}</button>`}
       <div class="soc-texte">
-        ${memeJeu ? `<b class="soc-jeu soc-jeu-fixe">${esc(p.nom)}</b>`
+        ${sansJeu ? ''
           : `<button type="button" class="soc-jeu soc-vers-jeu" data-act="jeu"
               >${esc(p.nom)}</button>`}
-        ${socialAvisHTML(p.avis, court)
-          || '<p class="soc-muet">Pas d\'avis écrit pour ce jeu.</p>'}
+        ${socialAvisHTML(p, court)
+          || `<p class="soc-muet">Pas d'avis écrit${sansJeu ? '' : ' pour ce jeu'}.</p>`}
       </div>
     </div>
     <footer class="soc-pied">
@@ -329,14 +349,19 @@ function socialFerme(id){
 }
 function socialFermeTout(){ socialFerme('socFil'); socialFerme('socAvis'); }
 
-function socialCadre(id, titre, corps, retour){
+/* Un seul bouton pour sortir, et c'est la croix. Il y avait une flèche
+   « retour » à gauche du titre quand la fenêtre s'ouvrait par-dessus une
+   autre : elle refermait celle-ci pour découvrir celle-là, ce qui est
+   exactement, au geste près, ce que fait la croix - la fenêtre du dessous
+   n'est jamais fermée, elle attend derrière. Deux boutons pour une seule
+   sortie, à quelques pixels l'un de l'autre, font hésiter sur ce qui les
+   sépare au lieu d'aider à en sortir. */
+function socialCadre(id, titre, corps){
   const h = socialHote(id);
   h.innerHTML = `<div class="sheet soc-sheet" role="dialog" aria-modal="true"
       aria-label="${esc(titre)}">
     <div class="sheet-tools">
-      <span class="grp">${retour
-        ? `<button class="sbtn soc-retour" aria-label="Revenir aux avis">‹</button>` : ''}
-        <b class="fhead">${esc(titre)}</b></span>
+      <span class="grp"><b class="fhead">${esc(titre)}</b></span>
       <span class="grp"><button class="sbtn soc-x" aria-label="Fermer">×</button></span>
     </div>
     <div class="soc-in">${corps}</div>
@@ -345,16 +370,6 @@ function socialCadre(id, titre, corps, retour){
   auPremierPlan(h);         // la fiche d'un jeu a pu l'ouvrir, et elle est haute
   verrouFond();
   h.querySelector('.soc-x').onclick = ()=> socialFerme(id);
-  const r = h.querySelector('.soc-retour');
-  if(r) r.onclick = ()=>{
-    /* Refermer CETTE fenêtre d'abord. La flèche n'apparaît que quand il y a
-       quelque chose derrière, et ce quelque chose est resté ouvert : sans
-       cette ligne, elle redessinait la fenêtre du dessous sans découvrir
-       celle du dessus - donc elle ne faisait rien du tout, sous les yeux
-       de qui venait de cliquer. */
-    socialFerme(id);
-    if(typeof retour === 'function') retour();
-  };
   return h;
 }
 
@@ -489,10 +504,12 @@ function socialMiniFormHTML(valeur, valider){
   </form>`;
 }
 
-/* `retour` : d'où l'on vient, quand on vient de la liste des avis. La flèche
-   n'apparaît que dans ce cas - depuis le fil, il n'y a rien derrière. */
-async function ouvrirFilSocial(jeuId, retour){
-  socialCadre('socFil', 'Discussion', '<p class="soc-muet soc-vide">Chargement…</p>', retour);
+/* La même fenêtre d'où qu'on vienne - le fil, la liste des avis, une
+   notification. Quand elle s'ouvre par-dessus la liste des avis, celle-ci
+   reste dessous : la refermer suffit à la retrouver là où on l'avait
+   laissée, sans rien redemander au serveur. */
+async function ouvrirFilSocial(jeuId){
+  socialCadre('socFil', 'Discussion', '<p class="soc-muet soc-vide">Chargement…</p>');
   let data;
   try{ data = await socialAppel(`/api/social/jeu/${jeuId}`); }
   catch(e){
@@ -711,9 +728,9 @@ function socialBrancheFil(h, jeuId){
   champ.focus();
 }
 
-/* Les chiffres d'un jeu, en haut de ses avis : combien l'ont terminé,
-   combien en ont écrit quelque chose, et la note qu'ils lui donnent en
-   moyenne.
+/* Les chiffres d'un jeu, à côté de sa jaquette en haut de ses avis :
+   combien l'ont terminé, combien en ont écrit quelque chose, et la note
+   qu'ils lui donnent en moyenne.
 
    Trois nombres et trois mots, là où il y avait une phrase. « 1 joueur a
    terminé ce jeu, dont 1 avec un avis écrit. » se lit en entier pour en
@@ -738,14 +755,39 @@ function socialChiffresHTML(posts){
   return `<p class="soc-compte">${bouts.join('<i>·</i>')}</p>`;
 }
 
+/* L'en-tête de la fenêtre « Avis » : le jeu, une fois, avec ses chiffres.
+
+   C'est là que tient la page. En dessous, toutes les cartes parlent de ce
+   jeu-ci et d'aucun autre - elles n'ont donc plus à se le rappeler l'une
+   après l'autre, et ce qu'on lit en descendant n'est plus que des gens et
+   des avis. La jaquette peut alors être vue plutôt que devinée : une seule
+   à l'écran, et assez grande pour reconnaître le jeu du premier coup d'œil.
+
+   Elle ne se clique pas, et le titre non plus : on arrive ici depuis la
+   fiche du jeu, qui attend juste derrière. Voir `sansJeu` dans
+   socialCarteHTML pour le tour en rond que ça évitait déjà. */
+function socialAvisTeteHTML(nom, idIgdb, posts){
+  return `<header class="soc-avis-tete">
+    ${socialCover({nom: nom, idIgdb: idIgdb, note: null})}
+    <div class="soc-avis-ident">
+      <b class="soc-avis-jeu">${esc(nom)}</b>
+      ${posts.length ? socialChiffresHTML(posts) : ''}
+    </div>
+  </header>`;
+}
+
 /* ---------- la page « Avis » d'un jeu ----------
    Ouverte depuis la fiche du mur : tous ceux qui ont terminé ce jeu, ceux
    qui ont écrit quelque chose d'abord. C'est le seul endroit du site où le
    même titre rassemble plusieurs journaux - partout ailleurs, un jeu est
    une ligne dans le classeur de quelqu'un. */
 async function ouvrirAvisSocial(nom, idIgdb){
-  const titre = `Avis sur « ${nom} »`;
-  socialCadre('socAvis', titre, '<p class="soc-muet soc-vide">Chargement…</p>');
+  /* Le titre de la barre ne répète plus le nom du jeu : l'en-tête juste
+     dessous le porte, en grand et avec sa jaquette. Deux fois le même titre
+     à trente pixels d'écart, c'était la première des redites de cette
+     fenêtre. */
+  socialCadre('socAvis', 'Avis des joueurs',
+              '<p class="soc-muet soc-vide">Chargement…</p>');
   let data;
   const params = new URLSearchParams({nom: nom || ''});
   if(idIgdb) params.set('idIgdb', idIgdb);
@@ -759,22 +801,32 @@ async function ouvrirAvisSocial(nom, idIgdb){
   const h = document.getElementById('socAvis');
   if(!h || h.hidden) return;
   const posts = data.posts || [];
-  h.querySelector('.soc-in').innerHTML = posts.length
-    ? `${socialChiffresHTML(posts)}
-       <div class="soc-liste">${posts.map(p => socialCarteHTML(p, true, true)).join('')}</div>`
-    : `<p class="soc-muet soc-vide">Personne d'autre n'a encore terminé ce jeu.</p>`;
+  /* Le jeu en tête, puis les gens. Entre les deux, une ligne qui dit ce
+     qu'on va lire et combien : sans elle, la liste commençait au ras de
+     l'en-tête et le premier avis se lisait comme la suite de celui-ci.
+     Elle sert aussi de prise pour le défilement - on sait où la lecture
+     commence, et où revenir. */
+  h.querySelector('.soc-in').innerHTML = `
+    ${socialAvisTeteHTML(nom, idIgdb, posts)}
+    ${posts.length
+      ? `<h3 class="soc-avis-sous">${posts.length} joueur${posts.length > 1 ? 's' : ''}
+           ${posts.length > 1 ? 'ont' : 'a'} terminé ce jeu</h3>
+         <div class="soc-liste">${posts.map(p => socialCarteHTML(p, true, true)).join('')}</div>`
+      : `<p class="soc-muet soc-vide">Personne n'a encore terminé ce jeu.</p>`}`;
   h.onclick = e=>{
     if(socialVersProfil(e)) return;
-    if(socialVersJeu(e)) return;
+    /* Pas de socialVersJeu ici : plus une seule carte ne porte de jaquette
+       ni de titre cliquables, il n'y a donc rien à intercepter avant la
+       discussion. Le fil, lui, en a toujours besoin. */
     const jaime = e.target.closest('[data-act="jaime"]');
     if(jaime){ socialAimer(jaime); return; }
     const carte = e.target.closest('.soc-post');
-    /* `true` et non une fonction : la liste est restée ouverte derrière, il
-       n'y a qu'à refermer la discussion pour la retrouver là où on l'avait
-       laissée. La redemander au serveur aurait tout redessiné, et perdu la
-       position de lecture pour rien - les compteurs de la liste, eux, sont
-       tenus à jour au fil des clics (voir socialAccorde). */
-    if(carte) ouvrirFilSocial(carte.dataset.id, true);
+    /* Rien à passer : cette liste reste ouverte derrière la discussion, et
+       la croix de celle-ci la redécouvre telle qu'on l'avait laissée. La
+       redemander au serveur aurait tout redessiné, et perdu la position de
+       lecture pour rien - les compteurs, eux, sont tenus à jour au fil des
+       clics (voir socialAccorde). */
+    if(carte) ouvrirFilSocial(carte.dataset.id);
   };
 }
 
@@ -845,6 +897,28 @@ function socialNotifHTML(n){
   </li>`;
 }
 
+/* La cloche vue de dehors : l'engrenage, le menu des périodes et la
+   recherche la referment quand ils s'ouvrent - un seul menu ouvert à la
+   fois, la règle que ces trois-là se disaient déjà entre eux.
+
+   Elle vit ici plutôt que dans monteCloche parce que ce sont d'autres
+   fichiers qui l'appellent, et qu'ils n'ont pas de prise sur ce qui se
+   passe dans cette fermeture. `SOC_NOTIFS` suffit à retrouver le panneau et
+   son bouton, et valoir `null` - une page Social sans compte n'a pas de
+   cloche - est un cas normal, pas une panne. */
+function socialClocheFerme(){
+  if(!socialClocheOuverte()) return;
+  SOC_NOTIFS.panneau.hidden = true;
+  SOC_NOTIFS.bouton.setAttribute('aria-expanded', 'false');
+}
+/* La même question, pour qui doit décider ce que fait Échap : le panneau de
+   la cloche n'est pas une fenêtre de la pile - il pend sous son bouton -
+   donc FERMETURES ne le connaît pas, et c'est la chaîne « aucune fenêtre
+   ouverte » d'archive-demarrage.js qui s'en occupe. */
+function socialClocheOuverte(){
+  return !!SOC_NOTIFS && !SOC_NOTIFS.panneau.hidden;
+}
+
 function monteCloche(bouton){
   if(!bouton) return;
   const panneau = document.createElement('div');
@@ -856,11 +930,21 @@ function monteCloche(bouton){
   // ce que le temps réel a pu annoncer avant que la cloche existe
   socialPastille(bouton, SOC_NEUVES);
 
-  const ferme = ()=>{
-    panneau.hidden = true;
-    bouton.setAttribute('aria-expanded', 'false');
-  };
+  const ferme = socialClocheFerme;
   const ouvre = async ()=>{
+    /* Les autres menus de la barre s'en vont, et c'est à l'ouverture qu'on
+       le fait : le clic posé sur le document ne peut pas s'en charger, parce
+       que ce bouton-ci et celui de l'engrenage appellent tous les deux
+       stopPropagation sur le leur - justement pour que le clic qui ouvre un
+       menu ne le referme pas aussitôt en remontant. Aucun des deux ne voyait
+       donc l'autre partir, et cloche puis engrenage - ou l'inverse -
+       laissait les deux panneaux ouverts l'un par-dessus l'autre.
+
+       `typeof` : la page Social n'a ni engrenage ni onglets de période, elle
+       ne charge ni archive-journal.js ni archive-mur.js. */
+    if(typeof closeMenu === 'function') closeMenu();
+    if(typeof closePer === 'function') closePer();
+    if(typeof fermerRecherche === 'function') fermerRecherche();
     panneau.hidden = false;
     bouton.setAttribute('aria-expanded', 'true');
     panneau.innerHTML = '<p class="soc-muet soc-vide">Chargement…</p>';
@@ -934,15 +1018,13 @@ function socialTempsReel(quoi){
   return prise;
 }
 
-/* ---------- Échap ferme la fenêtre du dessus ----------
-   Posé ici plutôt que dans chaque page : les deux ont les mêmes fenêtres,
-   et elles doivent se fermer pareil. */
-document.addEventListener('keydown', e=>{
-  if(e.key !== 'Escape') return;
-  /* Le fil d'abord : quand il est ouvert par-dessus la liste des avis,
-     c'est lui qu'on veut fermer, et la liste doit rester derrière. */
-  const fil = document.getElementById('socFil');
-  if(fil && !fil.hidden){ socialFerme('socFil'); return; }
-  const avis = document.getElementById('socAvis');
-  if(avis && !avis.hidden) socialFerme('socAvis');
-});
+/* Échap n'a plus d'écoute à lui ici. Ces deux fenêtres se sont inscrites
+   auprès de fermeSurFond en se créant (voir socialHote), et c'est
+   archive-noyau.js qui ferme celle du dessus - la vraie, celle qu'auPremierPlan
+   a mise devant, et non celle qu'un ordre écrit à la main croyait être là.
+
+   Ce qui était écrit ici marchait pour ces deux-là entre elles - le fil
+   avant les avis - mais rien ne le disait au reste de la page : la cascade
+   d'archive-fiche.js ne les connaissait pas, si bien qu'Échap sur les avis
+   refermait la fiche du dessous en même temps. Deux ordres partiels valent
+   moins qu'un seul qui regarde. */

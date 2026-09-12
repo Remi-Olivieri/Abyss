@@ -112,6 +112,12 @@ function openJaq(nom, propositions, suite, idIgdb, opts){
   const host = $('jaq');
   host.innerHTML = jaqHTML(nom, propositions, !!suite, opts);
   host.hidden = false;
+  /* Devant ce qui est déjà ouvert : « Changer de jeu », dans la relecture de
+     la mise à jour depuis IGDB, ouvrait cette fenêtre-ci sous celle qui
+     venait de la demander (#jaq est à 75, #igdb à 76). Le bouton semblait ne
+     rien faire, alors que la grille était bien là - derrière.
+     Voir auPremierPlan dans archive-noyau.js. */
+  auPremierPlan(host);
   verrouFond();
   host.querySelector('.jaq-x').onclick = closeJaq;
   host.querySelector('.jaq-non').onclick = closeJaq;
@@ -399,10 +405,6 @@ async function alignePick(p){
   if(acRemplit($('f_release'), p.iso, true)) change.push('date');
   if(await acPrix(p, true)) change.push('prix');
   if(!change.length) return;
-  toast(change.length === 2
-    ? 'Date et prix alignés sur la fiche choisie'
-    : (change[0] === 'date' ? 'Date de sortie alignée sur la fiche choisie'
-                            : 'Prix aligné sur la fiche choisie'));
 }
 
 /* ---------- changer la jaquette retenue ---------- */

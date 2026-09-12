@@ -144,9 +144,17 @@ function exporteJSON(jeux, champs){
 /* Une valeur par cellule CSV : guillemets doublés, et la cellule entière
    entre guillemets dès qu'elle contient une virgule, un guillemet ou un
    retour à la ligne - l'avis tient sur plusieurs lignes, entre autres. */
+/* Excel et LibreOffice lisent une cellule qui commence par =, +, - ou @
+   comme une FORMULE et non comme du texte : un titre de jeu venant d'IGDB
+   traversait l'export sans filtre et s'exécutait à l'ouverture. Une
+   apostrophe devant neutralise le tableur, et n'apparaît pas dans la
+   cellule affichée.
+   Les nombres en sont exemptés : préfixer -5 le rendrait illisible comme
+   nombre, et un nombre ne peut de toute façon pas être une formule. */
 function celluleCSV(v){
   if(v === null || v === undefined) return '';
-  const s = String(v);
+  let s = String(v);
+  if(typeof v !== 'number' && /^[=+\-@]/.test(s)) s = "'" + s;
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 const LIBELLES_EXPORT = {bucket:'onglet', name:'nom', rating:'note', month:'mois',
@@ -579,24 +587,19 @@ function fermerZoom(){
 }
 fermeSurFond('zoom', fermerZoom);
 
-/* ---------- le clavier, pour les deux fenetres de ce fichier ----------
-   Ici et non dans archive-fiche.js, ou il vivait : « Plus d'informations »
-   et l'agrandissement d'une capture s'ouvrent aussi depuis le fil du
-   Social, qui ne charge pas le mur. Les fleches ne changeaient donc d'image
-   que sur le journal, et Echap n'y refermait rien.
+/* ---------- les fleches, d'une capture a la suivante ----------
+   Echap n'est plus ici : les deux fenetres de ce fichier se sont inscrites
+   par fermeSurFond, et c'est archive-noyau.js qui ferme celle du dessus
+   (voir FERMETURES). Ce qu'il y avait a la place - « si le zoom est
+   ouvert..., sinon si le detail... » - etait la meme cascade a tenir a la
+   main que dans archive-fiche.js, et par les deux bouts.
 
-   Les deux pages chargent ce fichier avec ces deux fenetres : la regle et
-   ce qu'elle commande arrivent ensemble. archive-fiche.js s'arrete toujours
-   sur elles sans rien en faire, pour qu'une fleche ne compte pas double
-   la ou les deux fichiers sont charges. */
+   Restent les fleches, et seulement quand c'est bien la capture en grand
+   qu'on regarde : `estDuDessus` pose la meme question que la fiche du mur
+   pose pour elle-meme, et c'est ce qui les empeche de compter double la ou
+   les deux fichiers sont charges. */
 document.addEventListener('keydown', e=>{
-  const zoom = document.getElementById('zoom');
-  if(zoom && !zoom.hidden){
-    if(e.key === 'Escape') fermerZoom();
-    else if(e.key === 'ArrowLeft') zoomBouge(-1);
-    else if(e.key === 'ArrowRight') zoomBouge(1);
-    return;
-  }
-  const det = document.getElementById('detail');
-  if(det && !det.hidden && e.key === 'Escape') fermerDetail();
+  if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if(!estDuDessus('zoom')) return;
+  zoomBouge(e.key === 'ArrowLeft' ? -1 : 1);
 });

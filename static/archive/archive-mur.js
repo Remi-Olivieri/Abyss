@@ -74,6 +74,7 @@ function comparateur(cle, sens){
    barre s'allonge sans fin à chaque nouvelle année. */
 function choisirOnglet(k){
   closePer();
+  const change = S.bucket !== k;
   /* On entre dans les statistiques : elles s'ouvrent sur l'onglet qu'on
      était en train de lire. « En cours » et « Wishlist » n'ont ni note ni
      temps de jeu, il n'y a rien à analyser dedans - depuis ceux-là, et
@@ -85,6 +86,16 @@ function choisirOnglet(k){
   S.bucket = k;
   S.range = null;   // l'histogramme est recalculé : la tranche choisie ne vaut plus
   render();
+  /* Et retour en haut du mur. On change d'onglet pour voir autre chose :
+     arriver au milieu de la nouvelle liste, à la hauteur où l'on avait
+     laissé l'ancienne, donne une page qu'on croit avoir déjà parcourue -
+     et d'autant plus qu'un onglet plus court que le précédent s'ouvrait
+     parfois sur son dernier écran, tuiles coupées comprises.
+
+     Seulement si l'onglet a vraiment changé : cliquer sur celui où l'on est
+     déjà - un clic en trop, un aller-retour dans le menu des années - ne
+     doit pas coûter sa place de lecture. */
+  if(change) window.scrollTo(0, 0);
 }
 function closePer(){
   const m = document.getElementById('perMenu');
@@ -99,6 +110,7 @@ function togglePer(periodes){
   const ouvert = m.hidden;
   if(ouvert){
     closeMenu(); fermerRecherche();               // un seul menu ouvert à la fois
+    if(typeof socialClocheFerme === 'function') socialClocheFerme();
     /* Plus de coche : l'onglet courant se surligne, comme dans la barre
        juste au-dessus. Une coche ici et un fond doré là pour dire la même
        chose obligeait à apprendre deux signes au lieu d'un - et la coche
@@ -173,7 +185,26 @@ function menuOnglet(e, onglet){
     ouvrirRenom(onglet);
   };
 }
-document.addEventListener('click', fermeMenuOnglet);
+/* ---------- et il se ferme au premier clic ailleurs ----------
+   En CAPTURE, et c'est tout ce qui compte ici. L'écoute était en bulle, donc
+   les boutons qui appellent `stopPropagation` sur leur propre clic - « Année »
+   et l'engrenage le font, pour que le clic qui ouvre leur menu ne le referme
+   pas aussitôt en remontant - ne la laissaient jamais arriver. Un clic droit
+   sur un onglet puis un clic sur « Année » repliait donc la liste en laissant
+   le menu contextuel flotter tout seul, au-dessus de plus rien.
+
+   La capture sur `document` passe avant tout gestionnaire de la cible, quoi
+   qu'il fasse de l'événement ensuite. Un bouton de plus qui arrête la
+   propagation demain ne rouvrira pas le problème - c'est pour ça qu'on la
+   règle ici plutôt que d'aller ajouter un appel dans chacun d'eux.
+
+   Le menu s'épargne lui-même : ses deux entrées se ferment elles-mêmes après
+   avoir agi, et le retirer en capture le détacherait avant que leur clic ne
+   leur parvienne. */
+document.addEventListener('click', e=>{
+  if(e.target.closest && e.target.closest('#ongletMenu')) return;
+  fermeMenuOnglet();
+}, true);
 document.addEventListener('scroll', fermeMenuOnglet, true);
 window.addEventListener('resize', fermeMenuOnglet);
 
@@ -735,7 +766,7 @@ document.getElementById('out').addEventListener('click', e=>{
 
 function emptyHTML(){
   if(S.q || S.range){
-    return `<div class="empty"><h3>Aucun jeu trouvé...</h3>`
+    return `<div class="empty"><h3>Aucun jeu trouvé...</h3></div>`;
   }
   return `<div class="empty">
     <h3>Cet onglet est vide</h3>

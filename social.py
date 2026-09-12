@@ -127,7 +127,7 @@ def _avec_slug(c):
 # sans les autres donnerait des cartes qui ne se ressemblent plus.
 CHAMPS_POST = (
     "j.id, j.nom, j.note, j.heures, j.mois, j.annee, j.periode, j.avis,"
-    " j.id_igdb, j.cree_le,"
+    " j.id_igdb, j.spoiler, j.cree_le,"
     " u.id AS auteur_id, u.pseudo, u.avatar, u.avatar_maj_le"
 )
 
@@ -143,6 +143,75 @@ VISIBLE = (
     " AND j.periode NOT IN (?, ?)"
 )
 VISIBLE_ARGS = (PROJET, *STATUTS)
+
+# --------------------------------------------------------------------------
+#   Les avis qui racontent la fin
+#
+#   L'auteur marque son avis d'une case a cocher (voir spoiler dans
+#   journal.py). Ce marquage ne dit pas « cache-le » : il dit « celui-la
+#   raconte quelque chose ». A qui le cacher se decide ici, a la lecture, et
+#   la reponse depend de qui lit :
+#
+#     - a l'auteur, jamais : il sait ce qu'il a ecrit ;
+#     - a qui a deja TERMINE le jeu, jamais non plus : on ne spoile pas
+#       quelqu'un sur une fin qu'il connait, et lui imposer un clic de plus
+#       sur chaque avis d'un jeu qu'il vient de finir rendrait la case
+#       insupportable a tout le monde ;
+#     - a tous les autres, oui.
+#
+#   Le texte part quand meme au navigateur : le floutage est une politesse
+#   d'affichage, pas un secret. Le retenir imposerait un aller-retour de plus
+#   au moment du clic, pour une phrase que la page finira de toute facon par
+#   montrer -- et donnerait l'illusion d'une confidentialite que le premier
+#   coup d'oeil au reseau dementirait.
+# --------------------------------------------------------------------------
+def _deja_finis(u) -> tuple[set, set]:
+    """Les jeux que cette personne a TERMINES, par fiche IGDB et par titre.
+
+    Les deux facons de reconnaitre un meme jeu d'un journal a l'autre, comme
+    dans avis_du_jeu : l'identifiant quand les deux lignes en ont un, le
+    titre reduit a son slug sinon.
+
+    « Termine » se lit comme partout ailleurs : range dans une periode qui
+    n'est ni « En cours » ni « Wishlist ». Avoir un jeu dans sa wishlist ne
+    protege de rien -- c'est meme la qu'on tient le plus a ne pas etre
+    spoile.
+    """
+    if u is None:
+        return set(), set()
+    lignes = cx().execute(
+        "SELECT j.id_igdb, j.nom FROM jeu j JOIN page p ON p.id = j.page_id"
+        " WHERE p.utilisateur_id = ? AND p.projet = ? AND j.periode NOT IN (?, ?)",
+        (u["id"], PROJET, *STATUTS)).fetchall()
+    return ({l["id_igdb"] for l in lignes if l["id_igdb"]},
+            {slug(l["nom"]) for l in lignes if l["nom"]})
+
+
+def censeur(u):
+    """Rend la fonction qui dit, ligne par ligne, si l'avis doit arriver flou.
+
+    Une fonction et non un simple test parce qu'il y a un etat a garder : la
+    bibliotheque du visiteur, lue une seule fois pour toute une page de fil,
+    et seulement si un avis marque s'y presente. Un fil sans spoiler ne coute
+    donc pas une requete de plus.
+    """
+    finis = None
+
+    def flou(spoiler, nom, id_igdb, auteur_id) -> bool:
+        nonlocal finis
+        if not spoiler:
+            return False
+        if u is not None and u["id"] == auteur_id:
+            return False
+        if finis is None:
+            finis = _deja_finis(u)
+        ids, titres = finis
+        if id_igdb and id_igdb in ids:
+            return False
+        return slug(nom or "") not in titres
+
+    return flou
+
 
 # L'ordre du fil : la date d'entree dans le fil, c'est-a-dire le jour ou le
 # jeu a ete TERMINE, et non celui ou sa ligne a ete creee. On ajoute souvent
@@ -175,12 +244,15 @@ def _avatar(ligne):
                                "avatar_maj_le": ligne["avatar_maj_le"]})
 
 
-def _post(ligne, u, jaime=0, aime=False, commentaires=0) -> dict:
+def _post(ligne, u, jaime=0, aime=False, commentaires=0, flou=False) -> dict:
     """Une ligne de journal telle que la carte du fil l'attend.
 
     `avis` part decoupe en lignes, comme dans journal.en_json : la page range
     les « + » d'un cote et les « - » de l'autre, et c'est elle qui sait a
     quoi ils ressemblent.
+
+    `flou` vient de censeur() et ne se recalcule pas ici : il depend de la
+    bibliotheque du visiteur, qu'on ne va pas relire une fois par carte.
     """
     return {
         "id": ligne["id"],
@@ -211,6 +283,11 @@ def _post(ligne, u, jaime=0, aime=False, commentaires=0) -> dict:
         "aime": aime if u is not None else None,
         "commentaires": commentaires,
         "moi": u is not None and u["id"] == ligne["auteur_id"],
+        # « cet avis raconte la fin » : le marquage de l'auteur, tel quel
+        "spoiler": bool(ligne["spoiler"]),
+        # « et pour toi, il doit arriver flou » : la meme chose passee au
+        # crible du visiteur (voir censeur)
+        "flou": flou,
     }
 
 
@@ -248,8 +325,13 @@ def _habille(lignes, u) -> list:
     ids = [l["id"] for l in lignes]
     aimes, dits = _compte(ids)
     miens = _miens(ids, u)
+    # une seule fois pour toute la fournee : c'est lui qui garde la
+    # bibliotheque du visiteur entre deux cartes
+    flou = censeur(u)
     return [_post(l, u, aimes.get(l["id"], 0), l["id"] in miens,
-                  dits.get(l["id"], 0)) for l in lignes]
+                  dits.get(l["id"], 0),
+                  flou(l["spoiler"], l["nom"], l["id_igdb"], l["auteur_id"]))
+            for l in lignes]
 
 
 def fil(u, avant=None, limite=FEED_LOT) -> dict:

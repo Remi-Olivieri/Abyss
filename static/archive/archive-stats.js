@@ -103,10 +103,14 @@ function correlation(paires){
   const den = Math.sqrt(dx*dy);
   return den ? num/den : null;
 }
-function litCorrelation(r){
+/* `sujet` : ce à quoi la note est comparée, article compris - « le temps de
+   jeu », « le prix payé ». Sans lui la phrase perdait son sujet et se
+   lisait « la note baisse quand monte », qui ne veut rien dire : la
+   fonction ne savait pas de quel axe elle parlait. */
+function litCorrelation(r, sujet){
   if(r === null) return 'trop peu de jeux pour en dire quoi que ce soit';
   const f = Math.abs(r);
-  const sens = r > 0 ? 'monte avec' : 'baisse quand monte';
+  const sens = r > 0 ? `monte avec ${sujet}` : `baisse quand ${sujet} monte`;
   if(f < 0.2) return `aucun lien visible (r = ${fr(r,2)})`;
   if(f < 0.4) return `un lien faible, la note ${sens} (r = ${fr(r,2)})`;
   if(f < 0.6) return `un lien net, la note ${sens} (r = ${fr(r,2)})`;
@@ -116,7 +120,11 @@ function litCorrelation(r){
 /* ---------- le nuage de points ---------- */
 const AN_L = 640, AN_H = 360, AN_MG = 46, AN_MB = 34, AN_MT = 12, AN_MR = 12;
 
-function nuageHTML(titre, points, uniteX, fmtX, sous, log){
+/* `uniteX` nomme l'axe, en bas à droite du dessin ; `sujet` nomme la même
+   chose dans une phrase, article compris - voir litCorrelation(). Les deux
+   ne s'écrivent pas pareil : « heures de jeu » sous un axe, « le temps de
+   jeu » dans « la note monte avec... ». */
+function nuageHTML(titre, points, uniteX, sujet, fmtX, sous, log){
   if(points.length < 3){
     return carteAnalyse(titre, 'Moins de trois jeux renseignés : rien à tracer.', '');
   }
@@ -159,7 +167,7 @@ function nuageHTML(titre, points, uniteX, fmtX, sous, log){
 
   const r = correlation(points.map(p => [p.x, p.y]));
   return carteAnalyse(titre,
-    `${points.length} jeu${points.length>1?'x':''} · ${litCorrelation(r)}${
+    `${points.length} jeu${points.length>1?'x':''} · ${litCorrelation(r, sujet)}${
       log ? ' · échelle logarithmique' : ''}${sous ? ' · ' + sous : ''}`,
     `<svg class="an-svg" viewBox="0 0 ${AN_L} ${AN_H}" role="img"
           aria-label="${esc(titre)}, ${points.length} jeux">
@@ -281,9 +289,9 @@ function renderAnalyse(){
         jeux.length>1?'s':''}${onglet === 'all' ? ' du classeur' : esc(` de « ${onglet} »`)}.</p>
     </div>
     <div class="an-grille2">
-      ${nuageHTML('Note et temps de jeu', heures, 'heures de jeu',
+      ${nuageHTML('Note et temps de jeu', heures, 'heures de jeu', 'le temps de jeu',
                   v => fr(v,0) + ' h', '', true)}
-      ${nuageHTML('Note et prix payé', prix, 'prix payé',
+      ${nuageHTML('Note et prix payé', prix, 'prix payé', 'le prix payé',
                   v => fr(v,0) + ' €', compare, false)}
       ${barresHTML('Note moyenne par genre', groupePar(jeux, 'genres'), ``)}
       ${barresHTML('Note moyenne par développeur', groupePar(jeux, 'developpeur'), ``)}
