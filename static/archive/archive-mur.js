@@ -111,6 +111,7 @@ function togglePer(periodes){
   if(ouvert){
     closeMenu(); fermerRecherche();               // un seul menu ouvert à la fois
     if(typeof socialClocheFerme === 'function') socialClocheFerme();
+    if(typeof menuMoiFerme === 'function') menuMoiFerme();
     /* Plus de coche : l'onglet courant se surligne, comme dans la barre
        juste au-dessus. Une coche ici et un fond doré là pour dire la même
        chose obligeait à apprendre deux signes au lieu d'un - et la coche
@@ -118,10 +119,7 @@ function togglePer(periodes){
     const entree = ongletEntree();
     m.innerHTML = periodes.map(b=>
       `<button class="menu-item${b===S.bucket?' on':''}" role="menuitem" data-b="${esc(b)}"
-         aria-current="${b===S.bucket}"${periodeValide(b) ? '' :
-           ' title="Onglet d\'avant la règle - clic droit dessus pour le renommer"'
-         }>${esc(b)}${b===entree?ETOILE:''}${
-         periodeValide(b)?'':'<span class="vieux">à renommer</span>'}</button>`).join('');
+         aria-current="${b===S.bucket}">${esc(b)}${b===entree?ETOILE:''}</button>`).join('');
     m.querySelectorAll('.menu-item').forEach(x=>{
       x.onclick = ()=> choisirOnglet(x.dataset.b);
       x.oncontextmenu = e => menuOnglet(e, x.dataset.b);
@@ -759,13 +757,60 @@ function oublieTuiles(){
    Le bouton de téléchargement d'une jaquette arrête la propagation de son
    côté, il ne remonte donc jamais jusqu'ici. */
 document.getElementById('out').addEventListener('click', e=>{
+  /* Le rebond vers IGDB, quand la recherche dans le mur n'a rien donné. Le
+     titre repart tel qu'on l'a tapé : la fenêtre s'ouvre en cherchant déjà,
+     il n'y a rien à retaper. */
+  const cta = e.target.closest('.empty-cta');
+  if(cta){
+    ouvrirRecherche({modes: ['jeu'], texte: cta.dataset.igdb});
+    return;
+  }
   const t = e.target.closest('.tile');
   if(!t) return;
   if(t.dataset.i !== undefined) ouvreFiche(+t.dataset.i, t);
 });
 
+/* =======================================================================
+   Le mur n'a rien trouvé - et c'est là que se pose l'autre question
+
+   Un titre tapé dans la barre du mur ne cherche que le classeur affiché.
+   Quand il ne donne rien, deux choses sont possibles : le jeu n'est pas
+   écrit comme on l'a tapé, ou il n'est pas là du tout. Le second cas est
+   le plus fréquent, et c'était jusqu'ici un cul-de-sac : un « Aucun jeu
+   trouvé... » et rien derrière, alors que l'intention venait d'être
+   écrite noir sur blanc dans le champ.
+
+   Chercher un jeu qu'on ne possède pas était pourtant possible - au bout
+   d'un chemin que personne ne prenait : la pastille « Social », puis la
+   pastille « Rechercher » de l'autre page, puis une bascule grise au
+   milieu d'une fenêtre. Quatre gestes, dont deux qu'il fallait déjà
+   connaître pour les voir.
+
+   La porte est donc ici, au moment exact où la question se pose, et elle
+   part avec ce qui est déjà tapé. C'est la seule entrée vers la recherche
+   IGDB depuis un journal, et c'est voulu : ailleurs dans la page, un
+   bouton qui propose des jeux qu'on n'a pas concurrencerait « + Ajouter
+   un jeu » sans rien promettre de plus clair.
+
+   Une tranche de notes choisie dans l'histogramme ne mène nulle part, en
+   revanche : elle ne dit aucun titre, il n'y a rien à aller chercher.
+   ======================================================================= */
 function emptyHTML(){
-  if(S.q || S.range){
+  if(S.q){
+    const q = clean(S.q);
+    return `<div class="empty">
+      <h3>Aucun jeu trouvé...</h3>
+      <p>« ${esc(q)} » n'est pas dans ce journal.</p>
+      <button type="button" class="empty-cta" data-igdb="${esc(q)}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+        </svg>
+        Rechercher « ${esc(q)} »
+      </button>
+    </div>`;
+  }
+  if(S.range){
     return `<div class="empty"><h3>Aucun jeu trouvé...</h3></div>`;
   }
   return `<div class="empty">

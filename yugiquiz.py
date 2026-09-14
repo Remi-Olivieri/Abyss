@@ -104,7 +104,7 @@ def branche(sio):
 # --------------------------------------------------------------------------
 #   L'etat des parties, en memoire
 # --------------------------------------------------------------------------
-list_cards = os.listdir(STATIC / "Cards")
+list_cards = os.listdir(STATIC / "yugioh" / "Cards")
 
 # Salles { room_id: { id, name, status, players: [{pseudo, sid, ready}], ... } }
 rooms = {}
@@ -247,7 +247,7 @@ with open(STATIC / "yugioh" / "cartes-vues.json", encoding="utf-8") as f:
 # recadre pour la deviner, la carte entiere pour la reveler. Le vivier ne
 # regardait que Cards/ -- un recadrage manquant donnait une manche a deviner
 # sur une image cassee, donc impossible.
-list_cards_set = set(list_cards) & set(os.listdir(STATIC / "CardsCropped"))
+list_cards_set = set(list_cards) & set(os.listdir(STATIC / "yugioh" / "CardsCropped"))
 id_to_name_fr = {str(card_id): nom_fr for card_id, nom_fr in cards_fr.items() if nom_fr}
 
 CARD_POOLS = {}
@@ -346,8 +346,8 @@ def jeton_pour(gs, card_id):
 
     L'identifiant d'une carte, c'est son passcode -- et static/yugioh/cartes-fr.json,
     que la Collection telecharge en clair, dit quel nom porte quel passcode.
-    Servir l'artwork sous /static/CardsCropped/<passcode>.jpg revenait donc a
-    donner la reponse dans l'URL de l'enigme : l'onglet reseau suffisait.
+    Servir l'artwork sous /static/yugioh/CardsCropped/<passcode>.jpg revenait
+    donc a donner la reponse dans l'URL de l'enigme : l'onglet reseau suffisait.
     Le jeton ne veut rien dire hors de la salle qui l'a tire.
     """
     jeton = uuid.uuid4().hex
@@ -615,7 +615,7 @@ def _sert_image(room_id, jeton, pleine):
         if not card_id or (pleine and not (gs['revele'] and card_id == gs['current_id'])):
             return jsonify({'message': 'Image inconnue.'}), 404
 
-    reponse = send_from_directory(STATIC / ("Cards" if pleine else "CardsCropped"),
+    reponse = send_from_directory(STATIC / "yugioh" / ("Cards" if pleine else "CardsCropped"),
                                   card_id + '.jpg')
     # pas de cache : un jeton ne vaut que pour sa manche, et l'image d'une
     # enigme n'a pas a rester dans le disque du navigateur

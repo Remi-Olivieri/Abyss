@@ -15,8 +15,8 @@
 /* =======================================================================
    Jaquette automatique - uniquement à l'ajout d'un jeu.
    C'est Flask qui va la chercher (jaquettes.py) : ni le navigateur ni
-   Apps Script ne savent écrire dans static/Cover/. Rien n'atterrit sur le
-   disque sans un clic : même quand une seule jaquette est trouvée, elle
+   Apps Script ne savent écrire dans static/archive/Cover/. Rien n'atterrit sur
+   le disque sans un clic : même quand une seule jaquette est trouvée, elle
    est montrée d'abord. Si la route n'existe pas - vieux serveur, page
    ouverte sans Flask - tout se tait et le jeu garde ses initiales.
    ======================================================================= */
@@ -403,6 +403,12 @@ async function acPrix(j, force){
 async function alignePick(p){
   const change = [];
   if(acRemplit($('f_release'), p.iso, true)) change.push('date');
+  /* La date vient de changer, donc la reponse a « ce jeu est-il sorti ? »
+     aussi : les deux cases de statut se refigent ou se liberent sur place.
+     Appele meme quand acRemplit n'a rien remplace - remplir une case vide
+     ne compte pas comme un changement pour le toast, mais c'est bien une
+     date nouvelle pour la regle. Voir syncSortie dans archive-formulaire.js. */
+  syncStatut();
   if(await acPrix(p, true)) change.push('prix');
   if(!change.length) return;
 }

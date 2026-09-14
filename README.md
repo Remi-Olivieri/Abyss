@@ -20,9 +20,10 @@ un seul compte : `app.py` branche chaque projet comme un blueprint.
 static/
 ├── commun/       ce que plusieurs projets chargent : compte.js, champs.js,
 │                 gestes.js, neige.js, suggestion.js, polices/, vendor/
-├── abyss/        abyss.css · Avatars/ Bannieres/
+├── Avatars/      les photos de profil        (Bannieres/ : pas encore)
+├── abyss/        abyss.css
 ├── archive/      archive.css, social.css, archive-*.js · Cover/
-├── quiz/         quiz.css                    (jaquettes : voir Cover/)
+├── quiz/         quiz.css            (jaquettes : voir archive/Cover/)
 ├── yugioh/       cartes-fr.json, cartes-en.json, cartes-vues.json
 │                 · Cards/ CardsCropped/
 ├── collection/   collection.css              (cartes : voir yugioh/)
@@ -43,10 +44,19 @@ existent tous les deux : deux projets sans rapport, deux dossiers.
 
 ### Les dossiers d'images
 
-`Avatars/`, `Bannieres/`, `Cards/`, `CardsCropped/`, `Cover/` et `chainz/art/`
-sont dans `.gitignore` : lourds, jamais édités à la main, déjà sur le serveur.
-Ils sont restés à la racine de `static/`, sauf `chainz/art/` qui a rejoint son
-projet. Le tableau ci-dessus dit à quel projet chacun se rattache.
+`Avatars/`, `Bannieres/`, `archive/Cover/`, `yugioh/Cards/`,
+`yugioh/CardsCropped/` et `chainz/art/` sont dans `.gitignore` : lourds, jamais
+édités à la main, déjà sur le serveur.
+
+Chacun vit dans le dossier du projet qui l'alimente, comme le reste : l'Archive
+télécharge les jaquettes, donc `archive/Cover/` ; les artworks de cartes sont
+une matière Yu-Gi-Oh, donc `yugioh/Cards/` à côté des noms de cartes. Que le
+Quiz rejoue les jaquettes et que le Yu-Gi-Quiz rejoue les artworks ne change
+rien : le dossier porte le nom de qui remplit, pas de qui lit.
+
+Seuls `Avatars/` et `Bannieres/` sont restés à la racine de `static/` : leur
+adresse publique est celle de la photo de profil d'un compte, recopiée dans des
+pages et des caches qu'on ne maîtrise pas.
 
 ## Les adresses
 

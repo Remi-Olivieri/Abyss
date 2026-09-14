@@ -23,7 +23,7 @@
 let SOURCES = [];
 
 const CONFIG = { // Configs pour les covers
-  imageDir: "/static/Cover/",
+  imageDir: "/static/archive/Cover/",
   imageExt: "webp",
   coverRatio: "3 / 4",
 };
@@ -319,7 +319,7 @@ async function rattrapageIgdb(){
   }
 }
 
-const FENETRES = ['sheet','form','jaq','bilan','igdb','recherche','export','renom','detail','zoom',
+const FENETRES = ['sheet','form','jaq','bilan','igdb','recherche','export','renom','detail','studio','zoom',
                  'sgFond',    // la fenêtre de suggestion, posée par static/commun/suggestion.js
                  // le social, posé par archive-social.js : ces deux-là se
                  // créent d'eux-mêmes et peuvent manquer, ce que la boucle

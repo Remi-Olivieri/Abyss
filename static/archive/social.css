@@ -537,10 +537,17 @@ button.soc-vers-jeu:hover,
   .cog-wrap{order:6}
   .tabs{order:7}
   .cloche{width:38px;height:38px;border-radius:50%}
-  /* La barre s'enroule ici : plus rien a pousser a droite, et ce cale sans
-     `order` passerait devant tout le monde -- son margin-left:auto
-     repousserait alors « Retour a Abyss » au milieu de la ligne. */
-  .soc-barre-vide{display:none}
+  /* La cale, redevenue utile. Elle etait masquee ici parce que la pastille
+     de recherche (.brand, flex:1 1 auto) poussait deja tout le monde a
+     droite ; la recherche est repartie sur le journal, ou est sa fenetre,
+     et sans cale « Suggestion » et la cloche revenaient se coller contre
+     mon pseudo, la moitie droite de la barre vide.
+
+     Elle pousse par flex-grow et non par margin-left:auto -- la marge
+     l'aurait fait passer devant « Retour a Abyss », qui n'a pas d'ordre a
+     lui. L'ordre 3 est celui que .brand occupait : entre moi et
+     « Suggestion ». */
+  .soc-barre-vide{order:3;flex:1 1 auto;margin-left:0}
 
   .soc-colonne{padding:16px 0 80px}
   .soc-post{padding:13px 13px 9px;border-radius:12px}

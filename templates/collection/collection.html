@@ -236,7 +236,7 @@ const codeRar = card => !card || !card[RAR] ? ''
 const brille = c => !!c && c !== 'C';
 const FOIL = '<i class="foil"><span></span></i>';
 
-let DATA = { types: [], images: '/static/Cards/', vignettes: '/api/collection/vignette/' };
+let DATA = { types: [], images: '/static/yugioh/Cards/', vignettes: '/api/collection/vignette/' };
 let MODE = 'offline';
 const S = { t:0, c:0, spread:0, sel:null, hit:null, pose:null, zoom:false, zt:0, zc:0 };
 
@@ -427,7 +427,7 @@ function applyData(d, frais){
     t.classeurs = (Array.isArray(t.classeurs) ? t.classeurs : [])
       .filter(c => c && Array.isArray(c.cards));
   });
-  DATA.images = DATA.images || '/static/Cards/';
+  DATA.images = DATA.images || '/static/yugioh/Cards/';
   DATA.vignettes = DATA.vignettes || '/api/collection/vignette/';
   CAN_WRITE = DATA.write === true;
   S.t = Math.max(0, Math.min(S.t, DATA.types.length - 1));

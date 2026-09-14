@@ -871,6 +871,88 @@ function socialPastille(bouton, n){
   p.textContent = n > 9 ? '9+' : String(n);
 }
 
+/* =======================================================================
+   La pastille du fil
+
+   La cloche ne sonne que pour ce qui nous vise : quelqu'un aime, commente,
+   repond. Le fil, lui, se remplit tout seul, et rien ne le disait - on
+   ouvrait « Communaute » pour decouvrir qu'il ne s'y etait rien passe, ou
+   on ne l'ouvrait pas pendant trois jours en manquant tout.
+
+   Un point rouge sur la pastille d'identite, et le compte sur l'entree
+   « Communaute » du menu qu'elle ouvre : le point dit qu'il y a quelque
+   chose derriere cette porte, l'entree dit quoi et combien. Un chiffre sur
+   la pastille d'identite, a cote de celui de la cloche, aurait pose deux
+   nombres voisins qui ne parlent pas de la meme chose.
+
+   Ou l'on en etait suit le compte, en base (voir neuf et marque_fil_vu
+   dans social.py) : lire le fil sur son telephone l'a lu partout. Et ses
+   propres jeux ne comptent pas - on sait ce qu'on vient de terminer.
+   ======================================================================= */
+/* Le compte, garde meme quand le menu n'existe pas encore : le demarrage
+   monte la pastille d'identite APRES avoir branche le temps reel, exactement
+   comme pour la cloche (voir SOC_NEUVES plus haut). */
+let SOC_FEED_NEUVES = 0;
+
+/* Le fil vient d'etre lu jusqu'a cette entree-la : la pastille s'eteint ici
+   et le repere avance cote serveur. Appele par la page du fil, au
+   chargement et a chaque carte qui s'y pose en direct. Un visiteur essuie
+   un refus (pas de compte, pas de repere) : ce n'est pas une panne. */
+function feedLu(id){
+  SOC_FEED_NEUVES = 0;
+  socialFeedPastille();
+  if(!id) return;
+  socialAppel('/api/social/feed/vu', 'POST', {id: id}).catch(()=>{});
+}
+function socialFeedNeuves(n){
+  SOC_FEED_NEUVES = Math.max(0, n || 0);
+  socialFeedPastille();
+}
+/* Le point sur la porte, le compte sur l'entree. Relue a chaque changement
+   et au montage du menu : les deux cibles n'existent pas forcement au meme
+   moment, et aucune des deux n'est indispensable a l'autre. */
+function socialFeedPastille(){
+  const n = SOC_FEED_NEUVES;
+  document.querySelectorAll('.moi-declencheur').forEach(b=>{
+    let pt = b.querySelector('.moi-point');
+    if(!n){ if(pt) pt.remove(); return; }
+    if(!pt){
+      pt = document.createElement('i');
+      pt.className = 'moi-point';
+      // le point est muet pour la voix : l'entree du menu porte le texte
+      pt.setAttribute('aria-hidden', 'true');
+      b.appendChild(pt);
+    }
+  });
+  const entree = document.querySelector('#moiMenu [data-moi="feed"]');
+  if(!entree) return;
+  entree.classList.toggle('a-neuf', !!n);
+  let marque = entree.querySelector('.menu-neuf');
+  if(!n){ if(marque) marque.remove(); return; }
+  if(!marque){
+    marque = document.createElement('i');
+    marque.className = 'menu-neuf';
+    entree.appendChild(marque);
+  }
+  marque.textContent = n >= 10 ? '9+' : String(n);
+  marque.setAttribute('aria-label',
+    `${n >= 10 ? 'plus de 9' : n} nouveau${n > 1 ? 'x' : ''} jeu${n > 1 ? 'x' : ''} dans le fil`);
+}
+
+/* Ce qui s'est passe dans le fil depuis la derniere fois qu'on l'a ouvert.
+   Une seule requete au chargement de la page du journal ; le temps reel
+   prend la suite (voir socialTempsReel).
+
+   Le serveur decide de tout - premiere visite, jeux a soi, repere perdu.
+   Un echec ne dit rien : une pastille est un supplement, elle n'a pas a
+   signaler ses propres pannes. */
+async function socialSurveilleFeed(){
+  let data;
+  try{ data = await socialAppel('/api/social/feed/neuf'); }
+  catch(e){ return; }
+  socialFeedNeuves(data.neuves);
+}
+
 const SOC_GENRES = {
   jaime:       'a aimé ton avis sur',
   commentaire: 'a commenté ton avis sur',
@@ -919,8 +1001,176 @@ function socialClocheOuverte(){
   return !!SOC_NOTIFS && !SOC_NOTIFS.panneau.hidden;
 }
 
-function monteCloche(bouton){
+/* =======================================================================
+   Le menu de la pastille d'identité
+
+   La barre du haut portait quatre pastilles avant les onglets : le retour
+   à Abyss, moi, le fil, et la recherche d'un journal. Elles ne parlaient
+   pas du même sujet - sortir du site, moi, les autres - et rien ne les
+   rangeait ensemble ; on lisait quatre contours et on cherchait le bon.
+
+   Trois de ces gestes parlent en fait de la MÊME chose : moi et les
+   autres. Ils sont donc passés sous la pastille qui dit déjà qui je suis,
+   et la barre a perdu deux boutons sans rien perdre du tout.
+
+   C'est aussi ce qui a permis de donner enfin sa porte à « Rechercher un
+   jeu » : elle n'avait jamais tenu dans la barre, faute de place pour une
+   cinquième pastille, et elle vivait donc cachée dans une bascule grise au
+   milieu de la fenêtre de recherche. Elle est ici, écrite en toutes
+   lettres, à côté de « Rechercher un journal » - deux entrées d'une même
+   liste, ce qu'elles auraient dû être depuis le début.
+
+   Monté par les DEUX pages, comme la cloche juste en dessous : le journal
+   et le fil ont la même pastille au même endroit, elle doit ouvrir le même
+   menu. Ce qui change d'une page à l'autre n'est pas la liste, c'est ce
+   qu'une entrée DÉCLENCHE - et ça arrive en paramètre.
+
+   `hote` : le .moi-wrap qui entoure la ou les pastilles. Une seule est
+   visible à la fois - la mienne quand j'ai un compte, le nom du site
+   sinon - et elles partagent donc un seul panneau, posé une fois ici.
+
+   `opts` :
+     surJournal()     ce qu'un clic sur « Mon journal » fait de mieux qu'un
+                      rechargement
+     surRecherche(m)  idem pour les deux recherches, avec 'journal' ou 'jeu'
+     ici              'journal' ou 'feed' : l'entrée de la page où l'on est
+                      déjà se marque au lieu de mener à elle-même
+
+   « Mon journal » n'est pas posée au montage mais par menuMoiJournal() :
+   on peut créer son journal sans quitter la page, et l'entrée doit alors
+   apparaître dans un panneau déjà construit.
+
+   Les entrées sont des liens porteurs d'une vraie adresse, et les gestes
+   ne font que les intercepter : un clic du milieu ouvre donc un onglet, et
+   sans script le menu reste un menu de navigation qui marche.
+
+   Les deux recherches s'ouvrent sur la page où l'on est, jamais ailleurs.
+   Elles ont un temps mené à /archive?recherche=..., et refermer la fenêtre
+   laissait alors sur une autre page que celle d'où l'on venait : on avait
+   déménagé pour ouvrir un tiroir. Les deux pages ont donc la fenêtre, et
+   l'adresse n'est plus qu'un repli.
+   ======================================================================= */
+let MENU_MOI = null;
+
+function menuMoiOuvert(){
+  return !!MENU_MOI && !MENU_MOI.panneau.hidden;
+}
+/* La même fonction que socialClocheFerme, pour la même raison : ce sont
+   d'autres fichiers qui referment ce panneau - l'engrenage, la cloche, la
+   recherche - et aucun n'a de prise sur ce qui se passe dedans. */
+function menuMoiFerme(){
+  if(!menuMoiOuvert()) return;
+  MENU_MOI.panneau.hidden = true;
+  MENU_MOI.boutons.forEach(b => b.setAttribute('aria-expanded', 'false'));
+}
+
+/* « Mon journal », posée après coup : un visiteur n'en a pas, et on peut
+   créer le sien sans quitter la page - l'entrée apparaît alors dans un
+   panneau déjà construit. `null` la range. */
+function menuMoiJournal(adresse){
+  const el = document.querySelector('#moiMenu [data-moi="journal"]');
+  if(!el) return;
+  el.hidden = !adresse;
+  if(adresse) el.href = adresse;
+}
+
+function monteMenuMoi(hote, opts){
+  if(!hote) return;
+  const o = opts || {};
+  const boutons = Array.from(hote.querySelectorAll('.moi-declencheur'));
+  if(!boutons.length) return;
+
+  /* « Communauté » et non « Feed » : le fil est ce qu'on y trouve
+     aujourd'hui, pas ce que l'entrée promet. Le jour où il y aura une page
+     de communauté digne du nom, c'est elle qui prendra cette adresse - le
+     mot, lui, n'aura pas à changer. */
+  const lien = (adresse, texte, quoi, marque, cache) =>
+    `<a class="menu-item${marque ? ' on' : ''}" role="menuitem"${cache ? ' hidden' : ''}
+        data-moi="${quoi}" href="${esc(adresse)}">${esc(texte)}</a>`;
+
+  const panneau = document.createElement('div');
+  panneau.className = 'menu moi-menu';
+  panneau.id = 'moiMenu';
+  panneau.hidden = true;
+  panneau.setAttribute('role', 'menu');
+  panneau.innerHTML =
+    lien('/archive', 'Mon journal', 'journal', false, true)
+    + lien('/archive/feed', 'Communauté', 'feed', o.ici === 'feed')
+    + lien('/archive?recherche=journal', 'Rechercher un journal', 'rjournal')
+    + lien('/archive?recherche=jeu', 'Rechercher un jeu', 'rjeu');
+  hote.appendChild(panneau);
+  MENU_MOI = {panneau: panneau, boutons: boutons};
+  /* Le compte du fil a pu arriver avant que ce panneau existe - le
+     demarrage branche le temps reel avant de monter la pastille
+     d'identite. On repose donc ce qu'on sait, maintenant qu'il y a une
+     entree « Communaute » pour le porter. Voir socialFeedPastille. */
+  socialFeedPastille();
+
+  const ouvre = ()=>{
+    /* Un seul menu ouvert à la fois. Les trois autres viennent de fichiers
+       que la page Social ne charge pas, d'où les `typeof` - la règle est
+       celle que l'engrenage, la cloche et les périodes se disaient déjà
+       entre eux, ce panneau ne fait que s'y ajouter. */
+    if(typeof closeMenu === 'function') closeMenu();
+    if(typeof closePer === 'function') closePer();
+    if(typeof fermerRecherche === 'function') fermerRecherche();
+    socialClocheFerme();
+    panneau.hidden = false;
+    boutons.forEach(b => b.setAttribute('aria-expanded', 'true'));
+  };
+  boutons.forEach(b=>{
+    /* stopPropagation, comme l'engrenage et la cloche : sans lui, le clic
+       qui ouvre le panneau remonte au document et le referme aussitôt. */
+    b.addEventListener('click', e=>{
+      e.preventDefault(); e.stopPropagation();
+      if(menuMoiOuvert()) menuMoiFerme(); else ouvre();
+    });
+  });
+
+  panneau.querySelectorAll('.menu-item').forEach(el=>{
+    const quoi = el.dataset.moi;
+    el.addEventListener('click', e=>{
+      /* La page où l'on est déjà : l'entrée la marque, cliquer dessus ne
+         doit pas la recharger pour arriver au même endroit. */
+      if(el.classList.contains('on')){ e.preventDefault(); menuMoiFerme(); return; }
+      if(quoi === 'journal' && o.surJournal){
+        e.preventDefault(); menuMoiFerme(); o.surJournal(); return;
+      }
+      if((quoi === 'rjournal' || quoi === 'rjeu') && o.surRecherche){
+        e.preventDefault(); menuMoiFerme();
+        o.surRecherche(quoi === 'rjeu' ? 'jeu' : 'journal');
+        return;
+      }
+      /* Rien à intercepter : c'est un lien, il part. Le menu se ferme quand
+         même - un retour en arrière retrouverait la page avec son panneau
+         ouvert, sans rien qui l'explique. */
+      menuMoiFerme();
+    });
+  });
+
+  /* Une sélection de texte commencée dans le panneau et relâchée dehors ne
+     doit pas le fermer : on ne ferme que si le mousedown ET le clic visaient
+     tous les deux en dehors. Même précaution qu'au menu de l'engrenage. */
+  let dehors = false;
+  document.addEventListener('mousedown', e=>{ dehors = !e.target.closest('.moi-wrap'); });
+  document.addEventListener('click', e=>{
+    if(dehors && !e.target.closest('.moi-wrap')) menuMoiFerme();
+  });
+}
+
+/* `opts.surNotif(jeuId)` : ce qu'un clic sur une ligne de la cloche ouvre.
+
+   Toutes les notifications parlent d'une discussion - quelqu'un a aimé,
+   commenté, ou répondu sous un avis - et la discussion se lit sur le fil.
+   Depuis le fil, elle s'ouvre donc sur place. Depuis le journal, elle
+   s'ouvrait aussi sur place, et c'était le geste de trop : on lisait une
+   réponse dans une fenêtre posée sur son propre classeur, sans jamais
+   voir le fil où elle avait été écrite ni ce qui s'y disait autour. La
+   page du journal envoie maintenant là-bas, avec le jeu à ouvrir dans
+   l'adresse - voir ?fil= dans templates/archive/feed.html. */
+function monteCloche(bouton, opts){
   if(!bouton) return;
+  const surNotif = (opts && opts.surNotif) || (id => ouvrirFilSocial(id));
   const panneau = document.createElement('div');
   panneau.className = 'soc-cloche-panneau';
   panneau.hidden = true;
@@ -945,6 +1195,7 @@ function monteCloche(bouton){
     if(typeof closeMenu === 'function') closeMenu();
     if(typeof closePer === 'function') closePer();
     if(typeof fermerRecherche === 'function') fermerRecherche();
+    menuMoiFerme();
     panneau.hidden = false;
     bouton.setAttribute('aria-expanded', 'true');
     panneau.innerHTML = '<p class="soc-muet soc-vide">Chargement…</p>';
@@ -975,7 +1226,7 @@ function monteCloche(bouton){
     const ligne = e.target.closest('.soc-notif');
     if(!ligne) return;
     ferme();
-    ouvrirFilSocial(ligne.dataset.fil);
+    surNotif(ligne.dataset.fil);
   });
   document.addEventListener('click', e=>{
     if(!panneau.hidden && !panneau.contains(e.target) && e.target !== bouton) ferme();
@@ -1010,7 +1261,20 @@ function socialTempsReel(quoi){
      événement, et un nombre juste se pose là où un incrément se décale. */
   prise.on('cloche', d => socialMajNeuves(d && d.neuves));
 
-  if(quoi && quoi.surJeu) prise.on('jeu', d => d && d.post && quoi.surJeu(d.post));
+  /* Un jeu vient d'entrer dans le fil. Deux lectures possibles selon la
+     page, et c'est `surJeu` qui les separe : la page du fil le recoit pour
+     poser sa carte - elle est donc lue dans la seconde, et la pastille n'a
+     rien a annoncer - tandis que le journal, qui n'a pas de fil a remplir,
+     n'a justement que la pastille pour le dire. */
+  prise.on('jeu', d => {
+    if(!(d && d.post)) return;
+    if(quoi && quoi.surJeu){ feedLu(d.post.id); quoi.surJeu(d.post); return; }
+    /* Mon propre jeu : je sais que je viens de le terminer. La carte part a
+       tout le monde, batie pour un visiteur (voir annonce_jeu), d'ou la
+       comparaison au pseudo plutot qu'au champ `moi`. */
+    if(MOI.pseudo && d.post.pseudo === MOI.pseudo) return;
+    socialFeedNeuves(SOC_FEED_NEUVES + 1);
+  });
   /* Un jeu qui quitte le fil : remis en cours, reclassé en wishlist, ou
      effacé. Le retirer aussi, sinon le fil garde à l'écran un jeu que
      personne ne retrouvera en rechargeant. */

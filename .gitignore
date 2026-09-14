@@ -1,8 +1,8 @@
 # Les images : lourdes, jamais editees, deja sur le serveur.
 # Elles vivent dans le dossier de leur projet, comme le reste.
-static/Cards/
-static/CardsCropped/
-static/Cover/
+static/yugioh/Cards/
+static/yugioh/CardsCropped/
+static/archive/Cover/
 static/Avatars/
 static/Bannieres/
 static/chainz/art/

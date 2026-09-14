@@ -60,11 +60,19 @@ function teinteAvatar(nom){
    un jeu se cherche chez IGDB, donc à chaque frappe et avec un délai.
 
    Elle se monte où on le lui demande - dans sa fenêtre quand on clique sur
-   « Rechercher », et à même l'écran d'accueil quand personne n'est
-   connecté, où elle est tout ce qu'un visiteur peut faire et n'a donc pas
-   à être derrière un bouton. D'où l'absence d'identifiants ici : deux
+   « Rechercher un journal », et à même l'écran d'accueil quand personne
+   n'est connecté, où elle est tout ce qu'un visiteur peut faire et n'a donc
+   pas à être derrière un bouton. D'où l'absence d'identifiants ici : deux
    exemplaires peuvent vivre en même temps dans la page, et deux id
    identiques n'en désigneraient qu'un.
+
+   Les deux modes ne sont plus toujours offerts ensemble. `opts.modes` dit
+   lesquels cette recherche-ci propose, et un seul mode ne dessine aucune
+   bascule : il n'y a plus de choix à montrer. C'est ce qui a permis aux
+   deux portes de la page de dire enfin ce qu'elles ouvrent - « Rechercher
+   un journal » dans l'en-tête, « Chercher sur IGDB » au bout d'une
+   recherche restée sans réponse - au lieu d'un « Rechercher » qui laissait
+   la question entière et la réponse cachée dans une pastille grise.
    ======================================================================= */
 const LOUPE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"
   stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
@@ -83,34 +91,51 @@ const MODES = [
      actif()            le rang du journal déjà affiché, pour la coche -
                         -1 quand aucun ne l'est, ce qui est le cas partout
                         sauf sur le journal lui-même
+     modes              les modes offerts, dans l'ordre ; le premier est
+                        celui qui s'affiche. Un seul : pas de bascule.
+     texte              ce qui est déjà tapé en arrivant
 
-   Sans `opts`, les trois valent ce que fait la page du journal : c'est
-   elle qui monte la recherche à deux endroits, et lui faire répéter ses
-   propres réglages n'aurait rien appris à personne. */
+   Sans `opts`, les trois gestes valent ce que fait la page du journal :
+   c'est elle qui monte la recherche à deux endroits, et lui faire répéter
+   ses propres réglages n'aurait rien appris à personne. */
 function monteRecherche(hote, opts){
   const o = opts || {};
   const surJournal = o.surJournal || (i => choisirClasseur(i));
   const surJeu     = o.surJeu     || ((id, titre) => ouvrirDetailIgdb(id, titre));
   const actif      = o.actif      || (() => (typeof SRC === 'number' ? SRC : -1));
-  hote.innerHTML = `
-    <!-- deux bascules, et non des onglets : un onglet doit désigner le
-         panneau qu'il ouvre, et il n'y en a pas - c'est la même liste qui
-         change de contenu. aria-pressed dit exactement ce qui se passe. -->
+  /* Les modes demandés, dans l'ordre demandé, et jamais un nom inventé :
+     ce qui ne figure pas dans MODES ne sait rien chercher. */
+  const modes = (o.modes || MODES.map(m => m.cle))
+    .map(cle => MODES.find(m => m.cle === cle)).filter(Boolean);
+  if(!modes.length) modes.push(MODES[0]);
+  /* Deux bascules, et non des onglets : un onglet doit désigner le panneau
+     qu'il ouvre, et il n'y en a pas - c'est la même liste qui change de
+     contenu. aria-pressed dit exactement ce qui se passe.
+
+     Un seul mode n'en dessine aucune : une bascule solitaire et allumée
+     d'avance ne propose rien, elle occupe une rangée pour dire ce que
+     l'invite du champ dit déjà. */
+  const basculesHTML = modes.length < 2 ? '' : `
     <div class="rsearch-modes" role="group" aria-label="Que chercher">
-      ${MODES.map((m, k)=>`<button type="button" class="rsearch-mode${k ? '' : ' on'}"
+      ${modes.map((m, k)=>`<button type="button" class="rsearch-mode${k ? '' : ' on'}"
         data-mode="${m.cle}" aria-pressed="${k ? 'false' : 'true'}"
         >${esc(m.nom)}</button>`).join('')}
-    </div>
+    </div>`;
+  hote.innerHTML = `
+    ${basculesHTML}
     <label class="rsearch-box">
       ${LOUPE}
-      <input class="rsearch-input" type="text" placeholder="${esc(MODES[0].invite)}"
+      <input class="rsearch-input" type="text" placeholder="${esc(modes[0].invite)}"
              autocomplete="off" spellcheck="false" aria-label="Rechercher">
     </label>
     <div class="rsearch-list"></div>`;
 
   const champ = hote.querySelector('.rsearch-input');
   const liste = hote.querySelector('.rsearch-list');
-  const etat = {mode: 'journal', jeton: 0, minuteur: null};
+  const etat = {mode: modes[0].cle, jeton: 0, minuteur: null};
+  /* Ce qu'on cherchait ailleurs arrive avec nous : le mur du journal n'a
+     rien trouvé, on rouvre la question chez IGDB sans la retaper. */
+  if(o.texte) champ.value = o.texte;
 
   /* Un mot à la place de la liste : « rien trouvé », « ça cherche », « IGDB
      n'a pas répondu ». Une liste qui reste vide sans rien dire laisse croire
@@ -236,21 +261,31 @@ function monteRecherche(hote, opts){
 /* ---------- la recherche dans sa fenêtre ---------- */
 let RECHERCHE = null;
 
+/* Le titre de la fenêtre dit ce qu'elle cherche. Il ne disait « Rechercher »
+   que du temps où la réponse était « ça dépend de la bascule ». */
+const RECHERCHE_TITRES = {journal: 'Rechercher un journal', jeu: 'Rechercher un jeu'};
+
 function fermerRecherche(){
   const host = document.getElementById('recherche');
-  if(host.hidden) return;
+  /* Le Social n'a plus de fenêtre de recherche : il charge ce fichier pour
+     ses avatars et ses lignes de résultat, pas pour sa fenêtre. */
+  if(!host || host.hidden) return;
   if(RECHERCHE){ RECHERCHE.arrete(); RECHERCHE = null; }
   host.hidden = true; host.innerHTML = '';
   verrouFond();
 }
 /* Les options de la fenêtre, posées une fois par la page qui la charge.
-   ouvrirRecherche() est appelée de six endroits - un bouton, une adresse,
-   une touche - et aucun n'a de raison de connaître ce que fait un clic sur
-   un résultat. La page le dit une fois, ici. */
+   ouvrirRecherche() est appelée de plusieurs endroits - un bouton, une
+   adresse, une touche - et aucun n'a de raison de connaître ce que fait un
+   clic sur un résultat. La page le dit une fois, ici.
+
+   Ce que l'appelant ajoute, lui, ne concerne que son ouverture à lui : quel
+   mode, et avec quoi déjà tapé dedans. Les deux se superposent au moment du
+   montage, les réglages de la page d'abord. */
 let RECHERCHE_OPTS = null;
 function regleRecherche(opts){ RECHERCHE_OPTS = opts; }
 
-function ouvrirRecherche(){
+function ouvrirRecherche(o){
   /* Les deux premiers n'existent que sur la page du journal : elle a un menu
      d'engrenage et un sélecteur de période à refermer, le Social n'a ni
      l'un ni l'autre. La cloche, elle, est sur les deux pages - mais pas
@@ -258,10 +293,14 @@ function ouvrirRecherche(){
   if(typeof closeMenu === 'function') closeMenu();
   if(typeof closePer === 'function') closePer();
   if(typeof socialClocheFerme === 'function') socialClocheFerme();
+  if(typeof menuMoiFerme === 'function') menuMoiFerme();
   const host = document.getElementById('recherche');
-  host.innerHTML = `<div class="sheet recherche-sheet" role="dialog" aria-modal="true" aria-label="Rechercher">
+  if(!host) return;
+  const opts = Object.assign({}, RECHERCHE_OPTS, o);
+  const titre = RECHERCHE_TITRES[(opts.modes || [])[0]] || 'Rechercher';
+  host.innerHTML = `<div class="sheet recherche-sheet" role="dialog" aria-modal="true" aria-label="${esc(titre)}">
     <div class="sheet-tools">
-      <span class="grp"><b class="fhead">Rechercher</b></span>
+      <span class="grp"><b class="fhead">${esc(titre)}</b></span>
       <span class="grp"><button class="sbtn rsearch-x" aria-label="Fermer">×</button></span>
     </div>
     <div class="rsearch-in"></div>
@@ -269,20 +308,28 @@ function ouvrirRecherche(){
   host.hidden = false;
   verrouFond();
   host.querySelector('.rsearch-x').onclick = fermerRecherche;
-  RECHERCHE = monteRecherche(host.querySelector('.rsearch-in'), RECHERCHE_OPTS);
+  RECHERCHE = monteRecherche(host.querySelector('.rsearch-in'), opts);
   RECHERCHE.champ.focus();
+  /* Le curseur au bout de ce qui est déjà là, et non devant : on arrive ici
+     pour corriger ou compléter un titre, pas pour écrire avant lui. */
+  const n = RECHERCHE.champ.value.length;
+  if(n) RECHERCHE.champ.setSelectionRange(n, n);
 }
-fermeSurFond('recherche', fermerRecherche);
-/* Le bouton de l'en-tête, quand la page en a un. Sur le journal, cette
-   place est prise par « Social » et la fenêtre s'ouvre depuis l'adresse
-   (?recherche=1) ; sur le Social, c'est ce bouton-ci qui l'ouvre.
+if(document.getElementById('recherche')) fermeSurFond('recherche', fermerRecherche);
+/* ---------- les deux portes, chacune sur ce qu'elle ouvre ----------
 
-   preventDefault, mais le lien porte quand même une adresse de repli vers
-   /archive?recherche=1 : sans script, le bouton fait tout de même quelque
-   chose plutôt que rien. */
-const jnlSearchBtn = document.getElementById('jnlSearchBtn');
-if(jnlSearchBtn){
-  jnlSearchBtn.addEventListener('click', e=>{
-    e.preventDefault(); e.stopPropagation(); ouvrirRecherche();
-  });
-}
+   « Rechercher un journal » et « Rechercher un jeu » sont deux entrées du
+   menu de la pastille d'identité (voir monteMenuMoi dans
+   archive-social.js). Elles n'ont plus de bouton à elles dans la barre du
+   haut, et c'est ce qui a permis de les écrire en toutes lettres : il n'y
+   avait pas la place pour deux pastilles de plus, mais il y a toute la
+   place voulue pour deux lignes dans une liste.
+
+   Rien à brancher ici, donc. C'est la page qui dit ce qu'une entrée
+   déclenche - ouvrir la fenêtre sur place sur le journal, y mener depuis
+   le fil - et ouvrirRecherche() reçoit le mode en paramètre.
+
+   Chercher un JEU se propose aussi ailleurs, et c'est là qu'on la trouve
+   le plus souvent : au bout d'une recherche dans le mur restée sans
+   réponse, avec le titre déjà tapé qui part avec elle. Voir emptyHTML()
+   dans archive-mur.js. */

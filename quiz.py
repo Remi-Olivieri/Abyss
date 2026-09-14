@@ -6,8 +6,8 @@ Tous puisent au meme endroit -- les journaux de jeu deja remplis -- et rien
 n'est prevu a l'avance pour des jeux qui n'existent pas encore.
 
 D'ou vient la matiere : de la base, et d'elle seule. Le nom d'un jeu et son
-identifiant IGDB donnent le nom du fichier deja telecharge sous static/Cover
-(voir jaquettes.cle_jaquette) ; la date de sortie est deja en colonne, et la
+identifiant IGDB donnent le nom du fichier deja telecharge sous
+static/archive/Cover/ (voir jaquettes.cle_jaquette) ; la date de sortie est deja en colonne, et la
 grille lit en plus le studio et les genres, ecrits une fois pour toutes au
 rattachement IGDB (voir journal.enrichit_igdb). Rien n'est demande a IGDB
 ici, et une partie ne coute donc aucun appel exterieur.
@@ -100,10 +100,10 @@ CHRONO_PAR_JEU = 200
 blueprint_quiz = Blueprint("quiz", __name__, url_prefix="/api/quiz")
 
 DOSSIER = None            # pose par blueprint_quiz_jaquettes, comme jaquettes.py
-URL_PUBLIQUE = "/static/Cover/"
+URL_PUBLIQUE = "/static/archive/Cover/"
 
 
-def branche(dossier, url_publique="/static/Cover/") -> Blueprint:
+def branche(dossier, url_publique="/static/archive/Cover/") -> Blueprint:
     """Dit au module ou vivent les jaquettes, et rend le blueprint.
 
     Meme facon de faire que blueprint_jaquettes : le chemin du dossier est

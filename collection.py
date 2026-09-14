@@ -96,7 +96,7 @@ CARTES_MAXI = 20000        # par page : garde-fou contre un import qui s'emballe
 # telecharge un catalogue pour afficher une vignette.
 DOSSIER_CARTES = None      # poses par branche(), comme jaquettes.py
 FICHIER_NOMS = None
-URL_CARTES = "/static/Cards/"
+URL_CARTES = "/static/yugioh/Cards/"
 
 # --- les vignettes ---------------------------------------------------------
 # Le fonds est fait pour etre regarde de pres : 813 x 1185 pixels, 160 Ko par
@@ -227,7 +227,7 @@ def vignette(fichier):
     return cible
 
 
-def branche(dossier_cartes, fichier_noms, url_publique="/static/Cards/") -> Blueprint:
+def branche(dossier_cartes, fichier_noms, url_publique="/static/yugioh/Cards/") -> Blueprint:
     """Dit au module ou vivent les artworks, et rend le blueprint.
 
     Meme facon de faire que blueprint_jaquettes et quiz.branche : les chemins
@@ -645,7 +645,7 @@ if __name__ == "__main__":
     import sys
 
     base = Path(__file__).parent.resolve()
-    branche(base / "static" / "Cards", base / "static" / "yugioh" / "cartes-fr.json")
+    branche(base / "static" / "yugioh" / "Cards", base / "static" / "yugioh" / "cartes-fr.json")
     print(f"Vignettes de {DOSSIER_CARTES} -> {DOSSIER_CARTES / VIGNETTES}")
     faites, ratees = prechauffe()
     print(f"{faites} vignette(s) fabriquee(s), {ratees} illisible(s).")

@@ -166,6 +166,9 @@ ECHAP_SANS_FENETRE = function(){
      c'est donc lui qu'Échap doit reprendre en premier. Il se fermait déjà au
      premier clic ailleurs, mais pas à la touche. */
   if(document.getElementById('ongletMenu')){ fermeMenuOnglet(); return; }
+  /* Le menu de la pastille d'identité, avec les autres panneaux de la barre :
+     il pend sous son bouton, FERMETURES ne le connaît donc pas. */
+  if(menuMoiOuvert()){ menuMoiFerme(); return; }
   const menu = document.getElementById('menu');
   if(menu && !menu.hidden){ closeMenu(); return; }
   const per = document.getElementById('perMenu');
@@ -208,7 +211,13 @@ function brancheCloche(){
   const cloche = document.getElementById('cloche');
   if(!cloche || !MOI.connecte) return;
   cloche.hidden = false;
-  monteCloche(cloche);
+  /* Une notification parle toujours d'une discussion, et une discussion se
+     lit sur le fil : on y va, avec le jeu à ouvrir dans l'adresse. Elle
+     s'ouvrait jusqu'ici dans une fenêtre posée sur ce classeur-ci, ce qui
+     montrait la réponse et cachait l'endroit où elle avait été écrite. */
+  monteCloche(cloche, {
+    surNotif: id => { location.href = '/archive/feed?fil=' + encodeURIComponent(id); },
+  });
   socialMajNeuves(MOI.notifs || 0);
   /* La pastille en direct : quelqu'un aime ou commente pendant qu'on
      range son classeur, et le chiffre bouge sans qu'on recharge. Cette
@@ -216,6 +225,15 @@ function brancheCloche(){
      Voir socialTempsReel dans archive-social.js. */
   socialTempsReel();
 }
+
+/* La barre du haut sans fond tant qu'on est en haut de la page, pour que la
+   banniere du journal se voie en entier derriere elle (voir body.en-haut
+   dans archive.css). Passive : on ne fait que lire la position. */
+function majEnHaut(){
+  document.body.classList.toggle('en-haut', window.scrollY < 8);
+}
+window.addEventListener('scroll', majEnHaut, {passive: true});
+majEnHaut();
 
 (async function demarrer(){
   document.documentElement.style.setProperty('--cov-ratio', CONFIG.coverRatio);
@@ -232,24 +250,49 @@ function brancheCloche(){
   catch(e){ showGate('<b>Serveur injoignable.</b> Le hub Abyss ne répond pas.'); return; }
 
   brancheCloche();
+  /* Le menu de la pastille d'identité, monté AVANT majMoi : c'est elle qui
+     y fait apparaître « Mon journal », et elle a besoin que le panneau
+     existe. Les trois gestes qu'il déclenche restent dans la page - on ne
+     recharge pas pour ouvrir son propre classeur ni une fenêtre. */
+  monteMenuMoi(document.querySelector('.moi-wrap'), {
+    ici: 'journal',
+    surJournal: ()=>{ closeMenu(); fermerRecherche(); ouvrirLeMien(); },
+    surRecherche: mode => ouvrirRecherche({modes: [mode]}),
+  });
+  /* Ce qui est arrivé dans le fil pendant qu'on n'y était pas : un point
+     rouge sur la pastille d'identité, le compte sur l'entrée
+     « Communauté ». Après le menu, qui porte la seconde des deux marques,
+     et seulement pour qui est connecté - la pastille d'identité est cachée
+     aux autres, et une marque posée dessus ne se verrait nulle part.
+     Sans await : la page n'attend pas une pastille pour s'afficher. Voir
+     socialSurveilleFeed dans archive-social.js. */
+  if(MOI.connecte) socialSurveilleFeed();
   /* Ma pastille d'identité : posée une fois, juste après l'annuaire qui la
      renseigne. Elle ne dépend pas du journal ouvert - c'est justement ce
      qui en fait un repère fixe. */
   majMoi();
 
-  /* La recherche demandée par l'adresse. C'est le bouton « Rechercher » de
-     la page Social qui mène ici : la fenêtre vit avec les journaux qu'elle
-     fouille, donc de ce côté-ci.
+  /* La recherche demandée par l'adresse. C'est le repli des deux entrées
+     « Rechercher... » du menu d'identité : elles s'ouvrent sur place, sur
+     la page où l'on est - le fil a la même fenêtre depuis qu'il a le même
+     menu - et l'adresse qu'elles portent fait le même travail au
+     chargement pour le clic du milieu et pour qui n'a pas de script.
+
+     La valeur dit laquelle : ?recherche=jeu ou ?recherche=journal. Tout
+     autre contenu vaut « journal », y compris le ?recherche=1 des liens
+     d'avant - une adresse déjà donnée doit continuer d'ouvrir quelque
+     chose.
 
      Le paramètre est effacé aussitôt - il a servi. Le garder ferait rouvrir
      la fenêtre à chaque rechargement, et il partirait dans le lien qu'on
      copie pour donner son journal. */
-  if(new URLSearchParams(location.search).get('recherche')){
+  const quoi = new URLSearchParams(location.search).get('recherche');
+  if(quoi){
     const propre = new URLSearchParams(location.search);
     propre.delete('recherche');
     const reste = propre.toString();
     try{ history.replaceState(null, '', location.pathname + (reste ? '?' + reste : '')); }catch(e){}
-    ouvrirRecherche();
+    ouvrirRecherche({modes: [quoi === 'jeu' ? 'jeu' : 'journal']});
   }
 
   /* Une adresse /archive/<pseudo> passe avant tout le reste : elle dit

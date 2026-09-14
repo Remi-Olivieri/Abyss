@@ -9,6 +9,7 @@ from flask import Flask, abort, jsonify, redirect, request, send_from_directory
 from flask_socketio import SocketIO
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+import alertes
 import collection
 import comptes
 import journal
@@ -114,12 +115,13 @@ app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024 # aucune de nos routes n'envo
 # ce bloc ne s'execute jamais.
 comptes.init()
 monitoring.menage()          # les visites d'il y a quatre mois ne servent plus
+alertes.lance()              # le mail de la veille d'une sortie, a minuit (voir alertes.py)
 
 app.register_blueprint(comptes.blueprint_comptes)
 app.register_blueprint(journal.blueprint_journal)
-app.register_blueprint(collection.branche(STATIQUE / "Cards",
+app.register_blueprint(collection.branche(STATIQUE / "yugioh" / "Cards",
                                           STATIQUE / "yugioh" / "cartes-fr.json"))
-app.register_blueprint(blueprint_jaquettes(STATIQUE / "Cover"))
+app.register_blueprint(blueprint_jaquettes(STATIQUE / "archive" / "Cover"))
 app.register_blueprint(blueprint_suggestions)
 app.register_blueprint(social.blueprint_social)
 # Le temps reel du Social se branche sur le meme serveur SocketIO que le
@@ -127,7 +129,7 @@ app.register_blueprint(social.blueprint_social)
 # et une pastille de cloche bouge sans qu'on recharge. Voir social.NS.
 social.branche_temps_reel(socketio)
 app.register_blueprint(blueprint_monitoring)
-app.register_blueprint(quiz.branche(STATIQUE / "Cover"))
+app.register_blueprint(quiz.branche(STATIQUE / "archive" / "Cover"))
 # Deux blueprints, les pages et leur API : voir yugiquiz.branche.
 for bp in yugiquiz.branche(socketio):
     app.register_blueprint(bp)
@@ -150,8 +152,8 @@ def note_la_visite(r):
 def cibles(chemin: str):
     """Ou chercher `chemin`, dans l'ordre.
 
-    static/Cards/123.jpg   ->  static/Cards/123.jpg
-    abyss/accueil.html     ->  templates/abyss/accueil.html
+    static/yugioh/Cards/123.jpg  ->  static/yugioh/Cards/123.jpg
+    abyss/accueil.html           ->  templates/abyss/accueil.html
     """
     if chemin.startswith("static/"):
         yield STATIQUE, chemin[len("static/"):]

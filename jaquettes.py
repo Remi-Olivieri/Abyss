@@ -5,7 +5,7 @@ Recuperation automatique des jaquettes de jeux, pour le journal Jeux Videos.
 Se branche sur le hub en deux lignes, dans app.py :
 
     from jaquettes import blueprint_jaquettes
-    app.register_blueprint(blueprint_jaquettes(STATIQUE / "Cover"))
+    app.register_blueprint(blueprint_jaquettes(STATIQUE / "archive" / "Cover"))
 
 Pour voir ce qui se passe, ce fichier se lance tout seul :
 
@@ -97,6 +97,9 @@ from howlongtobeatpy import HowLongToBeat
 # --------------------------------------------------------------------------
 JETON_URL = "https://id.twitch.tv/oauth2/token"
 IGDB_URL = "https://api.igdb.com/v4/games"
+# Les societes. Le seul endpoint d'IGDB qu'on interroge en dehors des jeux :
+# c'est lui qui sait quels jeux un studio a developpes (voir studio_de).
+IGDB_SOCIETES = "https://api.igdb.com/v4/companies"
 IGDB_IMG = "https://images.igdb.com/igdb/image/upload"
 # le prix ne vient pas d'IGDB (il n'en a pas) mais de la boutique Steam,
 # dont IGDB donne le lien. cc= decide du pays, donc de la devise.
@@ -435,11 +438,16 @@ def jeton(forcer=False):
     return valeur, None
 
 
-def interroge(requete):
+def interroge(requete, adresse=IGDB_URL):
     """Envoie une requete APICalypse. Renvoie (liste de fiches, souci).
 
     Un 401 veut dire jeton perime cote serveur alors qu'on le croyait bon :
     on en redemande un et on rejoue, une seule fois.
+
+    `adresse` designe l'endpoint. Tout passe par les jeux sauf la liste des
+    jeux d'un studio, qui commence par les societes (voir studio_de) : le
+    jeton, les en-tetes, le debit et le rejeu du 401 sont les memes pour les
+    deux, et n'avaient aucune raison d'etre recopies.
     """
     for essai in (0, 1):
         acces, souci = jeton(forcer=bool(essai))
@@ -458,7 +466,7 @@ def interroge(requete):
             "Content-Type": "text/plain",
         }
         _patiente("igdb")
-        brut, _, souci = _appelle(IGDB_URL, entetes, requete.encode("utf-8"),
+        brut, _, souci = _appelle(adresse, entetes, requete.encode("utf-8"),
                                    service="igdb")
         if souci == "HTTP 401" and not essai:
             continue
@@ -929,6 +937,123 @@ def fiches_par_id(ids):
 
 
 # --------------------------------------------------------------------------
+#   Les jeux d'un studio
+#
+#   Le developpeur s'affichait sur la fiche detaillee comme un fait parmi
+#   d'autres, au meme titre qu'un genre : un nom, et rien derriere. C'est
+#   pourtant la premiere question qu'on se pose en le lisant -- « ils ont
+#   fait quoi d'autre ? » -- et il fallait aller la poser ailleurs.
+#
+#   Deux requetes, et pas une. La liste `developed` d'une societe est la
+#   reponse exacte a la question : ce sont les jeux qu'elle a DEVELOPPES, et
+#   non ceux ou elle apparait a un titre ou a un autre. Filtrer les jeux par
+#   `involved_companies` aurait tenu en un seul appel, mais IGDB ne garantit
+#   pas que les deux conditions -- cette societe, et developpeur -- portent
+#   sur la meme entree du tableau : un jeu qu'elle a seulement edite serait
+#   passe pour un jeu qu'elle a fait.
+# --------------------------------------------------------------------------
+# Ce qu'une fenetre montre sans devenir un annuaire. Les studios qui
+# depassent sont les editeurs historiques, ou les soixante plus recents
+# disent bien mieux qui ils sont que la liste complete.
+STUDIO_MAX = 60
+# Le plafond d'IGDB sur une requete `where id = (...)`.
+STUDIO_IDS_MAX = 500
+# Ce qui compte comme « un jeu qu'ils ont fait » : un jeu a part entiere, un
+# remake, un remaster (game_type 0, 8 et 9). Sans ce filtre, un studio actif
+# ne montrait que ses six derniers mois de DLC, de packs et de correctifs --
+# soixante lignes ou le jeu dont ils viennent tous n'apparaissait pas.
+# `parent_game`/`version_parent` a null ecarte au passage les editions
+# speciales et les rereleases, qui portent le type d'un jeu plein.
+VRAIS_JEUX = (" & game_type = (0, 8, 9)"
+              " & parent_game = null & version_parent = null")
+
+
+def _texte_apicalypse(valeur):
+    """Un texte pose entre guillemets dans une requete APICalypse.
+
+    Le nom vient du navigateur : un guillemet suffirait a sortir de la
+    chaine et a ecrire la suite de la requete. On retire donc ce qui la
+    delimite et ce qui l'echappe, plutot que de les echapper -- un nom de
+    studio n'en porte pas, et une requete qu'on ne sait pas relire ne vaut
+    pas d'etre envoyee.
+    """
+    return re.sub(r'[\\"\n\r]', " ", str(valeur or "")).strip()[:120]
+
+
+def studio_de(nom):
+    """Les jeux developpes par ce studio. Renvoie (resultat, souci).
+
+    `resultat` vaut None quand IGDB ne connait aucune societe de ce nom --
+    ce qui arrive, la colonne `developpeur` d'un classeur ayant pu etre
+    remplie par une version d'IGDB qui a renomme la societe depuis.
+
+    Les jeux partent du plus recent au plus ancien, et ceux dont la date est
+    inconnue ferment la marche : un studio se lit par ce qu'il vient de
+    sortir, pas par ce qu'IGDB n'a pas date.
+    """
+    propre = _texte_apicalypse(nom)
+    if not propre:
+        return None, None
+
+    societes, souci = interroge(
+        f'fields name, developed; where name = "{propre}"; limit 5;',
+        adresse=IGDB_SOCIETES)
+    if souci:
+        return None, souci
+    # le nom exact d'abord : « Capcom » et « Capcom U.S.A. » sont deux
+    # societes, et c'est la premiere qu'on a demandee
+    exacte = slug(propre)
+    societes.sort(key=lambda c: (slug(c.get("name")) != exacte,
+                                 -len(c.get("developed") or [])))
+    societe = societes[0] if societes else None
+    if not societe:
+        return None, None
+
+    nom_studio = societe.get("name") or propre
+    ids = (societe.get("developed") or [])[:STUDIO_IDS_MAX]
+    if not ids:
+        return {"studio": nom_studio, "jeux": [], "encore": False}, None
+
+    liste = ",".join(str(int(n)) for n in ids)
+
+    def demande(filtre):
+        """Une page de jeux du studio, triee du plus recent au plus ancien.
+
+        Un de plus que demande, comme le fil du Social : sa presence dit
+        qu'il y en a d'autres derriere sans avoir a tout compter.
+        """
+        return interroge(
+            f"fields {CHAMPS}; where id = ({liste}){filtre};"
+            f" sort first_release_date desc; limit {STUDIO_MAX + 1};")
+
+    resultats, souci = demande(VRAIS_JEUX)
+    if souci:
+        return None, souci
+    # Un studio dont IGDB ne connait que des DLC : plutot que d'ecrire
+    # « aucun jeu » a cote d'un nom qui en a fait, on redemande sans le
+    # filtre. Rare, et un second aller-retour ne coute que dans ce cas-la.
+    if not resultats:
+        resultats, souci = demande("")
+        if souci:
+            return None, souci
+
+    jeux = []
+    for jeu in resultats:
+        # exige_jaquette=False : un jeu sans image reste un jeu du studio, et
+        # l'ecarter donnerait une liste trouee sans dire pourquoi
+        fiche = _fiche(jeu, "", exige_jaquette=False)
+        if fiche and fiche["titre"]:
+            jeux.append(fiche)
+
+    encore = len(jeux) > STUDIO_MAX
+    jeux = jeux[:STUDIO_MAX]
+    # IGDB trie les dates inconnues en tete d'un `sort desc` : elles doivent
+    # fermer la marche, pas l'ouvrir
+    jeux.sort(key=lambda f: (f["annee"] is None, -(f["annee"] or 0)))
+    return {"studio": nom_studio, "jeux": jeux, "encore": encore}, None
+
+
+# --------------------------------------------------------------------------
 #   Images larges : les bannieres de profil
 # --------------------------------------------------------------------------
 # t_1080p pour la banniere affichee, t_screenshot_med pour la vignette du
@@ -1254,7 +1379,7 @@ CHAMPS_PROPOSITION = ("id", "titre", "date", "iso", "nature",
 # --------------------------------------------------------------------------
 #   Les deux routes
 # --------------------------------------------------------------------------
-def blueprint_jaquettes(dossier, url_publique="/static/Cover/"):
+def blueprint_jaquettes(dossier, url_publique="/static/archive/Cover/"):
     """Les huit routes du module :
 
       /api/jaquette          cherche les jaquettes possibles d'un nom
@@ -1400,6 +1525,29 @@ def blueprint_jaquettes(dossier, url_publique="/static/Cover/"):
                                message=souci or "aucune information trouvée")
             return jsonify(dict({"ok": True}, **(complet or {}), hltb=temps))
         return _protege("detail", travail)
+
+    @bp.route("/api/jeu/studio", methods=["POST"])
+    def studio():
+        """Les jeux d'un studio, depuis son nom tel qu'il s'affiche.
+
+        Le nom est tout ce qu'on a : la colonne `developpeur` d'un classeur
+        garde des noms, pas des identifiants IGDB (voir _colonne), et la
+        fiche detaillee d'un jeu qu'on ne possede pas n'en garde pas
+        davantage. C'est donc lui qui part, et studio_de retrouve la societe.
+
+        `introuvable` plutot qu'une liste vide : IGDB renomme ses societes,
+        et « aucun jeu » ne dit pas la meme chose que « ce studio, je ne le
+        connais pas ». La fenetre ecrit deux phrases differentes.
+        """
+        def travail():
+            donnees = request.get_json(silent=True) or {}
+            trouve, souci = studio_de(donnees.get("nom"))
+            if souci:
+                return jsonify(etat="injoignable", raison=souci)
+            if not trouve:
+                return jsonify(etat="introuvable")
+            return jsonify(etat="ok", **trouve)
+        return _protege("studio", travail)
 
     @bp.route("/api/jeu/prix", methods=["POST"])
     def prix():

@@ -66,6 +66,22 @@ input,textarea{caret-color:var(--gold)}
   border-bottom:1px solid var(--line);
 }
 .top-in{display:flex;align-items:center;gap:22px;height:62px}
+/* En haut du journal, la barre s'efface devant la banniere.
+   La tete du journal remonte derriere elle (voir .jtete), mais un voile
+   presque opaque et flou gardait le haut de l'image pour lui : on voyait une
+   banniere qui commencait sous la barre, coupee net. Tant qu'on n'a pas
+   defile, la barre n'a donc plus de fond - juste un degrade leger qui garde
+   les boutons lisibles sur une image claire - et l'image se lit en entier.
+   Des qu'on descend, le fond revient : sans lui le texte du mur passerait
+   sous les boutons. `en-haut` est pose par archive-demarrage.js.
+   Pas sur telephone, ou la tete ne remonte pas sous la barre. */
+@media (min-width:641px){
+  .top{transition:background-color .25s,border-color .25s,backdrop-filter .25s}
+  body.en-haut .top{
+    background:linear-gradient(180deg,rgba(23,19,31,.55) 0%,rgba(23,19,31,0) 100%);
+    backdrop-filter:none;border-bottom-color:transparent;
+  }
+}
 /* La maison qui ouvrait mon journal est partie de la barre : c'est la
    pastille d'identité (.brand-moi ci-dessous) qui fait ce chemin-la, et
    qui dit en plus sous quel compte on est. Ses regles s'en vont avec elle
@@ -98,18 +114,28 @@ input,textarea{caret-color:var(--gold)}
    C'est aussi le chemin du retour chez soi, celui que portait la petite
    maison : un bouton de moins, et le geste au bon endroit. */
 .brand-moi{
+  position:relative;
   display:flex;align-items:center;gap:9px;flex:0 0 auto;
   text-decoration:none;color:inherit;
+}
+/* Le point du fil : il y a du neuf derriere cette porte. Un point et non un
+   chiffre - la cloche en porte deja un a trois centimetres de la, et deux
+   nombres voisins qui ne comptent pas la meme chose se lisent comme un
+   seul. Le combien est ecrit sur l'entree « Communaute » du menu, c'est-a-
+   dire a l'endroit ou il veut dire quelque chose (voir .menu-neuf).
+   La meme teinte que la pastille de la cloche : c'est la meme promesse. */
+.moi-point{
+  position:absolute;top:-2px;left:22px;width:9px;height:9px;border-radius:50%;
+  background:#B4295C;border:2px solid var(--bg);
 }
 /* Le pseudo passe a l'or, et rien d'autre. Une pastille qui se cerne au
    survol dessine un bouton la ou il n'y en a pas -- et dans une barre qui
    compte deja quatre contours, un cinquieme qui n'apparait qu'au passage de
    la souris se lit comme un accroc. */
 /* La graisse et la taille du pseudo sont ecrites ici, et non heritees de
-   `.brand b` : sur le journal la pastille est DANS `.brand`, sur le Social
-   elle est a cote (l'en-tete y range la recherche seule dans `.brand`).
-   Sans ces trois lignes, le meme pseudo passait de 19px a la taille du
-   corps d'une page a l'autre. */
+   `.brand b` : sur le journal la pastille est DANS `.brand`, sur le fil
+   elle est seule dans la barre. Sans ces trois lignes, le meme pseudo
+   passait de 19px a la taille du corps d'une page a l'autre. */
 .brand-moi b{
   font-family:var(--display);font-weight:800;font-size:19px;
   letter-spacing:-.02em;transition:color .15s;
@@ -117,6 +143,43 @@ input,textarea{caret-color:var(--gold)}
 .brand-moi:hover b{color:var(--gold)}
 .brand-moi:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:99px}
 .brand-moi-ava{display:flex;flex:0 0 auto}
+
+/* ---------- le menu de la pastille d'identité ----------
+   La barre portait quatre pastilles avant les onglets. Trois parlaient du
+   même sujet - moi, le fil, la recherche d'un journal - et se lisaient
+   pourtant comme trois sujets. Elles tiennent maintenant dans un seul
+   panneau, sous la seule d'entre elles qui ne change jamais.
+
+   Le chevron dit qu'il y a quelque chose dessous, et c'est tout ce qu'on
+   ajoute : pas de cadre, pas de fond au survol. Une pastille qui se cerne
+   dessine un bouton là où il n'y en a pas, et la barre en compte assez.
+
+   Le panneau réutilise .menu tel quel - même fond, même ombre, même
+   animation que l'engrenage et les années. Il ne change qu'une chose : il
+   s'accroche à GAUCHE, parce que son bouton est à gauche et qu'un panneau
+   aligné à droite serait parti dans la page. */
+.moi-wrap{position:relative;flex:0 0 auto;display:flex;align-items:center}
+.moi-menu{left:0;right:auto}
+.moi-chev{
+  flex:0 0 auto;color:var(--muted);opacity:.75;
+  transition:transform .16s,color .15s,opacity .15s;
+}
+.moi-declencheur:hover .moi-chev{color:var(--gold);opacity:1}
+.moi-declencheur[aria-expanded="true"] .moi-chev{
+  transform:rotate(180deg);color:var(--gold);opacity:1;
+}
+.moi-declencheur[aria-expanded="true"] b{color:var(--gold)}
+/* Le déclencheur du visiteur : le nom du site, sans photo. Il porte
+   .brand-moi pour que le mot ait la même taille et la même graisse que mon
+   pseudo - c'est la même place dans la barre, elle ne doit pas changer de
+   hauteur selon qu'on est connecté ou non. */
+.moi-anon{gap:6px}
+/* L'entrée de la page où l'on est déjà. Dorée et non surlignée : le menu
+   des années se sert du fond plein pour dire « c'est l'onglet ouvert », et
+   deux marques identiques pour deux idées différentes finissent par ne
+   plus rien dire. Ici ça veut dire « tu y es », pas « tu as choisi ». */
+.moi-menu .menu-item.on{color:var(--gold);cursor:default}
+.moi-menu .menu-item.on:hover{background:none}
 .brand-moi-ava .ava{width:28px;height:28px;font-size:10px}
 /* [hidden] vient de la feuille du navigateur : sans ce rappel, le
    display:flex ci-dessus le couvre et la pastille reste la sur un ecran ou
@@ -126,24 +189,11 @@ input,textarea{caret-color:var(--gold)}
   font-family:var(--display);font-weight:800;font-size:19px;
   letter-spacing:-.02em;transition:color .15s;
 }
-/* Le bouton qui ouvre la recherche de journal, à droite du titre. Un mot à
-   côté de la loupe plutôt qu'une icône seule : sans lui, rien ne dit que
-   la fonction existe avant de tomber dessus par hasard. Bordure visible au
-   repos pour la même raison - pas seulement au survol, sans quoi il se
-   fond dans le bandeau tant qu'on ne l'a pas déjà repéré. */
-.jnl-search{
-  align-self:center;display:flex;align-items:center;gap:6px;
-  height:27px;padding:0 11px 0 9px;border-radius:99px;
-  color:var(--muted);border:1px solid var(--line);
-  font-family:var(--mono);font-size:11px;letter-spacing:.02em;
-  /* C'etait un <button> ; c'est un lien depuis que la pastille mene au
-     Social ici et a la recherche la-bas. Un lien arrive souligne et se
-     coupe en deux lignes -- les deux se reglent ici plutot que dans deux
-     gabarits qui finiraient par ne plus dire pareil. */
-  text-decoration:none;white-space:nowrap;
-  transition:color .15s,border-color .15s,background .15s;
-}
-.jnl-search:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+/* La classe .jnl-search - la pastille de l'en-tête - a disparu de cette
+   feuille avec les deux boutons qui la portaient : « Feed » et
+   « Rechercher un journal » sont passés dans le menu de la pastille
+   d'identité (voir .moi-wrap plus bas). Le classeur Yu-Gi-Oh! en a une du
+   même nom, mais dans sa propre feuille : rien à reprendre ici. */
 /* Les deux actions de l'en-tête, une à chaque bout - « Retour à Abyss » à
    gauche, « Suggestion / Bug » à droite - et, dès qu'il y a la place, en
    dehors de la colonne centrale.
@@ -184,13 +234,6 @@ input,textarea{caret-color:var(--gold)}
   #abyssBtn{left:24px}
   #suggBtn{right:24px}
 }
-/* Le libellé du bouton de recherche. La règle portait sur `.brand span` et
-   visait la catégorie affichée derrière le titre (« Journal de X -
-   Catégorie ») ; celle-ci a disparu - l'onglet est déjà lisible dans la
-   barre juste dessous, l'écrire deux fois n'apprenait rien. Le bouton, lui,
-   la recevait au passage : le sélecteur nomme donc maintenant ce qu'il
-   habille vraiment, sans rien changer à ce qui s'affiche. */
-.jnl-search span{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase}
 /* pas d'overflow ici : il rognerait le menu déroulant des années. Le
    défilement horizontal ne sert plus, la barre ne grandit plus avec les
    années puisqu'elles sont regroupées dans ce menu. */
@@ -228,6 +271,17 @@ input,textarea{caret-color:var(--gold)}
   text-decoration:none;box-sizing:border-box;
 }
 .menu-item:hover{background:var(--bg3)}
+/* Une entree qui porte un compte : le libelle a gauche, le nombre pousse au
+   bout de la ligne. `display` ne bascule que sur les entrees concernees -
+   les autres restent des blocs, et une entree qui perd son compte redevient
+   ce qu'elle etait. */
+.menu-item.a-neuf{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.menu-neuf{
+  flex:0 0 auto;min-width:17px;height:17px;padding:0 5px;border-radius:9px;
+  display:grid;place-items:center;
+  background:#B4295C;color:#fff;font-family:var(--mono);font-style:normal;
+  font-size:9.5px;line-height:1;
+}
 .menu-item.quit{color:var(--muted)}
 .menu-item.quit:hover{color:var(--text)}
 .menu-item.on{color:var(--gold)}
@@ -299,17 +353,38 @@ input,textarea{caret-color:var(--gold)}
 
 /* ---------- répartition des notes ---------- */
 .dist{padding:26px 0 22px;border-bottom:1px solid var(--line)}
-.dist-head{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+/* La hauteur du bouton « notes 7,50 → 8,00 », reservee meme quand il n'est
+   pas la. Il n'apparait qu'au premier clic sur une barre, et la ligne
+   grandissait alors de sa hauteur : l'histogramme, le mur et tout ce qui
+   suit descendaient d'un cran au moment precis ou l'on venait de cliquer,
+   c'est-a-dire sous le doigt. Une ligne de hauteur fixe ne bouge plus.
+
+   align-items passe de baseline a center pour la meme raison : dans une
+   ligne plus haute que son texte, une base commune collait le titre et la
+   moyenne en haut, et les faisait redescendre quand le bouton entrait. */
+.dist{--dist-clear-h:26px}
+.dist-head{
+  display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;
+  min-height:var(--dist-clear-h);
+}
 .dist-head h2{
   font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.18em;
   text-transform:uppercase;color:var(--muted);margin:0;
 }
 .dist-hint{font-size:12px;color:var(--muted);opacity:.8;font-variant-numeric:tabular-nums}
+/* Hauteur ecrite plutot que deduite du remplissage : c'est elle que
+   .dist-head reserve au-dessus, et deux valeurs qui doivent s'accorder
+   valent mieux dans la meme variable que dans deux calculs separes. */
 .dist-clear{
   margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
-  padding:4px 11px;border-radius:99px;color:var(--gold);white-space:nowrap;
+  height:var(--dist-clear-h);padding:0 11px;display:inline-flex;align-items:center;
+  border-radius:99px;color:var(--gold);white-space:nowrap;
   border:1px solid rgba(229,196,107,.45);transition:background .15s,border-color .15s;
 }
+/* `display` pose sur une classe l'emporte sur le `display:none` que le
+   navigateur attache a [hidden] : sans cette ligne, le bouton ne se
+   cacherait plus jamais. */
+.dist-clear[hidden]{display:none}
 .dist-clear:hover{background:rgba(229,196,107,.12);border-color:var(--gold)}
 .dist-clear span{opacity:.6;margin-left:6px}
 .hist-box{position:relative}
@@ -536,9 +611,6 @@ input,textarea{caret-color:var(--gold)}
 /* Pointillé : cet onglet n'existe pas encore, on est en train de le créer.
    Le voir avant de valider vaut mieux que de le découvrir après. */
 .bkd-p.neuf{border-style:dashed}
-/* Un onglet d'avant la règle, montré seulement au jeu qui y est déjà rangé. */
-.bkd-p.vieux{color:#E38F89;border-color:rgba(227,143,137,.35)}
-.bkd-p.vieux[aria-pressed="true"]{color:#2A0F14;background:#E38F89;border-color:#E38F89}
 /* « Autre… » n'est pas un onglet : il ouvre, il ne choisit pas. */
 .bkd-p.autre{
   font-family:var(--body);font-size:12.5px;letter-spacing:0;
@@ -907,10 +979,15 @@ input,textarea{caret-color:var(--gold)}
 
    Ni l'une ni l'autre ne coute quoi que ce soit la ou le probleme ne se
    pose pas. */
+/* Le fond est plein jusqu'au bas des boutons, et ne s'efface que dans le
+   padding du dessous. Il s'effacait a 74 % de la hauteur : les boutons
+   descendaient donc dans la partie transparente, et ce qui defilait dessous
+   - la bande-annonce de la fiche detaillee surtout - apparaissait autour
+   d'eux. Le fondu garde sa douceur, mais il vit maintenant SOUS la barre. */
 .sheet-tools,
 .sg-tete{
   position:sticky;top:-1px;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:6px;
-  padding:13px 12px 6px;background:linear-gradient(var(--bg2) 74%,rgba(30,24,41,0));
+  padding:13px 12px 10px;background:linear-gradient(var(--bg2) calc(100% - 10px),rgba(30,24,41,0));
 }
 /* Le masque. `bottom:100%` le pose entierement au-dessus de la barre, donc
    hors du conteneur qui defile, qui le coupe : on ne le voit pas. Il ne se
@@ -1346,6 +1423,14 @@ input,textarea{caret-color:var(--gold)}
 .fld.fcheck:hover{border-color:var(--line-strong)}
 .fld.fcheck:has(input:checked){border-color:rgba(229,196,107,.45)}
 .fld.fcheck:has(input:checked) span{color:var(--gold)}
+/* Une case figee par la regle de sortie : le jeu n'est pas encore sorti, il
+   ne peut aller qu'en wishlist (voir syncSortie dans archive-formulaire.js).
+   Elle s'eteint sans disparaitre - une case absente laisserait croire qu'il
+   n'y a jamais eu de choix, alors qu'il y en a un et qu'il est fait. Le
+   curseur dit qu'il n'y a rien a cliquer, le bandeau dessous dit pourquoi. */
+.fld.fcheck:has(input:disabled){opacity:.55;cursor:not-allowed}
+.fld.fcheck:has(input:disabled):hover{border-color:var(--line)}
+.fld.fcheck input:disabled{cursor:not-allowed}
 /* la case wishlist reprend la teinte froide de sa pastille, pour qu'un coup
    d'oeil suffise à savoir laquelle des deux est cochée */
 .fld.fcheck.wish input[type="checkbox"]{accent-color:var(--wish)}
@@ -1984,6 +2069,42 @@ input,textarea{caret-color:var(--gold)}
 }
 .detail-fait b{font-size:14px;font-weight:500;line-height:1.4;max-width:280px;display:block}
 
+/* ---------- le developpeur, cliquable ----------
+   Le seul des cinq faits de la fiche qui mene ailleurs. Il en porte donc la
+   marque - un cadre discret, l'or au survol - sans devenir un bouton plein :
+   il reste une valeur qu'on lit, et un aplat dore au milieu de quatre faits
+   gris aurait attire l'oeil avant le titre du jeu.
+   Plusieurs studios se posent les uns a cote des autres et passent a la
+   ligne : « Nintendo EPD, Monolith Soft » sont deux boutons, pas un. */
+.detail-fait b.detail-studios{display:flex;flex-wrap:wrap;gap:6px}
+.detail-studio{
+  font:inherit;font-size:14px;font-weight:500;line-height:1.3;text-align:left;
+  padding:2px 8px;border-radius:7px;cursor:pointer;
+  color:var(--text);background:var(--bg3);border:1px solid var(--line);
+  transition:color .15s,border-color .15s,background .15s;
+}
+.detail-studio:hover{color:var(--gold);border-color:rgba(229,196,107,.45)}
+.detail-studio:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* ---------- les jeux d'un studio ----------
+   Plus etroite que la fiche detaillee qui l'ouvre : il n'y a ici qu'une
+   colonne de titres, et l'etaler sur 680px aurait laisse la moitie de la
+   ligne vide entre la jaquette et la date.
+   Les lignes elles-memes sont celles de la liste deroulante du champ « Nom
+   du jeu » (.ac-item, plus haut) : c'est le meme objet, il se dessine au
+   meme endroit. Seule la boite qui les tient change. */
+.studio-sheet{max-width:520px}
+.studio-in{padding:6px 24px 24px;display:flex;flex-direction:column;gap:12px}
+.studio-compte{margin:0;font-size:12.5px;color:var(--muted)}
+.studio-compte b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+/* Une hauteur plafonnee et non la fenetre entiere : la barre du titre reste
+   a l'ecran pendant qu'on descend la liste, donc la croix aussi. */
+.studio-liste{
+  display:flex;flex-direction:column;gap:2px;
+  max-height:min(56vh,520px);overflow-y:auto;overscroll-behavior:contain;
+  margin:0 -6px;padding:0 6px;
+}
+
 .detail-temps-grid u{
   display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--muted);text-decoration:none;margin-bottom:12px;
@@ -2184,6 +2305,24 @@ input,textarea{caret-color:var(--gold)}
 }
 .empty h3{font-family:var(--display);font-weight:700;font-size:21px;margin:0 0 8px;letter-spacing:-.02em}
 .empty p{color:var(--muted);margin:0 0 18px;max-width:56ch}
+/* Le rebond vers IGDB, quand le mur n'a rien trouvé. Doré et plein, comme
+   « + Ajouter un jeu » : c'est la seule chose à faire dans un écran qui
+   n'en propose aucune autre, et un bouton fantôme au milieu d'un cadre en
+   pointillés ne se serait pas distingué du cadre.
+
+   `svg` en bloc : posé en ligne, il s'assoit sur la ligne de base et
+   décale la loupe d'un pixel vers le bas. */
+.empty-cta{
+  display:inline-flex;align-items:center;gap:9px;
+  height:40px;padding:0 18px;border-radius:99px;
+  background:rgba(229,196,107,.12);
+  border:1px solid rgba(229,196,107,.45);color:var(--gold);
+  font-family:var(--mono);font-size:12.5px;letter-spacing:.02em;
+  transition:background .15s,border-color .15s;
+}
+.empty-cta svg{display:block;flex:0 0 auto}
+.empty-cta:hover{background:rgba(229,196,107,.2);border-color:var(--gold)}
+.empty-cta:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .empty ol{margin:0;padding-left:18px;color:var(--muted);max-width:64ch}
 .empty li{margin-bottom:7px}
 .empty code{
@@ -2358,7 +2497,6 @@ input,textarea{caret-color:var(--gold)}
     padding-top:9px;padding-bottom:0;position:static;
   }
   #abyssBtn{order:1}
-  .brand-moi{order:2}
   .brand{order:3;flex:1 1 auto;min-width:0;align-items:center;gap:7px;padding:0}
   #suggBtn{order:4}
   .cog-wrap{order:5;position:relative;top:auto;right:auto}
@@ -2367,19 +2505,21 @@ input,textarea{caret-color:var(--gold)}
   /* Ronds et de 38 px : c'est la plus petite cible qu'un pouce trouve du
      premier coup, et la forme dit « icône » là où le rectangle disait
      « bouton avec du texte dedans ». */
-  .entete-action,.cog,.jnl-search{
+  .entete-action,.cog{
     width:38px;height:38px;padding:0;border-radius:50%;
     flex:0 0 auto;margin:0;justify-content:center;
   }
-  .entete-action span,.jnl-search span{display:none}
+  .entete-action span{display:none}
   .brand b{
     font-size:17px;min-width:0;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
-  /* La loupe perd son mot, et c'est le seul endroit où l'on renonce à la
-     règle « un libellé plutôt qu'une icône » : une loupe dans une barre de
-     titre de téléphone n'a plus besoin d'être présentée. */
-  .jnl-search{align-self:auto}
+  /* La pastille d'identité ne devient PAS un rond. C'est la seule de la
+     barre qui porte un nom propre - le mien, ou celui du site - et un rond
+     sans texte ne dirait plus qui l'on est ni que quelque chose se déplie
+     dessous. Elle garde donc son libellé, et c'est elle qui absorbe la
+     place laissée par les quatre autres passées en icônes. */
+  .moi-wrap{order:2;min-width:0}
 
   /* ---------- les onglets : un sélecteur segmenté ----------
      Ils passent sur leur propre ligne et s'y partagent la largeur à parts
@@ -2511,7 +2651,8 @@ input,textarea{caret-color:var(--gold)}
      haut et ne défile pas, le doigt qui s'y pose ne peut vouloir que ça.
      Le corps de la feuille, lui, garde son défilement. */
   /* le pixel rendu au padding suit le top:-1px de la regle generale */
-  .sheet-tools,.sg-tete{padding:18px 10px 6px;touch-action:none}
+  /* 10 px en bas comme sur grand ecran : c'est la hauteur du fondu */
+  .sheet-tools,.sg-tete{padding:18px 10px 10px;touch-action:none}
   .sheet-tools::before,.sg-tete::before{
     content:'';position:absolute;top:7px;left:50%;transform:translateX(-50%);
     width:38px;height:4px;border-radius:99px;background:var(--line-strong);
@@ -2541,7 +2682,8 @@ input,textarea{caret-color:var(--gold)}
   .fhead,.sg-titre{padding-left:14px;font-size:16px}
   .fld input,.fld select,.fld.fcheck,.sg-select{height:46px}
   .fld select,.sg-select{background-position:calc(100% - 17px) 21px,calc(100% - 12px) 21px}
-  .form-in,.rsearch-in,.jaq-in,.bilan-in,.igdb-in,.export-in,.detail-in,.sg-form{
+  .form-in,.rsearch-in,.jaq-in,.bilan-in,.igdb-in,.export-in,.detail-in,
+  .studio-in,.sg-form{
     padding:2px 16px 20px;
   }
   .sg-genre span{height:42px;font-size:12px}
@@ -2938,15 +3080,6 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
   background:var(--bg2);border:1px solid var(--line);color:var(--muted);
   display:grid;place-items:center;cursor:pointer;padding:0;
   transition:color .15s,border-color .15s,background .15s;
-}
-
-/* --- .vieux  (transcript du 2026-09-02T20:33:10) --- */
-/* L'onglet qui ne suit pas la règle, dans le menu des années : signalé, pas
-   caché. Le cacher reviendrait à perdre les jeux qui sont dedans. */
-.menu-item .vieux{
-  float:right;margin-left:8px;
-  font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
-  color:#E38F89;
 }
 
 /* --------------------------------------------------------------------------

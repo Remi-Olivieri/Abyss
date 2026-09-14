@@ -40,6 +40,8 @@ import sqlite3
 import threading
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
+from email.utils import formatdate, make_msgid
+from html import escape as html_echappe
 from pathlib import Path
 
 from flask import Blueprint, g, jsonify, request
@@ -137,7 +139,7 @@ class Refus(Exception):
         self.code, self.message, self.statut = code, message, statut
 
 
-def envoie_mail(destinataire, sujet, corps) -> None:
+def envoie_mail(destinataire, sujet, corps, html=None) -> None:
     """Un mail texte brut, ou son contenu sur la console si aucun serveur
     SMTP n'est configure.
 
@@ -157,7 +159,19 @@ def envoie_mail(destinataire, sujet, corps) -> None:
     msg["Subject"] = sujet
     msg["From"] = SMTP_EXPEDITEUR
     msg["To"] = destinataire
+    # Date et Message-ID : un mail qui n'en a pas est un mail fabrique a la
+    # main par un script, et c'est exactement ce que les filtres a spam
+    # cherchent. Le relais les ajoute parfois, pas toujours -- on ne compte
+    # pas dessus.
+    msg["Date"] = formatdate(localtime=False)
+    msg["Message-ID"] = make_msgid(domain="jokrem.fr")
     msg.set_content(corps)
+    # La version HTML en plus du texte, pas a sa place : les deux partent
+    # ensemble et chaque messagerie affiche celle qu'elle prefere. Un lien
+    # nu dans du texte brut ressemble davantage a de l'hameconnage qu'un
+    # bouton dans un message mis en forme.
+    if html:
+        msg.add_alternative(html, subtype="html")
     with smtplib.SMTP(SMTP_HOTE, SMTP_PORT, timeout=10) as s:
         s.starttls()
         if SMTP_UTILISATEUR:
@@ -530,10 +544,42 @@ SPOILER = """
 ALTER TABLE jeu ADD COLUMN spoiler INTEGER NOT NULL DEFAULT 0;
 """
 
+# Migration 20 : jusqu'ou chacun a lu le fil.
+#
+# La pastille du bouton « Communaute » compte ce qui est entre dans le fil
+# depuis la derniere visite. Ce repere suit le compte et non le navigateur :
+# lire le fil sur son telephone l'a lu partout. Un identifiant de ligne, et
+# non une date -- c'est deja le curseur du fil (voir fil() dans social.py),
+# et la comparaison porte sur le meme couple (date d'entree, id).
+FIL_VU = """
+ALTER TABLE utilisateur ADD COLUMN fil_vu_id INTEGER;
+"""
+
+# Migration 21 : prevenir la veille de la sortie d'un jeu convoite.
+#
+# `alertes_sortie` : l'option du compte, eteinte par defaut -- on n'envoie
+# pas de mail a quelqu'un qui ne l'a pas demande.
+#
+# `alerte_sortie` : ce qui est deja parti. Un redemarrage du serveur a
+# minuit et une minute relance l'envoi du jour ; sans cette table, il
+# repartirait une seconde fois. La date de sortie fait partie de la cle :
+# un jeu repousse d'un mois doit bien etre annonce une nouvelle fois.
+ALERTES_SORTIE = """
+ALTER TABLE utilisateur ADD COLUMN alertes_sortie INTEGER NOT NULL DEFAULT 0;
+CREATE TABLE alerte_sortie(
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  jeu_id         INTEGER NOT NULL REFERENCES jeu(id) ON DELETE CASCADE,
+  sortie         TEXT NOT NULL,
+  envoye_le      TEXT NOT NULL,
+  PRIMARY KEY (utilisateur_id, jeu_id, sortie)
+);
+"""
+
 MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
               SUGGESTIONS, BANNIERE, ONGLET_DEFAUT, PRIORITE,
               SUGGESTIONS_VUES, MONITORING, QUIZ_SOURCE, THEMES_JEU,
-              CLASSEUR, SOCIAL, DISCUSSION, FIL, SPOILER]
+              CLASSEUR, SOCIAL, DISCUSSION, FIL, SPOILER, FIL_VU,
+              ALERTES_SORTIE]
 
 _local = threading.local()
 
@@ -790,14 +836,32 @@ def demande_reinitialisation(identifiant) -> None:
     lien = f"{request.host_url}abyss/reinitialiser?jeton={jeton}"
     corps = (
         f"Bonjour {u['pseudo']},\n\n"
-        "Quelqu'un (toi, on espere) a demande a reinitialiser le mot de passe "
+        "Quelqu'un (toi, on espère) a demandé à réinitialiser le mot de passe "
         "de ton compte Abyss.\n\n"
         f"Choisis-en un nouveau ici, le lien est valable une heure :\n{lien}\n\n"
-        "Si ce n'est pas toi qui as fait cette demande, ignore ce message : "
-        "rien ne change a ton compte.\n"
+        "Si ce n'est pas toi qui as fait cette demande, tu peux ignorer ce message.\n"
+        "Abyss - jokrem.fr\n"
     )
+    # Le meme message, mis en forme. Tout en styles en ligne : les
+    # messageries retirent les <style> et les feuilles externes.
+    pseudo_html = html_echappe(u["pseudo"])
+    lien_html = html_echappe(lien)
+    html = f"""<!doctype html>
+<html lang="fr"><body style="margin:0;padding:24px;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;color:#1d2733">
+  <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:10px;padding:28px">
+    <p style="margin:0 0 16px;font-size:15px">Bonjour {pseudo_html},</p>
+    <p style="margin:0 0 22px;font-size:15px;line-height:1.5">Quelqu'un (toi, on espère) a demandé à réinitialiser le mot de passe de ton compte Abyss.</p>
+    <p style="margin:0 0 22px">
+      <a href="{lien_html}" style="display:inline-block;background:#2e6f96;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-size:15px">Choisir un nouveau mot de passe</a>
+    </p>
+    <p style="margin:0 0 8px;font-size:13px;color:#5b6773">Le lien est valable une heure. S'il ne s'ouvre pas, copie cette adresse :</p>
+    <p style="margin:0 0 22px;font-size:12px;word-break:break-all;color:#5b6773">{lien_html}</p>
+    <p style="margin:0;font-size:13px;color:#5b6773">Si ce n'est pas toi qui as fait cette demande, tu peux ignorer ce message.</p>
+  </div>
+  <p style="text-align:center;font-size:12px;color:#8a95a1;margin:16px 0 0">Abyss - jokrem.fr</p>
+</body></html>"""
     try:
-        envoie_mail(u["email"], "Reinitialiser ton mot de passe Abyss", corps)
+        envoie_mail(u["email"], "Réinitialiser ton mot de passe Abyss", corps, html)
     except Exception as err:               # noqa: BLE001 - SMTP casse de mille facons
         # Laisser remonter donnait un 500 -- mais SEULEMENT pour un compte
         # qui existe et a un e-mail. La difference entre 500 et 200 disait
@@ -1190,7 +1254,9 @@ def etat(u) -> dict:
              "suggestionsNeuves": suggestions_neuves(u),
              # la cloche du social, au meme endroit et pour la meme raison :
              # une pastille suit le compte, pas la page ou on l'affiche
-             "notificationsNeuves": notifications_neuves(u)},
+             "notificationsNeuves": notifications_neuves(u),
+             # le mail de la veille d'une sortie : voir alertes.py
+             "alertesSortie": bool(u["alertes_sortie"])},
         "masques": [] if u is None else masques(u["id"]),
         # le reglage du Quiz voyage avec le reste : la page des mini-jeux le
         # lit dans la reponse qu'elle demande deja, sans un second appel
@@ -1325,7 +1391,32 @@ def changer_email():
     email = verifie_email(d.get("email"))
     c = cx()
     with c:
-        c.execute("UPDATE utilisateur SET email = ? WHERE id = ?", (email, u["id"]))
+        # Sans adresse, l'alerte de sortie n'a nulle part ou partir : elle
+        # s'eteint avec. La laisser allumee la ferait revenir toute seule
+        # le jour ou une adresse serait remise, sans qu'on l'ait redemande.
+        c.execute("UPDATE utilisateur SET email = ?,"
+                  " alertes_sortie = CASE WHEN ? IS NULL THEN 0 ELSE alertes_sortie END"
+                  " WHERE id = ?", (email, email, u["id"]))
+    return reponse(etat(par_pseudo(u["pseudo"])))
+
+
+@blueprint_comptes.put("/alertes-sortie")
+def alertes_sortie():
+    """Allume ou eteint le mail de la veille d'une sortie (voir alertes.py).
+
+    Refuse sans adresse e-mail : la page grise deja la case dans ce cas,
+    mais c'est ici que la regle tient vraiment.
+    """
+    u = actuel()
+    if u is None:
+        return echec("connexion", "Il faut etre connecte.", 401)
+    actif = corps().get("actif") is True
+    if actif and not u["email"]:
+        return echec("email", "Ajoute d'abord une adresse e-mail.", 400)
+    c = cx()
+    with c:
+        c.execute("UPDATE utilisateur SET alertes_sortie = ? WHERE id = ?",
+                  (1 if actif else 0, u["id"]))
     return reponse(etat(par_pseudo(u["pseudo"])))
 
 
@@ -1411,7 +1502,7 @@ def mot_de_passe_oublie():
     # e-mail, ou lien reellement parti. Rien ici ne doit dire lequel --
     # sinon la page devient un testeur d'adresses.
     return reponse({"ok": True, "message":
-        "Si un compte correspond, un lien vient de partir sur son adresse e-mail."})
+        "Si un compte correspond, un lien vient d'être envoyé à cette adresse e-mail."})
 
 
 @blueprint_comptes.post("/mot-de-passe-oublie/confirmer")

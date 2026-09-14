@@ -458,7 +458,8 @@ function peintDetail(data, g){
        jaquettes.py) : la page n'a pas a savoir compter en secondes UTC. */
     data.date        ? detailFaitHTML('Sortie',       data.date)        : '',
     data.plateforme  ? detailFaitHTML('Plateformes',  data.plateforme)  : '',
-    data.developpeur ? detailFaitHTML('D\u00E9veloppeur',  data.developpeur) : '',
+    // le seul fait qui mene ailleurs : voir detailStudiosHTML juste au-dessus
+    data.developpeur ? detailStudiosHTML(data.developpeur)                 : '',
     data.genres      ? detailFaitHTML('Genres',       data.genres)      : '',
     data.themes      ? detailFaitHTML('Th\u00E8mes',      data.themes)      : '',
     (data.note_critique !== null && data.note_critique !== undefined)
@@ -506,12 +507,132 @@ function peintDetail(data, g){
     ${galerie}
     <div class="links">${liens}</div>`;
 
+  // chaque studio ouvre la liste de ce qu'il a fait, par-dessus cette fiche
+  zone.querySelectorAll('.detail-studio').forEach(b=>{
+    b.onclick = ()=> ouvrirStudio(b.dataset.studio);
+  });
+
   // les captures s'ouvrent en grand : la bande ne sert qu'à choisir laquelle
   const vues = (data.images || []).map(im => im.grande);
   zone.querySelectorAll('.detail-galerie img').forEach(img=>{
     img.onclick = ()=> ouvrirZoom(vues, +img.dataset.i);
   });
 }
+
+/* =======================================================================
+   Les jeux d'un studio
+
+   Le developpeur etait un fait parmi d'autres sur la fiche : un nom pose a
+   cote des genres et des plateformes. C'est pourtant le seul des cinq qui
+   appelle une suite - on lit « Supergiant Games » et on veut savoir ce
+   qu'ils ont fait d'autre, ce qui voulait dire sortir du site.
+
+   Chaque nom devient donc un bouton, et la fenetre qu'il ouvre est faite
+   des memes lignes que la liste deroulante du champ « Nom du jeu » : c'est
+   le meme objet - une fiche IGDB qu'on peut ouvrir - et acHTML est deja
+   l'endroit ou il se dessine (voir archive-recherche.js).
+
+   Elle se pose PAR-DESSUS la fiche qui l'a ouverte, et non a sa place :
+   revenir au jeu d'ou l'on vient est un clic sur la croix, pas un retour
+   en arriere a reconstruire. Et de la, un jeu du studio rouvre la fiche
+   detaillee, qui repasse devant - on peut donc remonter une lignee de
+   studio en studio sans jamais rien perdre.
+   ======================================================================= */
+let STUDIO_JETON = 0;
+let STUDIO_JEUX = [];
+
+/* Un nom de studio par bouton. La colonne `developpeur` en porte parfois
+   plusieurs, separes par des virgules (voir _colonne dans jaquettes.py) :
+   « Nintendo EPD, Monolith Soft » sont deux studios, et c'est celui qu'on
+   designe qu'on veut voir - pas la chaine entiere, qui ne correspond a
+   aucune societe. */
+function detailStudiosHTML(liste){
+  const noms = String(liste || '').split(',').map(n => n.trim()).filter(Boolean);
+  if(!noms.length) return '';
+  return `<div class="detail-fait"><u>D\u00E9veloppeur${noms.length > 1 ? 's' : ''}</u>
+    <b class="detail-studios">${noms.map(n =>
+      `<button type="button" class="detail-studio" data-studio="${esc(n)}"
+        aria-label="Voir les jeux de ${esc(n)}">${esc(n)}</button>`).join('')}</b></div>`;
+}
+
+function studioHTML(nom){
+  return `<div class="sheet studio-sheet" role="dialog" aria-modal="true"
+      aria-label="Les jeux de ${esc(nom)}">
+    <div class="sheet-tools">
+      <span class="grp"><b class="fhead">${esc(nom)}</b></span>
+      <span class="grp"><button class="sbtn studio-x" aria-label="Fermer">\u00D7</button></span>
+    </div>
+    <div class="studio-in" id="studioIn">
+      <p class="detail-etat">Recherche des jeux du studio\u2026</p>
+    </div>
+  </div>`;
+}
+
+async function ouvrirStudio(nom){
+  const propre = String(nom || '').trim();
+  if(!propre) return;
+  const host = $('studio');
+  host.innerHTML = studioHTML(propre);
+  host.hidden = false;
+  auPremierPlan(host);      // elle s'ouvre depuis la fiche, qui reste dessous
+  verrouFond();
+  host.querySelector('.studio-x').onclick = fermerStudio;
+
+  const jeton = ++STUDIO_JETON;
+  let data;
+  try{ data = await api('/api/jeu/studio', {nom: propre}); }
+  catch(e){ data = {etat: 'injoignable', raison: raisonReseau(e)}; }
+  // refermee, ou un autre studio ouvert entre-temps
+  if(jeton !== STUDIO_JETON || host.hidden) return;
+  peintStudio(data, propre);
+}
+
+function peintStudio(data, nom){
+  const zone = document.getElementById('studioIn');
+  if(!zone) return;
+  const etat = data && data.etat;
+  if(etat === 'introuvable'){
+    zone.innerHTML = `<p class="detail-etat">IGDB ne conna\u00EEt aucun studio nomm\u00E9
+      \u00AB\u202F${esc(nom)}\u202F\u00BB.</p>`;
+    return;
+  }
+  if(etat !== 'ok'){
+    zone.innerHTML = `<p class="detail-etat">Jeux du studio injoignables : ${
+      esc((data && data.raison) || 'pas de r\u00E9ponse')}</p>`;
+    return;
+  }
+  STUDIO_JEUX = data.jeux || [];
+  if(!STUDIO_JEUX.length){
+    zone.innerHTML = `<p class="detail-etat">Aucun jeu connu pour ce studio.</p>`;
+    return;
+  }
+  /* Le compte en tete, et « les plus recents » quand la liste est coupee :
+     une liste tronquee qui ne le dit pas se lit comme une liste complete,
+     et un studio de trente ans y semble en avoir fait soixante. */
+  const n = STUDIO_JEUX.length;
+  zone.innerHTML = `<p class="studio-compte">${data.encore
+      ? `Les <b>${n}</b> jeux les plus r\u00E9cents`
+      : `<b>${n}</b> jeu${n > 1 ? 'x' : ''}`}, du plus r\u00E9cent au plus ancien.</p>
+    <div class="studio-liste">${acHTML(STUDIO_JEUX)}</div>`;
+
+  zone.querySelectorAll('.ac-item').forEach(el=>{
+    el.onclick = ()=>{
+      const j = STUDIO_JEUX[+el.dataset.i];
+      // la fiche du jeu repasse devant ; le studio reste dessous, on y
+      // revient d'une croix sans avoir a le redemander
+      if(j) ouvrirDetailIgdb(j.id, j.titre);
+    };
+  });
+}
+
+function fermerStudio(){
+  const host = $('studio');
+  if(host.hidden) return;
+  STUDIO_JETON++;              // ce qui repondra apres nous ne sert plus
+  host.hidden = true; host.innerHTML = '';
+  verrouFond();
+}
+fermeSurFond('studio', fermerStudio);
 
 /* ---------- une capture en grand ----------
    La dernière fenêtre de la pile, et la plus simple : une image, deux

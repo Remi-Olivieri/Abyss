@@ -68,6 +68,14 @@
   .banniere-email{display:block;margin-top:5px;color:var(--brume);font-size:13.5px}
   .banniere-actions{display:flex;flex-wrap:wrap;gap:10px}
 
+  /* L'alerte de sortie reprend la bascule des projets, sans son sens : là-bas
+     une case décochée est un projet masqué, donc éteint. Ici, décoché est
+     simplement l'état normal, et seule l'absence d'adresse éteint la ligne. */
+  .bascule.alerte:has(input:not(:checked)){opacity:1}
+  .bascule.alerte:has(input:disabled){opacity:.45;cursor:not-allowed}
+  .bascule.alerte input:disabled{cursor:not-allowed}
+  .alerte-sans-mail{margin:6px 0 0}
+
   /* ---------- l'image de bannière ----------
      Dans une couche à part plutôt qu'en background de la section : c'est ce
      qui permet de l'assombrir sans la teinter, et de la laisser vivre à
@@ -172,6 +180,18 @@
       <h2>Projets affichés</h2>
       <p class="explication">Décoche ceux que tu ne veux pas voir sur Abyss.</p>
       <div id="listeProjets"></div>
+    </section>
+
+    <!-- Le mail de la veille d'une sortie. Éteint par défaut, et grisé tant
+         qu'il n'y a pas d'adresse où l'envoyer - la phrase sous la case dit
+         pourquoi, plutôt que de laisser deviner. Voir alertes.py. -->
+    <section class="carte-profil">
+      <h2>Notifications</h2>
+      <label class="bascule alerte" id="alerteLigne">
+        <input type="checkbox" id="alerteSortie">
+        <span class="etiquette">M'envoyer un e-mail la veille de la sortie d'un jeu de ma wishlist</span>
+      </label>
+      <p class="explication alerte-sans-mail" id="alerteSansMail" hidden>Ajoute une adresse e-mail pour activer cette option.</p>
     </section>
 
   </main>
@@ -573,7 +593,33 @@ function majAvatarApercu() {
 function majBanniereCompte() {
   el("bannierePseudo").textContent = MOI.utilisateur.pseudo;
   el("banniereEmail").textContent = MOI.utilisateur.email || "Aucun e-mail enregistré";
+  // l'alerte de sortie dépend de l'adresse : elle se grise ou se libère avec
+  dessineAlertes();
 }
+
+/* =========================================================
+   Notifications - l'alerte de la veille d'une sortie
+   ========================================================= */
+function dessineAlertes() {
+  const aMail = !!MOI.utilisateur.email;
+  const c = el("alerteSortie");
+  c.checked = aMail && !!MOI.utilisateur.alertesSortie;
+  c.disabled = !aMail;
+  el("alerteSansMail").hidden = aMail;
+}
+el("alerteSortie").addEventListener("change", async () => {
+  const c = el("alerteSortie");
+  const voulu = c.checked;
+  c.disabled = true;
+  try {
+    const data = await api("/api/alertes-sortie", "PUT", { actif: voulu });
+    MOI.utilisateur = data.utilisateur;
+    toast(voulu ? "Alerte de sortie activée." : "Alerte de sortie désactivée.");
+  } catch (err) {
+    toast("Réglage non enregistré : " + err.message, true);
+  }
+  dessineAlertes();          // le serveur fait foi, y compris quand il a refusé
+});
 el("avatarFichier").addEventListener("change", () => {
   const fichier = el("avatarFichier").files[0];
   if (!fichier) return;

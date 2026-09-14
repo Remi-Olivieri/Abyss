@@ -234,6 +234,7 @@ function toggleMenu(){
   if(ouvert){
     fermerRecherche(); closePer();
     if(typeof socialClocheFerme === 'function') socialClocheFerme();
+    if(typeof menuMoiFerme === 'function') menuMoiFerme();
   }
   m.hidden = !ouvert;
   document.getElementById('cog').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
@@ -285,7 +286,7 @@ function majEntete(){ majIdentite(); }
    changement de classeur. */
 function majMoi(){
   const bouton = document.getElementById('moiBtn');
-  const titre = document.getElementById('brand-title');
+  const anon = document.getElementById('moiAnon');
   /* L'entretien de la base ne dépend pas non plus du journal affiché : il
      se pose ici, avec le reste de ce qui parle de moi. majVerrou() le
      redira à chaque classeur ouvert, mais l'administration qui arrive sur
@@ -293,21 +294,24 @@ function majMoi(){
      pouvoir l'ouvrir quand même : c'est de la base qu'il s'agit, pas d'un
      classeur en particulier. */
   document.getElementById('igdbBtn').hidden = !MOI.admin;
+  /* Les deux déclencheurs du menu d'identité, dont un seul se montre : ma
+     pastille quand j'ai un compte, le nom du site sinon. La barre ne peut
+     pas rester nue, et le menu ne peut pas dépendre du fait d'en avoir un -
+     un visiteur a le même besoin d'aller au fil et de chercher un journal.
+     Voir monteMenuMoi dans archive-social.js. */
   bouton.hidden = !MOI.pseudo;
-  // sans compte, la barre porte le nom du site : elle ne peut pas rester nue
-  titre.hidden = !!MOI.pseudo;
+  anon.hidden = !!MOI.pseudo;
+  /* Et l'entrée « Mon journal » du menu avec eux : sans journal à soi, elle
+     ne mène nulle part. Voir menuMoiJournal dans archive-social.js. */
+  menuMoiJournal(MOI.pseudo ? '/archive/' + encodeURIComponent(MOI.pseudo) : null);
   if(!MOI.pseudo) return;
   bouton.href = '/archive/' + encodeURIComponent(MOI.pseudo);
   document.getElementById('moiAva').innerHTML = avatarHTML(MOI.pseudo, MOI.avatar);
   document.getElementById('moiNom').textContent = MOI.pseudo;
-  bouton.onclick = e=>{
-    /* On est déjà sur la page : changer de classeur sur place vaut mieux
-       que de la recharger. L'adresse reste vraie pour le clic du milieu et
-       le menu contextuel, qui n'entrent pas ici. */
-    e.preventDefault();
-    closeMenu(); fermerRecherche();
-    ouvrirLeMien();
-  };
+  /* Le clic gauche n'ouvre plus mon journal, il ouvre le menu - et c'est
+     « Mon journal » qui fait le chemin, première ligne de la liste. Le
+     branchement est dans monteMenuMoi ; il n'y a donc plus rien à poser
+     ici, seulement à dire que ce n'est pas un oubli. */
 }
 
 /* La pastille de l'en-tête et le bandeau du haut, remplis d'un seul geste :

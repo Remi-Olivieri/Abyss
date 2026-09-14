@@ -29,30 +29,65 @@
     padding:1px 6px;border-radius:5px;background:rgba(3,8,15,.7);color:#9FC4DA;
   }
 
-  /* ---------- filtres ---------- */
-  .sug-filtres{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
-  .sug-filtre{
-    font:inherit;font-size:13px;padding:7px 14px;border-radius:999px;
+  /* ---------- filtres ----------
+     Trois menus déroulants - Type, Importance, Page - au lieu d'une rangée
+     de boutons qui s'allongeait d'un bouton par projet. Dans un menu on
+     coche autant de valeurs qu'on veut (elles s'additionnent : « Bugs » et
+     « Idées » montrent les deux) ; d'un menu à l'autre elles se combinent
+     (« Bugs » ET « Urgent » ET « Archive »). Rien de coché dans un menu,
+     c'est tout ce menu. */
+  .sug-filtres{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:24px}
+  .sug-dd{position:relative}
+  .sug-dd-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    font:inherit;font-size:13px;padding:7px 12px 7px 14px;border-radius:999px;
     color:var(--brume);border:1px solid rgba(150,195,220,.16);
-    background:rgba(3,8,15,.6);cursor:pointer;
+    background:rgba(3,8,15,.6);cursor:pointer;white-space:nowrap;
     transition:border-color .2s ease,color .2s ease,background .2s ease;
   }
-  .sug-filtre:hover{color:var(--os)}
-  .sug-filtre.actif{
+  .sug-dd-btn:hover{color:var(--os)}
+  .sug-dd-btn b{font-weight:500;color:var(--os)}
+  .sug-dd-btn svg{opacity:.6;transition:transform .2s ease}
+  .sug-dd-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+  /* un menu qui filtre se voit fermé : c'est lui qui explique une liste courte */
+  .sug-dd.actif .sug-dd-btn{
     color:var(--os);border-color:rgba(120,200,230,.55);background:rgba(120,200,230,.12);
   }
-  .sug-filtre b{font-weight:500;opacity:.6;margin-left:5px}
-  .sug-filtre:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
-  /* les trois filtres d'importance portent leur couleur même éteints : sinon
-     rien ne dirait qu'ils forment un groupe à part des projets */
-  .sug-filtre i{
-    display:inline-block;width:7px;height:7px;border-radius:50%;
-    margin-right:7px;vertical-align:middle;position:relative;top:-1px;
-    background:var(--n);box-shadow:0 0 8px -1px var(--n);
+  .sug-dd-btn:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  .sug-dd-panneau{
+    position:absolute;top:calc(100% + 6px);left:0;z-index:30;
+    min-width:220px;max-height:min(60vh,380px);overflow-y:auto;padding:6px;
+    border-radius:12px;background:#0B1624;border:1px solid rgba(150,195,220,.22);
+    box-shadow:0 18px 40px rgba(0,0,0,.55);
   }
-  .sug-filtre.niveau.actif{
-    color:var(--n);border-color:var(--n-bord);background:var(--n-fond);
+  .sug-dd-panneau[hidden]{display:none}
+  .sug-opt{
+    display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;
+    font-size:13.5px;color:#DCE8F0;cursor:pointer;user-select:none;
   }
+  .sug-opt:hover{background:rgba(120,200,230,.08)}
+  .sug-opt input{margin:0;accent-color:var(--plancton);width:15px;height:15px;flex:none}
+  .sug-opt span{flex:1}
+  .sug-opt b{font-weight:500;font-size:12px;color:var(--brume);font-variant-numeric:tabular-nums}
+  /* une valeur qui ne donnerait rien avec les autres filtres : lisible, éteinte */
+  .sug-opt.zero{opacity:.45}
+  /* la pastille de couleur des niveaux, dans leur menu */
+  .sug-opt i{
+    width:8px;height:8px;border-radius:50%;flex:none;
+    background:var(--n,rgba(150,195,220,.35));box-shadow:0 0 8px -1px var(--n,transparent);
+  }
+  .sug-opt.n1{--n:#FF8A8A}.sug-opt.n2{--n:#F2B25C}.sug-opt.n3{--n:#4FE0AF}
+  .sug-dd-pied{
+    display:flex;justify-content:flex-end;padding:6px 4px 2px;margin-top:4px;
+    border-top:1px solid rgba(150,195,220,.1);
+  }
+  .sug-lien{
+    font:inherit;font-size:12.5px;color:var(--brume);background:none;border:0;
+    padding:6px 8px;border-radius:7px;cursor:pointer;
+  }
+  .sug-lien:hover{color:var(--os);background:rgba(120,200,230,.08)}
+  .sug-effacer{margin-left:4px}
+  .sug-resume{margin-left:auto;font-size:12.5px;color:var(--brume)}
 
   /* ---------- une section ---------- */
   .sug-section{margin-bottom:34px}
@@ -109,11 +144,17 @@
      pastille repeinte, et le mot en clair dans la méta. La couleur seule
      ne dirait rien à qui ne la distingue pas - et un rouge et un vert de
      même clarté, c'est précisément la paire qui se confond le plus. */
-  .sug-ligne.p1,.sug-filtre.p1{--n:#FF8A8A;--n-bord:rgba(255,138,138,.45);--n-fond:rgba(232,106,106,.13)}
-  .sug-ligne.p2,.sug-filtre.p2{--n:#F2B25C;--n-bord:rgba(242,178,92,.45);--n-fond:rgba(232,163,74,.13)}
-  .sug-ligne.p3,.sug-filtre.p3{--n:#4FE0AF;--n-bord:rgba(79,224,175,.42);--n-fond:rgba(63,217,164,.11)}
+  .sug-ligne.p1{--n:#FF8A8A;--n-bord:rgba(255,138,138,.45);--n-fond:rgba(232,106,106,.13)}
+  .sug-ligne.p2{--n:#F2B25C;--n-bord:rgba(242,178,92,.45);--n-fond:rgba(232,163,74,.13)}
+  .sug-ligne.p3{--n:#4FE0AF;--n-bord:rgba(79,224,175,.42);--n-fond:rgba(63,217,164,.11)}
 
+  /* La barre allumée à gauche est une ombre intérieure, pas un élément posé
+     sur le bord : une ombre `inset` suit l'arrondi de la carte, alors qu'un
+     ::before de 3px ne peut pas porter un coin de 13px - il restait droit et
+     dépassait de la courbe. La seconde ombre est son halo, vers l'intérieur. */
   .sug-ligne.p1,.sug-ligne.p2,.sug-ligne.p3{
+    --barre:inset 3px 0 0 var(--n),inset 10px 0 16px -10px var(--n);
+    box-shadow:var(--barre);
     border-color:var(--n-bord);
     background:
       linear-gradient(100deg,var(--n-fond),rgba(8,15,26,.55) 46%),
@@ -121,15 +162,7 @@
   }
   .sug-ligne.p1:hover,.sug-ligne.p2:hover,.sug-ligne.p3:hover{
     border-color:var(--n);
-    box-shadow:0 0 26px -12px var(--n);
-  }
-  /* la barre : posée sur le bord de la carte, pas à côté - elle doit se
-     lire comme la tranche allumée de la ligne, pas comme un objet de plus */
-  .sug-ligne.p1::before,.sug-ligne.p2::before,.sug-ligne.p3::before{
-    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
-    border-radius:13px 0 0 13px;
-    background:linear-gradient(180deg,var(--n),var(--n-bord));
-    box-shadow:0 0 14px -1px var(--n);
+    box-shadow:var(--barre),0 0 26px -12px var(--n);
   }
   .sug-ligne.p1 .sug-pion,.sug-ligne.p2 .sug-pion,.sug-ligne.p3 .sug-pion{
     background:var(--n);box-shadow:0 0 10px var(--n);
@@ -148,7 +181,7 @@
     padding:0;border-radius:50%;cursor:pointer;
     color:var(--brume);border:1px solid rgba(150,195,220,.2);
     background:rgba(3,8,15,.6);
-    opacity:0;transition:opacity .18s ease,color .2s ease,border-color .2s ease,
+    opacity:.45;transition:opacity .18s ease,color .2s ease,border-color .2s ease,
                          background .2s ease,box-shadow .2s ease;
   }
   .sug-niv.n1{--n:#FF8A8A}
@@ -178,33 +211,78 @@
   .sug-ligne.bug .sug-etiq{border-color:rgba(232,120,140,.4);color:#E8A9B6}
   .sug-main{opacity:.55}       /* écrite à la main : pas de compte derrière */
 
-  .sug-boutons{display:flex;gap:6px;flex:none}
+  /* ---------- les actions d'une ligne ----------
+     Copier et Résolu étaient deux jumeaux collés : même taille, même gris,
+     six pixels d'écart, et tous deux invisibles jusqu'au survol - ils
+     apparaissaient sous la souris au moment où elle arrivait, et le clic
+     partait sur celui qui se trouvait là. Or ils ne pèsent pas pareil :
+     l'un ne touche à rien, l'autre efface la ligne du fichier.
+
+     Trois zones maintenant, de gauche à droite, dans l'ordre du travail :
+     classer, copier, puis - loin, derrière un trait - résoudre.
+
+       - toujours visibles, un peu éteints hors survol : un bouton qu'on
+         voit avant d'y aller ne se fait pas cliquer par surprise ;
+       - Résolu est vert, porte une coche, et se tient à l'écart ;
+       - Copier porte l'icône du presse-papiers et reste neutre. */
+  .sug-boutons{display:flex;align-items:center;gap:6px;flex:none}
   .sug-fait,.sug-copier{
+    display:inline-flex;align-items:center;gap:6px;
     font:inherit;font-size:12.5px;padding:6px 13px;border-radius:999px;
     color:var(--brume);border:1px solid rgba(150,195,220,.2);
     background:rgba(3,8,15,.6);cursor:pointer;white-space:nowrap;
-    opacity:0;transition:opacity .18s ease,color .2s ease,border-color .2s ease,background .2s ease;
+    opacity:.6;transition:opacity .18s ease,color .2s ease,border-color .2s ease,background .2s ease;
   }
+  .sug-fait svg,.sug-copier svg{flex:none}
   .sug-ligne:hover .sug-fait,.sug-ligne:hover .sug-copier,
   .sug-fait:focus-visible,.sug-copier:focus-visible{opacity:1}
+  /* le trait qui met Résolu à part : un vrai vide, pas un simple écart */
+  .sug-sep{
+    width:1px;align-self:stretch;margin:2px 10px 2px 8px;
+    background:rgba(150,195,220,.16);
+  }
+  .sug-fait{
+    color:#8FE0B0;border-color:rgba(143,224,176,.32);background:rgba(143,224,176,.05);
+  }
   .sug-fait:hover{
-    color:#8FE0B0;border-color:rgba(143,224,176,.5);background:rgba(143,224,176,.1);
+    color:#B6F0CE;border-color:rgba(143,224,176,.65);background:rgba(143,224,176,.14);
   }
   .sug-copier:hover{
     color:var(--os);border-color:rgba(120,200,230,.55);background:rgba(120,200,230,.1);
   }
-  /* le retour du copier : la couleur suffit, le mot change déjà */
-  .sug-copier.fait{color:#8FE0B0;border-color:rgba(143,224,176,.5)}
+  .sug-copier.fait{color:#9FC4DA;border-color:rgba(120,200,230,.5);opacity:1}
   .sug-fait:focus-visible,.sug-copier:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
-  .sug-fait[disabled]{cursor:progress;opacity:1}
-  /* Sans survol, les boutons ne viendraient jamais : au toucher ils restent là. */
-  @media (hover:none){ .sug-fait,.sug-copier{opacity:1} }
-  /* Cinq boutons sur une ligne de téléphone, c'est trois de trop : ils
-     passent dessous, alignés sur le texte plutôt que sur la pastille. */
+
+  /* Une ligne déjà copiée le garde écrit, tant que la page reste ouverte :
+     on copie, on part corriger ailleurs, on revient - et c'est cette carte
+     qui dit « c'est moi que tu viens de traiter ». Son Résolu s'allume,
+     puisque c'est le geste qui suit. */
+  .sug-copiee-marque{
+    display:none;padding:1px 8px;border-radius:999px;
+    color:#9FC4DA;border:1px solid rgba(120,200,230,.4);background:rgba(120,200,230,.08);
+  }
+  .sug-ligne.copiee .sug-copiee-marque{display:inline-block}
+  .sug-ligne.copiee .sug-fait{opacity:1;border-color:rgba(143,224,176,.6)}
+
+  /* Sans survol, tout reste pleinement visible. */
+  @media (hover:none){ .sug-fait,.sug-copier,.sug-niv{opacity:1} }
+  /* Sur téléphone, les boutons passent dessous : classer et copier à
+     gauche, Résolu poussé tout au bout de la ligne, le pouce loin de l'un
+     quand il vise l'autre. */
   @media (max-width:640px){
     .sug-ligne{flex-wrap:wrap}
     .sug-boutons{width:100%;margin-left:23px;margin-top:10px}
+    .sug-sep{margin-left:auto;background:none;margin-right:0}
   }
+
+  /* ---------- le toast et son « Annuler » ---------- */
+  .toast.montre{pointer-events:auto}
+  .toast-action{
+    font:inherit;font-size:13px;font-weight:500;margin-left:14px;padding:3px 11px;
+    border-radius:999px;cursor:pointer;
+    color:var(--os);border:1px solid rgba(120,200,230,.5);background:rgba(120,200,230,.12);
+  }
+  .toast-action:hover{background:rgba(120,200,230,.24)}
 
   /* ---------- états ---------- */
   .sug-etat{
@@ -259,7 +337,20 @@ const echappe = (s) => String(s === null || s === undefined ? "" : s)
 
 let MOI = { connecte: false, utilisateur: null };
 let SECTIONS = [];
-let FILTRE = "tout";          // 'tout', 'bug', 'suggestion', 'p1'..'p3', ou un projet
+/* Les lignes copiées depuis l'ouverture de la page, par leur texte exact.
+   En mémoire seulement : c'est un repère pour la séance de travail en
+   cours, pas un état à garder. */
+const COPIEES = new Set();
+
+const ICONE_COPIE = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const ICONE_COCHE = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+/* Les filtres : une liste de valeurs cochées par menu. Vide = tout. */
+const FILTRES = { genre: new Set(), niveau: new Set(), page: new Set() };
+let MENU_OUVERT = null;       // la clé du menu déroulé, ou null
 
 /* Les trois niveaux d'importance. 0 n'y est pas : ce n'est pas un quatrième
    niveau mais l'absence de tri, et il n'a donc ni couleur ni nom. */
@@ -290,13 +381,27 @@ async function api(chemin, methode, charge) {
 
 /* ---------- toast ---------- */
 let minuteurToast = null;
-function toast(message, mauvais) {
+function toast(message, mauvais, action) {
   const t = el("toast");
   t.textContent = message;
+  /* Une action dans le toast : « Annuler » après un Résolu. Le toast reste
+     alors le temps du délai de grâce, pas les 3,6 secondes habituelles. */
+  if (action) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "toast-action";
+    b.textContent = action.nom;
+    b.addEventListener("click", () => {
+      action.faire();
+      t.className = "toast"; t.hidden = true;
+    });
+    t.appendChild(b);
+  }
   t.className = "toast montre" + (mauvais ? " mauvais" : "");
   t.hidden = false;
   clearTimeout(minuteurToast);
-  minuteurToast = setTimeout(() => { t.className = "toast"; t.hidden = true; }, 3600);
+  minuteurToast = setTimeout(() => { t.className = "toast"; t.hidden = true; },
+                             action ? GRACE_MS : 3600);
 }
 
 /* ---------- menu du compte ----------
@@ -318,52 +423,112 @@ function dateCourte(iso) {
     { day: "numeric", month: "short", year: "numeric" });
 }
 
-/* Le filtre s'applique à une ligne, jamais à une section : masquer une
+/* Ce que chaque ligne vaut pour chacun des trois menus. La page d'une
+   section est son titre : c'est ce qu'on lit, et deux sections n'en ont
+   jamais le même. */
+const valeurs = (ligne, section) => ({
+  genre: ligne.genre === "bug" ? "bug" : "suggestion",
+  niveau: String(niveauDe(ligne) ? ligne.priorite : 0),
+  page: section.titre,
+});
+
+/* Une ligne passe si, dans chaque menu, rien n'est coché ou sa valeur l'est.
+   `sauf` ignore un menu : c'est ce qui permet de compter, dans un menu,
+   ce que chaque case donnerait avec les AUTRES filtres en place.
+
+   Le filtre s'applique à une ligne, jamais à une section : masquer une
    section entière ferait disparaître son titre et on ne saurait plus d'où
    viennent les lignes restantes. */
-function retenue(ligne, section) {
-  if (FILTRE === "tout") return true;
-  if (FILTRE === "bug" || FILTRE === "suggestion") return ligne.genre === FILTRE;
-  /* « p1 » en entier, pas seulement son premier caractère : le jour où un
-     projet s'appellera « photos », le filtre par projet ne doit pas se
-     faire prendre pour un filtre d'importance. */
-  if (/^p[123]$/.test(FILTRE)) return ligne.priorite === +FILTRE[1];
-  return section.projet === FILTRE;
+function retenue(ligne, section, sauf) {
+  const v = valeurs(ligne, section);
+  return Object.keys(FILTRES).every((cle) =>
+    cle === sauf || !FILTRES[cle].size || FILTRES[cle].has(v[cle]));
 }
 
-function compte() {
-  const n = { total: 0, bugs: 0, 1: 0, 2: 0, 3: 0 };
-  SECTIONS.forEach((s) => s.lignes.forEach((l) => {
-    n.total++;
-    if (l.genre === "bug") n.bugs++;
-    if (niveauDe(l)) n[l.priorite]++;
-  }));
-  n.idees = n.total - n.bugs;
-  return n;
+const CHEVRON = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+
+function menus() {
+  return [
+    { cle: "genre", nom: "Type", options: [
+        { v: "suggestion", nom: "Idées" }, { v: "bug", nom: "Bugs" }] },
+    { cle: "niveau", nom: "Importance", options: [
+        ...NIVEAUX.map((x) => ({ v: String(x.n), nom: x.nom, classe: "n" + x.n })),
+        { v: "0", nom: "Non classée" }] },
+    { cle: "page", nom: "Page", options: SECTIONS.map((s) => ({ v: s.titre, nom: s.titre })) },
+  ];
 }
 
 function dessineFiltres() {
-  const n = compte();
-  const boutons = [
-    { cle: "tout", nom: "Tout", n: n.total },
-    { cle: "suggestion", nom: "Idées", n: n.idees },
-    { cle: "bug", nom: "Bugs", n: n.bugs },
-  ];
-  /* Un niveau sans aucune ligne n'a pas de bouton : un filtre qui ne peut
-     que vider la page n'apprend rien, et la rangée est déjà longue. */
-  NIVEAUX.forEach((v) => {
-    if (n[v.n] || FILTRE === "p" + v.n) boutons.push({ cle: "p" + v.n, nom: v.nom, n: n[v.n], niveau: v.n });
+  /* Les comptes : pour chaque case, les lignes qu'elle montrerait avec les
+     filtres des deux autres menus. Une case à zéro reste cochable mais
+     s'éteint - on voit tout de suite qu'elle viderait la liste. */
+  const comptes = { genre: {}, niveau: {}, page: {} };
+  let visibles = 0, total = 0;
+  SECTIONS.forEach((s) => s.lignes.forEach((l) => {
+    total++;
+    if (retenue(l, s)) visibles++;
+    const v = valeurs(l, s);
+    Object.keys(comptes).forEach((cle) => {
+      if (retenue(l, s, cle)) comptes[cle][v[cle]] = (comptes[cle][v[cle]] || 0) + 1;
+    });
+  }));
+  const actifs = Object.values(FILTRES).some((f) => f.size);
+
+  el("filtres").innerHTML = menus().map((m) => {
+    const choisis = m.options.filter((o) => FILTRES[m.cle].has(o.v));
+    const resume = !choisis.length ? "Tous"
+      : choisis.length === 1 ? choisis[0].nom : `${choisis.length} choisis`;
+    const ouvert = MENU_OUVERT === m.cle;
+    return `
+    <div class="sug-dd${choisis.length ? " actif" : ""}" data-menu="${m.cle}">
+      <button type="button" class="sug-dd-btn" aria-haspopup="true" aria-expanded="${ouvert}">
+        ${echappe(m.nom)} · <b>${echappe(resume)}</b>${CHEVRON}</button>
+      <div class="sug-dd-panneau" ${ouvert ? "" : "hidden"}>
+        ${m.options.map((o) => {
+          const n = comptes[m.cle][o.v] || 0;
+          return `<label class="sug-opt${o.classe ? " " + o.classe : ""}${n ? "" : " zero"}">
+            <input type="checkbox" value="${echappe(o.v)}"${FILTRES[m.cle].has(o.v) ? " checked" : ""}>
+            ${m.cle === "niveau" ? "<i></i>" : ""}<span>${echappe(o.nom)}</span><b>${n}</b></label>`;
+        }).join("")}
+        ${choisis.length ? `<div class="sug-dd-pied">
+          <button type="button" class="sug-lien" data-vider="${m.cle}">Tout afficher</button></div>` : ""}
+      </div>
+    </div>`;
+  }).join("") + `
+    ${actifs ? '<button type="button" class="sug-lien sug-effacer" data-vider="*">Effacer les filtres</button>' : ""}
+    <span class="sug-resume">${actifs ? `${visibles} sur ${total}` : `${total} ligne${total > 1 ? "s" : ""}`}</span>`;
+
+  el("filtres").querySelectorAll(".sug-dd").forEach((dd) => {
+    const cle = dd.dataset.menu;
+    dd.querySelector(".sug-dd-btn").addEventListener("click", () => {
+      MENU_OUVERT = MENU_OUVERT === cle ? null : cle;
+      dessineFiltres();
+    });
+    dd.querySelectorAll("input").forEach((c) => {
+      c.addEventListener("change", () => {
+        if (c.checked) FILTRES[cle].add(c.value); else FILTRES[cle].delete(c.value);
+        dessine();               // le menu reste ouvert : on coche souvent deux cases d'affilée
+      });
+    });
   });
-  SECTIONS.forEach((s) => {
-    if (s.projet) boutons.push({ cle: s.projet, nom: s.titre, n: s.lignes.length });
-  });
-  el("filtres").innerHTML = boutons.map((b) => `
-    <button type="button" class="sug-filtre${b.niveau ? " niveau p" + b.niveau : ""}${b.cle === FILTRE ? " actif" : ""}"
-            data-cle="${echappe(b.cle)}">${b.niveau ? "<i></i>" : ""}${echappe(b.nom)}<b>${b.n}</b></button>`).join("");
-  el("filtres").querySelectorAll(".sug-filtre").forEach((b) => {
-    b.addEventListener("click", () => { FILTRE = b.dataset.cle; dessine(); });
+  el("filtres").querySelectorAll("[data-vider]").forEach((b) => {
+    b.addEventListener("click", () => {
+      const cle = b.dataset.vider;
+      (cle === "*" ? Object.keys(FILTRES) : [cle]).forEach((k) => FILTRES[k].clear());
+      if (cle === "*") MENU_OUVERT = null;
+      dessine();
+    });
   });
 }
+
+/* Un clic hors des menus, ou Échap, referme celui qui est ouvert. */
+document.addEventListener("click", (e) => {
+  if (MENU_OUVERT && !e.target.closest(".sug-dd")) { MENU_OUVERT = null; dessineFiltres(); }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && MENU_OUVERT) { MENU_OUVERT = null; dessineFiltres(); }
+});
 
 function dessine() {
   dessineFiltres();
@@ -395,7 +560,7 @@ function dessine() {
         ${lignes.map((l) => {
           const v = niveauDe(l);
           return `
-          <article class="sug-ligne${l.genre === "bug" ? " bug" : ""}${v ? " p" + v.n : ""}"
+          <article class="sug-ligne${l.genre === "bug" ? " bug" : ""}${v ? " p" + v.n : ""}${COPIEES.has(l.texte) ? " copiee" : ""}"
                    data-s="${si}" data-texte="${echappe(l.texte)}">
             <span class="sug-pion" aria-hidden="true"></span>
             <div class="sug-corps">
@@ -406,6 +571,7 @@ function dessine() {
                 ${l.pseudo ? `<span class="sug-auteur">${echappe(l.pseudo)}</span>` : ""}
                 ${l.creeLe ? `<span>${echappe(dateCourte(l.creeLe))}</span>` : ""}
                 ${l.duSite ? "" : '<span class="sug-main">écrite à la main</span>'}
+                <span class="sug-copiee-marque">copiée</span>
               </div>
             </div>
             <div class="sug-boutons">
@@ -416,15 +582,16 @@ function dessine() {
                           title="${echappe(x.titre)}${l.priorite === x.n ? " (cliquer pour retirer)" : ""}"
                           aria-label="${echappe(x.nom)}">${x.n}</button>`).join("")}
               </div>
-              <button type="button" class="sug-copier">Copier</button>
-              <button type="button" class="sug-fait">Résolu</button>
+              <button type="button" class="sug-copier">${ICONE_COPIE}<span>Copier</span></button>
+              <span class="sug-sep" aria-hidden="true"></span>
+              <button type="button" class="sug-fait">${ICONE_COCHE}<span>Résolu</span></button>
             </div>
           </article>`; }).join("")}
       </section>`;
   }).join("");
 
   if (!rendues) {
-    zone.innerHTML = '<p class="sug-etat"><b>Rien sous ce filtre.</b>Choisis-en un autre.</p>';
+    zone.innerHTML = '<p class="sug-etat"><b>Rien avec ces filtres.</b>Décoche une case, ou efface les filtres.</p>';
     return;
   }
   zone.querySelectorAll(".sug-fait").forEach((b) => {
@@ -465,11 +632,14 @@ async function copier(bouton) {
     zone.remove();
   }
   if (!pose) { toast("Copie refusée par le navigateur.", true); return; }
-  bouton.textContent = "Copié";
+  COPIEES.add(carte.dataset.texte);
+  carte.classList.add("copiee");
+  const mot = bouton.querySelector("span");
+  mot.textContent = "Copié";
   bouton.classList.add("fait");
   clearTimeout(bouton._minuteur);
   bouton._minuteur = setTimeout(() => {
-    bouton.textContent = "Copier";
+    mot.textContent = "Copier";
     bouton.classList.remove("fait");
   }, 1600);
 }
@@ -503,36 +673,83 @@ async function classer(bouton) {
     return;
   }
   ligne.priorite = voulu;
+  // la marque [!n] fait partie du texte : la ligne copiée garde son repère
+  if (COPIEES.delete(texte)) COPIEES.add(reponse.texte);
   ligne.texte = reponse.texte;
   dessine();
 }
 
-/* La ligne s'en va avant la réponse du serveur ? Non : on attend, et on ne
-   la retire qu'une fois le fichier réellement réécrit. Une ligne qui
-   disparaît puis revient parce que l'écriture a échoué serait pire que
-   l'attente d'une demi-seconde. */
-async function resoudre(bouton) {
+/* ---------- Résolu, avec un délai de grâce ----------
+   Résolu efface la ligne du fichier, et il n'y a pas de retour en arrière
+   côté serveur. Plutôt qu'une confirmation à chaque fois - un second clic
+   qu'on finit par faire les yeux fermés - la ligne quitte l'écran tout de
+   suite, et l'écriture ne part qu'après GRACE_MS. D'ici là, « Annuler »
+   dans le toast la remet exactement où elle était.
+
+   Si l'écriture échoue au bout du délai, la ligne revient avec le message :
+   rien n'a été effacé. Et une page qu'on ferme pendant le délai envoie ce
+   qui attend (keepalive) - fermer l'onglet n'est pas annuler. */
+const GRACE_MS = 6000;
+const EN_ATTENTE = new Map();       // texte -> { section, ligne, rang, minuteur }
+
+function envoieResolu(texte) {
+  const a = EN_ATTENTE.get(texte);
+  if (!a) return;
+  EN_ATTENTE.delete(texte);
+  api("/api/changement/resolu", "POST", { projet: a.section.projet, texte: texte })
+    .catch((err) => {
+      remet(a);
+      toast(`Pas retirée : ${err.message}`, true);
+    });
+}
+
+function remet(a) {
+  const lignes = a.section.lignes;
+  if (!lignes.some((l) => l.texte === a.ligne.texte)) {
+    lignes.splice(Math.min(a.rang, lignes.length), 0, a.ligne);
+  }
+  dessine();
+}
+
+function resoudre(bouton) {
   const carte = bouton.closest(".sug-ligne");
   const section = SECTIONS[+carte.dataset.s];
   const texte = carte.dataset.texte;
-  bouton.disabled = true;
-  bouton.textContent = "…";
-  try {
-    await api("/api/changement/resolu", "POST",
-              { projet: section.projet, texte: texte });
-  } catch (err) {
-    bouton.disabled = false;
-    bouton.textContent = "Résolu";
-    toast(err.message, true);
-    return;
-  }
-  section.lignes = section.lignes.filter((l) => l.texte !== texte);
+  const rang = section.lignes.findIndex((l) => l.texte === texte);
+  if (rang < 0 || EN_ATTENTE.has(texte)) return;
+  const ligne = section.lignes[rang];
+
+  section.lignes.splice(rang, 1);
+  const a = { section, ligne, rang, minuteur: 0 };
+  a.minuteur = setTimeout(() => envoieResolu(texte), GRACE_MS);
+  EN_ATTENTE.set(texte, a);
+
   carte.classList.add("part");
-  /* le temps de l'animation, puis on redessine : les compteurs des filtres
-     doivent suivre, et eux ne s'animent pas */
   setTimeout(() => { dessine(); }, 280);
-  toast("Réglé.");
+
+  const extrait = ligne.message.length > 48 ? ligne.message.slice(0, 46) + "…" : ligne.message;
+  toast(`Résolu : « ${extrait} »`, false, {
+    nom: "Annuler",
+    faire: () => {
+      if (!EN_ATTENTE.has(texte)) return;
+      clearTimeout(a.minuteur);
+      EN_ATTENTE.delete(texte);
+      remet(a);
+    },
+  });
 }
+
+window.addEventListener("pagehide", () => {
+  EN_ATTENTE.forEach((a, texte) => {
+    clearTimeout(a.minuteur);
+    fetch("/api/changement/resolu", {
+      method: "POST", credentials: "same-origin", keepalive: true,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projet: a.section.projet, texte: texte }),
+    });
+  });
+  EN_ATTENTE.clear();
+});
 
 (async function () {
   let data;

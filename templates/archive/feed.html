@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Social - Jeux Vidéos</title>
+<title>Feed - Jeux Vidéos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Karla:wght@400;500;700&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -22,12 +22,13 @@
          ordre : « Retour à Abyss » dehors à gauche, « Suggestion / Bug »
          dehors à droite, et entre les deux ma pastille d'identité, le titre
          et la cloche.
-         Le Social est une salle de l'Archive, pas un autre site - on doit
+         Le fil est une salle de l'Archive, pas un autre site - on doit
          pouvoir passer de l'une à l'autre sans chercher où sont partis les
          boutons.
 
-         Une seule chose change de nature : la pastille posée à côté du
-         titre. Sur le journal elle mène ici ; ici, elle est la recherche. -->
+         Une seule chose manque par rapport au journal : les deux pastilles
+         posées à côté du titre. « Feed » mène ici, et on y est ; et
+         « Rechercher un journal » est restée là-bas, avec sa fenêtre. -->
     <a class="entete-action" id="abyssBtn" href="/abyss">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -35,33 +36,38 @@
       </svg>
       <span>Retour à Abyss</span>
     </a>
-    <!-- Moi, comme sur le journal : ma photo et mon pseudo, qui mènent chez
-         moi. La petite maison qui tenait cette place y disait la même chose
-         sans la dire - une icône de plus dans une barre qui en compte cinq.
-         Masqué tant qu'on n'a pas de journal à soi. -->
-    <a class="brand-moi" id="moiBtn" hidden href="/archive">
-      <span class="brand-moi-ava" id="moiAva"></span>
-      <b id="moiNom"></b>
-    </a>
-    <div class="brand">
-      <!-- Pas de titre ici : la page en porte un, en grand, juste dessous.
-           « Social » écrit deux fois à quarante pixels d'écart n'apprenait
-           rien la seconde fois. Reste la pastille, qui elle a un travail. -->
-      <!-- La recherche prend exactement la place qu'occupe « Social » sur le
-           journal : la pastille à côté du titre, la porte à côté.
+    <!-- Moi, comme sur le journal, et avec le même menu dessous : « Mon
+         journal », « Communauté », et les deux recherches. C'est la seule
+         porte de navigation des deux pages, elle doit s'ouvrir pareil des
+         deux côtés.
 
-           Un lien et non un bouton, parce que la fenêtre de recherche vit
-           dans la page du journal, avec les journaux qu'elle fouille - et
-           que choisir un résultat mène de toute façon là-bas. Autant y aller
-           tout de suite : ?recherche=1 l'ouvre à l'arrivée. -->
-      <a class="jnl-search" id="jnlSearchBtn" href="/archive?recherche=1">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7"/>
-          <path d="M21 21l-4.3-4.3"/>
-        </svg>
-        <span>Rechercher</span>
+         Ce qui change ici : les deux entrées « Rechercher... » sont de
+         vrais liens vers /archive?recherche=..., parce que la fenêtre de
+         recherche vit là-bas, avec les journaux qu'elle fouille. Sur le
+         journal, elles s'ouvrent sur place. Même liste, même mots, un
+         chemin de plus ici - voir monteMenuMoi dans archive-social.js.
+
+         Pas de déclencheur de repli pour qui n'est pas connecté : cette
+         page-ci porte son titre en grand juste dessous, et la barre n'a donc
+         pas besoin qu'on lui rappelle le nom du site. -->
+    <div class="moi-wrap">
+      <a class="brand-moi moi-declencheur" id="moiBtn" hidden href="/archive"
+         aria-haspopup="true" aria-expanded="false">
+        <span class="brand-moi-ava" id="moiAva"></span>
+        <b id="moiNom"></b>
+        <svg class="moi-chev" width="10" height="10" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="3" stroke-linecap="round"
+             stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
       </a>
     </div>
+    <!-- Ni titre ni pastille ici. La page porte son titre en grand juste
+         dessous, et la recherche est repartie d'où elle vient : la fenêtre
+         fouille des journaux, elle vit dans la page des journaux, et son
+         bouton est maintenant dans l'en-tête de celle-ci. Elle était ici
+         par accident d'histoire - le fil avait pris la place de l'ancien
+         bouton « Rechercher », alors la recherche avait pris la sienne -
+         et il fallait donc venir sur le fil pour chercher un journal, puis
+         en repartir aussitôt. -->
     <!-- La place des onglets du journal, laissée vide : elle pousse la
          cloche à droite comme là-bas, pour que la barre garde les mêmes
          appuis d'une page à l'autre. Un fil n'a pas d'années. -->
@@ -111,11 +117,15 @@
 
 <!-- Les fenêtres que cette page peut ouvrir. Vides dans le balisage : leur
      contenu est monté au moment où on les ouvre.
-     « recherche » est celle de la pastille de l'en-tête ; « detail » et
-     « zoom » sont la fiche d'un jeu trouvé et l'agrandissement d'une de ses
-     captures, exactement comme sur le journal. -->
+     « recherche » est celle des deux entrées « Rechercher... » du menu
+     d'identité : elles s'ouvrent ici, sur le fil, plutôt que de renvoyer
+     sur le journal pour s'y ouvrir - on ne change pas de page pour ouvrir
+     une fenêtre. « detail », « studio » et « zoom » sont la fiche d'un
+     jeu, les jeux de son développeur et l'agrandissement d'une de ses
+     captures, comme sur le journal. -->
 <div class="sheet-back" id="recherche" hidden></div>
 <div class="sheet-back" id="detail" hidden></div>
+<div class="sheet-back" id="studio" hidden></div>
 <div class="sheet-back" id="zoom" hidden></div>
 <div class="toast" id="toast" hidden></div>
 
@@ -139,11 +149,13 @@
      couleur d'une note, manifeste des jaquettes - et archive-social.js
      n'a besoin de rien d'autre. Le journal, lui, charge les onze. -->
 <script src="/static/archive/archive-noyau.js"></script>
-<!-- La recherche, la même qu'ailleurs : ce qu'un résultat déclenche arrive
-     en paramètre (voir regleRecherche plus bas), la fenêtre est identique.
-     archive-export.js vient avec elle pour la fiche d'un jeu trouvé - son
-     export à lui ne s'active pas ici, faute de bouton (voir la fin du
-     fichier). -->
+<!-- La recherche, la même qu'ailleurs : la fenêtre est identique au pixel
+     près, ce qu'un résultat déclenche arrive en paramètre (voir
+     regleRecherche plus bas). Le fichier porte en plus le dessin d'une
+     ligne de résultat IGDB (acHTML) et la teinte d'un avatar sans photo
+     (teinteAvatar), dont le fil se sert ailleurs.
+     archive-export.js vient pour la fiche d'un jeu - son export à lui ne
+     s'active pas ici, faute de bouton (voir la fin du fichier). -->
 <script src="/static/archive/archive-recherche.js"></script>
 <script src="/static/archive/archive-export.js"></script>
 <script src="/static/archive/archive-social.js"></script>
@@ -179,6 +191,9 @@ const plus = document.getElementById('feedPlus');
    derrière, ce qui fait disparaître le bouton - voir fil() dans social.py. */
 let SUITE = null;
 let ENCOURS = false;
+/* Le premier lot est passé : les suivants descendent dans le passé et ne
+   déplacent plus le repère de ce qu'on a vu. */
+let SUITE_DEJA = false;
 
 function mot(txt){
   etat.textContent = txt;
@@ -200,6 +215,13 @@ async function chargeFil(){
       posts.map(p => socialCarteHTML(p, true)).join(''));
     SUITE = data.suite;
     plusZone.hidden = !SUITE;
+    /* Le fil est lu jusqu'à sa première carte : la pastille du bouton
+       « Communauté » s'éteint, et c'est d'ici que repartira le compte à la
+       prochaine visite du journal. Seulement sur le premier lot - « Voir
+       plus » descend dans le passé, il n'apprend rien de nouveau.
+       Voir feedLu dans archive-social.js. */
+    if(!SUITE_DEJA && posts.length) feedLu(posts[0].id);
+    SUITE_DEJA = true;
     mot(feed.children.length ? '' :
         "Personne n'a encore terminé de jeu dans un journal public.");
   }catch(e){
@@ -282,6 +304,15 @@ regleRecherche({
   actif: () => -1,
 });
 
+/* Échap referme ce qui pend sous un bouton de la barre. Cette page n'a ni
+   engrenage ni onglets : il n'y a que le menu d'identité et la cloche, et
+   ni l'un ni l'autre n'est une fenêtre de la pile - archive-noyau.js ne les
+   connaît donc pas. */
+ECHAP_SANS_FENETRE = function(){
+  if(menuMoiOuvert()){ menuMoiFerme(); return; }
+  if(socialClocheOuverte()) socialClocheFerme();
+};
+
 /* Le bouton « Suggestion / Bug » ouvre son formulaire sur place, comme
    partout ailleurs : voir static/commun/suggestion.js. Sans `estConnecte`, il
    demande lui-même au serveur avant d'ouvrir. */
@@ -303,6 +334,27 @@ if(window.Suggestion){
 (async ()=>{
   chargeFil();
   chargeManifeste();
+  /* La discussion demandée par l'adresse. C'est par là qu'arrive un clic
+     sur une notification depuis la page du journal : elle n'ouvre plus la
+     discussion sur place - une réponse lue au-dessus de son propre
+     classeur, sans le fil autour - elle envoie ici, où cette discussion
+     vit, et dit laquelle dans ?fil=.
+
+     Elle n'attend pas /api/journal : ouvrirFilSocial demande sa discussion
+     lui-même, et rien dans l'en-tête ne lui est nécessaire. La notification
+     s'ouvre donc pendant que le reste de la page se remplit.
+
+     Le paramètre est effacé aussitôt - il a servi. Le garder rouvrirait la
+     fenêtre à chaque rechargement, et il partirait dans l'adresse qu'on
+     copie pour donner le fil. */
+  const filDemande = new URLSearchParams(location.search).get('fil');
+  if(filDemande){
+    const propre = new URLSearchParams(location.search);
+    propre.delete('fil');
+    const reste = propre.toString();
+    try{ history.replaceState(null, '', location.pathname + (reste ? '?' + reste : '')); }catch(e){}
+    ouvrirFilSocial(filDemande);
+  }
   try{
     const d = await (await fetch('/api/journal', {credentials: 'same-origin'})).json();
     /* Ma pastille n'apparaît que si j'ai un journal, et elle pointe droit
@@ -334,6 +386,21 @@ if(window.Suggestion){
         : `<span class="ava ava-vide" style="--h:${teinteAvatar(d.moi.pseudo)}"
             >${esc(initials(d.moi.pseudo))}</span>`;
       moi.hidden = false;
+      /* Le menu ne se monte que si la pastille se montre : ici, elle est
+         son seul déclencheur. Sans journal à soi, la barre n'a rien à
+         déplier - et le fil se lit très bien sans.
+
+         Les deux recherches s'ouvrent ICI, dans la fenêtre de cette page.
+         Elles menaient à /archive?recherche=... et la page du journal les
+         ouvrait à l'arrivée : on changeait de page pour ouvrir une fenêtre,
+         et on se retrouvait ailleurs qu'où l'on était en la refermant. Les
+         adresses restent sur les liens, pour le clic du milieu et pour qui
+         n'a pas de script - c'est le clic qu'on intercepte, pas le lien. */
+      monteMenuMoi(document.querySelector('.moi-wrap'), {
+        ici: 'feed',
+        surRecherche: mode => ouvrirRecherche({modes: [mode]}),
+      });
+      menuMoiJournal('/archive/' + encodeURIComponent(d.moi.pseudo));
       /* Le sien d'abord, comme sur le journal : c'est celui qu'on cherche
          le plus souvent, et un journal privé n'est pas dans l'annuaire
          public - il faut l'y mettre nous-mêmes. */

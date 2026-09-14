@@ -100,6 +100,12 @@ function formHTML(g){
         <label class="fld fcheck wish">
           <input id="f_wish" type="checkbox">
           <span>Wishlist</span></label>
+        <!-- Pourquoi les deux cases sont figées, quand elles le sont : un jeu
+             qui n'est pas sorti ne se termine pas et ne se joue pas non plus.
+             Voir syncSortie() plus bas. Le bandeau reprend le dessin de
+             l'avis de doublon, deux lignes plus haut : ce sont les deux
+             mêmes mots posés au même endroit pour la même raison. -->
+        <p class="fld full doublon-avis" id="f_sortie" hidden></p>
         <div class="fld full" id="f_bucketwrap">
           <u>Année <span class="req" aria-hidden="true">*</span></u>
           ${constructeurHTML('f', `<label class="bkd-mois" id="f_monthwrap">
@@ -213,13 +219,6 @@ function decomposePeriode(p){
   return null;
 }
 const periodeValide = p => estStatutNom(p) || decomposePeriode(p) !== null;
-
-/* Les onglets du journal que la règle ne sait pas relire. Ils restent
-   affichés et utilisables : ce sont des jeux rangés dedans, pas des fautes
-   à effacer. La page les signale, et propose de les renommer. */
-function ongletsVieux(){
-  return BUCKETS.filter(b => !estStatutNom(b) && !periodeValide(b));
-}
 
 function anneesPossibles(){
   const liste = [];
@@ -352,8 +351,7 @@ function peintConstructeur(p){
   zone.innerHTML = pastillesPossibles(p).map(b => {
     const existe = BUCKETS.indexOf(b) >= 0;
     const n = existe ? GAMES.filter(g => g.bucket === b).length : 0;
-    return `<button type="button" class="bkd-p${existe ? '' : ' neuf'}${
-      periodeValide(b) ? '' : ' vieux'}" data-b="${esc(b)}"
+    return `<button type="button" class="bkd-p${existe ? '' : ' neuf'}" data-b="${esc(b)}"
       aria-pressed="${b === e.valeur}" title="${existe
         ? esc(`${n} jeu${n > 1 ? 'x' : ''}`) : 'Nouvel onglet'}">${esc(b)}</button>`;
   }).join('') + `<button type="button" class="bkd-p autre" id="${p}_autre"
@@ -385,6 +383,69 @@ function peintConstructeur(p){
 
   if(e.sur) e.sur(e.valeur);
 }
+/* =======================================================================
+   Un jeu qui n'est pas encore sorti
+
+   « Terminé » et « En cours » racontent tous les deux qu'on y a joué. Un
+   jeu annoncé pour l'an prochain ne peut être ni l'un ni l'autre : la seule
+   case qui veuille dire quelque chose de lui, c'est la wishlist. Elle se
+   coche donc seule, et les deux cases se figent - plutôt que de laisser
+   ranger un jeu de 2027 dans l'onglet 2026, où il fausse la moyenne de
+   l'année, le compte de jeux terminés et le fil de la communauté.
+
+   La date est celle de la fiche IGDB retenue (voir alignePick), relue dans
+   le champ caché f_release : c'est la même que celle affichée sous le nom
+   du jeu, donc celle qu'on a sous les yeux en cochant.
+
+   Deux jeux échappent à la règle, et c'est voulu :
+
+     - celui qu'on MODIFIE et qui était déjà terminé ou en cours. La règle
+       empêche de marquer, pas de corriger ce qui est déjà écrit : une date
+       IGDB fausse - il y en a, surtout sur les vieux jeux et les rééditions
+       - ne doit pas condamner une ligne à ne plus jamais être retouchée.
+     - celui dont on ne connaît pas la date. Une date inconnue n'est pas une
+       date future, et la moitié de la wishlist n'en a pas.
+   ======================================================================= */
+/* Vrai quand la règle ne s'applique pas à ce formulaire-ci : voir openForm. */
+let SORTIE_LIBRE = false;
+/* La wishlist cochée par la règle et non par quelqu'un. C'est ce qui permet
+   de la décocher toute seule quand on change d'avis et qu'on désigne une
+   autre fiche, déjà sortie celle-là - une case cochée par un automatisme
+   ne doit pas survivre à la disparition de sa raison d'être. */
+let WISH_FORCE = false;
+
+/* La sortie à venir du jeu, ou null : ni pour un jeu déjà sorti, ni pour
+   une date inconnue, ni quand la règle ne s'applique pas. */
+function sortieAVenir(){
+  if(SORTIE_LIBRE) return null;
+  const c = compteARebours($('f_release').value);
+  return c && c.avant ? c : null;
+}
+
+/* Coche la wishlist, fige les deux cases, et dit pourquoi. Appelée par
+   syncStatut, donc à chaque bascule d'une case - et par alignePick quand
+   une autre fiche IGDB vient poser une autre date. */
+function syncSortie(){
+  const attente = sortieAVenir();
+  const enCours = $('f_encours'), wish = $('f_wish');
+  if(attente && !wish.checked){
+    wish.checked = true; enCours.checked = false;
+    WISH_FORCE = true;
+  }else if(!attente && WISH_FORCE){
+    wish.checked = false;
+    WISH_FORCE = false;
+  }
+  // le pourquoi est ecrit en clair dans le bandeau juste dessous
+  [enCours, wish].forEach(c=>{ c.disabled = !!attente; });
+  const mot = $('f_sortie');
+  if(mot){
+    mot.hidden = !attente;
+    if(attente) mot.innerHTML = `Ce jeu n'est pas encore sorti (Sort dans <b>${
+      esc(attente.txt)}</b>)`;
+  }
+  return !!attente;
+}
+
 /* Un jeu en cours n'a rien à dire de sa fin : on retire de l'écran l'année,
    le mois, la note, le temps de jeu et l'avis. Décocher les fait revenir,
    c'est le geste qui termine un jeu.
@@ -392,6 +453,9 @@ function peintConstructeur(p){
    pas acheté, la case n'aurait aucun sens. Le prix de base reste, c'est
    justement ce qu'on veut noter. */
 function syncStatut(){
+  // d'abord la regle de sortie : elle peut cocher la wishlist, et c'est
+  // l'etat des cases qui decide de tout ce qui suit
+  syncSortie();
   const sansFin = statutCoche();
   // le mois n'est plus dans cette liste : il vit maintenant DANS f_bucketwrap,
   // sur la même ligne que l'année - le cacher deux fois ne le cache pas mieux
@@ -496,6 +560,14 @@ function validerFormulaire(){
   if(!EDIT && !(JEU_PICK && JEU_PICK.id))
     erreurs.push({champ:'f_name', message:
       "Choisis le jeu dans la liste qui s'ouvre sous le nom."});
+  /* Le filet de la regle de sortie. Les deux cases sont figees quand elle
+     s'applique (voir syncSortie), donc on ne devrait jamais passer par ici
+     - sauf a avoir desactive la case a la main, ou si un jour la fiche
+     retenue change sans que syncStatut soit rappele. Une regle qui ne se
+     defend qu'a l'affichage n'est pas une regle. */
+  if(!$('f_wish').checked && sortieAVenir())
+    erreurs.push({champ:'f_name', message:
+      "Ce jeu n'est pas encore sorti."});
   // la note est sur 10 partout dans la page : 85 tapé pour 8,5 doit se
   // voir tout de suite, pas finir en 85/10 dans les stats sans un mot
   if(!sansFin && champInvalide('f_rating', toNum, 0, 10))
@@ -542,6 +614,11 @@ function openForm(g){
   const wish    = !!(g && estWishlist(g));
   $('f_encours').checked = enCours;
   $('f_wish').checked = wish;
+  /* La regle de sortie ne vaut pas pour un jeu deja terminé ou déjà en
+     cours : on ouvre ici son formulaire pour le corriger, pas pour le
+     marquer. Voir sortieAVenir(). */
+  SORTIE_LIBRE = !!(g && !wish);
+  WISH_FORCE = false;
   // en ajout - et pour un jeu en cours ou convoité qu'on vient de terminer -
   // on propose toujours l'année la plus récente, pas l'onglet affiché
   const defaut = (g && !enCours && !wish) ? g.bucket : derniereAnnee();

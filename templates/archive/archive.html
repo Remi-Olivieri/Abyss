@@ -27,46 +27,47 @@
       </svg>
       <span>Retour à Abyss</span>
     </a>
-    <!-- La maison qui ouvrait mon journal est partie : c'est la pastille
-         d'identité ci-dessous qui fait ce chemin-là maintenant. Un bouton
-         de moins, et le geste est au bon endroit - on clique sur soi pour
-         rentrer chez soi. -->
+    <!-- ---------- moi, et tout ce qui parle de moi ----------
+         Une seule pastille là où il y en avait trois. « Feed » et
+         « Rechercher un journal » étaient posés à côté de celle-ci, et les
+         trois disaient la même chose sans le dire : moi, et les autres.
+         Elles sont passées dans son menu, la barre a perdu deux contours,
+         et « Rechercher un jeu » a enfin trouvé la place qu'elle n'avait
+         jamais eue en haut.
+
+         Deux déclencheurs pour un seul panneau, et jamais les deux à la
+         fois : ma pastille quand j'ai un compte, le nom du site sinon.
+         Un visiteur a autant besoin d'aller au fil et de chercher un
+         journal que moi - il n'a simplement pas de journal à lui, et c'est
+         la seule entrée qui lui manque. Voir monteMenuMoi dans
+         archive-social.js, et majMoi dans archive-journal.js pour le choix
+         de celui qui se montre. -->
     <div class="brand">
-      <!-- MOI, et non le journal affiché : c'est la seule chose de la barre
-           qui ne change pas d'un écran à l'autre, et c'est ce qui en fait
-           un point de repère. Le journal qu'on lit, lui, se nomme en grand
-           dans son bandeau juste dessous.
-
-           Un lien vers mon journal, qui fait office de retour au bercail -
-           le geste que portait la petite maison. Il garde une vraie adresse
-           pour qu'un clic du milieu l'ouvre dans un onglet, mais le clic
-           simple reste dans la page (voir majMoi). Masqué tant qu'on n'a
-           pas de journal à soi. -->
-      <a class="brand-moi" id="moiBtn" hidden href="/archive">
-        <span class="brand-moi-ava" id="moiAva"></span>
-        <b id="moiNom"></b>
-      </a>
-      <!-- Le nom du site, pour qui n'est pas connecté : la barre ne peut
-           pas rester vide, et il n'y a alors personne à y mettre. -->
-      <b id="brand-title">Jeux Vidéos</b>
-      <!-- « Social » a pris la place de « Rechercher ».
-
-           La recherche est un outil : on s'en sert quand on sait déjà qui ou
-           quoi on cherche. Le fil, lui, est un endroit où aller - ce que
-           les autres ont terminé, et ce qu'ils en ont dit. C'est la porte à
-           côté du titre du journal, pas un champ de saisie.
-
-           La recherche n'a pas disparu : elle est en haut de la page Social
-           (voir templates/archive/feed.html), et sa fenêtre s'ouvre toujours
-           ici, à l'arrivée, quand l'adresse porte ?recherche=1. -->
-      <a class="jnl-search" id="socialBtn" href="/archive/feed">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="9" cy="8" r="3.4"/>
-          <path d="M2.5 19.5a6.5 6.5 0 0 1 13 0"/>
-          <path d="M16.5 5.2a3.4 3.4 0 0 1 0 5.6M18 19.5a6.6 6.6 0 0 0-1.6-4.3"/>
-        </svg>
-        <span>Social</span>
-      </a>
+      <div class="moi-wrap">
+        <!-- Un lien, et non un bouton : le clic gauche ouvre le menu, mais
+             l'adresse reste vraie pour le clic du milieu et le menu
+             contextuel du navigateur - le geste que la pastille rendait
+             avant d'en porter un. -->
+        <a class="brand-moi moi-declencheur" id="moiBtn" hidden href="/archive"
+           aria-haspopup="true" aria-expanded="false">
+          <span class="brand-moi-ava" id="moiAva"></span>
+          <b id="moiNom"></b>
+          <svg class="moi-chev" width="10" height="10" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="3" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </a>
+        <!-- Le nom du site, pour qui n'est pas connecté : la barre ne peut
+             pas rester vide, et il n'y a alors personne à y mettre. Il
+             ouvre le même menu - c'est la seule porte de la page, elle ne
+             peut pas dépendre du fait d'avoir un compte. -->
+        <button type="button" class="brand-moi moi-declencheur moi-anon" id="moiAnon"
+                aria-haspopup="true" aria-expanded="false">
+          <b id="brand-title">Jeux Vidéos</b>
+          <svg class="moi-chev" width="10" height="10" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="3" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
     </div>
     <nav class="tabs" id="tabs" role="tablist"></nav>
     <!-- La cloche, à gauche de l'engrenage : les deux boutons du compte,
@@ -238,6 +239,10 @@
 <div class="sheet-back" id="export" hidden></div>
 <div class="sheet-back" id="renom" hidden></div>
 <div class="sheet-back" id="detail" hidden></div>
+<!-- Les jeux d'un studio, ouverte en cliquant le développeur sur la
+     fiche « plus d'informations » - et posée par-dessus elle, pas à sa
+     place. Voir ouvrirStudio dans archive-export.js. -->
+<div class="sheet-back" id="studio" hidden></div>
 <div class="sheet-back" id="zoom" hidden></div>
 <div class="toast" id="toast" hidden></div>
 

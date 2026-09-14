@@ -46,7 +46,7 @@ JOURS_COURBE = 15
 # Les pages du site, et leur nom en clair. La cle est la regle de route
 # telle que Flask la connait ; une page absente d'ici n'est pas notee --
 # c'est ce qui tient la liste courte et previsible, plutot que d'y voir
-# arriver un jour /static/Cover/machin.webp.
+# arriver un jour /static/archive/Cover/machin.webp.
 PAGES = {
     "/abyss": "Abyss",
     "/abyss/profil": "Profil",

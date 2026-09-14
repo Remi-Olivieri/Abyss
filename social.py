@@ -371,6 +371,89 @@ def fil(u, avant=None, limite=FEED_LOT) -> dict:
     }
 
 
+# Au-dela, la pastille dirait « 9+ » de toute facon : compter tout le fil
+# pour savoir s'il y a eu cinquante ou deux cents entrees ne sert personne.
+NEUF_MAX = 10
+
+# Plus recent que la ligne `?`, au sens du fil : meme couple (date, id) que
+# le curseur de fil(), compare dans l'autre sens.
+APRES = (f" ({ENTREE}, j.id) >"
+         " (SELECT COALESCE(entre_le, cree_le), id FROM jeu WHERE id = ?)")
+
+
+def _dernier_du_fil():
+    """L'identifiant de la carte en tete du fil, ou None sur un fil vide."""
+    ligne = cx().execute(
+        f"SELECT j.id{DE_LA_LIGNE} WHERE {VISIBLE}"
+        f" ORDER BY {ENTREE} DESC, j.id DESC LIMIT 1", VISIBLE_ARGS).fetchone()
+    return ligne["id"] if ligne else None
+
+
+def _pose_vu(u, jeu_id) -> None:
+    cx().execute("UPDATE utilisateur SET fil_vu_id = ? WHERE id = ?", (jeu_id, u["id"]))
+    cx().commit()
+
+
+def neuf(u) -> dict:
+    """La pastille du bouton « Communaute » : combien de jeux sont entres
+    dans le fil depuis la derniere fois que cette personne l'a lu.
+
+    Deux choses ne comptent pas :
+
+      - ses propres jeux. On sait ce qu'on vient de terminer ; se l'annoncer
+        a soi-meme allumerait la pastille a chaque ajout, et elle ne
+        voudrait plus rien dire.
+      - tout, a la premiere visite. Sans repere, on en pose un sur la tete
+        du fil et on repond zero : annoncer « 9+ » a qui n'a jamais ouvert la
+        page annoncerait son existence, pas une nouveaute.
+
+    Un repere qui ne designe plus rien -- le jeu a ete efface depuis --
+    repart de meme de la tete du fil. La comparaison au couple (date, id)
+    donnerait sinon NULL, donc zero nouveaute pour toujours.
+    """
+    if u is None:
+        return {"ok": True, "neuves": 0}
+    vu = cx().execute("SELECT fil_vu_id FROM utilisateur WHERE id = ?",
+                      (u["id"],)).fetchone()["fil_vu_id"]
+    existe = vu is not None and cx().execute(
+        "SELECT 1 FROM jeu WHERE id = ?", (vu,)).fetchone() is not None
+    if not existe:
+        dernier = _dernier_du_fil()
+        if dernier is not None:
+            _pose_vu(u, dernier)
+        return {"ok": True, "neuves": 0}
+    neuves = cx().execute(
+        f"SELECT COUNT(*) FROM (SELECT j.id{DE_LA_LIGNE}"
+        f" WHERE {VISIBLE} AND p.utilisateur_id != ? AND {APRES} LIMIT ?)",
+        (*VISIBLE_ARGS, u["id"], vu, NEUF_MAX)).fetchone()[0]
+    return {"ok": True, "neuves": neuves}
+
+
+def marque_fil_vu(u, jeu_id) -> dict:
+    """Le fil est lu jusqu'a cette carte-la.
+
+    Envoye par la page du fil a son premier chargement et a chaque carte
+    qui s'y pose en direct. Le repere n'avance que vers le haut : une page
+    ouverte depuis une heure qui renverrait sa vieille carte de tete ne doit
+    pas rallumer ce qu'un autre appareil vient d'eteindre.
+    """
+    try:
+        jeu_id = int(jeu_id)
+    except (TypeError, ValueError):
+        raise Refus("format", "Identifiant de jeu illisible.", 400)
+    if _ligne_visible(jeu_id) is None:
+        return {"ok": True}
+    vu = cx().execute("SELECT fil_vu_id FROM utilisateur WHERE id = ?",
+                      (u["id"],)).fetchone()["fil_vu_id"]
+    plus_recent = vu is None or cx().execute(
+        "SELECT 1 FROM jeu WHERE id = ?", (vu,)).fetchone() is None \
+        or cx().execute(f"SELECT 1{DE_LA_LIGNE} WHERE j.id = ? AND {APRES}",
+                        (jeu_id, vu)).fetchone() is not None
+    if plus_recent:
+        _pose_vu(u, jeu_id)
+    return {"ok": True}
+
+
 def _ligne_visible(jeu_id):
     """La ligne de journal, ou None si elle n'a rien a faire ici.
 
@@ -1125,6 +1208,22 @@ def refus(err):
 @blueprint_social.get("/feed")
 def route_feed():
     return reponse(fil(actuel(), request.args.get("avant")))
+
+
+@blueprint_social.get("/feed/neuf")
+def route_feed_neuf():
+    """La pastille du bouton « Communaute » : y a-t-il du neuf dans le fil ?
+
+    Zero pour un visiteur : le repere de lecture suit le compte (voir
+    utilisateur.fil_vu_id), et qui n'en a pas n'a rien a rattraper.
+    """
+    return reponse(neuf(actuel()))
+
+
+@blueprint_social.post("/feed/vu")
+def route_feed_vu():
+    """Le fil est lu jusqu'a la carte donnee : voir marque_fil_vu."""
+    return reponse(marque_fil_vu(_connecte(), corps().get("id")))
 
 
 @blueprint_social.get("/jeu/<int:jeu_id>")
