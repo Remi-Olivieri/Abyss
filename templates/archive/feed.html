@@ -6,7 +6,7 @@
 <title>Feed - Jeux Vidéos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Karla:wght@400;500;700&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Eczar:wght@500;600;700;800&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- La feuille de l'Archive, et pas celle d'Abyss : le Social est une salle
      de l'Archive, pas un projet à part. Tout ce qu'une carte affiche - la
      note en couleur, la jaquette, les « + » et les « − » d'un avis - vient
@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="/static/archive/social.css">
 </head>
 <body>
+<!-- la neige d'Abyss, derriere tout : voir #neige dans archive.css -->
+<canvas id="neige" aria-hidden="true"></canvas>
 
 <header class="top">
   <div class="wrap top-in">
@@ -141,7 +143,7 @@
      sans qu'on recharge. La même version que le lobby du quiz - c'est le
      même serveur en face. Son absence ne casse rien : voir socialTempsReel
      dans archive-social.js. -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+<script src="/static/commun/vendor/socket.io-4.1.2.min.js"></script>
 <script src="/static/commun/champs.js"></script>
 <script src="/static/commun/suggestion.js"></script>
 <!-- Deux fichiers seulement, et c'est tout l'intérêt du découpage de
@@ -159,6 +161,8 @@
 <script src="/static/archive/archive-recherche.js"></script>
 <script src="/static/archive/archive-export.js"></script>
 <script src="/static/archive/archive-social.js"></script>
+<!-- la couleur du profil : le fil prend la mienne -->
+<script src="/static/archive/archive-couleur.js"></script>
 <script>
 /* =======================================================================
    La page Social - le fil, et rien d'autre.
@@ -185,6 +189,15 @@ const feed = document.getElementById('feed');
 const etat = document.getElementById('feedEtat');
 const plusZone = document.getElementById('feedPlusZone');
 const plus = document.getElementById('feedPlus');
+
+/* La barre du haut sans fond ni trait tant qu'on est tout en haut, comme
+   sur le journal (voir body.en-haut dans archive.css). Le journal le pose
+   dans archive-demarrage.js, que cette page ne charge pas. */
+function majEnHaut(){
+  document.body.classList.toggle('en-haut', window.scrollY < 8);
+}
+window.addEventListener('scroll', majEnHaut, {passive: true});
+majEnHaut();
 
 /* Le curseur de la page suivante : l'identifiant de la dernière carte
    reçue. Le serveur renvoie `suite: null` quand il n'y a plus rien
@@ -376,6 +389,7 @@ if(window.Suggestion){
       /* MOI est déclaré dans archive-noyau.js et sert au-delà de l'en-tête :
          c'est par lui que la fiche d'un jeu sait quel journal lire pour
          décider si « + Wishlist » a lieu d'être (voir mesJeux). */
+      appliqueCouleur(d.moi.couleur);
       MOI = {connecte: true, pseudo: d.moi.pseudo, avatar: d.moi.avatar,
              notifs: d.notificationsNeuves || 0};
       const moi = document.getElementById('moiBtn');
@@ -418,5 +432,6 @@ if(window.Suggestion){
   }catch(e){}
 })();
 </script>
+<script src="/static/commun/neige.js" defer></script>
 </body>
 </html>

@@ -579,7 +579,6 @@ function dessine() {
                 ${NIVEAUX.map((x) => `
                   <button type="button" class="sug-niv n${x.n}" data-n="${x.n}"
                           aria-pressed="${l.priorite === x.n}"
-                          title="${echappe(x.titre)}${l.priorite === x.n ? " (cliquer pour retirer)" : ""}"
                           aria-label="${echappe(x.nom)}">${x.n}</button>`).join("")}
               </div>
               <button type="button" class="sug-copier">${ICONE_COPIE}<span>Copier</span></button>

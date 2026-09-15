@@ -50,6 +50,7 @@
     { cle: "jeux-videos", nom: "Archive Jeux Vidéos" },
     { cle: "collection", nom: "Collection Yu-Gi-Oh!" },
     { cle: "quiz", nom: "Mini-Jeux / Quiz" },
+    { cle: "chainz", nom: "L'Atelier Chainz" },
   ];
 
   const echappe = (s) => String(s === null || s === undefined ? "" : s)

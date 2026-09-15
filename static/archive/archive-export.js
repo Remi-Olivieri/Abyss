@@ -183,10 +183,11 @@ function detailHTML(g){
   return `<div class="sheet detail-sheet" role="dialog" aria-modal="true"
       aria-label="Plus d'informations sur ${esc(g.name)}">
     <div class="sheet-tools">
-      <!-- Une infobulle sur le titre, parce qu'il se coupe quand il est trop
-           long pour la ligne (voir .detail-sheet .fhead) : le survol rend le
-           reste, et l'aria-label de la fenetre le donne entier a la voix. -->
-      <span class="grp"><b class="fhead" title="${esc(g.name)}">${esc(g.name)}</b></span>
+      <!-- Le titre se coupe quand il est trop long pour la ligne (voir
+           .detail-sheet .fhead). Pas d'infobulle pour rendre le reste : le
+           site n'en affiche aucune. L'aria-label de la fenetre le donne
+           entier a la voix. -->
+      <span class="grp"><b class="fhead">${esc(g.name)}</b></span>
       <!-- Les deux actions, sur la ligne du titre : c'est le jeu qu'elles
            concernent, et le titre est ce qui le nomme. Plus bas, elles
            auraient flotté au-dessus d'une description qui ne parle pas
@@ -474,7 +475,7 @@ function peintDetail(data, g){
 
   const media = data.trailer
     ? `<div class="detail-media"><iframe src="${esc(data.trailer)}"
-        title="Bande-annonce" loading="lazy" allow="encrypted-media" allowfullscreen></iframe></div>`
+        aria-label="Bande-annonce" loading="lazy" allow="encrypted-media" allowfullscreen></iframe></div>`
     : '';
   /* Chaque vignette porte l'adresse de sa version large : c'est le serveur
      qui compose les deux tailles (voir detail_complet), la page n'a pas à

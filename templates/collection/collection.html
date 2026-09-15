@@ -6,10 +6,12 @@
 <title>Classeur Yu-Gi-Oh</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Inter+Tight:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Eczar:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/collection/collection.css">
 </head>
 <body>
+<!-- la neige d'Abyss, derriere tout : voir #neige dans collection.css -->
+<canvas id="neige" aria-hidden="true"></canvas>
 
 <header>
   <div class="brand">
@@ -1831,5 +1833,6 @@ majReflets();
   ouvreClasseurAffiche();
 })();
 </script>
+<script src="/static/commun/neige.js" defer></script>
 </body>
 </html>

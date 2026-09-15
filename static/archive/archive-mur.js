@@ -386,7 +386,6 @@ function renderSortDir(){
   const asc = S.dir === 'asc';
   b.classList.toggle('asc', asc);
   const txt = asc ? 'Ordre croissant' : 'Ordre décroissant';
-  b.title = txt + ' - cliquer pour inverser';
   b.setAttribute('aria-label', txt + ', inverser le tri');
 }
 
@@ -636,7 +635,7 @@ function tileInner(x, i){
      pourcentage est ce qui se lit d'un coup d'œil, pas « 23,99 € ». */
   const t = estWishlist(x) ? TARIFS[x.name] : null;
   const promo = t && t.remise > 0
-    ? `<span class="tpromo" title="${esc(money(t.actuel))} au lieu de ${esc(money(t.plein))}">−${t.remise}&#8239;%</span>`
+    ? `<span class="tpromo">−${t.remise}&#8239;%</span>`
     : '';
   return `${promo}${statut
       ? `<span class="tnote ${estWishlist(x) ? 'wish' : 'encours'}">${esc(statut)}</span>`

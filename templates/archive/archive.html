@@ -6,7 +6,7 @@
 <title>Jeux Vidéos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Karla:wght@400;500;700&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Eczar:wght@500;600;700;800&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/archive/archive.css">
 <!-- Le social : les cartes du fil, la fenêtre d'une discussion, la cloche et
      le bouton « Avis » de la fiche. Partagé avec templates/archive/feed.html,
@@ -14,6 +14,8 @@
 <link rel="stylesheet" href="/static/archive/social.css">
 </head>
 <body>
+<!-- la neige d'Abyss, derriere tout : voir #neige dans archive.css -->
+<canvas id="neige" aria-hidden="true"></canvas>
 
 <header class="top">
   <div class="wrap top-in">
@@ -100,9 +102,21 @@
         <button class="menu-item" id="statsBtn" role="menuitem">Statistiques</button>
         <button class="menu-item" id="bilanBtn" role="menuitem">Télécharger un résumé</button>
         <button class="menu-item" id="exportBtn" role="menuitem">Exporter...</button>
+        <!-- Chez soi seulement : la couleur du profil. Ouvre un sous-menu à
+             la place des entrées, voir static/archive/archive-couleur.js. -->
+        <button class="menu-item perso-ouvre" id="persoBtn" role="menuitem" hidden
+                aria-haspopup="true">Personnalisation<i aria-hidden="true">&rsaquo;</i></button>
         <button class="menu-item" id="igdbBtn" role="menuitem" hidden>Mettre à jour depuis IGDB</button>
         <button class="menu-item" id="unlock" role="menuitem">Passer en mode éditeur</button>
         <button class="menu-item quit" id="relock" role="menuitem" hidden>Repasser en lecture seule</button>
+        <div class="perso" id="perso" hidden>
+          <button type="button" class="perso-retour" id="persoRetour">
+            <span aria-hidden="true">&lsaquo;</span> Personnalisation
+          </button>
+          <p class="perso-titre" id="persoTitre">Couleur du profil</p>
+          <div class="perso-grille" id="persoGrille" role="radiogroup" aria-labelledby="persoTitre"></div>
+          <p class="perso-nom" id="persoNom" aria-live="polite"></p>
+        </div>
       </div>
     </div>
     <!-- Dernier de la barre, et volontairement en dehors de la colonne
@@ -262,7 +276,7 @@
      sans qu'on recharge. La même version que le lobby du quiz - c'est le
      même serveur en face. Son absence ne casse rien : voir socialTempsReel
      dans archive-social.js. -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+<script src="/static/commun/vendor/socket.io-4.1.2.min.js"></script>
 <script src="/static/commun/champs.js"></script>
 <script src="/static/commun/suggestion.js"></script>
 <!-- La page tenait dans un seul bloc de six mille lignes de JavaScript,
@@ -283,6 +297,7 @@
      côtés. Elle ne dépend que du noyau, d'où sa place juste après lui. -->
 <script src="/static/archive/archive-recherche.js"></script>
 <script src="/static/archive/archive-journal.js"></script>
+<script src="/static/archive/archive-couleur.js"></script>
 <script src="/static/archive/archive-mur.js"></script>
 <script src="/static/archive/archive-fiche.js"></script>
 <script src="/static/archive/archive-formulaire.js"></script>
@@ -296,5 +311,6 @@
      l'appelle - l'ordre des balises est l'ordre des dépendances. -->
 <script src="/static/archive/archive-social.js"></script>
 <script src="/static/archive/archive-demarrage.js"></script>
+<script src="/static/commun/neige.js" defer></script>
 </body>
 </html>

@@ -290,7 +290,7 @@ def verifie_periode(page_id, periode) -> str:
 # colonnes du meme nom sur une ligne sqlite3.Row, et l'une des deux gagne en
 # silence -- ici ce serait tout le journal qui lirait le mauvais numero.
 IDENTITE = ("p.*, u.pseudo, u.id AS compte_id, u.avatar, u.avatar_maj_le,"
-            " u.banniere, u.banniere_maj_le")
+            " u.banniere, u.banniere_maj_le, u.couleur")
 
 
 def identite(page) -> dict:
@@ -305,7 +305,12 @@ def identite(page) -> dict:
               "avatar": page["avatar"], "avatar_maj_le": page["avatar_maj_le"],
               "banniere": page["banniere"], "banniere_maj_le": page["banniere_maj_le"]}
     return {"avatar": comptes.url_avatar(compte),
-            "banniere": comptes.url_banniere(compte)}
+            "banniere": comptes.url_banniere(compte),
+            # La couleur du profil (voir comptes.PALETTE) : le journal
+            # s'habille de celle de son proprietaire, pour tous ceux qui le
+            # lisent. Lue avec prudence -- une ligne qui ne viendrait pas de
+            # IDENTITE n'aurait pas la colonne.
+            "couleur": page["couleur"] if "couleur" in page.keys() else None}
 
 
 def page_de(pseudo):
@@ -686,6 +691,8 @@ def liste():
         "pseudo": mienne["pseudo"], "jeux": nb_jeux(mienne["id"]),
         "avatar": comptes.url_avatar(u),   # u vient de actuel() : u.* complet
         "banniere": comptes.url_banniere(u),
+        # la mienne, pour les pages qui ne montrent pas de journal (le fil)
+        "couleur": u["couleur"],
     }
     return reponse({"ok": True,
                     "journaux": annuaire(),

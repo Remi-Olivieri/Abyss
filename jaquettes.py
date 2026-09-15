@@ -1611,10 +1611,35 @@ def blueprint_jaquettes(dossier, url_publique="/static/archive/Cover/"):
             fiches, souci = toutes_les_fiches(nom)
             if souci:
                 return jsonify(etat="injoignable", raison=souci, jaquette=jaquette)
+
+            # Un jeu deja rattache a une fiche n'a plus rien a deviner : c'est
+            # CETTE fiche, quoi que dise le nom. Sans ca, deux jeux au titre
+            # identique sortis la meme annee (« Kirby and the Forgotten Land »,
+            # le jeu et son edition) laissaient l'analyse retomber sur le
+            # mauvais a chaque passage, et proposer de defaire le choix fait a
+            # la main la fois d'avant. La fiche est cherchee dans les
+            # resultats du nom, puis demandee par identifiant si la recherche
+            # ne l'a pas remontee ; si IGDB ne la connait plus, on revient au
+            # rapprochement par le nom.
+            choix, surete = None, ""
+            try:
+                id_connu = int(donnees.get("id_igdb") or 0)
+            except (TypeError, ValueError):
+                id_connu = 0
+            if id_connu:
+                choix = next((f for f in fiches if f["id"] == id_connu), None)
+                if not choix:
+                    par_id, _souci_id = fiches_par_id([id_connu])
+                    choix = par_id.get(id_connu)
+                    if choix:
+                        fiches = [choix] + fiches
+                if choix:
+                    surete = "sure"
+
             if not fiches:
                 return jsonify(etat="introuvable", jaquette=jaquette)
-
-            choix, surete = retenue_pour(fiches, _annee(donnees.get("sortie")))
+            if not choix:
+                choix, surete = retenue_pour(fiches, _annee(donnees.get("sortie")))
 
             # les jaquettes possibles, celle de la fiche retenue en tete :
             # c'est presque toujours la bonne, autant ne pas la faire

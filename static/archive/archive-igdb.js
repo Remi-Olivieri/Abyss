@@ -69,7 +69,8 @@ const IGD = {
   filtre: false,   // la relecture ne montre que les jeux à vérifier
   compte: {dates:0, prix:0, jaquettes:0, detail:0, echecs:0},
   echecs: [],
-  opts: {dates:true, prix:true, jaquettes:true, detail:true},
+  opts: {dates:true, prix:true, jaquettes:true, detail:true, tout:false},
+  passes: 0,       // les jeux déjà complets, que l'analyse n'a pas interrogés
 };
 
 const SURETE = {
@@ -79,14 +80,30 @@ const SURETE = {
 };
 
 function igdbCorps(){ return $('igdbIn'); }
-function igdbEntete(txt){ const b = $('igdbTitre'); if(b) b.textContent = txt; }
+/* Chaque étape passe par ici pour se nommer : c'est donc aussi l'endroit
+   où la flèche de réduction apparaît ou s'efface, et où la pastille apprend
+   que le travail qu'elle suivait est fini. */
+function igdbEntete(txt){
+  const b = $('igdbTitre'); if(b) b.textContent = txt;
+  const r = document.querySelector('#igdb .igdb-reduire');
+  if(r) r.hidden = !igdbEnCours();
+  igdbPastilleMaj();
+}
+/* Les deux étapes qui tournent seules, et les seules qu'on puisse replier :
+   la relecture et les jaquettes demandent un œil, les réduire n'aurait pas
+   de sens. */
+const igdbEnCours = ()=> IGD.etape === 'analyse' || IGD.etape === 'ecriture';
 
 function ouvrirIgdb(){
   closeMenu();
   if(!MOI.admin){ toast("L'entretien de la base est réservé à l'administration.", true); return; }
+  /* Une mise à jour repliée attend en bas : le menu la fait revenir, il ne
+     la jette pas pour en recommencer une. */
+  if(igdbPastille()){ rouvrirIgdb(); return; }
   IGD.jeton++;
   IGD.stop = false;
   IGD.lignes = []; IGD.file = []; IGD.fi = 0; IGD.ecrit = false; IGD.filtre = false;
+  IGD.avance = null;
   /* Les cinq compteurs, et pas quatre : `detail` manquait ici alors que le
      bilan l'affiche. L'écriture le remettait à zéro au passage, ce qui
      masquait l'oubli - sauf quand il n'y a rien à écrire et qu'on va
@@ -97,13 +114,16 @@ function ouvrirIgdb(){
   host.innerHTML = `<div class="sheet igdb-sheet" role="dialog" aria-modal="true" aria-label="Mise à jour depuis IGDB">
     <div class="sheet-tools">
       <span class="grp"><b class="fhead" id="igdbTitre">Mise à jour depuis IGDB</b></span>
-      <span class="grp"><button class="sbtn igdb-x" aria-label="Fermer">×</button></span>
+      <span class="grp">
+        <button class="sbtn igdb-reduire" aria-label="Réduire, pour naviguer pendant la mise à jour" hidden>${ICONE_REDUIRE}</button>
+        <button class="sbtn igdb-x" aria-label="Fermer">×</button></span>
     </div>
     <div class="igdb-in" id="igdbIn"></div>
   </div>`;
   host.hidden = false;
   verrouFond();
   host.querySelector('.igdb-x').onclick = fermerIgdb;
+  host.querySelector('.igdb-reduire').onclick = igdbReduire;
   igdbOuvreReglages();
 }
 /* La base est relue à chaque ouverture, jamais gardée d'une fois sur
@@ -139,12 +159,125 @@ async function igdbOuvreReglages(){
 }
 function fermerIgdb(){
   const host = $('igdb');
-  if(host.hidden) return;
+  // repliée, la fenêtre est cachée mais bien là : la pastille le dit
+  const reduite = !!igdbPastille();
+  igdbPastilleEnleve();
+  if(host.hidden && !reduite) return;
   IGD.jeton++;                  // ce qui répondra après nous ne sert plus
+  IGD.etape = '';
   host.hidden = true; host.innerHTML = '';
+  host.style.zIndex = '';       // posé par rouvrirIgdb, voir closeForm
   verrouFond();
   igdbRelitLeClasseur();
 }
+
+/* ---------- réduire pendant que ça tourne ----------
+   Sur toute la base, l'analyse se compte en minutes, et la fenêtre tenait
+   la page entière pendant ce temps. La flèche la replie en une pastille en
+   bas au centre - la jauge, le pourcentage, le temps restant - et rend le
+   journal : on va lire, noter, changer de journal, et un clic la fait
+   remonter. Le même geste et le même vol que le formulaire replié (voir
+   reduireForm dans archive-formulaire.js), dont on reprend les outils.
+
+   Au centre et pas dans un coin : le bas à droite est au formulaire replié,
+   le bas à gauche au rattrapage, et les deux peuvent être là en même temps. */
+let IGDB_ANIME = false;
+function igdbPastille(){ return $('igdbPastille'); }
+function igdbPastilleEnleve(){
+  const p = igdbPastille();
+  if(p) p.remove();
+}
+function igdbPastilleMonte(){
+  igdbPastilleEnleve();
+  const p = document.createElement('div');
+  p.id = 'igdbPastille';
+  p.className = 'igdb-pastille mesure';
+  p.innerHTML = `<button type="button" class="ip-ouvre" aria-label="Rouvrir la mise à jour depuis IGDB">
+      <span class="fp-fleche">${ICONE_AGRANDIR}</span>
+      <span class="ip-corps">
+        <span class="ip-ligne"><b class="ip-pct"></b><i class="ip-reste"></i></span>
+        <span class="ip-jauge"><i></i></span>
+      </span>
+    </button>`;
+  document.body.appendChild(p);
+  p.querySelector('.ip-ouvre').onclick = ()=> rouvrirIgdb();
+  igdbPastilleMaj();
+  return p;
+}
+/* Pendant le travail : le pourcentage et le temps restant. Une fois l'étape
+   passée, ce qui attend - la relecture ou le bilan ne se font pas seuls,
+   la pastille le dit au lieu de rester figée sur 100 %. */
+const IGDB_FIN_ETAPE = {
+  revue: 'Analyse terminée',
+  jaquettes: 'Écriture terminée',
+  fini: 'Mise à jour terminée',
+};
+function igdbPastilleMaj(){
+  const p = igdbPastille();
+  if(!p) return;
+  const a = IGD.avance || {fait: 0, total: 0};
+  const enCours = igdbEnCours();
+  const pct = enCours ? (a.total ? Math.round(a.fait / a.total * 100) : 0) : 100;
+  p.classList.toggle('fini', !enCours);
+  p.querySelector('.ip-pct').textContent = enCours
+    ? `${pct} %` : (IGDB_FIN_ETAPE[IGD.etape] || 'Mise à jour en pause');
+  p.querySelector('.ip-reste').textContent = enCours
+    ? igdbReste(a.fait, a.total) : 'Voir';
+  p.querySelector('.ip-jauge i').style.width = pct + '%';
+}
+
+function igdbReduire(){
+  const host = $('igdb');
+  const feuille = host.querySelector('.igdb-sheet');
+  if(host.hidden || !feuille || IGDB_ANIME) return;
+  IGDB_ANIME = true;
+  const p = igdbPastilleMonte();
+  poseVolForm(feuille, p);
+  const vite = sansMouvement();
+  if(!vite){
+    // jamais retirées, seulement échangées : voir le commentaire de reduireForm
+    feuille.classList.remove('revient');
+    feuille.classList.add('part');
+    host.classList.add('part');
+  }
+  setTimeout(()=>{
+    host.hidden = true;
+    host.classList.remove('part');
+    verrouFond();                       // la page redevient défilable
+    p.classList.remove('mesure');
+    if(!vite) p.classList.add('arrive');
+    IGDB_ANIME = false;
+  }, vite ? 0 : FORM_REDUIT_MS);
+}
+function rouvrirIgdb(){
+  const host = $('igdb');
+  const feuille = host.querySelector('.igdb-sheet');
+  const p = igdbPastille();
+  if(!feuille || IGDB_ANIME) return;
+  IGDB_ANIME = true;
+  const vite = sansMouvement();
+  host.hidden = false;
+  auPremierPlan(host);                  // au-dessus de ce qu'on a ouvert entre-temps
+  verrouFond();
+  if(p){
+    poseVolForm(feuille, p);
+    p.classList.remove('arrive');
+    if(vite) p.remove(); else { p.classList.add('repart'); setTimeout(()=> p.remove(), 200); }
+  }
+  if(!vite){
+    feuille.classList.remove('part');
+    feuille.classList.add('revient');
+  }
+  setTimeout(()=>{ IGDB_ANIME = false; }, vite ? 0 : FORM_ROUVRE_MS);
+}
+/* Les autres pages du site rechargent tout : quitter celle-ci en pleine
+   analyse la perdrait sans un mot. Le navigateur demande d'abord - et
+   seulement tant que quelque chose tourne. */
+window.addEventListener('beforeunload', e=>{
+  if(!igdbEnCours()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
 /* Des écritures ont pu passer : ce que le mur affiche date d'avant.
    Le classeur est relu au lieu d'être recollé à la main - l'écriture ne
    renvoie plus le journal, elle ne le peut plus : elle a pu toucher autant
@@ -233,6 +366,9 @@ function igdbReglages(){
       <label class="fld fcheck">
         <input id="igdb_detail" type="checkbox"${IGD.opts.detail ? ' checked' : ''}>
         <span>Plateforme, développeur, genres</span></label>
+      <label class="fld fcheck full">
+        <input id="igdb_tout" type="checkbox"${IGD.opts.tout ? ' checked' : ''}>
+        <span>Revérifier aussi les jeux déjà complets (plus long)</span></label>
     </div>
     <div class="frow"><span class="spacer"></span>
       <button class="ghost" id="igdb_annuler">Annuler</button>
@@ -261,6 +397,7 @@ function igdbReglages(){
       prix: $('igdb_prix').checked,
       jaquettes: $('igdb_jaq').checked,
       detail: $('igdb_detail').checked,
+      tout: $('igdb_tout').checked,
     };
     if(!IGD.opts.dates && !IGD.opts.prix && !IGD.opts.jaquettes && !IGD.opts.detail){
       toast("Coche au moins une chose à mettre à jour.", true);
@@ -304,12 +441,45 @@ function igdbReste(fait, total){
   return s < 90 ? `environ ${s} s` : `environ ${Math.round(s / 60)} min`;
 }
 function igdbAvance(fait, total, quoi){
+  IGD.avance = {fait, total};
+  igdbPastilleMaj();
   const barre = $('igdb_barre'), compteur = $('igdb_compteur');
   if(!barre || !compteur) return;
   barre.style.width = (total ? Math.round(fait / total * 100) : 100) + '%';
   compteur.textContent = `${fait} / ${total}`;
   $('igdb_quoi').textContent = quoi || '';
   $('igdb_reste').textContent = igdbReste(fait, total);
+}
+
+/* ---------- ce qu'il est inutile de redemander ----------
+   Toute la base, c'était une question à IGDB par jeu, à chaque passage - et
+   l'immense majorité n'avait plus rien à apprendre. Un jeu est passé quand
+   il est rattaché à une fiche (l'identifiant fait foi, voir /api/jeu/maj)
+   et qu'il ne lui manque rien de ce qu'on a coché :
+
+     - dates : une date connue et déjà passée ne bouge plus. Seuls les jeux
+       à venir, ou sans date, peuvent encore en changer.
+     - prix : le prix de base est rempli.
+     - fiche : plateforme, développeur et genres sont là. Pas le thème :
+       IGDB n'en donne pas à beaucoup de jeux, qui seraient sinon
+       redemandés à chaque fois pour rien.
+     - jaquettes : l'image est sur le disque, d'après le manifeste. Sans
+       manifeste on ne sait pas, donc on demande.
+
+   La case « Revérifier aussi les jeux déjà complets » repasse sur tout,
+   pour une fiche qu'IGDB aurait corrigée depuis. */
+function igdbAujourdhui(){
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+function igdbComplet(g, aujourdhui){
+  if(!g.idIgdb) return false;
+  const o = IGD.opts;
+  if(o.dates && !(/^\d{4}-\d{2}-\d{2}$/.test(g.release || '') && g.release <= aujourdhui)) return false;
+  if(o.prix && (g.base === null || g.base === undefined)) return false;
+  if(o.detail && !(g.plateforme && g.developpeur && g.genres)) return false;
+  if(o.jaquettes && !(JAQUETTES && (cleJaquette(g) in JAQUETTES))) return false;
+  return true;
 }
 
 /* ---------- étape 2 : l'analyse ---------- */
@@ -326,7 +496,12 @@ async function igdbAnalyse(){
       <button class="ghost" id="igdb_stop">Interrompre</button></div>`;
   $('igdb_stop').onclick = ()=>{ IGD.stop = true; };
 
-  const total = IGD.liste.length;
+  const aujourdhui = igdbAujourdhui();
+  const aInterroger = IGD.opts.tout
+    ? IGD.liste
+    : IGD.liste.filter(g => !igdbComplet(g, aujourdhui));
+  IGD.passes = IGD.liste.length - aInterroger.length;
+  const total = aInterroger.length;
   /* Le même jeu revient d'un journal à l'autre : sur toute la base, « Elden
      Ring » c'est douze lignes et une seule question à IGDB. La réponse est
      donc gardée le temps de l'analyse, sous le couple (nom, date connue) -
@@ -340,7 +515,7 @@ async function igdbAnalyse(){
   for(let i = 0; i < total; i++){
     if(jeton !== IGD.jeton) return;      // la fenêtre a été fermée
     if(IGD.stop) break;                  // interrompu : on garde ce qu'on a
-    const g = IGD.liste[i];
+    const g = aInterroger[i];
     igdbAvance(i, total, g.name);
     // l'identifiant fait partie de la clé : c'est lui qui décide sous quel
     // nom de fichier le serveur va chercher la jaquette, donc deux lignes
@@ -534,7 +709,9 @@ function igdbRevue(){
     <p class="igdb-info">
       <b>${IGD.lignes.length}</b> jeu${IGD.lignes.length > 1 ? 'x' : ''} analysé${IGD.lignes.length > 1 ? 's' : ''} :
       <b>${avec.length}</b> à corriger${flous.length ? `, dont <b>${flous.length}</b> à vérifier` : ''}${
-        nJaq ? `, <b>${nJaq}</b> jaquette${nJaq > 1 ? 's' : ''} à proposer` : ''}.
+        nJaq ? `, <b>${nJaq}</b> jaquette${nJaq > 1 ? 's' : ''} à proposer` : ''}.${
+        IGD.passes ? ` <b>${IGD.passes}</b> jeu${igdbPluriel(IGD.passes)} déjà complet${
+          IGD.passes > 1 ? 's' : ''}, non interrogé${IGD.passes > 1 ? 's' : ''}.` : ''}
       ${avec.length ? `Seules les cellules « Date de sortie », « Prix de base »${
         IGD.opts.detail ? ' et la fiche détaillée (plateforme, développeur, genres, thèmes)' : ''} sont touchées.` : ''}
     </p>
@@ -791,7 +968,7 @@ function igdbJaquette(){
     <p class="igdb-info">Jaquette de <b>« ${esc(e.nom)} »</b>.</p>
     <div class="jaq-grid">
       ${e.propositions.map((p,i)=>`
-        <button class="jaq-item${p.suggere ? ' suggeree' : ''}" data-i="${i}" title="${esc(p.lien || '')}">
+        <button class="jaq-item${p.suggere ? ' suggeree' : ''}" data-i="${i}">
           <img src="${esc(p.apercu)}" alt="" loading="lazy" decoding="async">
           <b>${esc(p.titre)}</b>
           <span>${esc(p.date || 'date inconnue')}${p.nature ? ' · ' + esc(p.nature) : ''}</span>

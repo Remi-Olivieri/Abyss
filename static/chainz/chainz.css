@@ -1,0 +1,405 @@
+/* L'Atelier Chainz, habille comme une piece d'Abyss.
+
+   La page vivait sur son propre domaine avec sa propre identite : fond
+   bleu-gris, polices systeme, aucun chemin vers le reste du site. Elle
+   reprend ici les couleurs du hub -- l'abysse, l'os, la brume -- ses deux
+   polices et sa neige -- mais garde son or : c'est la couleur de Chainz,
+   et le rose de la tuile d'Abyss s'y lisait moins bien.
+
+   Les couleurs des factions, elles, ne bougent pas : ce sont celles du jeu,
+   pas celles du site. */
+:root{
+  --abysse:#03060B;
+  --carte:#0D1725;
+  --carte-2:#070E18;
+  --creux:#040910;
+  --os:#DCE8F0;
+  --brume:#72899D;
+  --brume-2:#586A7C;
+  --ligne:rgba(150,195,220,.12);
+  --ligne-forte:rgba(150,195,220,.3);
+
+  --accent:#FFCC45;          /* l'or de Chainz */
+  --luciole:#FFCC45;         /* reservee */
+  --algue:#3FD9A4;           /* terminee */
+  --rouge:#E86A6A;
+
+  --f-bete-body:#663D1C;      --f-bete-accent:#FA9E38;
+  --f-ocean-body:#174275;     --f-ocean-accent:#4CA8FF;
+  --f-horreur-body:#401C57;   --f-horreur-accent:#CC5CFA;
+  --f-magie-body:#7D1E66;     --f-magie-accent:#E882C9;
+  --f-pyramide-body:#5C4D21;  --f-pyramide-accent:#FAD461;
+  --f-sylvestre-body:#1F522E; --f-sylvestre-accent:#70DB75;
+
+  --titre:"Eczar",Georgia,serif;
+  --corps:"Archivo","Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:14px;
+  --maxw:1180px;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+/* La fiche bloque le defilement du fond : sans gouttiere reservee, la
+   barre disparait et toute la grille saute d'une quinzaine de pixels. */
+html{scrollbar-gutter:stable;scrollbar-color:rgba(255,204,69,.5) #060C15}
+/* Le rail et le pouce a la couleur de la page : la barre grise et claire du
+   navigateur etait la seule chose qui n'en faisait pas partie. Les deux
+   syntaxes, parce qu'un navigateur qui comprend scrollbar-color ignore les
+   pseudo-elements, et inversement. */
+@supports not (scrollbar-color:auto){
+  html::-webkit-scrollbar{width:12px}
+  html::-webkit-scrollbar-track{background:#060C15}
+  html::-webkit-scrollbar-thumb{background:rgba(255,204,69,.5);border-radius:99px;border:3px solid #060C15}
+}
+[hidden]{display:none !important}
+body{
+  background:
+    radial-gradient(900px 430px at 50% -14%, rgba(255,204,69,.10), transparent 72%),
+    radial-gradient(900px 430px at 50% -14%, rgba(96,168,208,.12), transparent 72%),
+    linear-gradient(180deg,#0B1524 0%,#060C15 38%,var(--abysse) 100%);
+  background-attachment:fixed;
+  color:var(--os);
+  font-family:var(--corps);
+  font-size:15px;
+  line-height:1.55;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+body.modal-open{overflow:hidden}
+button,input{font:inherit;color:inherit}
+a{color:var(--accent)}
+::selection{background:rgba(255,204,69,.32)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+#neige{position:fixed;inset:0;z-index:0;pointer-events:none}
+main{position:relative;z-index:1;padding-bottom:80px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+
+/* ---------- en-tete ----------
+   La meme barre que l'Archive, le classeur et les mini-jeux : le retour au
+   hub a un bout, le signalement a l'autre. Fond presque opaque et pas de
+   backdrop-filter -- le flou recalcule a chaque image de la neige. */
+.top{
+  position:sticky;top:0;z-index:40;
+  background:rgba(5,10,18,.9);
+  border-bottom:1px solid var(--ligne);
+  transition:background-color .25s,border-color .25s;
+}
+/* Tout en haut, la barre n'a plus de fond, comme sur l'Archive : la tete de
+   page se lit en entier derriere elle. Le fond revient des qu'on defile,
+   sans quoi les cartes passeraient sous les boutons. `en-haut` est pose par
+   le script de la page. */
+body.en-haut .top{background:transparent;border-bottom-color:transparent}
+/* Pas de position:relative ici : sur grand ecran, les deux actions se
+   placent par rapport a .top (sticky, donc positionne) et sortent dans les
+   marges. Ancrees sur la colonne, « Retour a Abyss » tombait sur le logo. */
+.top-in{display:flex;align-items:center;gap:18px;height:62px}
+.marque{
+  font-family:var(--titre);font-weight:600;font-size:20px;
+  letter-spacing:.01em;line-height:1;white-space:nowrap;
+}
+.marque span{color:var(--accent)}
+.top-espace{flex:1}
+.entete-action{
+  flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  height:34px;padding:0 15px 0 13px;border-radius:99px;
+  color:var(--brume);border:1px solid var(--ligne);background:transparent;
+  font-family:var(--mono);font-size:12.5px;letter-spacing:.02em;
+  text-decoration:none;white-space:nowrap;cursor:pointer;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.entete-action:hover{color:var(--os);border-color:rgba(255,204,69,.5);background:rgba(255,204,69,.08)}
+/* Meme regle que l'Archive : sur un tres grand ecran, les deux actions
+   sortent de la colonne et se posent dans les marges vides. */
+@media (min-width:1560px){
+  #abyssBtn,#suggBtn{position:absolute;top:50%;transform:translateY(-50%)}
+  #abyssBtn{left:24px}
+  #suggBtn{right:24px}
+}
+
+/* ---------- tete de page ---------- */
+.entete{
+  padding:44px 0 30px;margin-bottom:26px;
+  border-bottom:1px solid transparent;
+  border-image:linear-gradient(90deg,rgba(255,204,69,.38),rgba(120,200,220,.02)) 1;
+}
+.entete-haut{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.surtitre{
+  margin:0 0 6px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--accent);
+}
+.titre{
+  font-family:var(--titre);font-weight:600;
+  font-size:clamp(42px,8.5vw,84px);line-height:.94;
+  letter-spacing:.1em;text-transform:uppercase;margin:0;
+  background:linear-gradient(180deg,#FFF6D8 0%,#E8C064 52%,#6B5220 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sous-titre{margin:14px 0 0;max-width:52ch;color:var(--brume)}
+
+.bouton{
+  font-size:14px;color:var(--os);
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 16px;border-radius:999px;
+  border:1px solid rgba(150,195,220,.18);
+  background:linear-gradient(170deg,rgba(20,36,55,.92),rgba(9,17,28,.92));
+  cursor:pointer;
+  transition:border-color .25s ease,box-shadow .25s ease,transform .2s ease;
+}
+.bouton:hover,.bouton:focus-visible{
+  border-color:rgba(255,204,69,.5);
+  box-shadow:0 0 22px -8px rgba(255,204,69,.7);
+}
+.bouton:active{transform:translateY(1px)}
+.bouton svg{color:var(--accent)}
+
+/* ---------- avancement ---------- */
+.chain-bar-wrap{display:flex;flex-direction:column;gap:8px;margin-top:26px}
+.chain-bar{
+  display:flex;height:9px;border-radius:99px;overflow:hidden;
+  background:var(--creux);border:1px solid var(--ligne);
+}
+.chain-seg{height:100%}
+.chain-seg.todo{background:rgba(114,137,157,.45)}
+.chain-seg.reserved{background:var(--luciole)}
+.chain-seg.done{background:var(--algue);box-shadow:0 0 12px rgba(63,217,164,.5)}
+.chain-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--brume)}
+.chain-legend span{display:inline-flex;align-items:center;gap:7px}
+.chain-legend b{color:var(--os);font-weight:500;font-variant-numeric:tabular-nums}
+.chain-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.chain-legend .dot-todo{background:var(--brume)}
+.chain-legend .dot-reserved{background:var(--luciole)}
+.chain-legend .dot-done{background:var(--algue)}
+
+/* ---------- filtres ---------- */
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:22px}
+.recherche{position:relative;flex:1 1 220px;min-width:200px}
+.recherche svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--brume);pointer-events:none}
+.recherche input{
+  width:100%;font-size:14.5px;color:var(--os);
+  padding:10px 12px 10px 36px;border-radius:10px;
+  border:1px solid rgba(150,195,220,.16);background:rgba(3,8,15,.66);
+  transition:border-color .2s ease,box-shadow .2s ease;
+}
+.recherche input::placeholder{color:var(--brume-2)}
+.recherche input:focus{outline:none;border-color:rgba(255,204,69,.55);box-shadow:0 0 0 3px rgba(255,204,69,.15)}
+.chip-row{display:flex;gap:4px;flex-wrap:wrap;padding:4px;border-radius:11px;background:rgba(3,8,15,.7);border:1px solid var(--ligne)}
+.chip{
+  font-size:13px;padding:6px 11px;border-radius:8px;border:0;
+  background:transparent;color:var(--brume);cursor:pointer;white-space:nowrap;
+  transition:color .2s ease,background .2s ease;
+}
+.chip:hover{color:var(--os)}
+.chip.active{color:var(--os);background:rgba(255,204,69,.18)}
+/* Une faction choisie prend sa propre couleur : le filtre dit deja dans
+   quelle famille de cartes on se trouve. */
+.chip[data-faction].active:not([data-faction="all"]){
+  color:#0a0b10;font-weight:500;background:var(--f-accent);
+}
+
+/* ---------- grille ---------- */
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
+.empty-state{
+  grid-column:1/-1;margin:0;padding:52px 20px;text-align:center;color:var(--brume);
+  border:1px dashed rgba(150,195,220,.16);border-radius:var(--r);
+}
+.card-tile{
+  position:relative;display:flex;flex-direction:column;gap:10px;
+  padding:12px;border-radius:var(--r);cursor:pointer;text-align:left;
+  background:linear-gradient(170deg,var(--carte),var(--carte-2));
+  border:1px solid rgba(150,195,220,.1);
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+  transition:transform .35s cubic-bezier(.2,.8,.3,1),box-shadow .35s ease,border-color .3s ease;
+}
+.card-tile::before{
+  content:"";position:absolute;left:14px;right:14px;top:-1px;height:2px;border-radius:0 0 2px 2px;
+  background:var(--f-accent,var(--accent));opacity:.85;
+}
+.card-tile:hover,.card-tile:focus-visible{
+  transform:translateY(-6px);
+  border-color:color-mix(in srgb,var(--f-accent,var(--accent)) 45%,transparent);
+  box-shadow:0 22px 44px rgba(0,0,0,.6),0 0 30px -8px color-mix(in srgb,var(--f-accent,var(--accent)) 45%,transparent);
+}
+.card-tile:focus-visible{outline:2px solid var(--f-accent,var(--accent));outline-offset:3px}
+.tile-head{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.faction-pill{
+  font-size:10.5px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 8px;border-radius:999px;color:#0a0b10;font-weight:700;
+  background:var(--f-accent,var(--accent));
+}
+.tile-id{font-family:var(--mono);font-size:10.5px;color:var(--brume-2)}
+.tile-name{font-family:var(--titre);font-weight:600;font-size:17px;line-height:1.2}
+.tile-image{
+  width:100%;aspect-ratio:494/720;border-radius:9px;overflow:hidden;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(120% 90% at 50% 120%, color-mix(in srgb,var(--f-accent,var(--accent)) 22%,transparent), transparent 70%),
+    var(--creux);
+}
+.tile-image img{width:100%;height:100%;object-fit:contain;display:block}
+.tile-image .ph{font-size:26px;opacity:.28}
+.tile-status{
+  font-size:11.5px;padding:4px 9px;border-radius:8px;text-align:center;
+  border:1px solid var(--ligne);
+}
+.tile-status.st-todo{color:var(--brume);background:rgba(150,195,220,.04)}
+.tile-status.st-reserved{color:var(--luciole);border-color:rgba(255,204,69,.38);background:rgba(255,204,69,.08)}
+.tile-status.st-done{color:var(--algue);border-color:rgba(63,217,164,.38);background:rgba(63,217,164,.08)}
+.reserved-badge,.new-badge{
+  position:absolute;top:6px;right:6px;
+  font-size:10px;font-weight:700;font-family:var(--mono);letter-spacing:.04em;
+  padding:2px 7px;border-radius:6px;text-transform:uppercase;
+}
+.reserved-badge{background:var(--luciole);color:#1f1204}
+.new-badge{background:var(--algue);color:#04170f}
+
+/* ---------- boussole des fleches ---------- */
+.compass{
+  display:grid;grid-template-columns:repeat(3,11px);grid-template-rows:repeat(3,11px);
+  gap:1px;padding:3px;background:rgba(0,0,0,.35);border-radius:6px;flex:none;
+}
+.compass .cell{display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--f-accent,var(--accent));opacity:.18}
+.compass .cell.active,.compass .cell.center{opacity:1}
+.compass .cell.center span{width:5px;height:5px;border-radius:50%;background:var(--f-accent,var(--accent));display:block}
+.compass.big{grid-template-columns:repeat(3,20px);grid-template-rows:repeat(3,20px);border:1px solid var(--ligne)}
+.compass.big .cell{font-size:15px}
+.compass.big .cell.center span{width:8px;height:8px}
+
+/* ---------- modales ----------
+   Le voile et la boite d'Abyss, la croix rouge d'Abyss : une fenetre qui
+   se ferme se reconnait avant d'etre lue, ici comme partout sur le site. */
+.voile{
+  position:fixed;inset:0;z-index:60;
+  display:none;align-items:flex-start;justify-content:center;
+  padding:6vh 16px;overflow-y:auto;
+  background:rgba(3,6,11,.84);
+}
+.voile.show{display:flex}
+.modale{
+  position:relative;width:100%;max-width:640px;margin-bottom:6vh;
+  padding:24px 24px 26px;border-radius:18px;
+  background:linear-gradient(170deg,#101C2C,#080F1A);
+  border:1px solid rgba(150,195,220,.16);
+  box-shadow:0 30px 70px rgba(0,0,0,.7);
+  animation:modale-ouvre .2s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes modale-ouvre{from{opacity:0;transform:translateY(10px) scale(.98)}}
+.fermer{
+  position:absolute;top:14px;right:14px;width:32px;height:32px;
+  font-size:13px;color:var(--rouge);background:transparent;
+  border:1px solid rgba(232,106,106,.24);border-radius:9px;cursor:pointer;
+}
+.fermer:hover{color:#F6A9A9;border-color:rgba(232,106,106,.55);background:rgba(232,106,106,.12)}
+
+.modal-head{display:flex;gap:14px;align-items:flex-start;padding-right:42px}
+.modal-title-block{flex:1;min-width:0}
+.modal-title-block h2{margin:8px 0 0;font-family:var(--titre);font-weight:600;font-size:26px;line-height:1.15}
+.modal-images{display:flex;gap:12px;margin:18px 0 12px;flex-wrap:wrap}
+.modal-image-box{
+  flex:1 1 200px;min-width:0;border-radius:12px;overflow:hidden;position:relative;
+  aspect-ratio:494/720;background:var(--creux);border:1px solid var(--ligne);
+}
+.modal-image-box img{width:100%;height:100%;object-fit:contain;display:block}
+.modal-image-box .ph{font-size:13px;color:var(--brume);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap}
+.modal-image-box .legende{
+  position:absolute;left:8px;bottom:8px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--os);background:rgba(3,6,11,.78);padding:2px 7px;border-radius:6px;
+}
+.modal-desc{
+  white-space:pre-line;font-size:14.5px;margin:6px 0 12px;padding:12px 14px;
+  border-radius:10px;background:rgba(3,8,15,.6);border:1px solid var(--ligne);
+}
+.designer-note{
+  margin:6px 0 12px;padding:12px 14px;border-radius:10px;font-size:14px;
+  color:#FFF1C9;background:rgba(255,204,69,.08);border:1px solid rgba(255,204,69,.3);
+}
+.designer-note b{display:block;margin-bottom:2px;color:var(--luciole);font-weight:500}
+.divider{height:1px;background:var(--ligne);margin:16px 0}
+.status-panel{display:flex;flex-direction:column;gap:10px}
+.big-status{font-size:13.5px;padding:7px 12px;border-radius:9px;border:1px solid var(--ligne-forte)}
+.big-status.st-todo{color:var(--os)}
+.big-status.st-reserved{color:var(--luciole);border-color:rgba(255,204,69,.4)}
+.big-status.st-done{color:var(--algue);border-color:rgba(63,217,164,.4)}
+.mandatory-symbol{color:var(--rouge);font-weight:bold}
+
+/* ---------- instructions ---------- */
+.modale.instructions{max-width:600px}
+.instructions-content{font-size:14.5px;line-height:1.7;color:#C3D2DE}
+.instructions-content h2{margin:0 42px 8px 0;font-family:var(--titre);font-weight:600;font-size:25px;color:var(--os)}
+.instructions-content h3{
+  margin:20px 0 4px;font-family:var(--titre);font-weight:600;font-size:18px;color:var(--accent);
+}
+.instructions-content p{margin:0 0 8px}
+.instructions-content strong{color:var(--os);font-weight:500}
+
+/* =======================================================================
+   La fenetre « Suggestion / Bug » -- balisage de static/commun/suggestion.js,
+   habillage de la page, comme sur l'Archive et le classeur.
+   ======================================================================= */
+.sg-fond{position:fixed;inset:0;z-index:86;background:rgba(3,6,11,.84);
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.sg-boite{width:min(480px,100%);max-height:100%;display:flex;flex-direction:column;
+  background:linear-gradient(170deg,#101C2C,#080F1A);border:1px solid rgba(150,195,220,.16);
+  border-radius:18px;box-shadow:0 30px 70px rgba(0,0,0,.7);overflow:hidden}
+.sg-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:20px 20px 12px;flex:0 0 auto}
+.sg-titre{font-family:var(--titre);font-weight:600;font-size:23px;margin:0}
+.sg-x{width:32px;height:32px;border-radius:9px;border:1px solid rgba(232,106,106,.24);
+  background:transparent;color:var(--rouge);display:grid;place-items:center;font-size:19px;line-height:1;cursor:pointer}
+.sg-x:hover{color:#F6A9A9;border-color:rgba(232,106,106,.55);background:rgba(232,106,106,.12)}
+.sg-form{padding:0 20px 22px;overflow:auto;min-height:0}
+.sg-genres{display:flex;gap:4px;padding:4px;margin-bottom:16px;border-radius:11px;background:rgba(3,8,15,.7)}
+.sg-genre{flex:1;min-width:0}
+.sg-genre input{position:absolute;opacity:0;width:0;height:0}
+.sg-genre span{display:flex;align-items:center;justify-content:center;height:32px;
+  border-radius:8px;font-size:13.5px;color:var(--brume);cursor:pointer;transition:color .2s,background .2s}
+.sg-genre:hover span{color:var(--os)}
+.sg-genre input:checked + span{color:var(--os);background:rgba(255,204,69,.18)}
+.sg-genre input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+.sg-champ{display:block;margin-bottom:14px;min-width:0}
+.sg-champ > span{display:block;font-size:12.5px;letter-spacing:.02em;color:var(--brume);margin-bottom:6px}
+.sg-oblig{color:var(--rouge);margin-left:2px}
+.sg-select,.sg-zone{width:100%;padding:10px 12px;border-radius:10px;background:rgba(3,8,15,.66);
+  border:1px solid rgba(150,195,220,.16);color:var(--os);font:inherit;font-size:14.5px;outline:none;
+  transition:border-color .2s,box-shadow .2s}
+.sg-select{cursor:pointer}
+.sg-select option{background:#0C1523;color:var(--os)}
+.sg-zone{min-height:96px;max-height:min(340px,42vh);line-height:1.5;resize:none}
+.sg-select:focus,.sg-zone:focus{border-color:rgba(255,204,69,.55);box-shadow:0 0 0 3px rgba(255,204,69,.15)}
+.sg-compteur{font-size:11.5px;color:var(--brume-2);margin:0 0 12px}
+.sg-err,.sg-ok{margin:0 0 12px;padding:9px 12px;border-radius:9px;font-size:13px;line-height:1.5}
+.sg-err{color:#FFD9D9;border:1px solid rgba(232,106,106,.35);background:rgba(232,106,106,.12)}
+.sg-ok{color:#C9F5E4;border:1px solid rgba(63,217,164,.35);background:rgba(63,217,164,.1)}
+.sg-go{width:100%;padding:11px 16px;border:0;border-radius:11px;cursor:pointer;
+  font-size:15px;font-weight:500;color:#1F1604;
+  background:linear-gradient(180deg,#FFDD7A,#E0A92E);transition:filter .2s,transform .15s}
+.sg-go:hover{filter:brightness(1.08)}
+.sg-go:active{transform:translateY(1px)}
+.sg-go[disabled]{opacity:.55;cursor:progress}
+
+/* ---------- telephone ---------- */
+@media (max-width:640px){
+  .wrap{padding:0 16px}
+  .top-in{gap:10px}
+  .entete-action{padding:0;width:34px;justify-content:center}
+  .entete-action span{display:none}
+  .marque{font-size:18px}
+  .entete{padding:30px 0 24px}
+  #grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .modale{padding:20px 18px 22px}
+  .modal-title-block h2{font-size:22px}
+  .sg-fond{padding:0;align-items:flex-end}
+  .sg-boite{width:100%;max-height:92dvh;border-radius:16px 16px 0 0;border-bottom:none;
+    animation:sg-monte .26s cubic-bezier(.2,.8,.3,1)}
+  @keyframes sg-monte{from{transform:translateY(100%)}}
+  .sg-tete{position:relative;padding-top:24px;touch-action:none}
+  .sg-tete::before{content:'';position:absolute;top:9px;left:50%;transform:translateX(-50%);
+    width:38px;height:4px;border-radius:99px;background:#ffffff26}
+  /* 16 px : en dessous, iOS zoome sur le champ des qu'on y pose le doigt */
+  .sg-select,.sg-zone,.recherche input{font-size:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms !important;animation-duration:.01ms !important}
+  .card-tile:hover{transform:none}
+}

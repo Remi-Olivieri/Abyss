@@ -575,11 +575,39 @@ CREATE TABLE alerte_sortie(
 );
 """
 
+# Migration 22 : la couleur du profil.
+#
+# Une teinte prise dans PALETTE, qui habille le journal de son proprietaire
+# -- pseudo, chiffres, boutons, tout ce qui etait dore -- pour tous ceux qui
+# le lisent. NULL : l'or de l'Archive, la couleur d'origine.
+COULEUR = """
+ALTER TABLE utilisateur ADD COLUMN couleur TEXT;
+"""
+
+# Les couleurs qu'on peut choisir, 5 x 5, rangees par teinte : du jaune au
+# rouge, du rose au violet, du bleu au vert, puis quelques douces et les
+# neutres. Des couleurs franches et bien distinctes -- une premiere palette
+# toute en pastels se ressemblait d'une case a l'autre et n'avait pas de
+# vrai rouge. Une palette fermee plutot qu'un selecteur libre : le texte des
+# boutons est sombre et la couleur s'ecrit aussi sur fond sombre, donc
+# aucune teinte n'est trop foncee ni trop pale pour les deux. La premiere
+# est l'or d'origine, enregistre comme NULL.
+#
+# static/archive/archive-couleur.js porte la meme liste, avec les noms :
+# tests.py verifie que les deux disent la meme chose.
+PALETTE = (
+    "#E8C064", "#F5DC3A", "#FFB020", "#FF8A1F", "#FF5A36",
+    "#F03A47", "#E8336E", "#FF3D9A", "#F044D0", "#C74BF0",
+    "#A35BFF", "#7A6BFF", "#5B7CFF", "#3D9BFF", "#22C3F0",
+    "#1FD1C1", "#1FC98A", "#3DD35F", "#B5E33A", "#7FF2C3",
+    "#FF6F61", "#FF9E80", "#B9A3FF", "#B7C4D1", "#F1F4F8",
+)
+
 MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
               SUGGESTIONS, BANNIERE, ONGLET_DEFAUT, PRIORITE,
               SUGGESTIONS_VUES, MONITORING, QUIZ_SOURCE, THEMES_JEU,
               CLASSEUR, SOCIAL, DISCUSSION, FIL, SPOILER, FIL_VU,
-              ALERTES_SORTIE]
+              ALERTES_SORTIE, COULEUR]
 
 _local = threading.local()
 
@@ -964,6 +992,27 @@ def enregistre_avatar(u, data_url) -> str:
     return ext
 
 
+def supprime_compte(u) -> None:
+    """Efface le compte et tout ce qui s'y accroche. Sans retour possible.
+
+    Une seule ligne a effacer : toutes les tables qui designent un compte le
+    font en ON DELETE CASCADE -- sessions, pages, jeux, cartes, j'aime,
+    commentaires, notifications -- ou en SET NULL pour ce qui doit survivre
+    anonymement (une suggestion garde son pseudo fige, une visite reste un
+    chiffre). Seuls les fichiers sur le disque demandent d'y aller a la main.
+
+    Les reponses des autres sous un commentaire efface partent avec lui :
+    le fil n'a qu'un niveau, une reponse sans son commentaire n'a plus de
+    sens (voir DISCUSSION).
+    """
+    for ext in ("jpg", "png", "gif", "webp"):
+        (DOSSIER_AVATARS / f"{u['id']}.{ext}").unlink(missing_ok=True)
+    _oublie_banniere_fichier(u["id"])
+    c = cx()
+    with c:
+        c.execute("DELETE FROM utilisateur WHERE id = ?", (u["id"],))
+
+
 def supprime_avatar(u) -> None:
     for ext in ("jpg", "png", "gif", "webp"):
         (DOSSIER_AVATARS / f"{u['id']}.{ext}").unlink(missing_ok=True)
@@ -1256,7 +1305,9 @@ def etat(u) -> dict:
              # une pastille suit le compte, pas la page ou on l'affiche
              "notificationsNeuves": notifications_neuves(u),
              # le mail de la veille d'une sortie : voir alertes.py
-             "alertesSortie": bool(u["alertes_sortie"])},
+             "alertesSortie": bool(u["alertes_sortie"]),
+             # la couleur du profil, NULL pour l'or d'origine : voir PALETTE
+             "couleur": u["couleur"]},
         "masques": [] if u is None else masques(u["id"]),
         # le reglage du Quiz voyage avec le reste : la page des mini-jeux le
         # lit dans la reponse qu'elle demande deja, sans un second appel
@@ -1420,6 +1471,30 @@ def alertes_sortie():
     return reponse(etat(par_pseudo(u["pseudo"])))
 
 
+@blueprint_comptes.put("/couleur")
+def couleur():
+    """La couleur du profil, prise dans PALETTE.
+
+    `null` -- ou l'or, premiere teinte de la palette -- rend la couleur
+    d'origine et s'enregistre comme NULL : un compte qui n'a rien choisi et
+    un compte revenu a l'or ne doivent pas se distinguer en base.
+    """
+    u = actuel()
+    if u is None:
+        return echec("connexion", "Il faut etre connecte.", 401)
+    demande = corps().get("couleur")
+    if demande is not None:
+        demande = str(demande).upper()
+        if demande not in PALETTE:
+            return echec("couleur", "Cette couleur n'est pas dans la palette.", 400)
+        if demande == PALETTE[0]:
+            demande = None
+    c = cx()
+    with c:
+        c.execute("UPDATE utilisateur SET couleur = ? WHERE id = ?", (demande, u["id"]))
+    return reponse(etat(par_pseudo(u["pseudo"])))
+
+
 @blueprint_comptes.post("/avatar")
 def poser_avatar():
     u = actuel()
@@ -1483,6 +1558,41 @@ def mot_de_passe():
     # de passe doit chasser qui serait entre, sans se deconnecter soi-meme.
     ferme_toutes(u["id"])
     return avec_cookie(reponse({"ok": True}), ouvre_session(u["id"], True), True)
+
+
+@blueprint_comptes.post("/compte/supprimer")
+def supprimer_compte():
+    """Supprime le compte connecte. Le mot de passe et le pseudo retape le
+    confirment.
+
+    POST et non DELETE : il faut un corps pour porter le mot de passe, et
+    c'est aussi ce qui fait passer la requete par la garde CSRF (exige_json).
+
+    Le mot de passe, parce qu'une session oubliee ouverte sur l'ordinateur
+    de quelqu'un d'autre ne doit pas suffire a tout effacer. Le pseudo, pour
+    qu'on ne le fasse pas par reflexe. Les essais rates sont comptes comme a
+    la connexion : sans ca, une session volee deviendrait un moyen de
+    deviner le mot de passe sans limite.
+    """
+    u = actuel()
+    if u is None:
+        return echec("connexion", "Il faut etre connecte.", 401)
+    cle = f"suppr:@{u['id']}"
+    if trop_d_essais(cle):
+        return echec("debit", "Trop d'essais. Reviens dans un quart d'heure.", 429)
+    d = corps()
+    if normalise(d.get("confirmation")) != u["pseudo_norm"]:
+        return echec("confirmation", "Le pseudo tapé ne correspond pas.", 400)
+    if identifiants_bons(u["pseudo"], d.get("mdp")) is None:
+        note_essai(cle)
+        return echec("identifiants", "Mot de passe incorrect.", 403)
+
+    supprime_compte(u)
+    oublie_essais(cle)
+    r = reponse(etat(None))
+    r.set_cookie(COOKIE, "", max_age=0, httponly=True,
+                 secure=FORCE_SECURE or request.is_secure, samesite="Lax", path="/")
+    return r
 
 
 @blueprint_comptes.post("/mot-de-passe-oublie")

@@ -399,8 +399,7 @@ function socialNoteMsgHTML(sonJeu){
   if(sonJeu.note === null || sonJeu.note === undefined){
     return `${tiret}<span class="soc-msg-etat">Non noté</span>`;
   }
-  return `${tiret}<span class="soc-msg-note" style="color:${noteColor(sonJeu.note)}"
-    title="Sa note pour ce jeu">${fr(sonJeu.note, 1)}</span>`;
+  return `${tiret}<span class="soc-msg-note" style="color:${noteColor(sonJeu.note)}">${fr(sonJeu.note, 1)}</span>`;
 }
 
 /* Un message. Le même dessin qu'on soit un commentaire de tête ou une

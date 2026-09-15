@@ -724,7 +724,6 @@ function boutonJaquette(nom, sortie, idIgdb){
   b.className = 'cov-get';
   b.setAttribute('role', 'button');
   b.setAttribute('tabindex', '0');
-  b.title = 'Chercher une jaquette';
   b.setAttribute('aria-label', `Chercher une jaquette pour ${nom}`);
   b.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

@@ -1,18 +1,25 @@
 :root{
-  --bg:#17131F;
-  --bg2:#1E1829;
-  --bg3:#261F33;
-  --line:rgba(242,237,228,.10);
-  --line-strong:rgba(242,237,228,.20);
-  --text:#F2EDE4;
-  --muted:#A79CB4;
-  --gold:#E5C46B;
+  --bg:#0A1424;
+  --bg2:#111E31;
+  --bg3:#172A44;
+  --line:rgba(160,205,230,.13);
+  --line-strong:rgba(160,205,230,.27);
+  --text:#E2ECF3;
+  --muted:#8DA3B6;
+  /* La couleur du profil : l'or par defaut, reposee sur <html> par
+     static/archive/archive-couleur.js quand le journal en a choisi une.
+     Tout ce qui etait dore la lit, directement ou par color-mix(). */
+  --gold:#E8C064;
   /* la wishlist : une teinte froide, pour ne pas se confondre avec l'or
      de « En cours » - les deux pastilles se croisent dans le même mur */
   --wish:#8FB8E8;
-  --display:"Bricolage Grotesque",system-ui,sans-serif;
-  --body:"Karla",system-ui,sans-serif;
+  --display:"Eczar",Georgia,serif;
+  --body:"Archivo","Segoe UI",system-ui,sans-serif;
   --mono:"Azeret Mono",ui-monospace,monospace;
+  /* les bioluminescences d'Abyss, pour les lumieres du fond */
+  --algue:#4FDDAE;
+  --plancton:#6BA6FF;
+  --meduse:#EE6FAE;
   --maxw:1120px;
   --cov-ratio:3/4;
   /* hauteur de l'en-tête collant : .top-in fait 62px, plus son liseré du
@@ -55,7 +62,7 @@ a{color:var(--gold)}
    écrit en transparent au-dessus d'un calque coloré (voir #f_review), et
    forcer une couleur de sélection ferait réapparaître son texte par-dessus
    ses propres couleurs. */
-::selection{background:rgba(229,196,107,.32)}
+::selection{background:color-mix(in srgb,var(--gold) 32%,transparent)}
 input,textarea{caret-color:var(--gold)}
 
 /* ---------- en-tête ---------- */
@@ -227,7 +234,7 @@ input,textarea{caret-color:var(--gold)}
   text-decoration:none;white-space:nowrap;
   transition:color .15s,border-color .15s,background .15s;
 }
-.entete-action:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+.entete-action:hover{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:var(--bg3)}
 .entete-action:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (min-width:1520px){
   .entete-action{position:absolute;top:50%;transform:translateY(-50%)}
@@ -245,7 +252,7 @@ input,textarea{caret-color:var(--gold)}
   display:grid;place-items:center;transition:color .15s,border-color .15s,background .15s;
 }
 .cog:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
-.cog[aria-expanded="true"]{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+.cog[aria-expanded="true"]{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:var(--bg3)}
 /* pastille d'état : verte en ligne, ambrée pendant une actualisation, rouge
    quand elle a échoué, éteinte hors ligne */
 .cog .led{
@@ -379,13 +386,13 @@ input,textarea{caret-color:var(--gold)}
   margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
   height:var(--dist-clear-h);padding:0 11px;display:inline-flex;align-items:center;
   border-radius:99px;color:var(--gold);white-space:nowrap;
-  border:1px solid rgba(229,196,107,.45);transition:background .15s,border-color .15s;
+  border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);transition:background .15s,border-color .15s;
 }
 /* `display` pose sur une classe l'emporte sur le `display:none` que le
    navigateur attache a [hidden] : sans cette ligne, le bouton ne se
    cacherait plus jamais. */
 .dist-clear[hidden]{display:none}
-.dist-clear:hover{background:rgba(229,196,107,.12);border-color:var(--gold)}
+.dist-clear:hover{background:color-mix(in srgb,var(--gold) 12%,transparent);border-color:var(--gold)}
 .dist-clear span{opacity:.6;margin-left:6px}
 .hist-box{position:relative}
 .hist{position:relative;height:118px;display:flex;align-items:flex-end;gap:3px}
@@ -427,7 +434,7 @@ input,textarea{caret-color:var(--gold)}
   color:var(--gold);white-space:nowrap;letter-spacing:.04em;
   padding:2px 6px;border-radius:6px;
   background:rgba(10,8,14,.85);
-  border:1px solid rgba(229,196,107,.32);
+  border:1px solid color-mix(in srgb,var(--gold) 32%,transparent);
 }
 .avg.flip span{left:auto;right:7px}
 /* ---------- l'onglet d'ouverture ----------
@@ -542,7 +549,7 @@ input,textarea{caret-color:var(--gold)}
   transition:background .15s;
 }
 .an-ligne:hover{background:rgba(242,237,228,.05)}
-.an-ligne[aria-expanded="true"]{background:rgba(229,196,107,.09)}
+.an-ligne[aria-expanded="true"]{background:color-mix(in srgb,var(--gold) 9%,transparent)}
 .an-ligne:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
 
 /* La liste dépliée. Deux colonnes dès qu'elle est large : une liste d'une
@@ -729,7 +736,7 @@ input,textarea{caret-color:var(--gold)}
   opacity:0;transition:opacity .15s,color .15s,border-color .15s;
 }
 .tile:hover .cov-get,.cov-get:focus-visible,.cov.xl .cov-get{opacity:1}
-.cov-get:hover{color:var(--gold);border-color:rgba(229,196,107,.5)}
+.cov-get:hover{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
 .cov-get:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .cov-get.busy{opacity:1;color:var(--gold);cursor:progress;animation:pulse 1.1s ease-in-out infinite}
 /* au doigt il n'y a pas de survol : le bouton reste visible */
@@ -768,7 +775,7 @@ input,textarea{caret-color:var(--gold)}
   transition:border-color .18s,transform .18s,box-shadow .18s;
 }
 .tile:hover{
-  border-color:rgba(229,196,107,.5);
+  border-color:color-mix(in srgb,var(--gold) 50%,transparent);
   transform:translateY(calc(-1 * var(--tuile-levee)));
   box-shadow:0 16px 34px rgba(0,0,0,.5);
 }
@@ -779,8 +786,8 @@ input,textarea{caret-color:var(--gold)}
    Une animation et pas une transition : la classe est posée et retirée par
    le script, et une animation se rejoue à l'identique à chaque fermeture. */
 @keyframes tuile-revenue{
-  from{box-shadow:0 0 0 3px rgba(229,196,107,.8), 0 14px 32px rgba(0,0,0,.5)}
-  to{box-shadow:0 0 0 3px rgba(229,196,107,0), 0 14px 32px rgba(0,0,0,0)}
+  from{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 80%,transparent), 0 14px 32px rgba(0,0,0,.5)}
+  to{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 0%,transparent), 0 14px 32px rgba(0,0,0,0)}
 }
 .tile.revenu{animation:tuile-revenue .6s ease-out}
 /* la jaquette avance un peu dans son cadre - seule l'image bouge, la case
@@ -807,7 +814,7 @@ input,textarea{caret-color:var(--gold)}
 .tile .tnote.encours,.tile .tnote.wish{
   font-family:var(--mono);font-weight:500;font-size:9.5px;letter-spacing:.14em;
   text-transform:uppercase;padding:4px 9px;
-  color:var(--gold);border-color:rgba(229,196,107,.4);
+  color:var(--gold);border-color:color-mix(in srgb,var(--gold) 40%,transparent);
 }
 .tile .tnote.wish{color:var(--wish);border-color:rgba(143,184,232,.4)}
 /* Promotion en cours sur un jeu convoité. Dans le coin droit : la pastille
@@ -889,9 +896,9 @@ input,textarea{caret-color:var(--gold)}
 .deco-neuf{
   margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.04em;
   padding:4px 11px;border-radius:99px;color:var(--gold);white-space:nowrap;
-  border:1px solid rgba(229,196,107,.45);transition:background .15s,border-color .15s;
+  border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);transition:background .15s,border-color .15s;
 }
-.deco-neuf:hover{background:rgba(229,196,107,.12);border-color:var(--gold)}
+.deco-neuf:hover{background:color-mix(in srgb,var(--gold) 12%,transparent);border-color:var(--gold)}
 .deco-neuf[disabled]{opacity:.5;cursor:progress}
 .deco-note{font-size:12.5px;color:var(--muted);opacity:.8;margin:0 0 16px}
 .deco-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
@@ -1005,7 +1012,7 @@ input,textarea{caret-color:var(--gold)}
   transition:color .15s,border-color .15s,background .15s;
 }
 .sbtn:hover,.sg-x:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
-.sbtn.sheet-share:hover{color:var(--gold);border-color:rgba(229,196,107,.45)}
+.sbtn.sheet-share:hover{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
 /* Une croix qui ferme est rouge, ici comme partout ailleurs sur le site :
    c'est le seul bouton d'une fenêtre qui annule ce qu'on y faisait, et il
    se reconnaît avant d'être lu. Le rouge est celui de la confirmation de
@@ -1065,7 +1072,7 @@ input,textarea{caret-color:var(--gold)}
 .sheet-nav.nav-prev.pousse{animation-name:nav-pousse-g}
 /* le temps de l'impulsion, la flèche prend la couleur qu'elle a au survol -
    au clavier, c'est le seul endroit où le geste se voit */
-.sheet-nav.pousse{color:var(--gold);border-color:rgba(229,196,107,.45)}
+.sheet-nav.pousse{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
 .sheet-cover{flex:0 0 216px}
 /* La boite de la jaquette, entre .sheet-cover et l'image. coverFiche()
    remplace tout ce qu'elle trouve chez son hote a chaque changement de jeu :
@@ -1087,7 +1094,7 @@ input,textarea{caret-color:var(--gold)}
 .sheet-note.encours,.sheet-note.wish{
   display:inline-block;font-size:10px;font-weight:500;letter-spacing:.16em;
   text-transform:uppercase;color:var(--gold);
-  padding:5px 12px;border-radius:99px;border:1px solid rgba(229,196,107,.45);
+  padding:5px 12px;border-radius:99px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);
 }
 .sheet-note.wish{color:var(--wish);border-color:rgba(143,184,232,.45)}
 .sheet-title{
@@ -1119,7 +1126,7 @@ input,textarea{caret-color:var(--gold)}
   transition:opacity .15s,color .15s,border-color .15s,background .15s;
 }
 .sheet-title:hover .titre-copie,.titre-copie:focus-visible{opacity:1}
-.titre-copie:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+.titre-copie:hover{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:var(--bg3)}
 .titre-copie:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (hover:none){ .sheet-title .titre-copie{opacity:1} }
 /* la place du jeu dans l'onglet affiche : « 3e sur 42 en 2026 » */
@@ -1256,11 +1263,11 @@ input,textarea{caret-color:var(--gold)}
 /* ---------- ajouter / modifier ---------- */
 .add{
   height:38px;padding:0 15px;border-radius:9px;white-space:nowrap;
-  border:1px solid rgba(229,196,107,.45);color:var(--gold);
+  border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);color:var(--gold);
   font-family:var(--mono);font-size:12px;letter-spacing:.03em;
   transition:background .15s,border-color .15s;
 }
-.add:hover{background:rgba(229,196,107,.12);border-color:var(--gold)}
+.add:hover{background:color-mix(in srgb,var(--gold) 12%,transparent);border-color:var(--gold)}
 #form{z-index:70}
 .form-sheet{max-width:680px}
 .fhead,.sg-titre{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-.02em;padding-left:16px}
@@ -1368,13 +1375,13 @@ input,textarea{caret-color:var(--gold)}
    dire quand même « ça va créer un onglet », plutôt que de disparaître */
 .ac-empty{margin:0;padding:9px 8px;font-size:12.5px;line-height:1.5;color:var(--muted)}
 /* le prix est en route vers Steam : la case le dit sans bloquer la saisie */
-.fld input.cherche{border-color:rgba(229,196,107,.4);animation:respire 1.1s ease-in-out infinite}
+.fld input.cherche{border-color:color-mix(in srgb,var(--gold) 40%,transparent);animation:respire 1.1s ease-in-out infinite}
 @keyframes respire{50%{opacity:.5}}
 /* dit où se trouve déjà le jeu du même nom pendant qu'on tape, avant même
    que submitForm() ne bloque l'ajout (voir .cta.armed plus bas) */
 .doublon-avis{
   margin:-4px 0 0;padding:9px 11px;border-radius:9px;font-size:12.5px;line-height:1.5;
-  background:rgba(229,196,107,.08);border:1px solid rgba(229,196,107,.28);color:var(--gold);
+  background:color-mix(in srgb,var(--gold) 8%,transparent);border:1px solid color-mix(in srgb,var(--gold) 28%,transparent);color:var(--gold);
 }
 .doublon-avis b{color:var(--text);font-weight:600}
 
@@ -1421,7 +1428,7 @@ input,textarea{caret-color:var(--gold)}
 }
 .fld.fcheck span{font-size:14px;color:var(--muted);transition:color .15s}
 .fld.fcheck:hover{border-color:var(--line-strong)}
-.fld.fcheck:has(input:checked){border-color:rgba(229,196,107,.45)}
+.fld.fcheck:has(input:checked){border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
 .fld.fcheck:has(input:checked) span{color:var(--gold)}
 /* Une case figee par la regle de sortie : le jeu n'est pas encore sorti, il
    ne peut aller qu'en wishlist (voir syncSortie dans archive-formulaire.js).
@@ -1513,7 +1520,8 @@ input,textarea{caret-color:var(--gold)}
    tant que la feuille est cachee, et cede directement la place a `.revient`
    (voir reduireForm). Rendre `animation` a .sheet relancait son `rise`
    d'entree, ce qui faisait clignoter le formulaire. */
-.form-sheet.part{
+.form-sheet.part,
+.igdb-sheet.part{
   animation:form-part .3s cubic-bezier(.45,0,.6,.25) forwards;
   transform-origin:center center;pointer-events:none;
 }
@@ -1537,11 +1545,12 @@ input,textarea{caret-color:var(--gold)}
 
    `.part`, lui, garde son `forwards` sans dommage : il ne vaut que pendant
    le vol et pendant que la feuille est cachee. */
-.form-sheet.revient{animation:form-revient .34s cubic-bezier(.2,.85,.25,1.04)}
+.form-sheet.revient,
+.igdb-sheet.revient{animation:form-revient .34s cubic-bezier(.2,.85,.25,1.04)}
 /* Le voile s'en va avec elle. L'id l'emporte sur l'animation `fade` que
    .sheet-back joue a l'ouverture, sans quoi les deux se disputeraient. */
 @keyframes form-fond-part{from{opacity:1}to{opacity:0}}
-#form.part{animation:form-fond-part .3s ease forwards}
+#form.part,#igdb.part{animation:form-fond-part .3s ease forwards}
 
 /* ---------- la croix qui demande ----------
    Armee, elle s'ouvre et se nomme : « Abandonner ? », rouge plein, a
@@ -1581,7 +1590,7 @@ input,textarea{caret-color:var(--gold)}
   display:flex;align-items:stretch;gap:2px;
   max-width:min(300px,calc(100vw - 36px));
   padding:5px;border-radius:14px;
-  background:var(--bg2);border:1px solid rgba(229,196,107,.42);
+  background:var(--bg2);border:1px solid color-mix(in srgb,var(--gold) 42%,transparent);
   box-shadow:0 14px 38px rgba(0,0,0,.55);
 }
 /* Pendant la mesure : dans la page pour avoir une boite, invisible pour ne
@@ -1596,7 +1605,7 @@ input,textarea{caret-color:var(--gold)}
 .fp-ouvre:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .fp-fleche{
   flex:0 0 auto;display:grid;place-items:center;width:26px;height:26px;
-  border-radius:8px;background:rgba(229,196,107,.12);color:var(--gold);
+  border-radius:8px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold);
   transition:transform .15s;
 }
 /* La fleche se souleve d'un pixel au survol : elle fait remonter, autant
@@ -1629,12 +1638,14 @@ input,textarea{caret-color:var(--gold)}
   62%{transform:translateY(0) scale(1.05);opacity:1}
   100%{transform:none;opacity:1}
 }
-.form-pastille.arrive{animation:fp-arrive .34s cubic-bezier(.2,.9,.25,1.25) both}
+.form-pastille.arrive,
+.igdb-pastille.arrive{animation:fp-arrive .34s cubic-bezier(.2,.9,.25,1.25) both}
 @keyframes fp-repart{
   from{transform:none;opacity:1}
   to{transform:translateY(6px) scale(.7);opacity:0}
 }
-.form-pastille.repart{animation:fp-repart .2s ease-in forwards;pointer-events:none}
+.form-pastille.repart,
+.igdb-pastille.repart{animation:fp-repart .2s ease-in forwards;pointer-events:none}
 /* Sur un telephone la pastille prend la largeur : un coin de 300 px sur 360
    laisse une bande inutile a cote, et le nom du jeu s'y coupait pour rien. */
 @media (max-width:560px){
@@ -1651,8 +1662,57 @@ input,textarea{caret-color:var(--gold)}
    saute alors les attentes correspondantes (voir sansMouvement). */
 @media (prefers-reduced-motion:reduce){
   .form-sheet.part,.form-sheet.revient,
-  #form.part,
-  .form-pastille.arrive,.form-pastille.repart{animation:none}
+  .igdb-sheet.part,.igdb-sheet.revient,
+  #form.part,#igdb.part,
+  .form-pastille.arrive,.form-pastille.repart,
+  .igdb-pastille.arrive,.igdb-pastille.repart{animation:none}
+}
+
+/* ---------- la mise à jour IGDB repliée ----------
+   Au centre, les deux coins étant pris (voir .form-pastille, .rattrapage).
+   Centrée par les marges et non par un translate : les animations
+   d'arrivée et de départ écrivent `transform`, elles l'écraseraient.
+   Même cadre doré que le formulaire replié - c'est la même promesse, un
+   travail qui attend - et la jauge dans l'or de celle de la fenêtre. */
+.igdb-pastille{
+  position:fixed;z-index:85;
+  left:0;right:0;margin-inline:auto;
+  width:min(280px,calc(100vw - 36px));
+  bottom:max(18px,env(safe-area-inset-bottom,0px));
+  padding:5px;border-radius:14px;
+  background:var(--bg2);border:1px solid color-mix(in srgb,var(--gold) 42%,transparent);
+  box-shadow:0 14px 38px rgba(0,0,0,.55);
+}
+.igdb-pastille.mesure{opacity:0;pointer-events:none}
+.ip-ouvre{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:6px 10px 6px 8px;border-radius:10px;text-align:left;
+  transition:background .15s;
+}
+.ip-ouvre:hover{background:var(--bg3)}
+.ip-ouvre:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.ip-ouvre:hover .fp-fleche{transform:translateY(-2px)}
+.ip-corps{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.ip-ligne{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.ip-pct{
+  font-size:13px;font-weight:600;line-height:1.25;font-variant-numeric:tabular-nums;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.ip-reste{
+  flex:0 0 auto;font-style:normal;color:var(--muted);white-space:nowrap;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+}
+.igdb-pastille.fini .ip-reste{color:var(--gold)}
+.ip-jauge{display:block;height:4px;border-radius:99px;overflow:hidden;background:var(--bg3)}
+.ip-jauge i{display:block;height:100%;width:0;background:var(--gold);transition:width .25s ease}
+/* Le toast est centré en bas lui aussi : il monte au-dessus de la pastille
+   plutôt que de la recouvrir. */
+body:has(#igdbPastille) .toast{bottom:88px}
+@media (max-width:560px){
+  .igdb-pastille{width:auto;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px))}
+  /* sur téléphone le formulaire replié prend la largeur : on se pose dessus */
+  body:has(#formPastille) .igdb-pastille{bottom:76px}
+  body:has(#formPastille):has(#igdbPastille) .toast{bottom:140px}
 }
 
 .toast{
@@ -1699,7 +1759,7 @@ input,textarea{caret-color:var(--gold)}
   background:var(--bg3);border:1px solid var(--line);border-radius:11px;
   color:var(--muted);transition:border-color .15s,color .15s;
 }
-.rsearch-box:focus-within{border-color:rgba(229,196,107,.5);color:var(--text)}
+.rsearch-box:focus-within{border-color:color-mix(in srgb,var(--gold) 50%,transparent);color:var(--text)}
 .rsearch-input{flex:1;height:100%;background:none;border:none;outline:none;color:var(--text);font-size:15px}
 .rsearch-input::placeholder{color:var(--muted)}
 .rsearch-list{display:flex;flex-direction:column;gap:3px;max-height:min(52vh,420px);overflow-y:auto}
@@ -1708,7 +1768,7 @@ input,textarea{caret-color:var(--gold)}
   text-align:left;transition:background .15s;
 }
 .rsearch-item:hover{background:var(--bg3)}
-.rsearch-item.on{background:rgba(229,196,107,.09)}
+.rsearch-item.on{background:color-mix(in srgb,var(--gold) 9%,transparent)}
 
 /* ---------- la banniere de quelqu'un, en fond de sa ligne ----------
    Elle sert a reconnaitre un journal, pas a se faire regarder : posee dans
@@ -1908,7 +1968,7 @@ input,textarea{caret-color:var(--gold)}
 /* la fiche dont l'année colle à la date de sortie : proposée en tête.
    Surtout pas « top » comme nom : .top est l'en-tête collante de la page,
    la case héritait de son position:sticky et restait au premier plan. */
-.jaq-item.suggeree{border-color:rgba(229,196,107,.5)}
+.jaq-item.suggeree{border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
 .jaq-item.pris{opacity:1;border-color:var(--gold)}
 
 /* ---------- bilan en image ---------- */
@@ -2034,7 +2094,7 @@ input,textarea{caret-color:var(--gold)}
   font:inherit;font-size:12px;cursor:pointer;white-space:nowrap;
   transition:color .15s,border-color .15s,background .15s,filter .15s;
 }
-.detail-act:hover{color:var(--gold);border-color:rgba(229,196,107,.45)}
+.detail-act:hover{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
 .detail-act:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 /* [hidden] vient de la feuille du navigateur : sans ce rappel, le
    display:inline-flex ci-dessus le couvre et le bouton reste la sur un jeu
@@ -2083,7 +2143,7 @@ input,textarea{caret-color:var(--gold)}
   color:var(--text);background:var(--bg3);border:1px solid var(--line);
   transition:color .15s,border-color .15s,background .15s;
 }
-.detail-studio:hover{color:var(--gold);border-color:rgba(229,196,107,.45)}
+.detail-studio:hover{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
 .detail-studio:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 /* ---------- les jeux d'un studio ----------
@@ -2225,7 +2285,7 @@ input,textarea{caret-color:var(--gold)}
   cursor:pointer;transition:border-color .15s;
 }
 .igdb-ligne:hover{border-color:var(--line-strong)}
-.igdb-ligne:has(input:checked){border-color:rgba(229,196,107,.42)}
+.igdb-ligne:has(input:checked){border-color:color-mix(in srgb,var(--gold) 42%,transparent)}
 .igdb-ligne input[type="checkbox"]{
   flex:0 0 auto;width:16px;height:16px;margin:3px 0 0;
   accent-color:var(--gold);cursor:pointer;
@@ -2237,7 +2297,7 @@ input,textarea{caret-color:var(--gold)}
   border:1px solid var(--line);color:var(--muted);font-size:12px;white-space:nowrap;
   transition:color .15s,border-color .15s,background .15s;
 }
-.igdb-fiche-btn:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg2)}
+.igdb-fiche-btn:hover{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:var(--bg2)}
 .igdb-corps{flex:1;min-width:0;display:block}
 .igdb-nom{display:block;font-size:14px;line-height:1.3;font-weight:700}
 .igdb-nom em{
@@ -2253,7 +2313,7 @@ input,textarea{caret-color:var(--gold)}
   border:1px solid var(--line-strong);white-space:nowrap;
 }
 .igdb-tag.sure{color:#9BE3BE;border-color:rgba(155,227,190,.35)}
-.igdb-tag.probable{color:var(--gold);border-color:rgba(229,196,107,.35)}
+.igdb-tag.probable{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 35%,transparent)}
 .igdb-tag.douteuse{color:#F0A29C;border-color:rgba(240,162,156,.35)}
 .igdb-delta{
   display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-top:6px;
@@ -2315,13 +2375,13 @@ input,textarea{caret-color:var(--gold)}
 .empty-cta{
   display:inline-flex;align-items:center;gap:9px;
   height:40px;padding:0 18px;border-radius:99px;
-  background:rgba(229,196,107,.12);
-  border:1px solid rgba(229,196,107,.45);color:var(--gold);
+  background:color-mix(in srgb,var(--gold) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);color:var(--gold);
   font-family:var(--mono);font-size:12.5px;letter-spacing:.02em;
   transition:background .15s,border-color .15s;
 }
 .empty-cta svg{display:block;flex:0 0 auto}
-.empty-cta:hover{background:rgba(229,196,107,.2);border-color:var(--gold)}
+.empty-cta:hover{background:color-mix(in srgb,var(--gold) 20%,transparent);border-color:var(--gold)}
 .empty-cta:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .empty ol{margin:0;padding-left:18px;color:var(--muted);max-width:64ch}
 .empty li{margin-bottom:7px}
@@ -2419,7 +2479,7 @@ input,textarea{caret-color:var(--gold)}
 }
 .sg-genre:hover span{color:var(--text)}
 .sg-genre input:checked + span{
-  color:var(--gold);border-color:rgba(229,196,107,.45);background:rgba(229,196,107,.09);
+  color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 9%,transparent);
 }
 .sg-genre input:focus-visible + span{outline:2px solid var(--gold);outline-offset:2px}
 .sg-champ{display:block;margin-bottom:13px;min-width:0}
@@ -2875,7 +2935,7 @@ input,textarea{caret-color:var(--gold)}
 
 /* --- .bkd-forme  (transcript du 2026-09-02T21:32:20) --- */
 .bkd-forme[aria-pressed="true"]{
-  color:var(--gold);border-color:rgba(229,196,107,.5);background:rgba(229,196,107,.1);
+  color:var(--gold);border-color:color-mix(in srgb,var(--gold) 50%,transparent);background:color-mix(in srgb,var(--gold) 10%,transparent);
 }
 
 /* --- .bkd-formes  (transcript du 2026-09-02T20:05:00) --- */
@@ -3015,7 +3075,7 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
 
 /* --- .rsearch-mode  (transcript du 2026-09-04T20:44:48) --- */
 .rsearch-mode.on{
-  color:var(--gold);border-color:rgba(229,196,107,.45);background:rgba(229,196,107,.09);
+  color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 9%,transparent);
 }
 
 /* --- .rsearch-mode  (transcript du 2026-09-04T20:44:48) --- */
@@ -3049,7 +3109,7 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
 .sheet-nav:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 /* --- .sheet-nav  (transcript du 2026-09-04T20:45:18) --- */
-.sheet-nav:hover{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+.sheet-nav:hover{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:var(--bg3)}
 
 /* --- .sortdir  (transcript du 2026-09-05T09:09:39) --- */
 .sortdir svg{transition:transform .2s ease}
@@ -3067,7 +3127,7 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
 .sortdir:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 /* --- .sortdir  (transcript du 2026-09-05T09:09:39) --- */
-.sortdir:hover{color:var(--gold);border-color:rgba(229,196,107,.45)}
+.sortdir:hover{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
 
 /* --- .sortdir  (transcript du 2026-09-05T09:09:39) --- */
 /* ---------- le sens du tri ----------
@@ -3134,3 +3194,358 @@ apres = '.bkd .bkd-mois select{width:auto;min-width:118px}'
    formulaire s'ouvrait tout nu partout ailleurs que sur Abyss, qui a son
    propre formulaire en dur.
    ========================================================================== */
+
+/* =======================================================================
+   L'habillage Abyss
+
+   L'Archive a pris les couleurs du hub et de l'Atelier Chainz : la palette
+   des abysses, Eczar pour les titres, Archivo pour le texte, la croix rouge
+   qui ferme, la neige, et les lumieres du fond -- la couleur du profil au
+   plafond, les trois bioluminescences d'Abyss (algue, plancton, meduse) sur
+   les bords.
+
+   Ecrit d'abord comme une feuille a part, posee par-dessus celle-ci pour
+   comparer, puis rapatrie ici : les regles qui suivent l'emportent sur
+   celles du dessus par leur place. Chaque regle qui touche une propriete
+   deja reglee dans un @media plus haut le repete a la fin de cette section
+   -- a specificite egale, c'est la derniere qui gagne, et sans ce rappel le
+   telephone perdrait son dessin.
+   ======================================================================= */
+/* La neige d'Abyss, derriere tout. z-index:-1 et non 0 : la page
+   n'enveloppe pas son contenu dans un bloc positionne comme le fait le hub,
+   et un canvas a 0 passerait devant lui. A -1, il se peint juste au-dessus
+   du fond et sous tout ce qu'elle contient. */
+#neige{position:fixed;inset:0;z-index:-1;pointer-events:none}
+
+/* ---------- le fond ----------
+   Sur un calque fixe a part plutot qu'en background-attachment:fixed sur
+   <body> : un fond fixe est repeint a chaque pixel de defilement, un calque
+   fixe est simplement compose. Sous la neige (-1), sous tout le reste. */
+body{background:#08111D}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(900px 420px at 50% -12%, color-mix(in srgb,var(--gold) 16%,transparent), transparent 70%),
+    radial-gradient(640px 900px at -12% 28%, rgba(79,221,174,.14), transparent 70%),
+    radial-gradient(640px 900px at 112% 52%, rgba(107,166,255,.17), transparent 70%),
+    radial-gradient(760px 520px at 82% 112%, rgba(238,111,174,.12), transparent 70%),
+    radial-gradient(620px 460px at 8% 108%, rgba(107,166,255,.08), transparent 70%),
+    linear-gradient(180deg,#12233D 0%,#0C182B 45%,#08101C 100%);
+}
+::selection{background:color-mix(in srgb,var(--gold) 30%,transparent)}
+
+/* ---------- la barre de defilement de la page ----------
+   L'or du classeur sur un rail de la couleur du fond : celle du navigateur,
+   grise et claire, etait la seule chose de la page qui n'en faisait pas
+   partie. */
+html{scrollbar-color:color-mix(in srgb,var(--gold) 50%,transparent) #08111D}
+@supports not (scrollbar-color:auto){
+  html::-webkit-scrollbar{width:12px}
+  html::-webkit-scrollbar-track{background:#08111D}
+  html::-webkit-scrollbar-thumb{
+    background:color-mix(in srgb,var(--gold) 50%,transparent);border-radius:99px;
+    border:3px solid #08111D;
+  }
+  html::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--gold) 75%,transparent)}
+}
+
+/* ---------- en-tete ----------
+   Des qu'on defile : un voile translucide et flou, qui laisse deviner les
+   jaquettes et les lumieres qui passent dessous. Tout en haut, rien du
+   tout -- ni fond, ni trait, ni flou. */
+.top{
+  background:rgba(9,18,32,.62);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3);
+  transition:background-color .25s,border-color .25s,backdrop-filter .25s;
+}
+body.en-haut .top{
+  background:transparent;border-bottom-color:transparent;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+.brand b,.brand-moi b{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.005em}
+.entete-action,.cog,.cloche{background:rgba(3,8,15,.35)}
+.entete-action:hover,.cog:hover,.cloche:hover{
+  color:var(--text);border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 10%,transparent);
+}
+.tab:hover{color:var(--text);background:rgba(107,166,255,.13)}
+.tab[aria-selected="true"]{
+  color:#1F1604;border-color:transparent;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 72%,#fff),color-mix(in srgb,var(--gold) 90%,#000));
+  box-shadow:0 0 20px -6px color-mix(in srgb,var(--gold) 80%,transparent);
+}
+.menu,.soc-cloche-panneau,.ac{
+  background:#0F1C2F;border-color:rgba(160,205,230,.18);
+  border-top-color:color-mix(in srgb,var(--gold) 40%,transparent);
+  box-shadow:0 18px 42px rgba(0,0,0,.6);
+}
+.menu-item:hover{background:rgba(107,166,255,.13)}
+
+/* ---------- la tete du journal ----------
+   La banniere se fond dans la page par un masque et non par un degrade vers
+   une couleur : le fond est fait de lumieres, aucune couleur unie ne
+   tomberait juste. */
+.jtete-fond{
+  -webkit-mask-image:linear-gradient(180deg,#000 66%,transparent);
+  mask-image:linear-gradient(180deg,#000 66%,transparent);
+}
+.jtete-fond::after{
+  background:
+    linear-gradient(90deg,rgba(8,16,28,.9) 0%,rgba(8,16,28,.6) 48%,rgba(8,16,28,.22) 100%),
+    linear-gradient(180deg,rgba(8,16,28,.3) 0%,rgba(8,16,28,.55) 45%,rgba(8,16,28,.8) 100%);
+}
+.jtete.sans-banniere .jtete-fond{
+  background:
+    radial-gradient(700px 280px at 16% 0%,color-mix(in srgb,var(--gold) 16%,transparent),transparent 70%),
+    radial-gradient(600px 300px at 90% 20%,rgba(107,166,255,.14),transparent 70%);
+}
+.jtete.sans-banniere .jtete-fond::after{background:none}
+.ident-ava .ava{
+  border-color:#12233D;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 55%,transparent),0 8px 28px rgba(0,0,0,.5),0 0 40px -6px color-mix(in srgb,var(--gold) 50%,transparent);
+}
+.ident-txt h1{
+  font-family:var(--display);font-weight:600;letter-spacing:.01em;
+  font-size:clamp(28px,5vw,46px);line-height:1.15;padding-bottom:.04em;
+  background:linear-gradient(180deg,#FFFFFF 0%,color-mix(in srgb,var(--gold) 42%,#fff) 52%,color-mix(in srgb,var(--gold) 90%,#000) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:none;filter:drop-shadow(0 2px 12px rgba(0,0,0,.5));
+}
+.ident-sous{color:#A9C6D8}
+.ident-cta,.detail-wish{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 72%,#fff),color-mix(in srgb,var(--gold) 86%,#000));color:#1F1604;border-color:transparent;
+  box-shadow:0 8px 22px -10px color-mix(in srgb,var(--gold) 80%,transparent);
+}
+
+/* Les chiffres du bandeau, tous dans l'or de l'Archive : une seule couleur
+   pour une seule rangee -- quatre teintes la faisaient lire comme quatre
+   sujets. */
+.stat b,.stats.ligne b{color:color-mix(in srgb,var(--gold) 85%,#fff)}
+.stat u{color:#9DB4C6}
+.dist-head h2,.deco-titre{color:var(--gold);letter-spacing:.2em}
+.avg{box-shadow:0 0 0 1px rgba(3,6,11,.75)}
+.avg span{background:rgba(6,12,21,.88)}
+.grouphead{color:#A9C0D1;letter-spacing:.2em}
+.grouphead::after{
+  background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 50%,transparent),rgba(107,166,255,.28) 55%,rgba(107,166,255,0));
+}
+
+/* ---------- barre d'outils ---------- */
+/* Ni flou ni fond, contrairement a l'en-tete : la barre ne se voit pas, il
+   ne reste que ses champs, poses sur la page. Ce sont eux qui portent un
+   fond presque plein, pour rester lisibles quand les jaquettes defilent
+   dessous. */
+.tools{
+  background:transparent;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+/* Des fonds pleins, sans aucune transparence : la barre n'a pas de fond
+   a elle, et le moindre pourcentage laissait voir les jaquettes defiler
+   au travers des champs. */
+.search,.sel,.sortdir{background-color:#0E1A2C;border-color:rgba(160,205,230,.2)}
+.search:focus-within{border-color:color-mix(in srgb,var(--gold) 60%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 14%,transparent)}
+.search svg{color:var(--gold);opacity:.8}
+.sel option,.fld select option,.sg-select option{background:#0F1C2F;color:var(--text)}
+.add{background:color-mix(in srgb,var(--gold) 9%,#0E1A2C)}
+.add:hover{box-shadow:0 0 22px -6px color-mix(in srgb,var(--gold) 80%,transparent)}
+
+/* ---------- le mur ----------
+   Au survol, la tuile s'allume de la couleur de sa note (--note, posee par
+   tuilePour) -- l'or pour ce qui n'en a pas. Le mur se lit en couleurs
+   avant de se lire en chiffres. */
+.tile{
+  background:linear-gradient(170deg,rgba(24,41,66,.92),rgba(12,22,37,.94));
+  border-color:rgba(160,205,230,.12);border-radius:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.38);
+}
+.tile:hover{
+  border-color:color-mix(in srgb,var(--note,var(--gold)) 65%,transparent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 22px 44px rgba(0,0,0,.5),
+    0 0 36px -8px color-mix(in srgb,var(--note,var(--gold)) 60%,transparent);
+}
+.tile:hover .tn{color:color-mix(in srgb,var(--note,var(--gold)) 70%,#fff)}
+.tile .tn{font-family:var(--display);font-weight:500;font-size:15px;line-height:1.22;letter-spacing:0}
+.tile .tmeta{color:#93AABD}
+.tile .tnote{background:rgba(6,12,21,.86);border-color:rgba(160,205,230,.2)}
+.cov.chargement,.fantome-l,.fantome-bar,.fantome-tab{
+  background-image:linear-gradient(100deg,var(--bg3) 28%,rgba(190,225,245,.09) 46%,var(--bg3) 64%);
+}
+.deco-carte{background:linear-gradient(170deg,rgba(24,41,66,.92),rgba(12,22,37,.94));border-color:rgba(160,205,230,.12)}
+.deco-carte:hover{border-color:rgba(107,166,255,.5);box-shadow:0 0 30px -10px rgba(107,166,255,.6)}
+.deco-nom,.deco-nue{font-family:var(--display);letter-spacing:0}
+
+/* ---------- statistiques ---------- */
+.an-entete h2,.an-tete h3{font-family:var(--display);font-weight:600;letter-spacing:0}
+.an-entete h2{font-size:24px}
+.an-carte{
+  background:linear-gradient(170deg,rgba(24,41,66,.8),rgba(12,22,37,.8));
+  border-color:rgba(160,205,230,.12);border-top:2px solid color-mix(in srgb,var(--gold) 50%,transparent);
+}
+.an-carte:nth-child(4n+2){border-top-color:rgba(79,221,174,.55)}
+.an-carte:nth-child(4n+3){border-top-color:rgba(107,166,255,.6)}
+.an-carte:nth-child(4n+4){border-top-color:rgba(238,111,174,.55)}
+
+/* ---------- les fenetres ---------- */
+.sheet-back{background:rgba(4,9,16,.8)}
+#zoom{background:rgba(4,9,16,.95)}
+.sheet,.sg-boite{
+  border-color:rgba(160,205,230,.18);border-top-color:color-mix(in srgb,var(--gold) 45%,transparent);border-radius:18px;
+  box-shadow:0 30px 70px rgba(0,0,0,.65),0 0 60px -30px rgba(107,166,255,.5);
+}
+.sheet-title{font-family:var(--display);font-weight:600;letter-spacing:0;font-size:29px;line-height:1.12}
+/* En blanc, et pas sur les places du podium : .medaille les peint en or,
+   argent ou bronze, et une couleur posee ici par-dessus -- cette section
+   vient apres elle -- cachait le degrade. */
+.sheet-rank:not(.medaille){color:var(--text)}
+.fact u,.detail-fait u,.detail-temps-grid u,.export-section-title{color:#86AECB}
+.fhead,.sg-titre{font-family:var(--display);font-weight:600;letter-spacing:0;font-size:20px}
+.sheet-nav{background:rgba(17,30,49,.88)}
+/* La croix rouge d'Abyss : retenue au repos, franche au survol. */
+.sbtn[aria-label="Fermer"],.sg-x,.fp-x{color:#EE7777;border-color:rgba(238,119,119,.3)}
+.sbtn[aria-label="Fermer"]:hover,.sg-x:hover,.fp-x:hover{
+  color:#FFB3B3;background:rgba(238,119,119,.15);border-color:rgba(238,119,119,.6);
+}
+.fp-x{border-color:transparent}
+
+/* ---------- les champs ---------- */
+.fld input,.fld select,.fld textarea,.fld.fcheck,.sg-select,.sg-zone,
+.field input,.jaq-chercher input,.rsearch-box,.soc-champ{
+  background-color:rgba(5,11,20,.55);border-color:rgba(160,205,230,.18);border-radius:10px;
+}
+/* Le calque colore de l'avis doit garder exactement la boite du champ. */
+.ta-hl{background-color:rgba(5,11,20,.55);border-radius:10px}
+.fld input:focus,.fld select:focus,.fld textarea:focus,.sg-select:focus,.sg-zone:focus,
+.field input:focus,.jaq-chercher input:focus,.soc-champ:focus{
+  border-color:color-mix(in srgb,var(--gold) 60%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 14%,transparent);
+}
+.rsearch-box:focus-within{border-color:color-mix(in srgb,var(--gold) 60%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 14%,transparent)}
+.cta,.sg-go{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 72%,#fff),color-mix(in srgb,var(--gold) 86%,#000));color:#1F1604;
+  font-family:var(--body);font-weight:600;letter-spacing:0;border-radius:11px;
+  box-shadow:0 8px 22px -10px color-mix(in srgb,var(--gold) 80%,transparent);
+}
+.cta.armed{background:#B4295C;color:#fff;box-shadow:none}
+.ghost,.detail-btn{border-color:rgba(160,205,230,.18)}
+.detail-btn:hover{border-color:rgba(107,166,255,.5);color:var(--text)}
+.fpick,.igdb-ligne,.igdb-chiffre,.jaq-item,.compare,.pt,.detail-temps,.export-section{
+  background-color:rgba(23,42,68,.55);
+}
+
+/* ---------- ce qui flotte ---------- */
+.toast,.rattrapage{background:#12213A;border-color:rgba(107,166,255,.35)}
+.form-pastille,.igdb-pastille{background:#0F1C2F}
+.tip{background:#12213A}
+
+/* ---------- ecrans d'attente ---------- */
+.gate h2,.empty h3{font-family:var(--display);font-weight:600;letter-spacing:0}
+.gate h2{font-size:32px;line-height:1.15}
+.empty{background:rgba(17,30,49,.6);border-color:color-mix(in srgb,var(--gold) 30%,transparent)}
+
+/* ---------- le Social ---------- */
+/* Le fil est une colonne de texte, pas un mur de jaquettes : les memes
+   lumieres qui habillent le journal y eblouissaient. Elles baissent d'un
+   bon tiers, le fond descend d'un cran, et les cartes s'assombrissent avec
+   lui. .soc-colonne n'existe que sur templates/archive/feed.html. */
+body:has(.soc-colonne)::before{
+  background:
+    radial-gradient(900px 420px at 50% -12%, color-mix(in srgb,var(--gold) 9%,transparent), transparent 70%),
+    radial-gradient(640px 900px at -12% 28%, rgba(79,221,174,.07), transparent 70%),
+    radial-gradient(640px 900px at 112% 52%, rgba(107,166,255,.09), transparent 70%),
+    radial-gradient(760px 520px at 82% 112%, rgba(238,111,174,.06), transparent 70%),
+    linear-gradient(180deg,#0D1A2E 0%,#091322 45%,#060C16 100%);
+}
+body:has(.soc-colonne) .soc-post{
+  background:linear-gradient(170deg,rgba(17,30,49,.92),rgba(9,17,29,.94));
+}
+body:has(.soc-colonne) .soc-cliquable:hover{
+  background:linear-gradient(170deg,rgba(21,37,60,.95),rgba(11,21,35,.95));
+}
+body:has(.soc-colonne) .soc-titre{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 42%,#fff) 0%,color-mix(in srgb,var(--gold) 92%,#000) 55%,color-mix(in srgb,var(--gold) 58%,#000) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.soc-titre{
+  font-family:var(--display);font-weight:600;letter-spacing:.01em;
+  font-size:clamp(32px,6vw,48px);line-height:1.08;padding-bottom:.04em;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 22%,#fff) 0%,#E8C064 55%,color-mix(in srgb,var(--gold) 68%,#000) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.soc-quoi{color:#A9C0D1}
+.soc-post{
+  background:linear-gradient(170deg,rgba(24,41,66,.92),rgba(12,22,37,.94));
+  border-color:rgba(160,205,230,.12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.32);
+}
+.soc-cliquable:hover{
+  background:linear-gradient(170deg,rgba(29,50,80,.95),rgba(14,26,44,.95));
+  border-color:rgba(107,166,255,.45);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 32px -10px rgba(107,166,255,.55);
+}
+.soc-in > .soc-post{background:none;box-shadow:none}
+.soc-jeu,.soc-avis-jeu,.soc-note{font-family:var(--display);letter-spacing:0}
+.soc-jeu{font-weight:600;font-size:17.5px}
+.soc-msg-in{background:rgba(5,11,20,.45)}
+.soc-reponses .soc-msg-in{background:rgba(23,42,68,.45)}
+.soc-notif.neuve{background:color-mix(in srgb,var(--gold) 8%,transparent)}
+.fiche-avis{background:rgba(5,11,20,.45)}
+
+/* ---------- rappels pour les ecrans ou archive.css change le dessin ---------- */
+@media (max-width:640px){
+  .brand b{font-size:18px}
+  .tools{background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+  .add{background:var(--gold)}
+  .sheet,.sg-boite{border-radius:20px 20px 0 0}
+  .sheet-nav{background:rgba(17,30,49,.92)}
+  .sheet-title{font-size:23px}
+  .fhead,.sg-titre{font-size:17px}
+  .gate h2{font-size:25px}
+}
+@media (max-width:380px){
+  .brand b{font-size:16px}
+  .sheet-title{font-size:20px}
+}
+@media (hover:none){
+  .tile:hover{
+    border-color:rgba(160,205,230,.12);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.38);
+  }
+  .tile:hover .tn{color:var(--text)}
+  .tab:hover{color:var(--muted);background:none}
+}
+
+/* ---------- personnalisation : la couleur du profil ----------
+   Un sous-menu des reglages. Il prend la place des entrees le temps de
+   choisir, sans ouvrir de fenetre : c'est un reglage d'une seconde, et on
+   veut voir la page changer derriere pendant qu'on essaie. Voir
+   static/archive/archive-couleur.js. */
+.menu-item.perso-ouvre{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.perso-ouvre i{font-style:normal;color:var(--muted)}
+.menu.en-perso > .menu-item{display:none}
+.perso{padding:2px 2px 6px}
+.perso-retour{
+  display:flex;align-items:center;gap:8px;width:100%;
+  padding:8px 8px;border-radius:8px;text-align:left;
+  font-size:13.5px;color:var(--text);transition:background .15s;
+}
+.perso-retour:hover{background:rgba(107,166,255,.13)}
+.perso-retour:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.perso-titre{
+  margin:8px 8px 12px;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);
+}
+.perso-grille{
+  display:grid;grid-template-columns:repeat(5,32px);gap:10px;
+  justify-content:center;padding:4px 8px;
+}
+.perso-teinte{
+  width:32px;height:32px;border-radius:50%;padding:0;cursor:pointer;
+  background:var(--t);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),inset 0 -6px 10px rgba(0,0,0,.18);
+  transition:transform .15s cubic-bezier(.2,.8,.3,1),box-shadow .15s;
+}
+.perso-teinte:hover{transform:scale(1.13)}
+.perso-teinte[aria-checked="true"]{
+  box-shadow:0 0 0 2px #0F1C2F,0 0 0 4px var(--t),0 0 18px -2px var(--t);
+}
+.perso-teinte:focus-visible{outline:2px solid var(--text);outline-offset:5px}
+.perso-nom{margin:14px 8px 2px;text-align:center;font-size:12.5px;color:var(--muted);min-height:1.5em}
+.perso-nom b{color:var(--gold);font-weight:600}

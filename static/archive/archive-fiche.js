@@ -123,7 +123,7 @@ function corpsFiche(g){
       ? `<span class="sheet-note ${wish ? 'wish' : 'encours'}">${esc(statut)}</span>`
       : `<span class="sheet-note" style="color:${noteColor(g.rating)}">${g.rating!==null?fr(g.rating,1):'-'}</span>`}
     <h3 class="sheet-title${med ? ' medaille ' + med : ''}">${esc(g.name)}<button
-        class="titre-copie" type="button" title="Copier le nom du jeu"
+        class="titre-copie" type="button"
         aria-label="Copier le nom du jeu">${ICONE_COPIE}</button>${
       g.release ? `<span class="sheet-release">${dateFmt(g.release)}</span>` : ''}</h3>
     ${rangHTML(rang, med)}

@@ -69,7 +69,7 @@
 }
 .soc-neuve{
   animation:soc-arrivee .28s cubic-bezier(.2,.7,.3,1);
-  border-color:rgba(229,196,107,.55);
+  border-color:color-mix(in srgb,var(--gold) 55%,transparent);
   transition:border-color 1.2s ease .8s;
 }
 @media (prefers-reduced-motion:reduce){
@@ -471,7 +471,7 @@ button.soc-vers-jeu:hover,
   display:grid;place-items:center;transition:color .15s,border-color .15s,background .15s;
 }
 .cloche:hover{color:var(--text);border-color:var(--line-strong);background:var(--bg3)}
-.cloche[aria-expanded="true"]{color:var(--gold);border-color:rgba(229,196,107,.45);background:var(--bg3)}
+.cloche[aria-expanded="true"]{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:var(--bg3)}
 .cloche:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 /* La pastille : un chiffre, pas un point. « 3 » dit s'il vaut la peine
    d'ouvrir tout de suite ; un point ne dit que « quelque chose ». */
@@ -504,7 +504,7 @@ button.soc-vers-jeu:hover,
 }
 /* Pas encore lue : un liseré, et rien de plus. Une ligne en gras dans une
    liste de gras ne se distingue plus au bout de trois. */
-.soc-notif.neuve{background:rgba(229,196,107,.06);box-shadow:inset 2px 0 0 var(--gold)}
+.soc-notif.neuve{background:color-mix(in srgb,var(--gold) 6%,transparent);box-shadow:inset 2px 0 0 var(--gold)}
 
 /* ---------- le bouton « Avis » de la fiche ----------
    Sous la jaquette, dans la colonne de gauche de la fiche : c'est la place

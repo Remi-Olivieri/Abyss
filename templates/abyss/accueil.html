@@ -356,21 +356,29 @@ function dessine() { dessineCompte(); dessineGrille(); }
 /* =========================================================
    Modales
    ========================================================= */
+const MODALES = ["mAuth", "mOubli", "mSugg"];
 let RENDRE_FOCUS = null;
+/* La page ne défile plus sous une fenêtre ouverte (même verrou que
+   abyss/profil.html). */
+function verrouFond() {
+  document.body.style.overflow = MODALES.some((id) => !el(id).hidden) ? "hidden" : "";
+}
 
 function ouvre(id, champ) {
   RENDRE_FOCUS = document.activeElement;
   el(id).hidden = false;
+  verrouFond();
   const c = champ && el(champ);
   if (c) c.focus();
 }
 function ferme(id) {
   el(id).hidden = true;
+  verrouFond();
   if (RENDRE_FOCUS && document.contains(RENDRE_FOCUS)) RENDRE_FOCUS.focus();
   RENDRE_FOCUS = null;
 }
 function fermeTout() {
-  ["mAuth", "mOubli", "mSugg"].forEach((id) => { if (!el(id).hidden) ferme(id); });
+  MODALES.forEach((id) => { if (!el(id).hidden) ferme(id); });
 }
 
 /* ---------- suggestions et bugs ----------

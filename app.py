@@ -2,10 +2,12 @@
 
 from pathlib import Path
 import argparse
+import gzip
 import os
+import re
 import socket
 
-from flask import Flask, abort, jsonify, redirect, request, send_from_directory
+from flask import Flask, Response, abort, jsonify, redirect, request, send_from_directory
 from flask_socketio import SocketIO
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -15,6 +17,7 @@ import comptes
 import journal
 import monitoring
 import quiz
+import sauvegarde
 import social
 import yugiquiz
 from jaquettes import blueprint_jaquettes
@@ -58,6 +61,45 @@ EXTENSIONS_CACHABLES = {".jpg", ".jpeg", ".png", ".webp", ".gif",
 # pour qu'une jaquette remplacee sous le meme nom finisse par reapparaitre.
 # Monte a 31536000 (un an) le jour ou les images ne bougent plus du tout.
 DUREE_CACHE = 86400
+
+# Scripts et feuilles de style : chaque page les cite avec un ?v= qui porte
+# la date de modification du fichier (voir versionne). Une adresse versionnee
+# ne change donc jamais de contenu, et le navigateur la garde un an sans
+# redemander. Modifier le fichier change le ?v= de la page : F5 et la
+# nouvelle version arrive, comme avant.
+DUREE_VERSIONNE = 31536000
+CITATION_STATIQUE = re.compile(r'((?:src|href)=")(/static/[^"?#]+)(")')
+
+# La compression : le JS, le CSS et le JSON se reduisent a un quart de leur
+# taille. Pas les images, deja compressees. En dessous d'un Ko, l'en-tete
+# coute plus que ce qu'on gagne.
+TYPES_COMPRESSIBLES = {"application/json", "application/javascript",
+                       "image/svg+xml", "text/javascript"}
+COMPRESSION_MINI = 1024
+# Les fichiers statiques compresses une fois pour toutes, par ETag (qui change
+# avec le fichier) : recompresser 64 Ko de socket.io a chaque visite serait
+# du travail jete.
+_compresses = {}
+COMPRESSES_MAXI = 300
+
+# Les en-tetes de securite, sur toutes les reponses.
+#  - nosniff : un fichier est lu selon son type annonce, jamais « devine » --
+#    une image piegee ne peut pas etre executee comme un script ;
+#  - frame-ancestors / X-Frame-Options : aucune page ne s'affiche dans le
+#    cadre d'un autre site, qui pourrait faire cliquer a l'aveugle sur
+#    « supprimer mon compte » (clickjacking) ;
+#  - base-uri, object-src, form-action : ce qu'une injection de HTML
+#    pourrait detourner sans meme executer de script.
+# La CSP ne restreint pas encore les scripts : les pages en ont en ligne, et
+# les bloquer demanderait de les sortir toutes dans des fichiers.
+EN_TETES_SECURITE = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Content-Security-Policy": "frame-ancestors 'none'; base-uri 'self'; "
+                               "object-src 'none'; form-action 'self'",
+}
 
 app = Flask(__name__, static_folder=None) # on gere les fichiers nous-memes
 
@@ -116,6 +158,7 @@ app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024 # aucune de nos routes n'envo
 comptes.init()
 monitoring.menage()          # les visites d'il y a quatre mois ne servent plus
 alertes.lance()              # le mail de la veille d'une sortie, a minuit (voir alertes.py)
+sauvegarde.lance()           # la copie de la base, chaque nuit (voir sauvegarde.py)
 
 app.register_blueprint(comptes.blueprint_comptes)
 app.register_blueprint(journal.blueprint_journal)
@@ -144,6 +187,58 @@ def note_la_visite(r):
     faire dans un compteur de pages vues, et monitoring.note les ecarte.
     """
     monitoring.note(request, r.status_code)
+    return r
+
+
+@app.after_request
+def securise(r):
+    """Les en-tetes de securite. setdefault : une route peut les ajuster."""
+    for nom, valeur in EN_TETES_SECURITE.items():
+        r.headers.setdefault(nom, valeur)
+    # HSTS seulement en HTTPS : annonce en HTTP, il serait ignore de toute
+    # facon, et en local il n'a rien a faire.
+    if request.is_secure:
+        r.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    return r
+
+
+@app.after_request
+def compresse(r):
+    """Gzip pour le texte, quand le navigateur l'accepte.
+
+    Si Caddy ou Nginx compresse deja devant, il voit Content-Encoding et
+    n'y touche plus : pas de double compression.
+    """
+    if (r.status_code != 200
+            or "Content-Encoding" in r.headers
+            or "gzip" not in request.headers.get("Accept-Encoding", "").lower()
+            or not (r.mimetype.startswith("text/") or r.mimetype in TYPES_COMPRESSIBLES)):
+        return r
+
+    etag = r.headers.get("ETag") if r.direct_passthrough else None
+    donnees = _compresses.get(etag) if etag else None
+    if donnees is None:
+        r.direct_passthrough = False       # un fichier : le lire pour le compresser
+        brut = r.get_data()
+        if len(brut) < COMPRESSION_MINI:
+            return r
+        donnees = gzip.compress(brut, compresslevel=6)
+        if etag:
+            if len(_compresses) >= COMPRESSES_MAXI:
+                _compresses.clear()
+            _compresses[etag] = donnees
+    else:
+        # deja compresse : le fichier ouvert par send_from_directory ne sera
+        # pas lu, il faut quand meme le refermer
+        fermer = getattr(r.response, "close", None)
+        if fermer is not None:
+            r.call_on_close(fermer)
+        r.direct_passthrough = False
+
+    r.set_data(donnees)
+    r.headers["Content-Encoding"] = "gzip"
+    r.headers.pop("Accept-Ranges", None)   # un octet de la version compressee n'est pas celui du fichier
+    r.vary.add("Accept-Encoding")
     return r
 
 # --------------------------------------------------------------------------
@@ -178,17 +273,46 @@ def envoie(chemin):
             cible = cible / "index.html"
 
         if cible.is_file():
+            if cible.suffix.lower() == ".html":
+                # une page : jamais gardee, et ses scripts cites avec leur ?v=
+                reponse = Response(versionne(cible.read_text(encoding="utf-8")),
+                                   mimetype="text/html")
+                reponse.headers["Cache-Control"] = "no-store, max-age=0"
+                return reponse
             reponse = send_from_directory(dossier, cible.relative_to(dossier).as_posix())
             if cible.suffix.lower() in EXTENSIONS_CACHABLES:
                 # une image ne change pas : la redemander a chaque affichage
                 # saturait les 6 connexions que Chrome accorde par origine
                 reponse.headers["Cache-Control"] = f"public, max-age={DUREE_CACHE}"
+            elif request.args.get("v"):
+                # adresse versionnee : son contenu ne changera jamais
+                reponse.headers["Cache-Control"] = f"public, max-age={DUREE_VERSIONNE}, immutable"
             else:
-                # pages et scripts : F5 et tu vois tout de suite tes modifs
-                reponse.headers["Cache-Control"] = "no-store, max-age=0"
+                # sans ?v= (un JSON lu par une page, un fichier cite depuis un
+                # script) : le navigateur garde sa copie mais redemande a
+                # chaque fois si elle a change -- un 304 de quelques octets
+                # quand rien n'a bouge, et tes modifs visibles tout de suite
+                reponse.headers["Cache-Control"] = "no-cache"
             return reponse
 
     abort(404)
+
+
+def versionne(html: str) -> str:
+    """Ajoute ?v=<date de modification> a chaque /static/ cite par la page.
+
+    /static/archive/archive.css  ->  /static/archive/archive.css?v=1757440000
+
+    Seuls les src= et href= : c'est ainsi que les pages chargent leurs
+    scripts et leurs feuilles. Un fichier introuvable est laisse tel quel.
+    """
+    def remplace(m):
+        try:
+            v = int((STATIQUE / m.group(2)[len("/static/"):]).stat().st_mtime)
+        except OSError:
+            return m.group(0)
+        return f"{m.group(1)}{m.group(2)}?v={v}{m.group(3)}"
+    return CITATION_STATIQUE.sub(remplace, html)
 
 # --------------------------------------------------------------------------
 #   Pages

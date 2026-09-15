@@ -140,7 +140,10 @@ function applyData(data, frais){
   BUCKETS = (data.periodes || []).slice();
   CAN_WRITE = data.write === true;
   TITRE = data.titre || '';
-  IDENTITE = {avatar: data.avatar || null, banniere: data.banniere || null};
+  IDENTITE = {avatar: data.avatar || null, banniere: data.banniere || null,
+              couleur: data.couleur || null};
+  // la couleur de qui tient ce journal : voir archive-couleur.js
+  if(typeof majCouleurJournal === 'function') majCouleurJournal();
   oublieTuiles();   // le mur garde ses tuiles : celles des jeux partis s'en vont
   // à l'ouverture seulement : on se place sur l'année la plus récente
   ONGLET_DEFAUT = data.ongletDefaut || '';
@@ -222,6 +225,9 @@ async function envoiBrut(methode, chemin, charge){
 }
 
 function closeMenu(){
+  // le sous-menu de la couleur se referme avec lui : rouvrir le menu doit
+  // retomber sur ses entrees, pas sur la palette laissee ouverte
+  if(typeof persoFerme === 'function') persoFerme();
   document.getElementById('menu').hidden = true;
   document.getElementById('cog').setAttribute('aria-expanded', 'false');
 }
@@ -232,6 +238,7 @@ function toggleMenu(){
   // celui-ci. `typeof` parce qu'elle vient d'archive-social.js, que la page
   // charge après ce fichier-ci.
   if(ouvert){
+    if(typeof persoFerme === 'function') persoFerme();
     fermerRecherche(); closePer();
     if(typeof socialClocheFerme === 'function') socialClocheFerme();
     if(typeof menuMoiFerme === 'function') menuMoiFerme();
@@ -268,7 +275,7 @@ document.addEventListener('click', e=>{
    journal.py) plutôt que d'être repêchées dans l'annuaire : celui-ci ne
    liste que les journaux publics, et son propriétaire serait donc arrivé
    sans visage sur son propre journal privé. */
-let IDENTITE = {avatar: null, banniere: null};
+let IDENTITE = {avatar: null, banniere: null, couleur: null};
 
 function majEntete(){ majIdentite(); }
 

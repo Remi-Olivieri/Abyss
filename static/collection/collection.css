@@ -1,7 +1,9 @@
 :root{
-  --ink:#EDE7E0; --ink-dim:#9C93A3; --ink-faint:#5F5768;
-  --bg:#1B1620; --bg-2:#241E2B; --sleeve-in:#171320;
-  --edge:#3A3242; --accent:#A086B7; --r:10px;
+  --ink:#E2ECF3; --ink-dim:#8DA3B6; --ink-faint:#657B8F;
+  --bg:#0A1424; --bg-2:#111E31; --sleeve-in:#060D18;
+  --edge:rgba(160,205,230,.16); --accent:#B39AE3; --r:10px;
+  /* les bioluminescences d'Abyss, pour les lumieres du fond */
+  --algue:#4FDDAE; --plancton:#6BA6FF; --meduse:#EE6FAE;
   --cw:104px; --ch:152px; --gap:8px; --pad:13px;
   /* fait afficher en sombre les widgets natifs : listes déroulantes, ascenseurs… */
   color-scheme:dark;
@@ -694,3 +696,161 @@ body.sansreflets .foil{display:none}
   .panel{padding:14px 14px 18px}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* =======================================================================
+   L'habillage Abyss
+
+   Le classeur a pris les couleurs du hub : la palette des abysses a la
+   place du prune, Eczar et Archivo, des pages bleu nuit, la croix rouge qui
+   ferme, la neige, et les lumieres du fond -- le violet du classeur au
+   plafond, les bioluminescences d'Abyss sur les bords. La mise en page ne
+   bouge pas : fit() calcule la taille des pochettes sur la place qu'il
+   trouve, et rien ici ne la lui retire.
+
+   Ecrit d'abord comme une feuille a part pour comparer, puis rapatrie ici :
+   ces regles l'emportent sur celles du dessus par leur place. Celles que la
+   feuille redessine sous 900 px sont rappelees a la fin.
+   ======================================================================= */
+/* La neige d'Abyss, derriere tout : voir la meme regle dans archive.css. */
+#neige{position:fixed;inset:0;z-index:-1;pointer-events:none}
+
+/* Le fond sur un calque fixe a part plutot qu'en background-attachment:fixed :
+   un fond fixe est repeint a chaque pixel de defilement, un calque fixe est
+   simplement compose. Sous la neige (-1), sous tout le reste. */
+body{font-family:"Archivo","Segoe UI",system-ui,sans-serif;background:#08111D}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(900px 420px at 50% -12%, rgba(179,154,227,.18), transparent 70%),
+    radial-gradient(640px 900px at -12% 30%, rgba(79,221,174,.13), transparent 70%),
+    radial-gradient(640px 900px at 112% 50%, rgba(107,166,255,.17), transparent 70%),
+    radial-gradient(760px 520px at 80% 112%, rgba(238,111,174,.13), transparent 70%),
+    linear-gradient(180deg,#13223C 0%,#0C182B 45%,#08101C 100%);
+}
+::selection{background:rgba(179,154,227,.34)}
+
+/* La barre de defilement de la page -- elle n'existe que sous 900 px, quand
+   le classeur s'empile et que la page defile. */
+html{scrollbar-color:rgba(179,154,227,.55) #08111D}
+@supports not (scrollbar-color:auto){
+  html::-webkit-scrollbar{width:12px}
+  html::-webkit-scrollbar-track{background:#08111D}
+  html::-webkit-scrollbar-thumb{background:rgba(179,154,227,.55);border-radius:99px;border:3px solid #08111D}
+}
+
+/* ---------- les titres ---------- */
+h1,.face .pg,.panel .who h3,.cbox .v,.sheetbox h2,.gate h2,.rsearch-tete b,.sg-titre,.bigfb{
+  font-family:"Eczar",Georgia,serif;letter-spacing:0;
+}
+h1{
+  font-weight:600;font-size:25px;line-height:1.12;padding-bottom:.04em;
+  background:linear-gradient(180deg,#FFFFFF 0%,#E4D8F8 55%,#B39AE3 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.face .pg{font-weight:600;font-size:15px;color:#DCD0F4}
+.panel .who h3{font-weight:600;font-size:22px}
+.sheetbox h2,.sg-titre{font-weight:600;font-size:21px}
+.gate h2{font-weight:600;font-size:30px;line-height:1.15}
+.rsearch-tete b{font-weight:600;font-size:18px}
+.slot.miss::after{font-family:"Eczar",Georgia,serif}
+
+/* ---------- en-tete ---------- */
+.entete-action{border-radius:99px;padding:0 14px 0 12px;background:rgba(5,11,20,.35)}
+.entete-action:hover,.jnl-search:hover{
+  color:var(--ink);border-color:rgba(179,154,227,.6);background:rgba(179,154,227,.12);
+}
+.retour,.maison,.gear,.nav,.jnl-search{background:rgba(5,11,20,.35)}
+.tab:hover{background:rgba(107,166,255,.12)}
+.tab[aria-selected="true"]{
+  color:var(--ink);background:rgba(179,154,227,.2);border-color:rgba(179,154,227,.55);
+  box-shadow:0 0 20px -8px rgba(179,154,227,.9);
+}
+.tab .n{color:#8FA6BA}
+.menu,.results{
+  background:#0F1C2F;border-color:rgba(160,205,230,.18);border-top-color:rgba(179,154,227,.45);
+  box-shadow:0 18px 42px rgba(0,0,0,.6);
+}
+.menu-item:hover,.results button:hover,.results button.on{background:rgba(107,166,255,.13)}
+
+/* ---------- recherche et jauge ---------- */
+.search input,.jump input,.rsearch-box{background:rgba(5,11,20,.55)}
+.search input:focus,.jump input:focus{
+  outline:none;border-color:rgba(179,154,227,.65);box-shadow:0 0 0 3px rgba(179,154,227,.16);
+}
+/* La jauge passe du violet au plancton puis a l'algue : elle se remplit en
+   s'eclairant. */
+.bar{background:rgba(160,205,230,.14)}
+.bar i{
+  background:linear-gradient(90deg,#B39AE3,#6BA6FF 60%,#4FDDAE);
+  box-shadow:0 0 12px rgba(107,166,255,.55);
+}
+.meter .val b{color:#DCD0F4}
+
+/* ---------- le classeur ---------- */
+.page{
+  background:
+    radial-gradient(120% 60% at 50% 0%,rgba(179,154,227,.07),transparent 60%),
+    linear-gradient(155deg,#16273F,#0E1B2E);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 24px 54px rgba(0,0,0,.42);
+}
+.page.cover{background:rgba(6,13,24,.5);border-color:rgba(160,205,230,.15)}
+.spine{background:linear-gradient(90deg,#060C16,#16263D 45%,#16263D 55%,#060C16)}
+.ring{border-color:#6A7FA0;background:#0A1424;box-shadow:inset 0 1px 0 rgba(190,225,245,.18),0 0 6px rgba(179,154,227,.25)}
+.slot{border-color:rgba(160,205,230,.08)}
+.slot.owned{
+  background:linear-gradient(165deg,var(--c) 0%,color-mix(in srgb,var(--c) 38%,#0A1424) 58%,#0A1424 100%);
+}
+.slot.miss{background:rgba(0,0,0,.24);border-color:rgba(160,205,230,.12)}
+.slot.void{background:rgba(0,0,0,.18);border-color:rgba(160,205,230,.08)}
+.slot.sortie{background:rgba(0,0,0,.24)}
+.slot:not(.void):hover{border-color:rgba(179,154,227,.6);box-shadow:0 0 22px -6px rgba(179,154,227,.7)}
+.classeurs button{background:rgba(5,11,20,.35)}
+.classeurs button[aria-pressed="true"]{
+  background:linear-gradient(180deg,#CBB8F0,#9A7FCF);color:#140F1F;border-color:transparent;
+}
+
+/* ---------- la carte au premier plan ---------- */
+#scrim{background:#050A13}
+.bigcard{
+  background:linear-gradient(165deg,var(--c,#1E3150) 0%,color-mix(in srgb,var(--c,#1E3150) 32%,#0A1424) 60%,#0A1424 100%);
+  box-shadow:0 40px 100px rgba(0,0,0,.8),0 0 0 1px rgba(190,225,245,.16),0 0 100px -30px var(--c,#B39AE3);
+}
+.bigmiss{background:linear-gradient(0deg,rgba(5,10,19,.94),rgba(5,10,19,.62) 70%,transparent)}
+.panel{
+  background:#0F1C2F;border-top-color:rgba(179,154,227,.5);
+  box-shadow:0 -16px 50px rgba(0,0,0,.6),0 -1px 30px -12px rgba(179,154,227,.5);
+}
+.cbox{background:rgba(5,11,20,.45)}
+.cbox:nth-child(3n+2) .v{color:var(--plancton)}
+.cbox:nth-child(3n+3) .v{color:var(--algue)}
+.edit select,.edit select option,.sg-select option{background:#0A1424;color:var(--ink)}
+.act{background:linear-gradient(180deg,#CBB8F0,#9A7FCF);color:#140F1F;border-radius:10px;
+  box-shadow:0 8px 22px -10px rgba(179,154,227,.85)}
+.act.ghost{background:none;border-color:var(--edge);box-shadow:none}
+
+/* ---------- les fenetres ---------- */
+.modal,.voile-rech,.sg-fond{background:rgba(4,9,16,.8)}
+.sheetbox,.rsearch-sheet,.sg-boite{
+  background:linear-gradient(170deg,#14243A,#0C1727);
+  border-color:rgba(160,205,230,.18);border-top-color:rgba(179,154,227,.5);border-radius:18px;
+  box-shadow:0 30px 70px rgba(0,0,0,.65),0 0 60px -30px rgba(107,166,255,.5);
+}
+.exp-titre{color:#86AECB}
+/* La croix rouge d'Abyss : retenue au repos, franche au survol. */
+.close,.rsearch-x,.sg-x{color:#EE7777}
+.rsearch-x,.sg-x{border-color:rgba(238,119,119,.3)}
+.close:hover{color:#FFB3B3}
+.rsearch-x:hover,.sg-x:hover{color:#FFB3B3;background:rgba(238,119,119,.15);border-color:rgba(238,119,119,.6)}
+.sg-go{background:linear-gradient(180deg,#CBB8F0,#9A7FCF);color:#140F1F}
+.toast{background:#12213A;border-color:rgba(107,166,255,.35)}
+
+@media (max-width:900px){
+  .entete-action{padding:0;width:34px}
+  h1{font-size:21px}
+}
+@media (max-width:640px){
+  .sg-boite{border-radius:16px 16px 0 0}
+}
+@media (hover:none){
+  .tab:hover{background:none}
+}

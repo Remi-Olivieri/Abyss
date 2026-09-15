@@ -130,6 +130,29 @@
   .ban-pied{display:flex;gap:10px;align-items:center;margin-top:16px}
   .ban-pied .valider{margin:0}
 
+  /* ---------- supprimer le compte ----------
+     Tout en bas, et en rouge : on ne tombe pas dessus par hasard, mais on
+     ne le cherche pas non plus. */
+  .zone-danger{
+    margin-top:40px;
+    border-color:rgba(232,106,106,.35);
+    background:linear-gradient(170deg,#1E1016,#0E0A10);
+  }
+  .zone-danger h2{color:var(--rouge)}
+  .supprimer{
+    width:100%;margin-top:14px;
+    font:inherit;font-size:16px;font-weight:600;letter-spacing:.02em;
+    color:#fff;padding:14px 18px;border:0;border-radius:12px;
+    background:linear-gradient(180deg,#E86A6A,#B83737);
+    box-shadow:0 10px 26px -12px rgba(232,106,106,.7);
+    cursor:pointer;transition:filter .2s ease,transform .15s ease;
+  }
+  .supprimer:hover{filter:brightness(1.1)}
+  .supprimer:active{transform:translateY(1px)}
+  .supprimer:disabled{opacity:.45;cursor:not-allowed;filter:none}
+  .supprimer:focus-visible{outline:2px solid var(--rouge);outline-offset:3px}
+  .suppr-liste{margin:0 0 16px;padding-left:20px;color:var(--brume);font-size:13.5px;line-height:1.6}
+
 </style>
 </head>
 <body>
@@ -154,7 +177,7 @@
           <div class="banniere-avatar">
             <img class="avatar-apercu" id="avatarApercu" alt="" hidden>
             <span class="avatar-vide" id="avatarVide"></span>
-            <label class="avatar-changer" aria-label="Changer la photo de profil" title="Changer la photo">
+            <label class="avatar-changer" aria-label="Changer la photo de profil">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 7h3.5l1.8-2h5.4l1.8 2H20v13H4z"/><circle cx="12" cy="13.5" r="3.5"/>
               </svg>
@@ -194,7 +217,39 @@
       <p class="explication alerte-sans-mail" id="alerteSansMail" hidden>Ajoute une adresse e-mail pour activer cette option.</p>
     </section>
 
+    <section class="carte-profil zone-danger">
+      <h2>Supprimer mon compte</h2>
+      <p class="explication">Ton compte, ton journal, ton classeur et tout ce que tu as écrit disparaissent définitivement.</p>
+      <button type="button" class="supprimer" id="btnSupprimer">Supprimer mon compte</button>
+    </section>
+
   </main>
+
+  <!-- ---------- Supprimer le compte ---------- -->
+  <div class="voile" id="mSupprimer" hidden>
+    <div class="modale" role="dialog" aria-modal="true" aria-labelledby="titreSuppr">
+      <h2 class="titre-modale" id="titreSuppr">Supprimer ton compte ?</h2>
+      <p class="explication">C'est définitif : rien ne pourra être récupéré. Seront effacés :</p>
+      <ul class="suppr-liste">
+        <li>ton journal de jeux vidéo et ton classeur Yu-Gi-Oh!</li>
+        <li>tes commentaires, tes j'aime et tes notifications</li>
+        <li>ta photo de profil et ta bannière</li>
+      </ul>
+      <form id="formSuppr">
+        <label class="champ">
+          <span>Tape <b id="sPseudoAttendu"></b> pour confirmer <span class="oblig" aria-hidden="true">*</span></span>
+          <input id="sPseudo" type="text" autocomplete="off" spellcheck="false" required aria-required="true">
+        </label>
+        <label class="champ">
+          <span>Mot de passe <span class="oblig" aria-hidden="true">*</span></span>
+          <input id="sMdp" type="password" autocomplete="current-password" required aria-required="true">
+        </label>
+        <p class="erreur" id="sErr" hidden></p>
+        <button class="supprimer" type="submit" id="sGo" disabled>Supprimer définitivement</button>
+      </form>
+      <button class="fermer" data-ferme="mSupprimer" aria-label="Fermer">&#10005;</button>
+    </div>
+  </div>
 
   <!-- ---------- Modifier l'e-mail ---------- -->
   <div class="voile" id="mEmail" hidden>
@@ -386,20 +441,28 @@ let MOI = { connecte: false, utilisateur: null, masques: [] };
    Modales - e-mail et mot de passe, ouvertes à la demande plutôt que
    toujours dépliées sur la page (même mécanique qu'abyss/accueil.html).
    ========================================================= */
+const MODALES = ["mEmail", "mMdp", "mBanniere", "mSupprimer"];
 let RENDRE_FOCUS = null;
+/* La page ne défile plus sous une fenêtre ouverte (même verrou que
+   archive-noyau.js). */
+function verrouFond() {
+  document.body.style.overflow = MODALES.some((id) => !el(id).hidden) ? "hidden" : "";
+}
 function ouvre(id, champ) {
   RENDRE_FOCUS = document.activeElement;
   el(id).hidden = false;
+  verrouFond();
   const c = champ && el(champ);
   if (c) c.focus();
 }
 function ferme(id) {
   el(id).hidden = true;
+  verrouFond();
   if (RENDRE_FOCUS && document.contains(RENDRE_FOCUS)) RENDRE_FOCUS.focus();
   RENDRE_FOCUS = null;
 }
 function fermeTout() {
-  ["mEmail", "mMdp", "mBanniere"].forEach((id) => { if (!el(id).hidden) ferme(id); });
+  MODALES.forEach((id) => { if (!el(id).hidden) ferme(id); });
 }
 
 /* =========================================================
@@ -447,7 +510,6 @@ async function chargePropositions() {
   }
   PROPOSITIONS = d.images || [];
   if (!PROPOSITIONS.length) {
-    el("banIntro").hidden = true;
     grille.innerHTML = `<p class="ban-etat">Aucun jeu trouvé... Remplis tes jeux préférés et réessaye.</p>`;
     return;
   }
@@ -704,6 +766,49 @@ el("formMdp").addEventListener("submit", async (e) => {
     erreur("pErr", err.message);
   } finally {
     bouton.disabled = false;
+  }
+});
+
+/* =========================================================
+   Supprimer le compte
+   Le bouton ne s'allume qu'une fois le pseudo retapé : on ne supprime pas
+   son compte d'un double clic. Le serveur revérifie pseudo et mot de passe,
+   c'est lui qui fait foi (voir supprimer_compte dans comptes.py).
+   ========================================================= */
+const pseudoConfirme = () =>
+  el("sPseudo").value.trim().toLowerCase() === MOI.utilisateur.pseudo.toLowerCase();
+function majBoutonSuppr() {
+  el("sGo").disabled = !(pseudoConfirme() && el("sMdp").value);
+}
+el("sPseudo").addEventListener("input", majBoutonSuppr);
+el("sMdp").addEventListener("input", majBoutonSuppr);
+
+el("btnSupprimer").addEventListener("click", () => {
+  el("sPseudoAttendu").textContent = MOI.utilisateur.pseudo;
+  el("sPseudo").value = el("sMdp").value = "";
+  el("sErr").hidden = true;
+  majBoutonSuppr();
+  ouvre("mSupprimer", "sPseudo");
+});
+
+el("formSuppr").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (el("sGo").disabled) return;
+  el("sErr").hidden = true;
+  el("sGo").disabled = true;
+  try {
+    await api("/api/compte/supprimer", "POST", {
+      confirmation: el("sPseudo").value.trim(),
+      mdp: el("sMdp").value
+    });
+    el("sMdp").value = "";
+    ferme("mSupprimer");
+    el("corps").hidden = true;
+    toast("Ton compte a été supprimé.");
+    setTimeout(() => { location.href = "/abyss"; }, 1800);
+  } catch (err) {
+    erreur("sErr", err.message);
+    majBoutonSuppr();
   }
 });
 

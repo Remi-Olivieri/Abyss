@@ -88,7 +88,7 @@ function jaqHTML(nom, propositions, retenir, opts){
       ${barre}
       <div class="jaq-grid">
         ${propositions.map((p,i)=>`
-          <button class="jaq-item${p.suggere ? ' suggeree' : ''}" data-i="${i}" title="${esc(p.lien||'')}">
+          <button class="jaq-item${p.suggere ? ' suggeree' : ''}" data-i="${i}">
             <img src="${esc(p.apercu)}" alt="" loading="lazy" decoding="async">
             <b>${esc(p.titre)}</b>
             <span>${esc(p.date || 'date inconnue')}${p.nature ? ' · ' + esc(p.nature) : ''}</span>

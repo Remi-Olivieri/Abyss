@@ -6,7 +6,7 @@
 <title>Mini-Jeux / Quiz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Karla:wght@400;500;600&family=Azeret+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Eczar:wght@500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Karla:wght@400;500;600&family=Azeret+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- La feuille de l'Archive, et pas celle d'Abyss : les mini-jeux sont une
      pièce du même projet et en portent les couleurs. Jamais les deux à la
      fois - elles définissent toutes deux :root, .menu, .cta et .gate. -->
@@ -22,7 +22,7 @@
 
 <header class="top">
   <div class="wrap top-in">
-    <a class="entete-action" id="abyssBtn" href="/abyss" title="Revenir au hub Abyss">
+    <a class="entete-action" id="abyssBtn" href="/abyss">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -214,7 +214,7 @@ function navRetour(vers, titre) {
 let MINUTEUR_ABANDON = null;
 function navAbandon(titre) {
   nav(`<button type="button" class="sbtn qz-abandon" id="navAbandon"
-         aria-label="Abandonner la partie" title="Abandonner la partie">×</button>
+         aria-label="Abandonner la partie">×</button>
        <span class="qz-nav-titre">${esc(titre)}</span>`);
   const b = el("navAbandon");
   b.addEventListener("click", () => {
@@ -282,8 +282,7 @@ function menuSource() {
     <div class="qz-src-piste" id="srcPiste">
       ${SOURCES.map((x) => `
         <button type="button" class="qz-src-opt" data-v="${esc(x.v)}"
-                aria-pressed="${x.v === SOURCE}"
-                title="${esc(x.note)}">${esc(x.nom)}</button>`).join("")}
+                aria-pressed="${x.v === SOURCE}">${esc(x.nom)}</button>`).join("")}
     </div>
   </div>`;
 }
@@ -988,8 +987,7 @@ function dessineFrise() {
         ${bon ? "" : `<i class="qz-place">placé en ${RANGS[donne] || donne + 1}</i>`}` : ""}
       </span>
       ${CHRONO.fini ? "" : `<button type="button" class="qz-grip"
-              aria-label="Déplacer ${esc(j.titre)}"
-              title="Glisser, ou flèches du clavier">${POIGNEE}</button>`}
+              aria-label="Déplacer ${esc(j.titre)}">${POIGNEE}</button>`}
     </li>`;
   }).join("");
 
@@ -1289,8 +1287,7 @@ function gcPeint() {
          rien à assombrir - elle serait juste plus terne que ses voisines. */
       return `<button type="button" class="gc-case${prise ? " prise" : ""}${
               c.image ? " jaq" : ""}"
-              data-titre="${esc(c.titre)}" aria-pressed="${prise}"
-              title="${esc(c.titre)}"${g.fini ? " disabled" : ""}
+              data-titre="${esc(c.titre)}" aria-pressed="${prise}"${g.fini ? " disabled" : ""}
               ${c.image ? `style="--fond:url('${esc(c.image)}')"` : ""}>
         <span>${esc(c.titre)}</span>
         <i class="gc-coche" aria-hidden="true">&#10003;</i>

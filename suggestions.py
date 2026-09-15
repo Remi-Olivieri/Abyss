@@ -47,6 +47,9 @@ SECTIONS = {
     "jeux-videos": "Archive Jeux Vidéos",
     "collection": "Collection Yu-Gi-Oh!",
     "quiz": "Mini-Jeux / Quiz",
+    # Pas encore de section dans le fichier : la premiere suggestion la cree
+    # a la fin (voir ajoute_au_fichier), donc apres le quiz -- d'ou sa place.
+    "chainz": "L'Atelier Chainz",
 }
 
 # Les projets qu'on ne propose qu'a l'administration : un projet pas encore

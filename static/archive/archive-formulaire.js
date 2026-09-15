@@ -72,8 +72,7 @@ function formHTML(g){
       <!-- Réduire, puis fermer. Dans cet ordre parce que c'est celui du
            risque : la flèche met de côté, la croix jette. -->
       <span class="grp">
-        <button class="sbtn form-reduire" aria-label="Réduire, pour aller voir le journal"
-          title="Réduire - le formulaire attend en bas à droite">${ICONE_REDUIRE}</button>
+        <button class="sbtn form-reduire" aria-label="Réduire, pour aller voir le journal">${ICONE_REDUIRE}</button>
         <button class="sbtn form-x" aria-label="Fermer">×</button></span>
     </div>
     <div class="form-in">
@@ -137,7 +136,7 @@ function formHTML(g){
             <label for="f_review"><u>Avis (Commencer par + ou -)</u></label>
             <!-- La case vit sur la ligne du titre, contre le champ qu'elle
                  qualifie : c'est de CET avis qu'elle parle, pas du jeu. -->
-            <label class="fspoil" title="Les autres verront l'avis flouté, sauf s'ils ont déjà terminé le jeu">
+            <label class="fspoil">
               <input id="f_spoiler" type="checkbox"${g && g.spoiler ? ' checked' : ''}>
               <span>Marquer en tant que spoiler</span></label>
           </div>
@@ -352,8 +351,7 @@ function peintConstructeur(p){
     const existe = BUCKETS.indexOf(b) >= 0;
     const n = existe ? GAMES.filter(g => g.bucket === b).length : 0;
     return `<button type="button" class="bkd-p${existe ? '' : ' neuf'}" data-b="${esc(b)}"
-      aria-pressed="${b === e.valeur}" title="${existe
-        ? esc(`${n} jeu${n > 1 ? 'x' : ''}`) : 'Nouvel onglet'}">${esc(b)}</button>`;
+      aria-pressed="${b === e.valeur}">${esc(b)}</button>`;
   }).join('') + `<button type="button" class="bkd-p autre" id="${p}_autre"
       aria-expanded="${e.ouvert}">${e.ouvert ? 'Fermer' : 'Ajouter'}</button>`;
 
@@ -419,7 +417,11 @@ let WISH_FORCE = false;
 function sortieAVenir(){
   if(SORTIE_LIBRE) return null;
   const c = compteARebours($('f_release').value);
-  return c && c.avant ? c : null;
+  /* Le jour même compte comme sorti : on peut très bien l'avoir commencé
+     ce matin. compteARebours range « aujourd'hui » du côté d'avant pour le
+     compte à rebours du mur, d'où ce cas écarté ici. */
+  if(!c || !c.avant || c.txt === "sort aujourd'hui") return null;
+  return c;
 }
 
 /* Coche la wishlist, fige les deux cases, et dit pourquoi. Appelée par
@@ -440,7 +442,8 @@ function syncSortie(){
   const mot = $('f_sortie');
   if(mot){
     mot.hidden = !attente;
-    if(attente) mot.innerHTML = `Ce jeu n'est pas encore sorti (Sort dans <b>${
+    // attente.txt dit déjà « dans 3 mois » : pas de second « dans »
+    if(attente) mot.innerHTML = `Ce jeu n'est pas encore sorti (sort <b>${
       esc(attente.txt)}</b>)`;
   }
   return !!attente;
@@ -485,10 +488,6 @@ function syncMois(){
   if(!annee) champ.value = '';
   const enveloppe = $('f_monthwrap');
   if(enveloppe) enveloppe.classList.toggle('inerte', !annee);
-  // le titre du champ dit ce qui manque, plutôt que de laisser deviner
-  const titre = $('f_bucketwrap');
-  if(titre) titre.title = annee ? '' :
-    "Le mois ne se choisit que dans une année pleine.";
 }
 
 /* ---------- doublon ----------
