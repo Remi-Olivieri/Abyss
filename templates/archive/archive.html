@@ -61,8 +61,17 @@
         <!-- Le nom du site, pour qui n'est pas connecté : la barre ne peut
              pas rester vide, et il n'y a alors personne à y mettre. Il
              ouvre le même menu - c'est la seule porte de la page, elle ne
-             peut pas dépendre du fait d'avoir un compte. -->
-        <button type="button" class="brand-moi moi-declencheur moi-anon" id="moiAnon"
+             peut pas dépendre du fait d'avoir un compte.
+
+             `hidden` au départ, comme la pastille juste au-dessus, et c'est
+             tout l'enjeu : c'était le SEUL élément de la barre à se peindre
+             sans attendre, si bien que « Jeux Vidéos » s'affichait sur une
+             page vide le temps d'un aller-retour, puis cédait la place au
+             pseudo. On voyait donc passer un titre qui n'était pas le bon.
+             majMoi() découvre celui des deux qui convient dès qu'on sait
+             qui est là - et premierEcran() le sait souvent avant même la
+             réponse du serveur. -->
+        <button type="button" class="brand-moi moi-declencheur moi-anon" id="moiAnon" hidden
                 aria-haspopup="true" aria-expanded="false">
           <b id="brand-title">Jeux Vidéos</b>
           <svg class="moi-chev" width="10" height="10" viewBox="0 0 24 24" fill="none"
@@ -106,7 +115,6 @@
              la place des entrées, voir static/archive/archive-couleur.js. -->
         <button class="menu-item perso-ouvre" id="persoBtn" role="menuitem" hidden
                 aria-haspopup="true">Personnalisation<i aria-hidden="true">&rsaquo;</i></button>
-        <button class="menu-item" id="igdbBtn" role="menuitem" hidden>Mettre à jour depuis IGDB</button>
         <button class="menu-item" id="unlock" role="menuitem">Passer en mode éditeur</button>
         <button class="menu-item quit" id="relock" role="menuitem" hidden>Repasser en lecture seule</button>
         <div class="perso" id="perso" hidden>
@@ -258,6 +266,20 @@
      place. Voir ouvrirStudio dans archive-export.js. -->
 <div class="sheet-back" id="studio" hidden></div>
 <div class="sheet-back" id="zoom" hidden></div>
+<!-- L'entretien de la base, pour l'administration seulement : hors du menu
+     des réglages, qui parle du journal affiché, alors que ceci repasse sur
+     tous les journaux. Montré par majMoi() et majVerrou(), voir
+     archive-journal.js ; ouvert par ouvrirIgdb() dans archive-igdb.js. -->
+<button class="igdb-maj" id="igdbBtn" type="button" hidden aria-label="Mettre à jour depuis IGDB">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 12a9 9 0 0 1-15.5 6.2L3 15.5"/>
+    <path d="M3 21v-5.5h5.5"/>
+    <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8.5"/>
+    <path d="M21 3v5.5h-5.5"/>
+  </svg>
+  <span>Mettre à jour depuis IGDB</span>
+</button>
 <div class="toast" id="toast" hidden></div>
 
 <!-- Les gestes du doigt, partagés avec le classeur Yu-Gi-Oh! : le balayage

@@ -207,14 +207,17 @@ function detailHTML(g){
    dans la recherche par son identifiant IGDB. Rien d'autre ne les distingue
    \u2014 m\u00EAme attente, m\u00EAme dessin, m\u00EAme peinture \u2014 donc rien d'autre n'est
    \u00E9crit deux fois. */
-async function ouvreLaFiche(nom, demande, idIgdb){
+async function ouvreLaFiche(nom, demande, idIgdb, sortie){
   const host = $('detail');
   /* L'identifiant IGDB voyage avec le nom depuis que la fiche porte deux
      actions : « Avis des joueurs », qui rassemble les journaux sur ce
      jeu-la, et « + Wishlist », qui l'ecrit dans le mien. Les deux le
      veulent, et la reponse du serveur ne le rend pas -- elle decrit le jeu,
      elle ne le nomme pas. */
-  const g = {name: nom, idIgdb: idIgdb || null};
+  /* La sortie aussi, quand on la connait deja : un jeu du classeur la porte,
+     et c'est elle qui decide des avis tant qu'IGDB n'a pas repondu -- ou
+     s'il ne connait pas le jeu (voir brancheActions). */
+  const g = {name: nom, idIgdb: idIgdb || null, release: sortie || null};
   host.innerHTML = detailHTML(g);
   host.hidden = false;
   auPremierPlan(host);      // elle peut s'ouvrir depuis les avis, ou l'inverse
@@ -242,7 +245,7 @@ function ouvrirDetail(g){
   return ouvreLaFiche(g.name, async ()=>{
     const r = await fetch(`/api/journal/jeu/${g.id}/detail`, {credentials: 'same-origin'});
     return r.json();
-  }, g.idIgdb);
+  }, g.idIgdb, g.release);
 }
 
 /* Un jeu qu'on ne poss\u00E8de pas, d\u00E9sign\u00E9 par sa fiche IGDB : il n'y a rien
@@ -415,7 +418,12 @@ function brancheActions(g, data){
   /* Les avis des autres sur ce jeu : la même fenêtre que le bouton sous la
      jaquette d'une fiche du mur (voir ouvrirAvisSocial dans
      archive-social.js), chargée par les deux pages. */
-  hote.querySelector('#detailAvis').onclick = ()=> ouvrirAvisSocial(g.name, g.idIgdb);
+  const avis = hote.querySelector('#detailAvis');
+  avis.onclick = ()=> ouvrirAvisSocial(g.name, g.idIgdb);
+  /* Pas d'avis sur un jeu qui n'est pas encore sorti : personne n'a pu le
+     terminer. La date d'IGDB d'abord (`iso`, voir detail_complet), celle du
+     classeur sinon. Meme regle que sous la jaquette d'une fiche. */
+  avis.hidden = pasEncoreSorti((data && data.iso) || g.release);
   const wish = hote.querySelector('#detailWish');
   wish.onclick = ()=> ajouteALaWishlist(g, data, wish);
   /* Un jeu qu'on a déjà n'a rien à faire dans une wishlist. Le bouton ne se
@@ -548,7 +556,9 @@ let STUDIO_JEUX = [];
    designe qu'on veut voir - pas la chaine entiere, qui ne correspond a
    aucune societe. */
 function detailStudiosHTML(liste){
-  const noms = String(liste || '').split(',').map(n => n.trim()).filter(Boolean);
+  /* Sans doublons : les classeurs remplis avant que _colonne ne les retire
+     portent encore « Nintendo R&D4, Nintendo R&D4 » en base. */
+  const noms = [...new Set(String(liste || '').split(',').map(n => n.trim()).filter(Boolean))];
   if(!noms.length) return '';
   return `<div class="detail-fait"><u>D\u00E9veloppeur${noms.length > 1 ? 's' : ''}</u>
     <b class="detail-studios">${noms.map(n =>

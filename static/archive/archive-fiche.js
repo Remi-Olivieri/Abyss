@@ -225,8 +225,8 @@ function monteFiche(host){
              sous la jaquette et non dans le corps de la fiche, parce qu'il
              parle du jeu lui-même - pas de la ligne qu'on est en train de
              lire, dont tout le reste de la fiche s'occupe.
-             Sur tous les jeux, y compris « En cours » et « Wishlist » :
-             voir paintSheet. -->
+             Sur tous les jeux deja sortis, y compris « En cours » et
+             « Wishlist » : voir paintSheet. -->
         <button type="button" class="fiche-avis">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -403,7 +403,7 @@ function paintSheet(sens){
   const boite = host.querySelector('.sheet');
   boite.setAttribute('aria-label', g.name);
   boite.querySelector('.sheet-edit').hidden = !CAN_WRITE;
-  /* « Avis des joueurs » sur tous les jeux, sans exception.
+  /* « Avis des joueurs » sur tous les jeux deja sortis.
 
      Il partait caché sur « En cours » et « Wishlist », au motif qu'un jeu
      pas fini n'a pas d'avis derrière lui. C'était confondre deux choses :
@@ -415,7 +415,12 @@ function paintSheet(sens){
 
      La fenêtre du détail (« Voir plus d'informations ») le proposait déjà
      sans condition, ce qui rendait l'écart d'autant plus visible : deux
-     chemins vers le même jeu, un seul menait aux avis. */
+     chemins vers le même jeu, un seul menait aux avis.
+
+     La seule exception est un jeu pas encore sorti : personne n'a pu le
+     terminer, la fenêtre ne pourrait être que vide. Même règle dans la
+     fenêtre du détail (voir brancheActions). */
+  boite.querySelector('.fiche-avis').hidden = pasEncoreSorti(g.release);
   host.querySelector('.nav-prev').disabled = i <= 0;
   host.querySelector('.nav-next').disabled = i >= SHEET_LIST.length - 1;
   coverFiche(g);
@@ -426,7 +431,10 @@ function paintSheet(sens){
      repartir du titre. */
   const cle = cleTuile(g);
   if(boite.dataset.jeu !== cle){
-    boite.scrollTop = 0;
+    /* Sur .sheet-in et non sur .sheet : le défilement appartient au bloc de
+       contenu depuis que la fenêtre rogne sa barre sur ses coins arrondis
+       (voir .sheet dans archive.css). */
+    boite.querySelector('.sheet-in').scrollTop = 0;
     boite.dataset.jeu = cle;
     animeFiche(sens);
     /* Le retour au mur (focus + halo) vise le jeu qu'on regarde à la

@@ -586,6 +586,13 @@ def _commentaire(l, u, proprietaire, etats, aimes, miens) -> dict:
         "id": l["id"],
         "pseudo": l["pseudo"],
         "avatar": _avatar(l),
+        # La teinte que l'auteur s'est choisie dans « Personnalisation » (voir
+        # PALETTE dans comptes.py), ou null s'il n'a rien choisi. La bulle et
+        # sa photo s'en cernent : dans un fil ou plusieurs personnes se
+        # repondent, c'est ce qui dit qui parle sans avoir a relire le pseudo.
+        # Elle ne sort d'ici que pour les commentaires : la carte de tete,
+        # elle, est un avis, pas une voix dans la conversation.
+        "couleur": l["couleur"],
         "texte": l["texte"],
         "quand": l["cree_le"],
         # `maj_le` non nul veut dire « retouche depuis » : la page ecrit
@@ -629,7 +636,7 @@ def commentaires_de(jeu_id, u) -> list:
     """
     lignes = cx().execute(
         "SELECT c.id, c.texte, c.cree_le, c.maj_le, c.parent_id,"
-        " u.id AS auteur_id, u.pseudo, u.avatar, u.avatar_maj_le"
+        " u.id AS auteur_id, u.pseudo, u.avatar, u.avatar_maj_le, u.couleur"
         " FROM commentaire c JOIN utilisateur u ON u.id = c.utilisateur_id"
         " WHERE c.jeu_id = ? ORDER BY c.cree_le, c.id", (jeu_id,)).fetchall()
     if not lignes:

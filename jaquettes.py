@@ -1140,9 +1140,14 @@ def _colonne(noms):
     themes dont trois n'existent pas. Aucun autre libelle d'IGDB n'en porte
     aujourd'hui, mais c'est le genre de chose qu'on ne voit qu'une fois la
     donnee ecrite partout.
+
+    Les doublons partent aussi, dans l'ordre d'arrivee : IGDB rattache
+    parfois deux fois la meme societe a un jeu -- une fois par role ou par
+    plateforme -- et « Nintendo R&D4, Nintendo R&D4 » s'affichait en deux
+    boutons identiques sur la fiche.
     """
-    propres = [n.replace(",", "") for n in noms if n]
-    return ", ".join(propres) or None
+    propres = [n.replace(",", "").strip() for n in noms if n]
+    return ", ".join(dict.fromkeys(n for n in propres if n)) or None
 
 
 def detail_complet(id_igdb):

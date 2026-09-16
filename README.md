@@ -73,7 +73,7 @@ Deux exceptions qui **servent** au lieu de rediriger :
 
 ```sh
 venv/bin/python app.py            # http://127.0.0.1:8000/abyss
-venv/bin/python -m unittest tests # 154 tests
+venv/bin/python -m unittest tests # 207 tests
 ```
 
 En ligne : `gunicorn -k gthread -w 1 --threads 8 app:app`. **Un seul worker** —

@@ -41,7 +41,12 @@ function render(){
      Plutôt que de laisser le bouton et de répondre par un refus au clic, il
      ne se montre pas là où il n'a rien à faire. */
   const vueStats = S.bucket === 'stats';
-  document.getElementById('bilanBtn').hidden = vueStats || estStatutNom(S.bucket);
+  /* Le résumé et l'export emportent le journal hors de la page : ils ne
+     s'offrent que chez soi. Chez quelqu'un d'autre, on lit, on n'emporte
+     pas. */
+  const chezMoi = estMonJournal();
+  document.getElementById('bilanBtn').hidden = !chezMoi || vueStats || estStatutNom(S.bucket);
+  document.getElementById('exportBtn').hidden = !chezMoi;
   /* Et l'entrée qui y mène non plus, quand on y est déjà : elle ne ferait
      que refermer le menu sans rien changer à l'écran. On en ressort par la
      barre d'onglets, restée affichée pour ça. */
@@ -244,10 +249,24 @@ majEnHaut();
   chargeManifeste();
   majEtat('offline', 'connexion...');
 
+  /* Ce qu'on peut montrer sans rien demander à personne : le pseudo dans la
+     barre, et le journal de la dernière visite s'il est encore en cache -
+     son squelette à défaut. C'est l'attente ci-dessous qu'on habille, et
+     elle durait jusqu'ici sur une page entièrement vide.
+     Voir premierEcran() dans archive-journal.js : rien de ce qui est posé
+     là n'engage la suite, qui refait le même chemin qu'avant. */
+  premierEcran();
+
   /* L'annuaire vient avant tout : sans lui on ne sait même pas quel journal
      ouvrir. C'est le seul temps d'attente incompressible de la page. */
   try{ await chargeAnnuaire(); }
-  catch(e){ showGate('<b>Serveur injoignable.</b> Le hub Abyss ne répond pas.'); return; }
+  catch(e){
+    /* Les deux déclencheurs de la barre sont masqués tant que personne ne
+       les a départagés, et majMoi() est le seul à le faire : sans cet
+       appel-ci, l'écran d'erreur s'affichait sous une barre sans nom. */
+    majMoi();
+    showGate('<b>Serveur injoignable.</b> Le hub Abyss ne répond pas.'); return;
+  }
 
   brancheCloche();
   /* Le menu de la pastille d'identité, monté AVANT majMoi : c'est elle qui

@@ -4,9 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mini-Jeux / Quiz</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Eczar:wght@500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Karla:wght@400;500;600&family=Azeret+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Cinzel, Cinzel Decorative et Raleway, servies par Abyss : ce sont les
+     polices du Yu-Gi-Quiz, et cette page porte désormais le même dessin.
+     Elles sont déjà sur le disque (voir static/commun/polices/polices.css,
+     écrit pour supprimer la dépendance à fonts.googleapis.com) - une
+     connexion de moins vers un second domaine, et du texte qui a sa forme
+     sans attendre un serveur étranger.
+
+     Les cinq familles demandées à Google jusqu'ici - Archivo, Eczar,
+     Bricolage, Karla, Azeret Mono - ne servent plus : rien dans
+     archive.css ne les nomme en dur, tout passe par --display, --body et
+     --mono, que static/quiz/quiz.css redéfinit. -->
+<link rel="stylesheet" href="/static/commun/polices/polices.css">
 <!-- La feuille de l'Archive, et pas celle d'Abyss : les mini-jeux sont une
      pièce du même projet et en portent les couleurs. Jamais les deux à la
      fois - elles définissent toutes deux :root, .menu, .cta et .gate. -->

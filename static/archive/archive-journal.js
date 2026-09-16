@@ -47,6 +47,32 @@ const cacheStore = {
   set(url, v){ try{ localStorage.setItem(this.cle(url), JSON.stringify(v)); }catch(e){} },
 };
 
+/* Le cache appartient au compte qui l'a rempli. Un journal privé y reste
+   lisible en clair, et après une déconnexion - ou sur un ordinateur
+   partagé, quand quelqu'un d'autre se connecte - le suivant le voyait
+   s'afficher pendant l'attente. On retient donc pour qui il a été écrit,
+   et tout ce qui parle d'un journal part dès que ce n'est plus la même
+   personne. Les jaquettes et les prix restent : ils ne disent rien de
+   personne. La déconnexion fait le même ménage de son côté, sans attendre
+   qu'on revienne ici (voir sortir() dans static/commun/compte.js). */
+const CLE_COMPTE = 'journal-de-jeu:compte';
+function oublieJournaux(){
+  try{
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('journal-de-jeu:data:') || k === 'journal-de-jeu:dernier')
+      .forEach(k => localStorage.removeItem(k));
+  }catch(e){}
+}
+function verifieProprioCache(){
+  try{
+    const qui = MOI.pseudo || '';
+    if(localStorage.getItem(CLE_COMPTE) !== qui){
+      oublieJournaux();
+      localStorage.setItem(CLE_COMPTE, qui);
+    }
+  }catch(e){}
+}
+
 let GAMES = [], BUCKETS = [], CAN_WRITE = false, SRC = 0, PREMIERE_FOIS = true, TITRE = '';
 /* L'onglet sur lequel le classeur affiché s'ouvre, choisi par son auteur.
    Vide = aucun choix, on retombe sur l'année la plus récente. */
@@ -58,11 +84,37 @@ const ONGLETS_VUE = ['all', 'stats'];
 /* le journal affiché, ou null si SOURCES est vide */
 const source = () => SOURCES[SRC] || null;
 
-/* Le classeur ouvert la dernière fois était retenu ici, pour rouvrir le
-   même journal public d'une visite à l'autre. Plus personne ne le lisait :
-   qui a un journal ouvre le sien, et qui n'en a pas voit l'écran d'accueil
-   et choisit dans la recherche. Un souvenir que rien ne relit ne fait que
-   laisser croire qu'il sert encore. */
+/* ---------- ce qu'on savait en partant ----------
+   Le classeur ouvert la dernière fois avait été retenu ici, puis retiré :
+   plus personne ne le relisait, et un souvenir que rien ne relit ne fait
+   que laisser croire qu'il sert encore.
+
+   Il revient parce que quelque chose le relit, maintenant, et pour un
+   autre usage que le sien d'avant : il ne sert plus à CHOISIR quel journal
+   ouvrir - c'est l'annuaire qui le dit, et lui seul - mais à savoir quoi
+   dessiner pendant qu'on l'attend. Voir premierEcran() plus bas.
+
+   Le pseudo et la photo voyagent avec, pour la même raison : la barre du
+   haut les affichait après l'aller-retour, donc le nom apparaissait
+   toujours une seconde après la page.
+
+   Même préfixe que le reste, donc emporté par le ménage de version tout en
+   haut de ce fichier : ce souvenir-là ne doit pas survivre à un format
+   qu'il ne comprendrait plus. */
+const CLE_DERNIER = 'journal-de-jeu:dernier';
+function retientDernier(){
+  try{
+    localStorage.setItem(CLE_DERNIER, JSON.stringify({
+      pseudo: MOI.pseudo || '',
+      avatar: MOI.avatar || null,
+      journal: (source() && source().nom) || '',
+    }));
+  }catch(e){}
+}
+function dernierConnu(){
+  try{ return JSON.parse(localStorage.getItem(CLE_DERNIER) || 'null') || null; }
+  catch(e){ return null; }
+}
 /* L'année la plus récente : la plus grande parmi les onglets, et à défaut
    d'onglet nommé comme une année, le dernier de la liste.
 
@@ -112,6 +164,10 @@ async function charger(opts = {}){
   }
 
   cacheStore.set(s.url, data);
+  /* De quoi dresser la page tout de suite à la prochaine visite. Posé ici
+     et pas au démarrage : c'est le seul endroit où l'on sait que le journal
+     s'est vraiment affiché, avec de vraies données et sans refus. */
+  retientDernier();
   applyData(data, true);
   showApp();
   render();
@@ -494,6 +550,7 @@ function showInvite(){
      est déjà "SRC". -1 n'existe dans aucune liste : rien ne coche, et le
      premier clic ouvre bien le journal visé. */
   SRC = -1;
+  appliqueCouleur(null);   // l'or par défaut : voir showAccueil
   // pas de source affichée ici : SOURCES[0] serait le journal public de
   // quelqu'un d'autre, et l'annoncer dans l'en-tête serait trompeur
   document.getElementById('brand-title').textContent = 'Jeux Vidéos';
@@ -520,6 +577,15 @@ function showAccueil(){
      ignore un clic sur ce qui est déjà « SRC ». Même raison qu'à
      showInvite(), et même remède : -1 n'existe dans aucune liste. */
   SRC = -1;
+  /* L'or par défaut : premierEcran() a pu dresser, le temps de l'attente,
+     le journal du dernier compte connecté sur ce navigateur - et poser sa
+     couleur au passage. Sans journal à l'écran, elle n'a plus de raison
+     d'être là. */
+  appliqueCouleur(null);
+  /* Et le souvenir de ce compte s'efface : sans ça, chaque visite
+     déconnectée rejouait son pseudo et son journal pendant l'attente,
+     avant que l'accueil ne les démente. */
+  retientDernier();
   document.getElementById('brand-title').textContent = 'Jeux Vidéos';
   document.getElementById('app').hidden = true;
   document.getElementById('tabs').hidden = true;
@@ -598,6 +664,70 @@ function squelette(){
        </div>`).join('')}</div>`);
 }
 
+/* ---------- le tout premier écran ----------
+   Le démarrage attend l'annuaire avant de montrer quoi que ce soit : c'est
+   le seul temps d'attente incompressible de la page (voir demarrer()). Rien
+   n'occupait cette attente-là - une barre du haut posée sur du vide, le
+   temps d'un aller-retour, et c'est précisément ce qu'on voyait en arrivant
+   depuis Abyss.
+
+   Le squelette existait pourtant déjà, juste en dessous. Il ne servait qu'au
+   cas le plus rare - une première visite sans rien en cache - et il était de
+   toute façon dressé APRÈS la réponse du serveur, c'est-à-dire après le
+   moment où l'on en avait besoin. Il passe donc devant l'attente.
+
+   Et quand on a mieux que sa forme, on montre mieux : le journal de la
+   dernière visite est en cache local, il s'affiche entier et tout de suite.
+   La suite du démarrage n'a plus qu'à confirmer - elle refait exactement le
+   même chemin qu'avant, sans rien savoir de ce qui est déjà à l'écran.
+
+   Rien ici ne DÉCIDE quoi que ce soit : tout est réécrit par le démarrage,
+   qui seul sait qui l'on est et quel journal ouvrir. C'est ce qui rend
+   l'approximation sans danger - au pire on aura montré une page juste une
+   demi-seconde trop tôt. Deux cas où elle se corrige sous les yeux, et tous
+   deux valaient mieux que le vide : on s'est déconnecté depuis (l'écran
+   d'accueil prend la place), ou le journal a changé entre-temps (la vraie
+   réponse se pose par-dessus).
+
+   Sans souvenir, on ne dresse rien : un visiteur qui n'a jamais rien ouvert
+   verrait un journal fantôme, puis l'écran d'accueil qui le dément. */
+function premierEcran(){
+  const su = dernierConnu();
+  if(!su) return;
+  /* La barre du haut d'abord : c'est elle qu'on regarde en arrivant, et
+     c'est elle qui coûtait le moins cher à rendre juste tout de suite.
+     chargeAnnuaire() remplace MOI en entier, ces valeurs-là ne peuvent donc
+     pas survivre à la réponse du serveur. */
+  if(su.pseudo){
+    MOI.pseudo = su.pseudo;
+    MOI.avatar = su.avatar || null;
+    MOI.connecte = true;
+    majMoi();
+  }
+  /* L'adresse passe devant tout : /archive/<pseudo> dit exactement quel
+     journal on vient lire, et c'est peut-être celui de quelqu'un d'autre.
+     Sans elle, le démarrage ouvre toujours le sien (voir demarrer()) - pas
+     le dernier consulté. Partir de su.journal montrait donc une demi-seconde
+     le journal de l'ami qu'on lisait avant de repasser par Abyss, remplacé
+     aussitôt par le nôtre. */
+  const nom = pseudoDeURL() || su.pseudo;
+  if(!nom) return;
+
+  const url = '/api/journal/' + encodeURIComponent(nom);
+  const cache = cacheStore.get(url);
+  if(!(cache && cache.jeux && cache.jeux.length)){ squelette(); return; }
+
+  /* Une source le temps du premier rendu : majIdentite() lit le nom du
+     journal affiché là-dedans. chargeAnnuaire() réécrit SOURCES en entier
+     et le démarrage repose SRC juste après - celle-ci ne vit donc que le
+     temps de l'attente. */
+  SOURCES = [{nom: nom, url: url}];
+  SRC = 0;
+  applyData(cache, false);
+  showApp();
+  render();
+}
+
 /* ---------- verrou : lecture seule / modification ----------
    Il n'y a plus rien à déverrouiller. Le serveur répond `write: true` quand
    le journal affiché est celui du visiteur connecté, et `false` sinon. Le
@@ -665,6 +795,7 @@ async function chargeAnnuaire(){
           // la mise à jour depuis IGDB ne s'ouvre que pour l'administration :
           // elle repasse sur la base entière, journaux des autres compris
           admin: d.admin === true };
+  verifieProprioCache();
   SOURCES = (d.journaux || []).map(j => ({
     nom: j.pseudo,
     titre: j.titre,

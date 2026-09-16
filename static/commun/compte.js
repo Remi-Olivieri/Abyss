@@ -182,6 +182,16 @@
       /* le cookie est peut-etre deja mort : on redescend quand meme en
          visiteur plutot que de rester sur un etat de connexion menteur */
     }
+    /* Les journaux gardés en cache par l'Archive partent avec le compte :
+       un journal privé y est lisible en clair, et le prochain visiteur de
+       ce navigateur n'a pas à le voir passer. Même préfixe que dans
+       static/archive/archive-journal.js (voir oublieJournaux). */
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("journal-de-jeu:data:") || k === "journal-de-jeu:dernier")
+        .forEach((k) => localStorage.removeItem(k));
+      localStorage.setItem("journal-de-jeu:compte", "");
+    } catch (e) { /* stockage bloqué : rien à effacer */ }
     ferme();
     if (OPTIONS.surSortie) OPTIONS.surSortie();
     else location.href = "/abyss";

@@ -957,15 +957,40 @@ input,textarea{caret-color:var(--gold)}
 .sheet,
 .sg-boite{
   position:relative;width:100%;max-width:760px;max-height:88vh;
-  /* l'axe vertical défile, l'horizontal est simplement coupé : le léger
-     décalage latéral de l'animation ferait sinon apparaître une barre de
-     défilement horizontale le temps d'un clignement */
-  overflow-y:auto;overflow-x:hidden;
+  /* La boîte rogne, un enfant défile.
+
+     Aucun navigateur ne rogne une barre de défilement sur un coin arrondi :
+     posée sur la boîte elle-même, elle filait tout droit et ressortait par
+     les coins, sous l'arrondi. Le défilement descend donc d'un cran, sur le
+     bloc de contenu (voir la règle suivante), et c'est l'`overflow:hidden`
+     d'ici qui coupe enfin la barre à la courbe.
+
+     C'est le montage que la fenêtre de suggestion du classeur et de Chainz
+     utilise déjà - la même situation, résolue pareil. */
+  display:flex;flex-direction:column;overflow:hidden;
   background:var(--bg2);border:1px solid var(--line-strong);border-radius:16px;
   box-shadow:0 30px 90px rgba(0,0,0,.65);animation:rise .22s cubic-bezier(.2,.7,.3,1);
 }
-/* La barre du haut d'une feuille : elle colle, et le contenu passe dessous
-   en se fondant dans son degrade.
+/* Le bloc de contenu d'une fenêtre - .sheet-in, .soc-in, .form-in, .detail-in,
+   .jaq-in... Toutes les fenêtres du site sont bâties de la même façon, une
+   barre de titre puis un seul bloc, et c'est ce bloc qui défile : la règle les
+   prend donc toutes sans avoir à les nommer une à une.
+
+   `min-height:0` sans quoi un enfant de flex refuse de descendre sous la
+   hauteur de son contenu - la fenêtre grandirait au lieu de le faire défiler.
+
+   L'axe horizontal est simplement coupé, comme avant : le léger décalage
+   latéral de l'animation ferait sinon apparaître une barre de défilement
+   horizontale le temps d'un clignement. */
+.sheet > :not(.sheet-tools),
+.sg-boite > :not(.sg-tete){overflow-y:auto;overflow-x:hidden;min-height:0}
+/* La barre du haut d'une feuille. Elle surplombe le contenu depuis que
+   celui-ci defile dans son propre bloc (voir .sheet plus haut) : plus rien ne
+   passe dessous, et son degrade -- du fond de la fenetre vers le transparent
+   -- ne se lit plus que comme un fond plein, puisqu'il s'efface sur la meme
+   couleur. Ce qui suit raconte l'epoque ou le contenu passait dessous, et
+   garde sa raison d'etre : les trois precautions ci-dessous ne coutent rien,
+   et la barre reste collante pour le jour ou elle redeviendrait utile.
 
    Trois precautions contre une meme fuite : une ligne d'un pixel, tout en
    haut, ou l'on voyait defiler ce qui aurait du passer derriere -- le
@@ -994,6 +1019,11 @@ input,textarea{caret-color:var(--gold)}
 .sheet-tools,
 .sg-tete{
   position:sticky;top:-1px;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:6px;
+  /* `flex:0 0 auto` depuis que la fenetre est une colonne flex : sans lui, une
+     barre de titre est un enfant de flex comme un autre et se laisse comprimer
+     quand le contenu est haut. Elle ne defile plus avec lui, elle le surplombe
+     - `sticky` n'a donc plus rien a faire, mais ne coute rien non plus. */
+  flex:0 0 auto;
   padding:13px 12px 10px;background:linear-gradient(var(--bg2) calc(100% - 10px),rgba(30,24,41,0));
 }
 /* Le masque. `bottom:100%` le pose entierement au-dessus de la barre, donc
@@ -1750,6 +1780,35 @@ body:has(#igdbPastille) .toast{bottom:88px}
   .rattrapage{left:12px;right:12px;bottom:12px;max-width:none}
 }
 
+/* ---------- mise à jour depuis IGDB ----------
+   Le bouton de l'administration, en bas à gauche : il entretient la base
+   entière, il n'avait rien à faire dans le menu d'un journal. Même dessin
+   que les boutons de l'en-tête. Il remonte quand le rattrapage occupe le
+   coin, et s'efface derrière les fenêtres (z-index sous .sheet-back). */
+.igdb-maj{
+  position:fixed;z-index:34;
+  left:max(18px,env(safe-area-inset-left,0px));
+  bottom:max(18px,env(safe-area-inset-bottom,0px));
+  display:flex;align-items:center;gap:8px;
+  height:34px;padding:0 15px 0 13px;border-radius:99px;
+  color:var(--muted);border:1px solid var(--line);background:rgba(3,8,15,.55);
+  font-family:var(--mono);font-size:12.5px;letter-spacing:.02em;white-space:nowrap;
+  cursor:pointer;transition:color .15s,border-color .15s,background .15s,bottom .2s;
+}
+.igdb-maj:hover{
+  color:var(--text);border-color:color-mix(in srgb,var(--gold) 55%,transparent);
+  background:color-mix(in srgb,var(--gold) 10%,transparent);
+}
+.igdb-maj:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+body:has(.rattrapage) .igdb-maj{bottom:78px}
+@media (max-width:560px){
+  /* rond, comme les boutons de l'en-tête sur téléphone */
+  .igdb-maj{width:38px;height:38px;padding:0;justify-content:center;border-radius:50%;
+    left:max(14px,env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+  .igdb-maj span{display:none}
+  body:has(.rattrapage) .igdb-maj{bottom:84px}
+}
+
 /* ---------- recherche d'un journal ---------- */
 #recherche{z-index:65}
 .recherche-sheet{max-width:420px}
@@ -2228,20 +2287,26 @@ body:has(#igdbPastille) .toast{bottom:88px}
    temps. La bordure transparente sert de marge - background-clip la
    retire du fond, ce qui donne le rail étroit sans rogner la zone
    cliquable. */
-.sheet,.sg-boite,.detail-galerie,.igdb-liste,.ac{
+/* Sur le bloc de contenu et non sur la fenetre elle-meme : c'est lui qui
+   defile depuis qu'une fenetre rogne sa barre sur ses coins arrondis (voir
+   .sheet plus haut). Laissee sur .sheet, cette mise en forme ne visait plus
+   rien de defilant, et les fenetres seraient revenues a la barre doree de la
+   page, dont elles heritent la couleur. */
+.sheet > :not(.sheet-tools),.sg-boite > :not(.sg-tete),
+.detail-galerie,.igdb-liste,.ac{
   scrollbar-width:thin;
   scrollbar-color:var(--line-strong) transparent;
 }
-.sheet::-webkit-scrollbar,.detail-galerie::-webkit-scrollbar,
+.sheet > :not(.sheet-tools)::-webkit-scrollbar,.detail-galerie::-webkit-scrollbar,
 .igdb-liste::-webkit-scrollbar,.ac::-webkit-scrollbar{width:11px;height:11px}
-.sheet::-webkit-scrollbar-track,.detail-galerie::-webkit-scrollbar-track,
+.sheet > :not(.sheet-tools)::-webkit-scrollbar-track,.detail-galerie::-webkit-scrollbar-track,
 .igdb-liste::-webkit-scrollbar-track,.ac::-webkit-scrollbar-track{background:transparent}
-.sheet::-webkit-scrollbar-thumb,.detail-galerie::-webkit-scrollbar-thumb,
+.sheet > :not(.sheet-tools)::-webkit-scrollbar-thumb,.detail-galerie::-webkit-scrollbar-thumb,
 .igdb-liste::-webkit-scrollbar-thumb,.ac::-webkit-scrollbar-thumb{
   background:var(--line-strong);border-radius:99px;
   border:3px solid transparent;background-clip:content-box;
 }
-.sheet::-webkit-scrollbar-thumb:hover,.detail-galerie::-webkit-scrollbar-thumb:hover,
+.sheet > :not(.sheet-tools)::-webkit-scrollbar-thumb:hover,.detail-galerie::-webkit-scrollbar-thumb:hover,
 .igdb-liste::-webkit-scrollbar-thumb:hover,.ac::-webkit-scrollbar-thumb:hover{
   background:var(--muted);background-clip:content-box;
 }
@@ -2693,9 +2758,14 @@ body:has(#igdbPastille) .toast{bottom:88px}
        cosmétique : vh mesure l'écran comme si la barre d'adresse n'existait
        pas, et la feuille dépassait par le bas de toute sa hauteur. */
     max-height:92vh;max-height:92dvh;
-    overscroll-behavior:contain;
     animation:monte-feuille .26s cubic-bezier(.2,.8,.3,1);
   }
+  /* `overscroll-behavior` suit le défilement, et le défilement a changé de
+     main : posé sur la feuille, il ne retenait plus rien - le mur derrière
+     repartait dès qu'on arrivait au bout de la fenêtre. Il vit donc sur le
+     bloc de contenu, comme le reste. */
+  .sheet > :not(.sheet-tools),
+  .sg-boite > :not(.sg-tete){overscroll-behavior:contain}
   /* La fiche d'un jeu, et elle seule : le vertical au navigateur,
      l'horizontal à nous, c'est ce qui laisse le balayage passer d'un jeu au
      suivant sans que le doigt ait à éviter le défilement. Voir
@@ -2885,6 +2955,22 @@ body:has(#igdbPastille) .toast{bottom:88px}
    n'est pas derrière un bouton ici - c'est la seule chose qu'un visiteur
    puisse faire, et l'écran serait vide sans elle. */
 .accueil-rech{margin-top:34px;padding-top:26px;border-top:1px solid var(--line)}
+/* L'accueil tient dans la fenêtre : c'est la liste des journaux qui
+   défile, pas la page. Sans ça, une recherche un peu fournie allongeait la
+   page entière, et le titre et le bouton de connexion partaient vers le
+   haut avec elle. Le corps devient une colonne à la hauteur de l'écran, et
+   la liste prend ce qui reste sous le champ. :has() plutôt qu'une classe
+   posée par showAccueil : l'état suit l'attribut hidden tout seul, sans
+   qu'aucun des autres écrans n'ait à penser à la retirer. */
+body:has(#accueil:not([hidden])){
+  display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;
+}
+body:has(#accueil:not([hidden])) > main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+#accueil{width:100%;min-height:0;display:flex;flex-direction:column;flex:1 1 auto;margin-bottom:0;padding-bottom:28px}
+#accueil > *{flex-shrink:0}
+#accueil > .accueil-rech{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+#accueilRech{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+#accueilRech .rsearch-list{flex:0 1 auto;min-height:0;max-height:none;overscroll-behavior:contain}
 
 /* --- .bkd  (transcript du 2026-09-02T21:32:20) --- */
 .bkd .bkd-mois select{width:auto;min-width:118px}

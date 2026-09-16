@@ -198,6 +198,15 @@ function compteARebours(iso){
     : { avant:false, txt:`sorti depuis ${duree}` };
 }
 
+/* Le jeu n'est pas encore sorti : une date connue, et strictement future.
+   Le jour meme compte comme sorti, comme dans le formulaire (voir
+   sortieAVenir) -- on peut l'avoir commence ce matin. Une date inconnue
+   n'est pas « pas sorti » : on ne cache rien sur un doute. */
+function pasEncoreSorti(iso){
+  const c = compteARebours(iso);
+  return !!c && c.avant && c.txt !== "sort aujourd'hui";
+}
+
 /* Neuf fenêtres peuvent se recouvrir : la fiche, le formulaire, le choix de
    jaquette, le bilan en image, la mise à jour depuis IGDB, la recherche de
    journal, l'export, le détail d'un jeu et une capture en grand. Chacune

@@ -336,6 +336,27 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
 .exp-info{margin:14px 0 0;font-size:12.5px;color:var(--ink-dim);text-align:center}
 .exp-info b{color:var(--accent);font-weight:600}
 
+/* ---------------- ajouter une carte ----------------
+   Meme fenetre que l'export. Les onglets passent a la ligne : six familles
+   ne tiennent pas sur une bascule a la largeur d'un telephone. */
+.aj-familles{display:flex;flex-wrap:wrap}
+.aj-champ{position:relative}
+.aj-champ input{width:100%;padding:9px 11px;border-radius:8px;background:#00000059;
+  border:1px solid var(--edge);color:var(--ink);font-size:13.5px;outline:none;transition:border-color .15s}
+.aj-champ input:focus{border-color:var(--accent)}
+.aj-champ input::placeholder{color:var(--ink-faint)}
+.aj-liste{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:2;max-height:252px;overflow:auto;
+  background:var(--bg-2);border:1px solid var(--edge);border-radius:var(--r);box-shadow:0 18px 40px #000a}
+.aj-opt{display:flex;align-items:center;gap:10px;padding:6px 11px;font-size:13px;cursor:pointer;
+  border-bottom:1px solid var(--edge)}
+.aj-opt:last-child{border-bottom:none}
+.aj-opt:hover,.aj-opt.on{background:#ffffff0d}
+.aj-opt img,.aj-sans{width:24px;height:35px;flex:0 0 auto;border-radius:3px;object-fit:cover;background:#0000004d}
+.aj-opt span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){
+  .aj-champ input{font-size:16px}   /* en dessous, iOS zoome sur le champ */
+}
+
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#101017;
   border:1px solid var(--edge);border-radius:10px;padding:11px 17px;font-size:13px;z-index:90;
   max-width:min(460px,92vw);opacity:0;visibility:hidden;pointer-events:none;
@@ -766,11 +787,11 @@ h1{
   box-shadow:0 0 20px -8px rgba(179,154,227,.9);
 }
 .tab .n{color:#8FA6BA}
-.menu,.results{
+.menu,.results,.aj-liste{
   background:#0F1C2F;border-color:rgba(160,205,230,.18);border-top-color:rgba(179,154,227,.45);
   box-shadow:0 18px 42px rgba(0,0,0,.6);
 }
-.menu-item:hover,.results button:hover,.results button.on{background:rgba(107,166,255,.13)}
+.menu-item:hover,.results button:hover,.results button.on,.aj-opt:hover,.aj-opt.on{background:rgba(107,166,255,.13)}
 
 /* ---------- recherche et jauge ---------- */
 .search input,.jump input,.rsearch-box{background:rgba(5,11,20,.55)}

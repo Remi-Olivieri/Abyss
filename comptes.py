@@ -61,12 +61,21 @@ CHEMIN = Path(os.environ.get(
 
 # Sous static/, donc servi tel quel par envoie() dans app.py : pas de route
 # a part pour l'avatar, juste un fichier de plus a cote des jaquettes.
-DOSSIER_AVATARS = Path(__file__).parent.resolve() / "static" / "Avatars"
+#
+# Deplacable par ABYSS_AVATARS, exactement comme ABYSS_BASE deplace la base,
+# et pour la meme raison : supprimer un compte efface ses fichiers. Tant que
+# ce chemin etait fige sur static/Avatars/, les tests avaient beau travailler
+# sur une base temporaire, leurs unlink() tombaient sur les vraies photos --
+# le compte de test porte l'id 1, donc le fichier efface etait 1.jpg.
+DOSSIER_AVATARS = Path(os.environ.get(
+    "ABYSS_AVATARS", Path(__file__).parent.resolve() / "static" / "Avatars"))
 AVATAR_MAXI = 2 * 1024 * 1024  # 2 Mo decodes ; MAX_CONTENT_LENGTH (app.py)
                                 # plafonne deja le corps entier a 4 Mo
 
-# La banniere du profil, meme principe que l'avatar.
-DOSSIER_BANNIERES = Path(__file__).parent.resolve() / "static" / "Bannieres"
+# La banniere du profil, meme principe que l'avatar -- dossier deplacable
+# compris : _oublie_banniere_fichier efface elle aussi sur le disque.
+DOSSIER_BANNIERES = Path(os.environ.get(
+    "ABYSS_BANNIERES", Path(__file__).parent.resolve() / "static" / "Bannieres"))
 BANNIERE_MAXI = 3 * 1024 * 1024
 
 # Format conseille a l'envoi. Large et court : la banniere est un bandeau,

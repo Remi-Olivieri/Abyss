@@ -1,226 +1,440 @@
 /* =======================================================================
    Mini-Jeux / Quiz - la feuille de cette page-ci.
 
-   Elle se pose SUR ../archive/archive.css, chargée juste avant : la palette,
-   la remise a zero, .top, .wrap, .cta, .sbtn, .gate et .ac viennent de la,
-   et rien n'est redefini ici. Ce n'est donc pas une seconde identite, c'est
-   la meme, avec de quoi tenir un salon de jeux plutot qu'un classeur.
+   Elle se pose SUR ../archive/archive.css, chargee juste avant. Ce qui a
+   change : elle ne se contente plus d'en heriter la palette, elle la
+   REMPLACE. La page prend le dessin du Yu-Gi-Quiz -- le noir, l'or, Cinzel,
+   les halos et les hachures -- pour que la section entiere se lise comme une
+   salle de jeux, et non comme un classeur avec des cartes dedans.
 
-   Ce que cette page a en propre, et pourquoi :
+   Pourquoi par-dessus et non a la place : archive.css apporte la remise a
+   zero, .top, .wrap, .cta, .ghost, .sbtn et la fenetre de suggestion. Tout
+   cela est ecrit en variables (var(--gold), var(--bg2), var(--display)...),
+   y compris les styles en ligne de templates/quiz/quiz.html. Redefinir les
+   variables suffit donc a faire basculer les composants partages sans
+   toucher au balisage -- et sans reecrire des boutons qui marchent.
 
-     - une entree en grand. Une page de jeux qui commence par une grille de
-       cartes ressemble a un menu de reglages ; il lui faut une porte ;
-     - deux familles, deux couleurs. « Jeux Videos » garde l'or du site,
-       « Yu-Gi-Oh! » prend le violet du classeur de cartes. La couleur dit a
-       quel projet un jeu appartient avant qu'on ait lu son nom ;
-     - des cartes qui ont l'air jouables : un embleme en filigrane, un
-       relief au survol, une lueur de la couleur de leur famille.
+   Ne restent a reprendre a la main que les regles ou archive.css ecrit une
+   couleur en dur plutot qu'un token : le fond de <body>, ses lumieres
+   bleues, la barre de defilement, .top et .entete-action. Elles sont
+   rassemblees sous « ce qu'il faut reprendre a archive.css », plus bas.
+
+   Le vocabulaire de classes n'a pas bouge d'un iota : la page construit son
+   HTML en JavaScript, et tout renommage ici serait un ecran casse la-bas.
    ======================================================================= */
 
-/* ---------- l'entree ----------
-   Le titre est en dur dans la page, pas construit en JavaScript : c'est la
+/* ---------- la palette du salon ----------
+   Celle du Yu-Gi-Quiz, aux memes valeurs (voir static/yugiquiz/yugiquiz.css) :
+   les deux salles doivent avoir exactement la meme lumiere, pas deux ors qui
+   se ressemblent de loin.
+
+   Les noms, eux, restent ceux d'archive.css : c'est ce qui permet a .cta,
+   .ghost et .sbtn de suivre sans qu'on les reecrive. Une seule feuille
+   decide de la couleur, et tout ce qui la lit change avec elle. */
+:root{
+  --bg:#07060E;            /* le noir du velours */
+  --bg2:#100E18;           /* une carte posee dessus */
+  --bg3:#1A1626;           /* un creux : champ, piste, jauge vide */
+  --line:rgba(201,168,76,.16);
+  --line-strong:rgba(201,168,76,.34);
+  --text:#EDE0C4;          /* l'ivoire des jetons */
+  --muted:#8C7B5A;
+  --gold:#C9A84C;
+  --wish:#8FB8E8;
+
+  /* Les trois ors, du plus clair au plus sombre. Un degrade d'or ne se fait
+     pas avec une seule couleur eclaircie : c'est la bande claire qui traverse
+     qui fait le metal, et il lui faut ses trois arrets. */
+  --or-clair:#F0D080;
+  --or-vif:#FFD700;
+  --or-sombre:#8B6914;
+
+  /* Les verdicts. Repris de la salle Yu-Gi-Quiz pour que « juste » et
+     « faux » aient la meme couleur d'un jeu a l'autre. */
+  --juste:#4CFF91;
+  --faux:#FF5C5C;
+
+  /* Cinzel pour tout ce qui annonce, Raleway pour tout ce qui se lit.
+     Auto-hebergees : voir static/commun/polices/polices.css, charge par la
+     page. Eczar et Archivo ne sont plus demandees ici -- rien dans
+     archive.css ne les nomme en dur, tout passe par ces trois variables. */
+  --display:"Cinzel Decorative","Cinzel",Georgia,serif;
+  --titre:"Cinzel",Georgia,serif;
+  --body:"Raleway","Segoe UI",system-ui,sans-serif;
+  --mono:"Cinzel",ui-monospace,monospace;
+
+  --ombre-or:0 0 24px rgba(201,168,76,.28), 0 0 70px rgba(201,168,76,.09);
+}
+
+/* =======================================================================
+   Ce qu'il faut reprendre a archive.css
+
+   Sa derniere section (« L'habillage Abyss ») ecrit des bleus en dur plutot
+   qu'en variables : redefinir la palette ne les atteint pas. Les voici
+   repris un par un -- c'est la liste complete, et elle est courte.
+   ======================================================================= */
+
+/* Le fond. Les lumieres d'Abyss (algue, plancton, meduse) laissent la place
+   a trois halos dores et a un quadrillage en biais. Le quadrillage est ce
+   qui fait la table de jeu : sans lui le noir est un vide, avec lui c'est
+   une surface. Meme construction que le Yu-Gi-Quiz, aux memes angles. */
+body{background:var(--bg)}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 0%,   rgba(201,168,76,.13) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 15% 85%,  rgba(139,105,20,.14) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 35% at 85% 35%,  rgba(201,168,76,.07) 0%, transparent 55%),
+    radial-gradient(ellipse 100% 100% at 50% 50%, #07060E 58%, #0D0A12 100%);
+}
+/* Les hachures. A -1 : au-dessus des halos, sous tout le contenu. Elles ne
+   bougent pas et ne se voient qu'a peine -- c'est une texture, pas un motif
+   qu'on doit remarquer. */
+body::after{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:
+    repeating-linear-gradient(60deg,  rgba(201,168,76,.03) 0, rgba(201,168,76,.03) 1px, transparent 1px, transparent 40px),
+    repeating-linear-gradient(-60deg, rgba(201,168,76,.03) 0, rgba(201,168,76,.03) 1px, transparent 1px, transparent 40px);
+}
+::selection{background:color-mix(in srgb,var(--or-vif) 30%,transparent)}
+
+/* La barre de defilement : le rail prend le noir du velours. */
+html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
+@supports not (scrollbar-color:auto){
+  html::-webkit-scrollbar-track{background:#07060E}
+  html::-webkit-scrollbar-thumb{
+    background:color-mix(in srgb,var(--gold) 55%,transparent);
+    border:3px solid #07060E;
+  }
+  html::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--or-clair) 80%,transparent)}
+}
+
+/* L'en-tete. archive.css lui donne un voile bleu et un flou ; ici un voile
+   noir et un trait d'or en bas -- le bord d'une table, pas une barre
+   d'application. `body.en-haut` n'existe pas sur cette page (c'est
+   archive-demarrage.js qui la pose, et il n'est pas charge), donc rien a
+   reprendre de ce cote. */
+.top{
+  background:rgba(7,6,14,.86);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line-strong);
+}
+/* Le filet d'or sous la barre : un trait qui s'allume au centre et s'eteint
+   aux bords, comme le bord lumineux d'une machine. */
+.top::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(201,168,76,.55),transparent);
+}
+.entete-action{
+  background:rgba(7,6,14,.55);border-color:var(--line);
+  font-family:var(--titre);font-weight:600;font-size:11.5px;letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.entete-action:hover{
+  color:var(--or-clair);
+  border-color:color-mix(in srgb,var(--gold) 60%,transparent);
+  background:rgba(201,168,76,.12);
+}
+.ghost{border-color:var(--line);font-family:var(--titre);letter-spacing:.08em}
+.ghost:hover{color:var(--or-clair);border-color:var(--line-strong);background:rgba(201,168,76,.08)}
+
+/* Les boutons pleins. archive.css les peint deja avec var(--gold), donc ils
+   ont deja vire a l'or du salon ; ce qui leur manque est le relief -- le
+   biseau sombre du dessous et la lumiere du dessus, qui font qu'on a envie
+   d'appuyer. C'est le bouton du Yu-Gi-Quiz, a l'identique. */
+.cta{
+  font-family:var(--titre);font-weight:700;font-size:13px;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:#1B1405;border-radius:9px;
+  background:linear-gradient(135deg,#E8C84A 0%,#C9A43A 40%,#A8831E 70%,#C9A43A 100%);
+  background-size:200% auto;
+  box-shadow:
+    0 2px 0 rgba(0,0,0,.45),
+    0 4px 20px rgba(201,168,76,.26),
+    inset 0 1px 0 rgba(255,255,255,.22);
+  transition:background-position .4s ease,box-shadow .3s,transform .12s,filter .15s;
+}
+.cta:hover{
+  background-position:right center;filter:none;
+  box-shadow:
+    0 2px 0 rgba(0,0,0,.45),
+    0 6px 30px rgba(255,215,0,.4),
+    0 0 60px rgba(255,215,0,.12),
+    inset 0 1px 0 rgba(255,255,255,.26);
+  transform:translateY(-1px);
+}
+.cta:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(0,0,0,.5),0 2px 10px rgba(201,168,76,.3)}
+.sbtn{border-color:var(--line);font-family:var(--titre)}
+.sbtn:hover{color:var(--or-clair);border-color:var(--line-strong);background:rgba(201,168,76,.1)}
+
+/* =======================================================================
+   L'entree
+   ======================================================================= */
+/* Le titre est en dur dans la page, pas construit en JavaScript : c'est la
    premiere chose a l'ecran, elle ne doit pas attendre une reponse du
    serveur pour exister. */
 .qz-hero{
-  position:relative;padding:52px 0 34px;overflow:hidden;
+  position:relative;padding:56px 0 38px;overflow:hidden;
   border-bottom:1px solid var(--line);
 }
 /* La lueur derriere le titre. En pseudo-element et en pointer-events:none :
    elle deborde volontairement de la colonne, et ne doit rien intercepter. */
 .qz-hero::before{
-  content:'';position:absolute;left:50%;top:-160px;
-  width:min(760px,120vw);height:340px;transform:translateX(-50%);
+  content:'';position:absolute;left:50%;top:-180px;
+  width:min(860px,130vw);height:380px;transform:translateX(-50%);
   pointer-events:none;
   background:radial-gradient(50% 50% at 50% 50%,
-    rgba(229,196,107,.16) 0%,rgba(160,134,183,.10) 45%,transparent 72%);
+    rgba(255,215,0,.16) 0%,rgba(201,168,76,.09) 45%,transparent 72%);
 }
+/* Le trait qui ferme l'entree, allume au centre : la meme signature que sous
+   la barre du haut et sous le titre lui-meme. Trois fois la meme idee, c'est
+   ce qui fait un style plutot qu'un effet. */
+.qz-hero::after{
+  content:'';position:absolute;left:50%;bottom:-1px;
+  width:min(560px,80%);height:1px;transform:translateX(-50%);
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+/* Cinzel Decorative, l'or en degrade et le halo : c'est le titre du
+   Yu-Gi-Quiz, au mot pres. Il tient la meme place et doit avoir le meme
+   poids -- c'est la porte de la salle. */
 .qz-hero h1{
-  position:relative;margin:0;
-  font-family:var(--display);font-weight:800;letter-spacing:-.045em;
-  font-size:clamp(38px,8vw,68px);line-height:1;
-  background:linear-gradient(168deg,#FFF6E2 0%,var(--gold) 42%,#8E7A50 100%);
+  position:relative;margin:0;text-align:center;
+  font-family:var(--display);font-weight:700;
+  font-size:clamp(30px,6.5vw,62px);line-height:1.1;letter-spacing:.1em;
+  background:linear-gradient(180deg,var(--or-clair) 0%,var(--gold) 45%,var(--or-sombre) 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 18px rgba(255,215,0,.35)) drop-shadow(0 2px 4px rgba(0,0,0,.8));
 }
 .qz-hero p{
-  position:relative;margin:14px 0 0;max-width:56ch;
+  position:relative;margin:16px auto 0;max-width:56ch;text-align:center;
   color:var(--muted);font-size:14.5px;line-height:1.6;
 }
 
-/* ---------- une famille de jeux ----------
-   Le trait part du libelle et s'efface : il dit ou commence la famille sans
+/* =======================================================================
+   Une famille de jeux
+   ======================================================================= */
+/* Le trait part du libelle et s'efface : il dit ou commence la famille sans
    enfermer les cartes dans une boite de plus. */
-.qz-fam{margin-top:38px}
-.qz-fam-tete{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.qz-fam{margin-top:42px}
+.qz-fam-tete{display:flex;align-items:center;gap:14px;margin-bottom:18px}
 .qz-fam-tete h2{
   margin:0;flex:0 0 auto;
-  font-family:var(--display);font-weight:800;font-size:15px;
-  letter-spacing:.02em;color:var(--fam,var(--gold));
+  font-family:var(--titre);font-weight:700;font-size:13px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--fam,var(--gold));
+  text-shadow:0 0 16px color-mix(in srgb,var(--fam,var(--gold)) 45%,transparent);
 }
 .qz-fam-tete i{
   flex:1;height:1px;min-width:20px;font-style:normal;
-  background:linear-gradient(90deg,var(--fam-trait,rgba(229,196,107,.4)),transparent);
+  background:linear-gradient(90deg,var(--fam-trait,rgba(201,168,76,.45)),transparent);
 }
 .qz-fam-tete u{
   flex:0 0 auto;text-decoration:none;
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  font-family:var(--titre);font-size:9.5px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--muted);
 }
 /* Chaque famille pose sa couleur une fois ; tout ce qui est dedans la lit
-   dans --fam, y compris les cartes. */
-.qz-fam.jv{--fam:var(--gold);--fam-trait:rgba(229,196,107,.4);--fam-doux:rgba(229,196,107,.09)}
-.qz-fam.ygo{--fam:#B79AD0;--fam-trait:rgba(183,154,208,.4);--fam-doux:rgba(183,154,208,.10)}
+   dans --fam, y compris les cartes. Le violet du classeur de cartes reste :
+   il dit a quel projet un jeu appartient avant qu'on ait lu son nom, et
+   c'est une information, pas une decoration. */
+.qz-fam.jv{--fam:var(--gold);--fam-trait:rgba(201,168,76,.45);--fam-doux:rgba(201,168,76,.1)}
+.qz-fam.ygo{--fam:#C6A0E0;--fam-trait:rgba(198,160,224,.45);--fam-doux:rgba(198,160,224,.12)}
 
-/* ---------- une carte de jeu ---------- */
-.qz-menu{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(258px,1fr))}
+/* =======================================================================
+   Une carte de jeu
+
+   Une carte de casino posee sur le tapis : un fond profond, un liseré qui
+   s'allume, des equerres aux coins, et un embleme en filigrane. Au survol,
+   la bordure doree se met a circuler -- c'est le seul endroit de la page ou
+   quelque chose bouge sans qu'on le lui demande, et ca suffit a dire que
+   c'est cliquable.
+   ======================================================================= */
+.qz-menu{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(262px,1fr))}
 .qz-jeu{
   position:relative;display:block;width:100%;text-align:left;overflow:hidden;
-  /* Yu-Gi-Quiz est une carte-lien, et l'Archive donne aux liens la couleur
-     or et le souligné du navigateur : toute la carte se retrouvait soulignée,
+  /* Yu-Gi-Quiz est une carte-lien, et archive.css donne aux liens la couleur
+     or et le souligne du navigateur : toute la carte se retrouvait soulignee,
      titre et texte compris. Une carte n'est pas un mot dans une phrase. */
   text-decoration:none;color:inherit;
-  min-height:172px;padding:20px 22px 22px;border-radius:16px;
+  min-height:180px;padding:22px 24px 24px;border-radius:16px;
   border:1px solid var(--line-strong);
-  background:linear-gradient(168deg,var(--bg2),var(--bg) 78%);
+  background:linear-gradient(160deg,#16120A 0%,var(--bg2) 52%,#0B0910 100%);
+  box-shadow:inset 0 1px 0 rgba(201,168,76,.1),0 10px 30px -18px #000;
   transition:border-color .18s,transform .16s,box-shadow .18s;
 }
+/* Les equerres : deux coins seulement, en haut a gauche et en bas a droite.
+   Quatre auraient dessine un cadre de plus autour d'un cadre qui existe
+   deja ; deux suffisent a dire « objet de jeu ». Reprises telles quelles de
+   .card-content du Yu-Gi-Quiz. */
+.qz-jeu::before,.qz-jeu::after{
+  content:'';position:absolute;width:20px;height:20px;pointer-events:none;
+  border-color:rgba(201,168,76,.42);border-style:solid;
+  transition:border-color .18s;
+}
+.qz-jeu::before{top:11px;left:11px;border-width:1.5px 0 0 1.5px;border-radius:4px 0 0 0}
+.qz-jeu::after{bottom:11px;right:11px;border-width:0 1.5px 1.5px 0;border-radius:0 0 4px 0}
 .qz-jeu:hover{
   border-color:var(--fam);transform:translateY(-3px);
-  box-shadow:0 18px 40px -26px #000,0 0 42px -22px var(--fam);
+  box-shadow:
+    inset 0 1px 0 rgba(201,168,76,.16),
+    0 20px 44px -24px #000,
+    0 0 46px -20px var(--fam);
 }
+.qz-jeu:hover::before,.qz-jeu:hover::after{border-color:var(--fam)}
 .qz-jeu:focus-visible{outline:2px solid var(--fam);outline-offset:3px}
-/* L'emblème en filigrane, débordant du coin : une illustration, pas une
-   icône - elle occupe la carte sans disputer la place au texte. */
+/* L'embleme en filigrane, debordant du coin : une illustration, pas une
+   icone - elle occupe la carte sans disputer la place au texte. */
 .qz-jeu svg.qz-embleme{
-  position:absolute;right:-14px;bottom:-16px;width:104px;height:104px;
-  color:var(--fam);opacity:.13;pointer-events:none;
+  position:absolute;right:-14px;bottom:-16px;width:108px;height:108px;
+  color:var(--fam);opacity:.12;pointer-events:none;
   transition:opacity .18s,transform .18s;
 }
-.qz-jeu:hover svg.qz-embleme{opacity:.22;transform:scale(1.06) rotate(-4deg)}
+.qz-jeu:hover svg.qz-embleme{opacity:.24;transform:scale(1.06) rotate(-4deg)}
 .qz-jeu h3{
-  position:relative;margin:0 0 7px;
-  font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.02em;
+  position:relative;margin:0 0 9px;
+  font-family:var(--titre);font-weight:700;font-size:18px;letter-spacing:.06em;
+  color:var(--text);
 }
-.qz-jeu p{position:relative;margin:0;color:var(--muted);font-size:13px;line-height:1.55;max-width:24ch}
+.qz-jeu:hover h3{color:var(--or-clair)}
+.qz-jeu p{
+  position:relative;margin:0;color:var(--muted);font-size:13px;line-height:1.6;
+  max-width:26ch;
+}
 .qz-jeu u{
-  position:absolute;left:22px;bottom:18px;text-decoration:none;
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;
+  position:absolute;left:24px;bottom:19px;text-decoration:none;
+  font-family:var(--titre);font-size:9.5px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--fam);
 }
 /* Le chevron des liens qui sortent du site : on doit le savoir avant de
-   cliquer, pas après. Plus aucune carte ne le porte depuis que Yu-Gi-Quiz
-   est une page d'ici - la règle reste pour le premier lien qui repartira
+   cliquer, pas apres. Plus aucune carte ne le porte depuis que Yu-Gi-Quiz
+   est une page d'ici - la regle reste pour le premier lien qui repartira
    vraiment ailleurs. */
 .qz-jeu .qz-sort{
   position:absolute;top:18px;right:20px;color:var(--muted);font-size:13px;
   transition:color .18s,transform .18s;
 }
 .qz-jeu:hover .qz-sort{color:var(--fam);transform:translate(2px,-2px)}
-/* Ce qui n'existe pas encore : éteint, et inerte. Une carte grise qui
-   répond au clic serait pire qu'une carte absente. */
+/* Ce qui n'existe pas encore : eteint, et inerte. Une carte grise qui
+   repond au clic serait pire qu'une carte absente. */
 .qz-jeu.bientot{
-  border-color:var(--line);background:none;cursor:default;pointer-events:none;
+  border-color:var(--line);background:rgba(16,14,24,.4);cursor:default;pointer-events:none;
+  box-shadow:none;
 }
+.qz-jeu.bientot::before,.qz-jeu.bientot::after{border-color:rgba(201,168,76,.12)}
 .qz-jeu.bientot h3,.qz-jeu.bientot p{opacity:.42}
 .qz-jeu.bientot u{color:var(--muted)}
 .qz-jeu.bientot svg.qz-embleme{opacity:.05}
 
-/* ---------- la navigation d'un écran à l'autre ----------
-   Une flèche pour revenir, une croix pour abandonner : deux gestes que tout
-   le monde connaît, à la même place, plutôt qu'un lien en bas de page qu'il
-   faut chercher. */
-.qz-nav{display:flex;align-items:center;gap:10px;margin-bottom:20px;min-height:32px}
+/* =======================================================================
+   La navigation d'un ecran a l'autre
+
+   Une fleche pour revenir, une croix pour abandonner : deux gestes que tout
+   le monde connait, a la meme place, plutot qu'un lien en bas de page qu'il
+   faut chercher.
+   ======================================================================= */
+.qz-nav{display:flex;align-items:center;gap:10px;margin-bottom:22px;min-height:32px}
 .qz-nav .sbtn{flex:0 0 auto}
 .qz-nav-titre{
-  font-family:var(--mono);font-size:10px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--muted);
+  font-family:var(--titre);font-size:10.5px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--gold);
 }
-/* L'abandon demande confirmation en s'armant, comme la suppression d'un jeu
-   dans l'Archive : le premier clic annonce, le second exécute. Une fenêtre
-   de confirmation pour quitter une partie sans enjeu serait disproportionnée,
-   mais partir d'un clic accidentel le serait aussi. */
+/* L'abandon demande confirmation en s'armant : le premier clic annonce, le
+   second execute. Une fenetre de confirmation pour quitter une partie sans
+   enjeu serait disproportionnee, mais partir d'un clic accidentel le serait
+   aussi. */
 .qz-abandon.arme{
-  width:auto;padding:0 12px;font-family:var(--body);font-size:12.5px;
+  width:auto;padding:0 12px;font-family:var(--titre);font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;
   color:#fff;background:#B4295C;border-color:#B4295C;
 }
 
-.qz-corps{padding:30px 0 90px}
+.qz-corps{padding:32px 0 90px}
 
-/* ---------- avec quels jeux on joue ----------
+/* =======================================================================
+   Avec quels jeux on joue
+
    Deux valeurs, deux boutons cote a cote dans l'en-tete de la famille « Jeux
-   Videos ». C'est un reglage de la famille entiere, garde dans le compte, et
-   il se lit desormais en entier sans rien ouvrir : le menu deroulant d'avant
-   demandait un clic rien que pour montrer ce qu'il proposait.
+   Videos ». C'est un reglage de la famille entiere, garde dans le compte.
 
-   La forme est celle de la barre d'onglets de l'Archive (.tab) : une piste
-   arrondie, une pastille doree a texte sombre sur l'option retenue. Deux
-   composants qui font le meme travail se ressemblent. */
+   La forme est celle d'un selecteur de mise : une piste creusee, une pastille
+   doree en relief sur l'option retenue.
+   ======================================================================= */
 .qz-src{display:flex;align-items:center;gap:10px;flex:0 0 auto}
 .qz-src>u{
-  text-decoration:none;font-family:var(--mono);font-size:9.5px;
-  letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  text-decoration:none;font-family:var(--titre);font-size:9.5px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
 }
 /* La piste tient les deux options ensemble : sans elle, deux boutons poses
    cote a cote se liraient comme deux actions independantes et non comme un
    choix entre l'une OU l'autre. */
 .qz-src-piste{
   display:flex;align-items:center;gap:3px;padding:3px;
-  border:1px solid var(--line);border-radius:99px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:99px;background:rgba(7,6,14,.65);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.5);
 }
 .qz-src-opt{
-  padding:6px 13px;border-radius:99px;white-space:nowrap;
-  font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.04em;
+  padding:6px 14px;border-radius:99px;white-space:nowrap;
+  font-family:var(--titre);font-size:11px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;
   color:var(--muted);border:1px solid transparent;
   transition:color .15s,background .15s,border-color .15s;
 }
-.qz-src-opt:hover{color:var(--text);background:var(--bg3)}
+.qz-src-opt:hover{color:var(--or-clair);background:rgba(201,168,76,.08)}
 .qz-src-opt[aria-pressed="true"]{
-  color:var(--bg);background:var(--gold);border-color:var(--gold);font-weight:700;
+  color:#1B1405;border-color:transparent;font-weight:700;
+  background:linear-gradient(135deg,var(--or-clair),var(--gold));
+  box-shadow:0 0 14px -2px rgba(201,168,76,.55);
 }
-.qz-src-opt[aria-pressed="true"]:hover{filter:brightness(1.08)}
+.qz-src-opt[aria-pressed="true"]:hover{filter:brightness(1.08);background:linear-gradient(135deg,var(--or-clair),var(--gold))}
 .qz-src-opt:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
-/* ---------- la partie ---------- */
+/* =======================================================================
+   La partie
+   ======================================================================= */
 .qz-partie{max-width:560px;margin:0 auto}
 .qz-barre{
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;
-  font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;
+  font-family:var(--titre);font-size:10.5px;letter-spacing:.2em;
   text-transform:uppercase;color:var(--muted);
 }
-.qz-score{margin-left:auto;letter-spacing:.08em}
+.qz-score{margin-left:auto;letter-spacing:.14em}
 .qz-score b{
-  font-family:var(--display);font-size:20px;font-weight:800;color:var(--gold);
-  letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-left:6px;
+  font-family:var(--titre);font-size:20px;font-weight:700;color:var(--or-clair);
+  letter-spacing:.02em;font-variant-numeric:tabular-nums;margin-left:8px;
+  text-shadow:0 0 14px rgba(255,215,0,.45);
 }
-/* les manches déjà jouées : on voit où on en est sans relire un compteur */
-.qz-jalons{display:flex;gap:5px}
-.qz-jalon{width:9px;height:9px;border-radius:50%;background:var(--bg3)}
-.qz-jalon.gagne{background:#9BE3BE;box-shadow:0 0 8px rgba(155,227,190,.6)}
-.qz-jalon.perdu{background:#E38F89;box-shadow:0 0 8px rgba(227,143,137,.5)}
-.qz-jalon.ici{box-shadow:0 0 0 2px rgba(229,196,107,.6)}
+/* Les manches deja jouees : on voit ou on en est sans relire un compteur.
+   Des jetons, pas des points : cernes, et allumes de leur couleur. */
+.qz-jalons{display:flex;gap:6px}
+.qz-jalon{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--bg3);border:1px solid var(--line);
+}
+.qz-jalon.gagne{background:var(--juste);border-color:var(--juste);box-shadow:0 0 9px rgba(76,255,145,.6)}
+.qz-jalon.perdu{background:var(--faux);border-color:var(--faux);box-shadow:0 0 9px rgba(255,92,92,.5)}
+.qz-jalon.ici{box-shadow:0 0 0 2px rgba(255,215,0,.55)}
 
 /* ---------- les images d'une partie ----------
    Le pendant tactile du blocage du clic droit (voir quiz/quiz.html) : sur
    telephone, un appui long ouvre le meme menu -- « enregistrer l'image »,
-   « copier l'image » -- et donne la reponse de la meme facon. La selection
-   part avec, sinon l'appui long selectionne l'image au lieu de rien faire,
-   ce qui laisse une surbrillance bleue en travers de la jaquette. */
+   « copier l'image » -- et donne la reponse de la meme facon. */
 #scene img{
   -webkit-touch-callout:none;
   -webkit-user-select:none;user-select:none;
 }
 
 /* ---------- la jaquette ----------
-   Le flou est posé sur l'image, pas sur son cadre : le cadre reste net, et
-   c'est bien le contenu qu'on cherche à lire. `scale` avec - un flou
-   gaussien mange ses propres bords, et sans ce léger agrandissement on
-   verrait un liseré transparent tout autour.
-   --cov-ratio est la proportion des jaquettes de l'Archive : la même image,
-   dans le même cadre qu'ailleurs sur le site. */
+   Le flou est pose sur l'image, pas sur son cadre : le cadre reste net, et
+   c'est bien le contenu qu'on cherche a lire. `scale` avec - un flou
+   gaussien mange ses propres bords, et sans ce leger agrandissement on
+   verrait un lisere transparent tout autour.
+   --cov-ratio est la proportion des jaquettes de l'Archive : la meme image,
+   dans le meme cadre qu'ailleurs sur le site. */
 .qz-cadre{
-  position:relative;aspect-ratio:var(--cov-ratio);max-width:300px;margin:0 auto 18px;
+  position:relative;aspect-ratio:var(--cov-ratio);max-width:300px;margin:0 auto 20px;
   border-radius:12px;overflow:hidden;
   border:1px solid var(--line-strong);background:var(--bg3);
-  box-shadow:0 26px 60px -34px #000;
+  box-shadow:0 26px 60px -34px #000, var(--ombre-or);
 }
 .qz-cadre img{
   display:block;width:100%;height:100%;object-fit:cover;
@@ -229,79 +443,91 @@
   transition:filter .55s cubic-bezier(.2,.7,.3,1);
 }
 @media (prefers-reduced-motion:reduce){ .qz-cadre img{transition:none} }
-/* la réponse, posée sur la jaquette une fois la manche finie */
+/* la reponse, posee sur la jaquette une fois la manche finie */
 .qz-verdict{
   position:absolute;left:0;right:0;bottom:0;
-  padding:34px 14px 14px;text-align:center;
-  background:linear-gradient(180deg,rgba(15,12,20,0),rgba(15,12,20,.94) 58%);
+  padding:36px 14px 15px;text-align:center;
+  background:linear-gradient(180deg,rgba(7,6,14,0),rgba(7,6,14,.95) 58%);
 }
 .qz-verdict b{
-  display:block;font-family:var(--display);font-weight:700;font-size:16px;
-  line-height:1.3;letter-spacing:-.02em;
+  display:block;font-family:var(--titre);font-weight:700;font-size:16px;
+  line-height:1.35;letter-spacing:.04em;color:var(--text);
 }
 .qz-verdict u{
-  display:block;margin-bottom:4px;text-decoration:none;
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  display:block;margin-bottom:5px;text-decoration:none;
+  font-family:var(--titre);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
 }
-.qz-verdict.bon u{color:#9BE3BE}
-.qz-verdict.rate u{color:#E38F89}
+.qz-verdict.bon u{color:var(--juste);text-shadow:0 0 12px rgba(76,255,145,.5)}
+.qz-verdict.rate u{color:var(--faux);text-shadow:0 0 12px rgba(255,92,92,.45)}
 
 /* ---------- les propositions ---------- */
-.qz-choix{display:grid;gap:7px;grid-template-columns:1fr 1fr}
+.qz-choix{display:grid;gap:8px;grid-template-columns:1fr 1fr}
 @media (max-width:560px){ .qz-choix{grid-template-columns:1fr} }
 .qz-choix button{
-  text-align:left;font-size:13.5px;padding:11px 13px;border-radius:10px;
-  border:1px solid var(--line);background:var(--bg2);
-  transition:border-color .15s,background .15s,opacity .25s;
+  text-align:left;font-size:13.5px;padding:12px 14px;border-radius:10px;
+  color:var(--text);
+  border:1px solid var(--line);background:rgba(16,14,24,.8);
+  transition:border-color .15s,background .15s,color .15s,box-shadow .15s,opacity .25s;
 }
-.qz-choix button:hover:not(:disabled){border-color:var(--gold);background:var(--bg3)}
+.qz-choix button:hover:not(:disabled){
+  border-color:var(--gold);background:rgba(201,168,76,.1);color:var(--or-clair);
+  box-shadow:0 0 18px -8px rgba(201,168,76,.8);
+}
 .qz-choix button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-/* une proposition ratée reste lisible et barrée : la retirer ferait sauter
-   la grille sous les doigts, et on ne saurait plus ce qu'on a essayé */
-.qz-choix button.rate{text-decoration:line-through;opacity:.38;border-color:rgba(227,143,137,.3)}
-.qz-choix button.bon{color:#0F1A14;font-weight:700;background:#9BE3BE;border-color:#9BE3BE}
-.qz-choix button.montre{border-color:#9BE3BE;background:rgba(155,227,190,.12)}
+/* une proposition ratee reste lisible et barree : la retirer ferait sauter
+   la grille sous les doigts, et on ne saurait plus ce qu'on a essaye */
+.qz-choix button.rate{text-decoration:line-through;opacity:.38;border-color:rgba(255,92,92,.3)}
+.qz-choix button.bon{
+  color:#06210F;font-weight:700;border-color:var(--juste);
+  background:linear-gradient(135deg,#7CFFB4,var(--juste));
+  box-shadow:0 0 22px -6px rgba(76,255,145,.7);
+}
+.qz-choix button.montre{border-color:var(--juste);background:rgba(76,255,145,.12);color:var(--juste)}
 .qz-choix button:disabled{cursor:default}
 
 /* ---------- la saisie libre ---------- */
 .qz-saisie{display:flex;gap:8px}
 .qz-saisie input{
-  height:44px;padding:0 14px;font-size:14.5px;
-  background:var(--bg2);border:1px solid var(--line);border-radius:10px;outline:none;
-  transition:border-color .15s;
+  height:44px;padding:0 14px;font-size:14.5px;font-family:var(--body);
+  color:var(--text);caret-color:var(--or-vif);
+  background:rgba(7,6,14,.7);border:1px solid var(--line);border-radius:9px;outline:none;
+  transition:border-color .2s,box-shadow .2s,background .2s;
 }
-.qz-saisie input:focus{border-color:var(--gold)}
-.qz-saisie input::placeholder{color:var(--muted)}
+.qz-saisie input:hover{border-color:rgba(201,168,76,.4)}
+.qz-saisie input:focus{
+  border-color:var(--gold);background:rgba(16,13,8,.9);
+  box-shadow:0 0 0 3px rgba(201,168,76,.1),0 0 16px rgba(201,168,76,.15);
+}
+.qz-saisie input::placeholder{color:rgba(140,123,90,.5);font-style:italic}
 
-/* ---------- la complétion du titre ----------
-   Reprend .ac de l'Archive, sans vignette : c'est la même liste sous le même
-   genre de champ, et elle doit se reconnaître comme telle. */
+/* ---------- la completion du titre ----------
+   La meme liste que partout ailleurs sur le site, dans la lumiere de cette
+   salle-ci : fond presque noir, liseré d'or, la ligne visee en or clair. */
 .qz-boite{position:relative;flex:1;min-width:0}
 .qz-boite input{width:100%}
 .qz-ac{
   position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:5;
   max-height:246px;overflow-y:auto;overscroll-behavior:contain;padding:5px;
-  background:var(--bg2);border:1px solid var(--line-strong);border-radius:11px;
-  box-shadow:0 22px 48px rgba(0,0,0,.6);
+  background:#12101C;border:1px solid rgba(201,168,76,.25);border-radius:10px;
+  box-shadow:0 22px 48px rgba(0,0,0,.7),0 0 0 1px rgba(201,168,76,.07);
 }
+.qz-ac::-webkit-scrollbar{width:3px}
+.qz-ac::-webkit-scrollbar-thumb{background:rgba(201,168,76,.22);border-radius:3px}
 .qz-ac button{
-  display:block;width:100%;text-align:left;font-size:13.5px;
-  padding:8px 10px;border-radius:8px;border:0;background:none;
+  display:block;width:100%;text-align:left;font-size:13.5px;color:var(--text);
+  padding:9px 10px;border-radius:7px;border:0;background:none;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  transition:background .15s,color .15s;
 }
-.qz-ac button:hover,.qz-ac button.on{background:var(--bg3)}
-.qz-ac button.on{color:var(--gold)}
+.qz-ac button:hover,.qz-ac button.on{background:rgba(201,168,76,.12);color:var(--or-clair)}
 
-.qz-info{margin:14px 0 0;text-align:center;font-size:12.5px;color:var(--muted);min-height:1.5em}
-.qz-info b{color:var(--gold);font-variant-numeric:tabular-nums}
+.qz-info{margin:16px 0 0;text-align:center;font-size:12.5px;color:var(--muted);min-height:1.5em}
+.qz-info b{color:var(--or-clair);font-variant-numeric:tabular-nums}
 
 /* ---------- sous la jaquette : ce qui est refuse, ce qui reste ----------
-   Deux lignes la ou il y avait une phrase. Voir info() dans la page pour
-   le pourquoi ; ici, seulement de quoi les tenir en place.
-
-   La hauteur est reservee pour les deux, meme quand il n'y en a qu'une :
-   sinon le compteur sauterait d'un cran a la premiere erreur, juste sous
-   une image qu'on est en train de regarder. */
+   La hauteur est reservee pour les deux lignes, meme quand il n'y en a
+   qu'une : sinon le compteur sauterait d'un cran a la premiere erreur, juste
+   sous une image qu'on est en train de regarder. */
 .qz-sous{min-height:3.3em}
 /* Le titre refuse. Barre, il n'a plus besoin qu'on lui dise « non » -- et
    sur une ligne a lui, un titre a rallonge se coupe au lieu de pousser le
@@ -309,135 +535,159 @@
 .qz-refus{
   display:block;max-width:min(460px,100%);margin:0 auto 6px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  text-decoration:line-through;text-decoration-color:#E38F89;
+  text-decoration:line-through;text-decoration-color:var(--faux);
   text-decoration-thickness:1.5px;opacity:.8;
 }
-/* L'essai en cours et la mise. En mono et en petites capitales : c'est un
-   compteur, il se lit d'un coup d'oeil et ne se relit pas. */
+/* L'essai en cours et la mise. C'est un compteur : il se lit d'un coup
+   d'oeil et ne se relit pas. */
 .qz-mise{
   display:inline-flex;align-items:center;gap:9px;
-  font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;
+  font-family:var(--titre);font-size:10px;letter-spacing:.18em;
   text-transform:uppercase;
 }
 
-/* ---------- la fin ---------- */
-.qz-fin{text-align:center}
-/* ---------- le bilan, commun aux trois mini-jeux ----------
+/* =======================================================================
+   La fin, et le bilan commun aux trois mini-jeux
+
    Les trois se comptent sur mille et finissent donc sur le meme bloc : une
-   mention, le score contre son maximum, une jauge, puis le detail. Voir
-   bilanHTML dans la page pour le pourquoi de ces quatre lignes-la.
+   mention, le score contre son maximum, une jauge, puis le detail.
 
    L'ordre a l'ecran n'est pas celui du balisage par hasard : la mention est
-   ce qu'on lit en premier, elle est donc au-dessus du nombre. */
+   ce qu'on lit en premier, elle est donc au-dessus du nombre.
+   ======================================================================= */
+.qz-fin{text-align:center}
 .qz-mention{
-  margin:0 0 6px;font-family:var(--mono);font-size:11px;font-weight:500;
-  letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  margin:0 0 8px;font-family:var(--titre);font-size:11px;font-weight:600;
+  letter-spacing:.28em;text-transform:uppercase;color:var(--muted);
 }
-.qz-mention.parfait{color:var(--gold)}
-.qz-mention.haut{color:#9BE3BE}
+.qz-mention.parfait{color:var(--or-vif);text-shadow:0 0 18px rgba(255,215,0,.6)}
+.qz-mention.haut{color:var(--juste);text-shadow:0 0 14px rgba(76,255,145,.4)}
 .qz-mention.moyen{color:var(--muted)}
 .qz-mention.bas{color:#E38FAE}
+/* Le score, en grand et en or massif : c'est le jeton qu'on ramasse. */
 .qz-total{
-  font-family:var(--display);font-weight:800;line-height:1;letter-spacing:-.04em;
-  font-size:clamp(48px,13vw,76px);color:var(--gold);
+  font-family:var(--display);font-weight:700;line-height:1;letter-spacing:.02em;
+  font-size:clamp(46px,12vw,74px);
+  background:linear-gradient(180deg,var(--or-clair) 0%,var(--gold) 48%,var(--or-sombre) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 20px rgba(255,215,0,.32));
   font-variant-numeric:tabular-nums;margin:0;
 }
 /* Le maximum contre lequel le score se lit. Colle au nombre plutot que
    renvoye a la ligne du dessous : c'est une fraction, pas une note de bas de
    page, et separer les deux moities obligeait a les rapprocher soi-meme. */
 .qz-total .qz-max{
-  font-family:var(--mono);font-weight:400;font-size:clamp(13px,2.6vw,17px);
-  letter-spacing:0;color:var(--muted);margin-left:8px;vertical-align:baseline;
+  font-family:var(--titre);font-weight:400;font-size:clamp(13px,2.6vw,17px);
+  letter-spacing:.08em;color:var(--muted);margin-left:8px;vertical-align:baseline;
+  -webkit-text-fill-color:var(--muted);
 }
 /* La jauge. Un rapport se voit, il ne se calcule pas : c'est la seule des
-   trois lectures qui ne demande aucun effort. Elle est bornee a 340px pour
-   ne pas devenir une barre de chargement en travers de l'ecran. */
+   trois lectures qui ne demande aucun effort. Bornee a 340px pour ne pas
+   devenir une barre de chargement en travers de l'ecran. */
 .qz-jauge{
-  width:min(340px,72%);height:7px;margin:16px auto 0;
-  background:var(--bg3);border:1px solid var(--line);border-radius:999px;
-  overflow:hidden;
+  width:min(340px,72%);height:8px;margin:18px auto 0;
+  background:rgba(7,6,14,.7);border:1px solid var(--line);border-radius:999px;
+  overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.6);
 }
 .qz-jauge i{
   display:block;height:100%;border-radius:999px;width:var(--part,0%);
-  background:linear-gradient(90deg,rgba(229,196,107,.55),var(--gold));
+  background:linear-gradient(90deg,var(--gold),var(--or-vif));
+  box-shadow:0 0 12px rgba(255,215,0,.5);
   animation:qz-remplit .62s cubic-bezier(.2,.7,.3,1) both;
 }
-.qz-jauge.haut i{background:linear-gradient(90deg,rgba(155,227,190,.5),#9BE3BE)}
+.qz-jauge.haut i{background:linear-gradient(90deg,#28CC6E,var(--juste));box-shadow:0 0 12px rgba(76,255,145,.45)}
 .qz-jauge.moyen i,.qz-jauge.bas i{
-  background:linear-gradient(90deg,rgba(167,156,180,.4),var(--muted));
+  background:linear-gradient(90deg,rgba(140,123,90,.5),var(--muted));box-shadow:none;
 }
 /* De zero jusqu'a la part atteinte : le remplissage dit combien il manquait,
    ce qu'une barre deja pleine a l'arrivee ne dit pas. */
 @keyframes qz-remplit{from{width:0}to{width:var(--part,0%)}}
 @media (prefers-reduced-motion:reduce){ .qz-jauge i{animation:none} }
-.qz-sur{color:var(--muted);font-size:13.5px;margin:14px 0 24px}
+.qz-sur{color:var(--muted);font-size:13.5px;margin:16px 0 24px}
+
 /* Le tableau de fin : les cinq jaquettes en ligne, nettes cette fois. Une
    liste de titres dirait la meme chose, mais c'est d'images qu'on vient de
    jouer -- et une jaquette qu'on n'a pas reconnue, on la reconnaitra la
-   prochaine fois pour l'avoir vue ici en grand, pas pour avoir lu son nom.
-   Les manquees restent en gris : le tableau se lit d'un regard, sans avoir a
-   compter les pastilles. */
+   prochaine fois pour l'avoir vue ici en grand, pas pour avoir lu son nom. */
 .qz-partie.qz-etendu{max-width:none}
-.qz-tableau{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:26px 0;text-align:left}
+.qz-tableau{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:28px 0;text-align:left}
 .qz-carte{min-width:0}
 .qz-carte .qz-face{border:1px solid var(--line);border-radius:12px}
 .qz-carte img{display:block;width:100%;height:100%;object-fit:cover}
-.qz-carte.rate img{filter:grayscale(1) brightness(.62)}
+.qz-carte.gagne .qz-face{
+  border-color:color-mix(in srgb,var(--juste) 45%,transparent);
+  box-shadow:0 0 22px -12px var(--juste);
+}
+.qz-carte.rate img{filter:grayscale(1) brightness(.6)}
 /* La pastille de points, posee sur la jaquette : le score de la manche se lit
    sur l'image de la manche, pas dans une colonne a cote. */
 .qz-carte .qz-sceau{
-  position:absolute;left:8px;bottom:8px;padding:3px 8px;border-radius:8px;
-  font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
-  color:#0F1A14;background:#9BE3BE;
+  position:absolute;left:8px;bottom:8px;padding:3px 9px;border-radius:8px;
+  font-family:var(--titre);font-size:10px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#06210F;background:var(--juste);
 }
 .qz-carte.rate .qz-sceau{color:#fff;background:rgba(180,41,92,.92)}
 .qz-carte b{
-  margin-top:9px;font-size:13px;font-weight:600;line-height:1.3;overflow:hidden;
+  margin-top:10px;font-size:13px;font-weight:600;line-height:1.35;overflow:hidden;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
 }
 .qz-carte i{
-  display:block;margin-top:3px;font-style:normal;font-family:var(--mono);
-  font-size:10px;letter-spacing:.06em;color:var(--muted);
+  display:block;margin-top:4px;font-style:normal;font-family:var(--titre);
+  font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
 }
-.qz-carte.gagne i{color:#9BE3BE}
+.qz-carte.gagne i{color:var(--juste)}
 @media (max-width:760px){ .qz-tableau{grid-template-columns:repeat(3,1fr);gap:12px} }
 @media (max-width:460px){ .qz-tableau{grid-template-columns:repeat(2,1fr)} }
 .qz-boutons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-/* .cta de l'Archive fait 100 % de large : ici deux boutons se partagent une
-   ligne, ils reprennent donc leur largeur naturelle */
+/* .cta fait 100 % de large : ici deux boutons se partagent une ligne, ils
+   reprennent donc leur largeur naturelle */
 .qz-boutons .cta{width:auto;padding:0 26px}
 
+/* L'ecran d'attente et celui d'erreur. Un feutre cerne de pointilles dores :
+   c'est la place d'une table qu'on n'a pas encore ouverte. */
 .qz-etat{
-  padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;
+  padding:44px 20px;text-align:center;color:var(--muted);font-size:14px;
   border:1px dashed var(--line-strong);border-radius:14px;
+  background:rgba(16,14,24,.4);
 }
 .qz-etat b{
-  display:block;font-family:var(--display);font-weight:700;font-size:16px;
-  color:var(--text);margin-bottom:6px;
+  display:block;font-family:var(--titre);font-weight:700;font-size:15px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--or-clair);margin-bottom:8px;
 }
 
-/* ---------- l'en-tête ----------
-   Le même bandeau que l'Archive, en plus court : pas d'onglets, pas
-   d'engrenage. Le bouton de retour porte l'id d'Abyss pour hériter de sa
-   règle - au-delà de 1520 px il sort de la colonne, comme là-bas. */
-.qz-marque{display:flex;align-items:baseline;gap:10px;flex:0 0 auto}
-.qz-marque b{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.02em}
+/* =======================================================================
+   L'en-tete de la page
+
+   Le meme bandeau que l'Archive, en plus court : pas d'onglets, pas
+   d'engrenage. Le bouton de retour porte l'id d'Abyss pour heriter de sa
+   regle - au-dela de 1520 px il sort de la colonne, comme la-bas.
+   ======================================================================= */
+.qz-marque{display:flex;align-items:baseline;gap:12px;flex:0 0 auto}
+.qz-marque b{
+  font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.1em;
+  background:linear-gradient(180deg,var(--or-clair) 0%,var(--gold) 55%,var(--or-sombre) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 10px rgba(255,215,0,.25));
+}
 .qz-marque span{
-  font-family:var(--mono);font-size:10px;color:var(--muted);
-  letter-spacing:.16em;text-transform:uppercase;
+  font-family:var(--titre);font-size:9.5px;color:var(--muted);
+  letter-spacing:.2em;text-transform:uppercase;
 }
 /* Le bouton de suggestion tient l'autre bout de la barre. Sans onglets pour
-   occuper le milieu, c'est cette marge qui l'y pousse - au-delà de 1520 px
-   la règle de l'Archive le sort de la colonne et celle-ci ne compte plus.
+   occuper le milieu, c'est cette marge qui l'y pousse - au-dela de 1520 px
+   la regle de l'Archive le sort de la colonne et celle-ci ne compte plus.
 
-   Sous 640 px l'en-tête passe en colonne et les boutons s'étirent sur toute
-   la largeur : une marge automatique les recollerait à droite en les
-   rétrécissant, d'où la borne basse. */
+   Sous 640 px l'en-tete passe en colonne et les boutons s'etirent sur toute
+   la largeur : une marge automatique les recollerait a droite en les
+   retrecissant, d'ou la borne basse. */
 @media (min-width:641px){
   #suggBtn{margin-left:auto}
 }
 
-/* ---------- Chronologie ----------
+/* =======================================================================
+   Chronologie
+
    Cinq jaquettes en ligne, le titre dessous, du plus ancien a gauche au plus
    recent a droite. En grand : c'est l'image qu'on reconnait avant le titre,
    et une frise se lit d'un bout a l'autre d'un seul regard.
@@ -449,28 +699,29 @@
    ======================================================================= */
 /* Toute la largeur de la colonne, et pas les 560 px d'une manche de jaquette
    floue : cinq jaquettes cote a cote, c'est le seul ecran du site ou la place
-   disponible se traduit directement en lisibilite. Sur 1120 px, une carte
-   fait plus de 200 px de large -- une vraie jaquette, pas une vignette. */
+   disponible se traduit directement en lisibilite. */
 .qz-partie.qz-chrono{max-width:none}
 .qz-frise{list-style:none;margin:0;padding:0;display:flex;gap:16px;align-items:stretch}
 .qz-piece{
   position:relative;flex:1 1 0;min-width:0;
   display:flex;flex-direction:column;padding:9px 9px 13px;
-  border:1px solid var(--line);border-radius:16px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(160deg,#16120A 0%,var(--bg2) 55%,#0B0910 100%);
+  box-shadow:inset 0 1px 0 rgba(201,168,76,.08);
   cursor:grab;
   /* pan-y : le doigt garde le defilement vertical de la page, et le
      glissement horizontal -- le seul qui nous interesse ici -- nous revient */
   touch-action:pan-y;
-  transition:transform .16s cubic-bezier(.2,.7,.3,1),border-color .15s,background .15s;
+  transition:transform .16s cubic-bezier(.2,.7,.3,1),border-color .15s,background .15s,box-shadow .15s;
 }
-.qz-piece:hover{border-color:var(--line-strong)}
+.qz-piece:hover{border-color:var(--line-strong);box-shadow:inset 0 1px 0 rgba(201,168,76,.14),0 0 26px -18px var(--gold)}
 /* Pendant qu'une carte est tenue : elle suit le doigt au pixel, donc aucune
    transition sur elle -- sinon elle traine derriere. Les autres, si : ce sont
    elles qui doivent se ranger doucement. */
 .qz-piece.prise{
   z-index:3;cursor:grabbing;transition:none;
-  border-color:var(--gold);background:var(--bg3);
-  box-shadow:0 24px 46px -22px #000,0 0 34px -20px var(--gold);
+  border-color:var(--gold);
+  box-shadow:0 24px 46px -22px #000,0 0 34px -16px var(--or-vif);
 }
 /* Glisser une carte ne doit pas surligner le texte de la page au passage. */
 .qz-frise.bouge{user-select:none;-webkit-user-select:none}
@@ -491,37 +742,41 @@
 .qz-face img{display:block;width:100%;height:100%;object-fit:cover}
 .qz-vide{
   display:grid;place-items:center;width:100%;height:100%;color:var(--muted);
-  font-family:var(--display);font-weight:800;font-size:clamp(24px,3.4vw,44px);
+  font-family:var(--display);font-weight:700;font-size:clamp(24px,3.4vw,44px);
 }
 /* Le rang, pose sur le coin de la jaquette : c'est la reponse qu'on donne,
-   elle doit se lire sur la carte et pas a cote. */
+   elle doit se lire sur la carte et pas a cote. Un jeton, donc : rond, cerne
+   d'or, chiffre en Cinzel. */
 .qz-rang{
   position:absolute;top:9px;left:9px;z-index:2;
-  min-width:26px;height:26px;padding:0 7px;border-radius:9px;
+  min-width:28px;height:28px;padding:0 7px;border-radius:99px;
   display:grid;place-items:center;
-  font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;
-  color:var(--text);background:rgba(15,12,20,.72);backdrop-filter:blur(3px);
+  font-family:var(--titre);font-size:13px;font-weight:700;
+  font-variant-numeric:tabular-nums;
+  color:var(--or-clair);background:rgba(7,6,14,.8);
+  border:1px solid rgba(201,168,76,.45);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
 }
-.qz-titre{display:flex;flex-direction:column;gap:3px;padding:11px 4px 0;min-width:0;text-align:center}
+.qz-titre{display:flex;flex-direction:column;gap:3px;padding:12px 4px 0;min-width:0;text-align:center}
 /* Deux lignes, reservees meme quand le titre en fait une : sans ca les
    cartes n'auraient pas toutes la meme hauteur et la ligne se deformerait
    au moindre echange. */
 .qz-titre b{
   /* La carte se dilate avec la page ; le titre suit, entre deux bornes. */
   font-size:clamp(11.5px,1.25vw,14.5px);
-  font-weight:600;line-height:1.3;min-height:2.6em;overflow:hidden;
+  font-weight:600;line-height:1.35;min-height:2.7em;overflow:hidden;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
 }
 /* La date reste cachee jusqu'au corrige : c'est la reponse. */
 .qz-date{
-  font-style:normal;font-family:var(--mono);font-size:clamp(10px,1vw,11.5px);
-  letter-spacing:.04em;color:var(--muted);
+  font-style:normal;font-family:var(--titre);font-size:clamp(10px,1vw,11.5px);
+  letter-spacing:.1em;color:var(--muted);
 }
 /* La place qu'on avait donnee a une carte mal placee. Sans elle, une frise
    remise dans l'ordre juste ne dirait plus d'ou chaque carte vient. */
 .qz-place{
-  font-style:normal;font-family:var(--mono);font-size:clamp(9.5px,.95vw,10.5px);
-  letter-spacing:.04em;color:#E38F89;
+  font-style:normal;font-family:var(--titre);font-size:clamp(9.5px,.95vw,10.5px);
+  letter-spacing:.1em;color:var(--faux);
 }
 /* La poignee ne sert qu'en colonne (voir la requete media plus bas) : en
    ligne, la carte entiere s'attrape, au doigt comme a la souris. */
@@ -530,29 +785,32 @@
 /* La fleche du temps sous la frise. Les rangs disent deja l'ordre ; elle dit
    dans quel SENS il se lit, et c'est ce qu'on oublie une fois la premiere
    carte posee. Inutile en colonne, ou elle pointerait de travers. */
-.qz-axe{display:flex;align-items:center;gap:10px;margin-top:12px}
+.qz-axe{display:flex;align-items:center;gap:10px;margin-top:14px}
 .qz-axe u{
   flex:0 0 auto;text-decoration:none;
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  font-family:var(--titre);font-size:9.5px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--muted);
 }
 .qz-axe i{
   flex:1;height:1px;
-  background:linear-gradient(90deg,rgba(229,196,107,.12),rgba(229,196,107,.5));
+  background:linear-gradient(90deg,rgba(201,168,76,.12),rgba(201,168,76,.6));
 }
 
 /* Le corrige : chaque carte dit si elle etait a sa place. La frise ne bouge
    plus, le curseur ne doit donc plus promettre qu'on peut la deplacer. */
 .qz-piece.juste,.qz-piece.faux{cursor:default}
-.qz-piece.juste{border-color:rgba(155,227,190,.45);background:rgba(155,227,190,.07)}
-.qz-piece.juste .qz-rang{background:#9BE3BE;color:#0F1A14}
-.qz-piece.faux{border-color:rgba(227,143,137,.38)}
-.qz-piece.faux .qz-rang{background:#E38F89;color:#1A0F12}
+.qz-piece.juste{
+  border-color:color-mix(in srgb,var(--juste) 45%,transparent);
+  box-shadow:0 0 30px -18px var(--juste);
+}
+.qz-piece.juste .qz-rang{background:var(--juste);color:#06210F;border-color:var(--juste)}
+.qz-piece.faux{border-color:rgba(255,92,92,.34)}
+.qz-piece.faux .qz-rang{background:var(--faux);color:#1A0F12;border-color:var(--faux)}
 
-.qz-consigne{margin-left:auto;letter-spacing:.1em}
+.qz-consigne{margin-left:auto;letter-spacing:.14em}
 /* Le bouton de verification, detache de la frise. Dans le bilan c'est la
    ligne de score qui tient cet ecart, d'ou la remise a zero. */
-.qz-chrono .qz-boutons{margin-top:18px}
+.qz-chrono .qz-boutons{margin-top:20px}
 .qz-bilan .qz-boutons{margin-top:0}
 /* Chez la jaquette floue le bilan OUVRE l'ecran de fin, il n'a donc rien
    au-dessus de quoi se detacher -- contrairement a la chronologie et a la
@@ -561,7 +819,7 @@
 
 /* Le score, la ou etait le bouton. Il arrive en meme temps que la frise se
    range : c'est le meme evenement, il ne doit pas demander un clic de plus. */
-.qz-bilan{text-align:center;margin-top:26px;animation:qz-monte .34s cubic-bezier(.2,.7,.3,1) both}
+.qz-bilan{text-align:center;margin-top:28px;animation:qz-monte .34s cubic-bezier(.2,.7,.3,1) both}
 .qz-bilan .qz-total{font-size:clamp(44px,9vw,68px)}
 .qz-bilan .qz-sur{margin-bottom:20px}
 @keyframes qz-monte{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -583,7 +841,7 @@
   /* .qz-face sert aussi au tableau de fin : ici, seule celle de la frise
      change de forme. */
   .qz-frise .qz-face{flex:0 0 auto;width:auto;height:auto;align-self:stretch;border-radius:0}
-  .qz-rang{top:4px;left:4px;min-width:18px;height:18px;padding:0 4px;font-size:10px;border-radius:6px}
+  .qz-rang{top:4px;left:4px;min-width:20px;height:20px;padding:0 4px;font-size:10px;border-radius:99px}
   .qz-vide{font-size:17px}
   .qz-titre{flex:1;justify-content:center;gap:1px;padding:7px 0;text-align:left}
   .qz-titre b{
@@ -603,50 +861,50 @@
 }
 
 /* =======================================================================
-   Le téléphone
+   Le telephone
 
    La barre de titre est celle de l'Archive : sous 640 px elle passe en une
-   rangée d'icônes rondes avec un titre au milieu (voir ../archive/archive.css).
-   .qz-marque prend la place que .brand occupe là-bas, il lui faut donc les
-   mêmes règles - sans quoi « Mini-Jeux / Quiz » et son sous-titre poussaient
-   le bouton de suggestion hors de l'écran.
+   rangee d'icones rondes avec un titre au milieu. .qz-marque prend la place
+   que .brand occupe la-bas, il lui faut donc les memes regles - sans quoi
+   « Mini-Jeux / Quiz » et son sous-titre poussaient le bouton de suggestion
+   hors de l'ecran.
    ======================================================================= */
 @media (max-width:640px){
-  /* order:3 comme .brand là-bas : sans lui, la marque (ordre par défaut 0)
-     serait passée AVANT le bouton de retour, qui porte order:1. */
+  /* order:3 comme .brand la-bas : sans lui, la marque (ordre par defaut 0)
+     serait passee AVANT le bouton de retour, qui porte order:1. */
   .qz-marque{order:3;flex:1 1 auto;min-width:0;align-items:center;gap:8px}
   .qz-marque b{
-    font-size:17px;min-width:0;
+    font-size:15px;min-width:0;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   /* Le sous-titre dit la manche en cours (« chronologie », « 3/5 »...). Il
-     n'a plus la place à côté du titre sur une rangée unique, et la partie
-     l'affiche déjà dans sa propre barre. */
+     n'a plus la place a cote du titre sur une rangee unique, et la partie
+     l'affiche deja dans sa propre barre. */
   .qz-marque span{display:none}
 
-  /* ---------- l'entrée ----------
-     Le titre géant tenait la moitié de l'écran avant la première carte de
-     jeu : sur téléphone, ce qu'on vient chercher, c'est la liste. */
-  .qz-hero{padding:30px 0 24px}
+  /* ---------- l'entree ----------
+     Le titre geant tenait la moitie de l'ecran avant la premiere carte de
+     jeu : sur telephone, ce qu'on vient chercher, c'est la liste. */
+  .qz-hero{padding:32px 0 26px}
   .qz-hero p{font-size:13.5px;margin-top:10px}
-  .qz-fam{margin-top:26px}
-  .qz-corps{padding:20px 0 calc(40px + env(safe-area-inset-bottom,0px))}
+  .qz-fam{margin-top:28px}
+  .qz-corps{padding:22px 0 calc(40px + env(safe-area-inset-bottom,0px))}
 
   /* ---------- une partie ----------
-     Les cibles passent à 48 px : répondre est le seul geste de cet écran,
+     Les cibles passent a 48 px : repondre est le seul geste de cet ecran,
      il ne doit jamais demander de viser. 16 px dans le champ, sinon iOS
-     zoome à chaque réponse tapée et ne remet plus la page d'aplomb. */
+     zoome a chaque reponse tapee et ne remet plus la page d'aplomb. */
   .qz-choix{gap:8px}
   .qz-choix button{font-size:14px;padding:13px 14px;min-height:50px}
   .qz-saisie input{height:48px;font-size:16px}
   .qz-saisie .cta,.qz-saisie .ghost{height:48px}
   .qz-ac{max-height:min(42vh,246px)}
   .qz-ac button{padding:11px 10px;font-size:14px}
-  /* les deux boutons de fin de manche se partagent la largeur plutôt que
+  /* les deux boutons de fin de manche se partagent la largeur plutot que
      de se serrer au milieu */
   .qz-boutons{gap:8px}
   .qz-boutons .cta,.qz-boutons .cta.auto,.qz-boutons .ghost{flex:1 1 0;height:48px}
-  .qz-nav{margin-bottom:14px}
+  .qz-nav{margin-bottom:16px}
   /* Deux options ecrites en toutes lettres ne tiennent plus a cote du titre
      de famille : la piste passe a la ligne suivante, sur toute la largeur,
      plutot que de rogner ses libelles. Le titre garde son trait au-dessus. */
@@ -654,32 +912,37 @@
   .qz-src{flex:1 1 100%}
   .qz-src-piste{flex:1 1 auto}
   /* cibles au pouce, et les deux options se partagent la largeur */
-  .qz-src-opt{flex:1 1 0;padding:10px 12px;font-size:12.5px}
-  .qz-tableau{margin:20px 0}
+  .qz-src-opt{flex:1 1 0;padding:10px 12px;font-size:11px}
+  .qz-tableau{margin:22px 0}
+  /* Les equerres se resserrent avec la carte : a 11 px elles flottaient
+     au milieu d'un coin devenu plus court. */
+  .qz-jeu{min-height:0;padding:18px 20px 20px}
+  .qz-jeu u{left:20px;bottom:16px}
 }
 
 /* =======================================================================
    Grille de connexions
 
-   Seize cases en carré, et des bandes qui s'empilent au-dessus à mesure
-   qu'on résout : le plateau rétrécit, ce qu'on a trouvé reste sous les yeux.
-   C'est la forme du jeu, et elle tient toute seule - il n'y a rien à faire
-   défiler entre la grille et ce qu'on vient d'en tirer.
+   Seize cases en carre, et des bandes qui s'empilent au-dessus a mesure
+   qu'on resout : le plateau retrecit, ce qu'on a trouve reste sous les yeux.
+   C'est la forme du jeu, et elle tient toute seule - il n'y a rien a faire
+   defiler entre la grille et ce qu'on vient d'en tirer.
 
-   Quatre couleurs pour quatre groupes, données dans l'ordre d'arrivée (que
-   le serveur mélange exprès : la couleur ne dit jamais la nature du lien).
-   Elles sont choisies dans ce que la page utilise déjà - l'or du site, le
-   bleu de la wishlist, le vert des bonnes réponses - plutôt qu'inventées.
+   Quatre couleurs pour quatre groupes, donnees dans l'ordre d'arrivee (que
+   le serveur melange expres : la couleur ne dit jamais la nature du lien).
+   Elles sont choisies dans la palette du salon - l'or, le vert des bonnes
+   reponses, le bleu froid, le violet du classeur de cartes.
    ======================================================================= */
 .gc{max-width:760px;margin:0 auto}
 
-/* ---------- une bande de groupe résolu ---------- */
+/* ---------- une bande de groupe resolu ---------- */
 .gc-bandes{display:flex;flex-direction:column;gap:8px}
 .gc-bandes:not(:empty){margin-bottom:12px}
 .gc-bande{
-  padding:11px 14px;border-radius:12px;text-align:center;
-  background:color-mix(in srgb, var(--gc) 16%, var(--bg2));
-  border:1px solid color-mix(in srgb, var(--gc) 45%, transparent);
+  padding:12px 15px;border-radius:12px;text-align:center;
+  background:color-mix(in srgb, var(--gc) 14%, var(--bg2));
+  border:1px solid color-mix(in srgb, var(--gc) 48%, transparent);
+  box-shadow:0 0 28px -18px var(--gc);
   animation:gc-bande-entre .32s cubic-bezier(.2,.8,.3,1);
 }
 @keyframes gc-bande-entre{
@@ -687,54 +950,53 @@
   to{opacity:1;transform:none}
 }
 .gc-bande b{
-  display:block;font-family:var(--mono);font-size:10.5px;font-weight:700;
-  letter-spacing:.13em;text-transform:uppercase;color:var(--gc);
+  display:block;font-family:var(--titre);font-size:10.5px;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--gc);
 }
 .gc-bande i{
-  display:block;margin-top:5px;font-style:normal;font-size:13px;line-height:1.45;
+  display:block;margin-top:6px;font-style:normal;font-size:13px;line-height:1.5;
   color:var(--text);
 }
-/* Dévoilée en perdant, pas trouvée : la teinte reste, pour qu'on relie la
-   bande à ce qu'on cherchait, mais elle s'éteint - ce n'est pas la même
+/* Devoilee en perdant, pas trouvee : la teinte reste, pour qu'on relie la
+   bande a ce qu'on cherchait, mais elle s'eteint - ce n'est pas la meme
    chose de l'avoir vue. */
-.gc-bande.ratee{opacity:.5}
-.gc-bande.ratee b::after{content:" · non trouvé";opacity:.7}
+.gc-bande.ratee{opacity:.5;box-shadow:none}
+.gc-bande.ratee b::after{content:" · non trouve";opacity:.7}
 .gc-bande.or{--gc:var(--gold)}
-.gc-bande.vert{--gc:#9BE3BE}
-.gc-bande.bleu{--gc:#8FB8E8}
+.gc-bande.vert{--gc:var(--juste)}
+.gc-bande.bleu{--gc:var(--wish)}
 .gc-bande.violet{--gc:#C6A0E0}
 
 /* ---------- le plateau ----------
    Quatre colonnes toujours : c'est la forme du jeu, pas une mise en page
-   qui s'adapte. Un carré de quatre sur quatre se lit en lignes ET en
-   colonnes, et une grille qui repasserait à deux colonnes sur téléphone ne
-   serait plus le même jeu. */
+   qui s'adapte. Un carre de quatre sur quatre se lit en lignes ET en
+   colonnes, et une grille qui repasserait a deux colonnes sur telephone ne
+   serait plus le meme jeu. */
 .gc-plateau{
   display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
 }
-/* Le temps qu'une réponse s'anime, le plateau ne répond plus - ni au clic,
-   qui est déjà ignoré côté script, ni au survol, qui laissait croire le
-   contraire. Voir gcAnime() dans templates/quiz.html. */
+/* Le temps qu'une reponse s'anime, le plateau ne repond plus - ni au clic,
+   qui est deja ignore cote script, ni au survol, qui laissait croire le
+   contraire. */
 .gc-plateau.fige{pointer-events:none}
-/* La case est d'abord une jaquette, le titre vient par-dessus. Elle était
-   en filigrane à 17 % : on lisait seize titres, l'image ne servait qu'à
-   meubler. Une jaquette se reconnaît avant de se lire - c'est même tout le
-   propos de « Jaquette floue » deux jeux plus haut -, et un lien entre
-   quatre jeux saute bien plus vite aux yeux sur des images. D'où la case
-   haute, l'image nette, et le titre posé en bas sur un voile. */
+/* La case est d'abord une jaquette, le titre vient par-dessus. Une jaquette
+   se reconnait avant de se lire - c'est meme tout le propos de « Jaquette
+   floue » deux jeux plus haut -, et un lien entre quatre jeux saute bien
+   plus vite aux yeux sur des images. D'ou la case haute, l'image nette, et
+   le titre pose en bas sur un voile. */
 .gc-case{
   position:relative;isolation:isolate;overflow:hidden;
   display:flex;align-items:flex-end;justify-content:center;
   min-height:124px;padding:8px 7px;
   border-radius:12px;border:1px solid var(--line);background:var(--bg2);
-  font-family:var(--body);font-size:12px;line-height:1.25;color:var(--text);
+  font-family:var(--body);font-size:12px;line-height:1.3;color:var(--text);
   text-align:center;cursor:pointer;
   transition:border-color .16s,background .16s,color .16s,box-shadow .16s,
              transform .16s cubic-bezier(.2,.8,.3,1);
 }
-/* La jaquette, dans une couche à part et non en background de la case :
+/* La jaquette, dans une couche a part et non en background de la case :
    c'est ce qui permet de poser le voile entre elle et le texte sans la
-   teinter - même procédé que les bannières de l'Archive. */
+   teinter. */
 .gc-case::before{
   content:'';position:absolute;inset:0;z-index:-2;
   background-image:var(--fond);background-size:cover;background-position:center;
@@ -742,75 +1004,73 @@
 }
 /* Le voile. Franc sous le titre, presque rien en haut : l'image reste
    lisible sur les deux tiers de la case, et le texte ne se bat jamais
-   contre un ciel clair ou une armure blanche. Posé seulement quand il y a
+   contre un ciel clair ou une armure blanche. Pose seulement quand il y a
    une jaquette - sur une case nue il ne ferait qu'assombrir le vide. */
 .gc-case.jaq::after{
   content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(to top,
-    rgba(14,11,20,.95) 16%, rgba(14,11,20,.72) 44%, rgba(14,11,20,.2) 78%,
-    rgba(14,11,20,.06));
+    rgba(7,6,14,.96) 16%, rgba(7,6,14,.74) 44%, rgba(7,6,14,.2) 78%,
+    rgba(7,6,14,.06));
 }
-.gc-case.jaq span{text-shadow:0 1px 3px rgba(0,0,0,.85)}
+.gc-case.jaq span{text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .gc-case span{
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
   overflow:hidden;overflow-wrap:anywhere;
 }
-/* ---------- survol, appui, sélection ----------
-   Trois états, et une seule règle qui les tient : la jaquette ne disparaît
+/* ---------- survol, appui, selection ----------
+   Trois etats, et une seule regle qui les tient : la jaquette ne disparait
    jamais. C'est elle qu'on compare - quatre images qu'on rapproche des
-   yeux -, et l'ancienne sélection la faisait tomber à 20 % d'opacité :
-   désigner une case revenait à effacer ce sur quoi on était en train de
-   réfléchir. Tout se dit donc autour et par-dessus, jamais à sa place.
+   yeux - et la faire tomber reviendrait a effacer ce sur quoi on est en
+   train de reflechir. Tout se dit donc autour et par-dessus, jamais a sa
+   place.
 
-   Et deux directions opposées, pour que les deux gestes ne se confondent
-   pas : le survol SOULÈVE la case, la sélection l'ENFONCE. */
+   Et deux directions opposees, pour que les deux gestes ne se confondent
+   pas : le survol SOULEVE la case, la selection l'ENFONCE. */
 .gc-case:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .gc-case:disabled{cursor:default}
 
-/* Le survol soulève et rallume : au repos les jaquettes sont à 72 % pour
-   que seize images ne se disputent pas l'œil, et celle qu'on montre du
+/* Le survol souleve et rallume : au repos les jaquettes sont a 72 % pour
+   que seize images ne se disputent pas l'oeil, et celle qu'on montre du
    doigt est justement celle qu'on veut voir en grand.
-   Sous (hover:hover) : sur un écran tactile, :hover reste accroché à la
-   dernière case touchée, et une case allumée sans raison au milieu de la
-   grille se lit comme une sélection. */
+   Sous (hover:hover) : sur un ecran tactile, :hover reste accroche a la
+   derniere case touchee, et une case allumee sans raison au milieu de la
+   grille se lit comme une selection. */
 @media (hover:hover){
   .gc-case:hover:not(:disabled){
-    border-color:var(--line-strong);
+    border-color:color-mix(in srgb,var(--gold) 55%,transparent);
     transform:translateY(-3px);
-    box-shadow:0 12px 24px -14px #000;
+    box-shadow:0 12px 24px -14px #000,0 0 24px -14px var(--gold);
   }
   .gc-case:hover:not(:disabled)::before{opacity:1}
-  /* Déjà prise : elle reste enfoncée, elle remonte juste d'un cheveu.
+  /* Deja prise : elle reste enfoncee, elle remonte juste d'un cheveu.
      La faire bondir annulerait la seule chose qui distingue les deux. */
   .gc-case.prise:hover:not(:disabled){transform:scale(.965) translateY(-2px)}
 }
-/* L'appui, au doigt comme à la souris. Sur un écran tactile c'est le seul
-   retour immédiat : il n'y a pas de survol pour préparer le geste. */
+/* L'appui, au doigt comme a la souris. Sur un ecran tactile c'est le seul
+   retour immediat : il n'y a pas de survol pour preparer le geste. */
 .gc-case:active:not(:disabled),
 .gc-case.prise:active:not(:disabled){transform:scale(.94);transition-duration:.06s}
 
-/* Désignée. La jaquette passe au contraire à pleine lumière, et la
-   sélection se dit par un cerne d'or épais, une lueur autour, le titre en
-   or et une coche dans le coin. Le fond doré ne se voit que sur les cases
-   sans jaquette - ailleurs l'image le couvre, ce qui est exactement ce
-   qu'on veut. */
+/* Designee. La jaquette passe au contraire a pleine lumiere, et la
+   selection se dit par un cerne d'or epais, une lueur autour, le titre en
+   or et une coche dans le coin. */
 .gc-case.prise{
   border-color:var(--gold);
   background:color-mix(in srgb,var(--gold) 15%,var(--bg2));
-  color:var(--gold);
+  color:var(--or-clair);
   transform:scale(.965);
   box-shadow:inset 0 0 0 2px var(--gold),
-             0 6px 20px -10px rgba(229,196,107,.75);
+             0 6px 22px -10px rgba(255,215,0,.8);
 }
 .gc-case.prise::before{opacity:1}
 /* L'image reste nette sous le titre : le voile doit donc rester entier,
-   et l'ombre portée du texte se renforce plutôt que de disparaître. */
+   et l'ombre portee du texte se renforce plutot que de disparaitre. */
 .gc-case.prise span{text-shadow:0 1px 4px rgba(0,0,0,.95)}
 
 /* La coche. Le cerne dit « celle-ci » ; la coche dit « elle est prise » -
    et sur quatre cases d'un coup, c'est elle qu'on compte du regard sans
    relire les titres. Elle arrive en rebondissant : c'est ce qui accuse
-   réception du clic, à l'endroit exact où l'on vient de cliquer. */
+   reception du clic, a l'endroit exact ou l'on vient de cliquer. */
 .gc-coche{
   position:absolute;top:6px;right:6px;width:21px;height:21px;border-radius:50%;
   display:grid;place-items:center;
@@ -824,20 +1084,20 @@
 .gc-case.prise .gc-coche{opacity:1;transform:none}
 
 /* Le groupe part : les quatre cases s'allument ensemble juste avant que la
-   grille ne se redessine. Sans ce temps d'arrêt, il disparaîtrait sans
+   grille ne se redessine. Sans ce temps d'arret, il disparaitrait sans
    qu'on ait vu lesquelles - et on veut les revoir en vert, jaquettes
    comprises, pour comprendre le lien qu'on vient de trouver. */
 .gc-case.juste{
-  border-color:#9BE3BE;
-  background:color-mix(in srgb,#9BE3BE 16%,var(--bg2));
-  color:#9BE3BE;transform:scale(.965);
-  box-shadow:inset 0 0 0 2px #9BE3BE, 0 6px 22px -8px rgba(155,227,190,.55);
+  border-color:var(--juste);
+  background:color-mix(in srgb,var(--juste) 16%,var(--bg2));
+  color:var(--juste);transform:scale(.965);
+  box-shadow:inset 0 0 0 2px var(--juste), 0 6px 24px -8px rgba(76,255,145,.6);
 }
 .gc-case.juste::before{opacity:1}
-.gc-case.juste .gc-coche{background:#9BE3BE;color:#0E2019}
+.gc-case.juste .gc-coche{background:var(--juste);color:#06210F}
 
-/* Raté : une secousse courte, la seule chose qu'on lise sans la lire.
-   L'image recule à moitié - la case vire au rouge sans pour autant
+/* Rate : une secousse courte, la seule chose qu'on lise sans la lire.
+   L'image recule a moitie - la case vire au rouge sans pour autant
    s'effacer, on doit pouvoir regarder ce qu'on vient de proposer. */
 .gc-case.faux{
   border-color:#B4295C;
@@ -848,8 +1108,8 @@
 }
 .gc-case.faux::before{opacity:.5}
 .gc-case.faux .gc-coche{background:#B4295C;color:#FFE8EE}
-/* L'échelle est reprise dans chaque étape : une animation remplace le
-   transform de la case, et sans elle la case bondirait à sa taille pleine
+/* L'echelle est reprise dans chaque etape : une animation remplace le
+   transform de la case, et sans elle la case bondirait a sa taille pleine
    le temps de la secousse - un sursaut vertical par-dessus l'horizontal. */
 @keyframes gc-secousse{
   10%,90%{transform:scale(.965) translateX(-2px)}
@@ -858,53 +1118,55 @@
 }
 
 /* ---------- le message ----------
-   Une seule ligne, réservée en permanence : sans hauteur fixe, « Il n'en
-   manquait qu'un » ferait sauter tout le bas de la page à chaque essai. */
+   Une seule ligne, reservee en permanence : sans hauteur fixe, « Il n'en
+   manquait qu'un » ferait sauter tout le bas de la page a chaque essai. */
 .gc-message{
-  margin:14px 0 0;min-height:1.5em;text-align:center;
+  margin:16px 0 0;min-height:1.5em;text-align:center;
   font-size:13px;color:var(--muted);transition:color .15s;
 }
-.gc-message.fort{color:var(--gold)}
-/* Il rejoue son apparition à chaque essai, même quand il redit exactement
-   la même chose : deux « Presque » de suite s'écrivaient au même endroit
-   sans que rien ne bouge, et le jeu avait l'air de n'avoir pas entendu.
-   C'est gcDitMessage() qui repose la classe - voir templates/quiz.html. */
+.gc-message.fort{color:var(--or-clair);text-shadow:0 0 14px rgba(255,215,0,.3)}
+/* Il rejoue son apparition a chaque essai, meme quand il redit exactement
+   la meme chose : deux « Presque » de suite s'ecrivaient au meme endroit
+   sans que rien ne bouge, et le jeu avait l'air de n'avoir pas entendu. */
 .gc-message.dit{animation:gc-dit .3s cubic-bezier(.2,.8,.3,1)}
 @keyframes gc-dit{
   from{opacity:0;transform:translateY(-5px)}
 }
 
-/* ---------- vies et actions ---------- */
+/* ---------- vies et actions ----------
+   Les erreurs restantes en jetons : quatre pastilles rouges qui s'eteignent
+   une a une. Le nombre se compte d'un regard, et une pastille eteinte se
+   voit mieux qu'un « 3 » devenu « 2 ». */
 .gc-vies{
-  display:flex;align-items:center;justify-content:center;gap:7px;margin:6px 0 16px;
+  display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0 18px;
 }
 .gc-vies u{
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  font-family:var(--titre);font-size:9.5px;letter-spacing:.2em;
   text-transform:uppercase;color:var(--muted);text-decoration:none;margin-right:4px;
 }
 .gc-vies i{
-  width:10px;height:10px;border-radius:50%;
-  background:#B4295C;box-shadow:0 0 9px -2px #B4295C;
+  width:11px;height:11px;border-radius:50%;
+  background:#B4295C;box-shadow:0 0 10px -2px #B4295C;
   transition:background .25s,box-shadow .25s,opacity .25s;
 }
-/* Une vie dépensée s'éteint mais reste : le nombre d'erreurs encore permises
-   se lit alors sans compter, et le total ne bouge pas d'un essai à l'autre. */
+/* Une vie depensee s'eteint mais reste : le nombre d'erreurs encore permises
+   se lit alors sans compter, et le total ne bouge pas d'un essai a l'autre. */
 .gc-vies i.usee{background:var(--bg3);box-shadow:none;opacity:.6}
 .gc-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .gc-actions .ghost{height:40px}
 .gc-ok{width:auto;padding:0 28px;height:40px}
-.gc-ok:disabled{opacity:.4;cursor:default;filter:none}
+.gc-ok:disabled{opacity:.4;cursor:default;filter:none;transform:none;box-shadow:none}
 
 @media (max-width:640px){
-  /* Le carré reste un carré - voir plus haut. Ce sont le texte et les
-     écarts qui se resserrent, pas la grille qui se déplie. */
+  /* Le carre reste un carre - voir plus haut. Ce sont le texte et les
+     ecarts qui se resserrent, pas la grille qui se deplie. */
   .gc-plateau{gap:6px}
   .gc-case{min-height:104px;padding:6px 4px;font-size:10.5px;border-radius:10px}
   .gc-case span{-webkit-line-clamp:3}
   .gc-coche{width:18px;height:18px;top:5px;right:5px;font-size:10.5px}
-  .gc-bande{padding:9px 11px}
+  .gc-bande{padding:10px 12px}
   .gc-bande i{font-size:11.5px}
-  .gc-bande b{font-size:9.5px;letter-spacing:.1em}
+  .gc-bande b{font-size:9.5px;letter-spacing:.14em}
   .gc-actions{gap:6px}
   .gc-actions .ghost,.gc-ok{flex:1 1 0;height:46px;padding:0 10px;min-width:0}
   .gc-message{font-size:12.5px}
@@ -912,9 +1174,9 @@
 @media (max-width:380px){
   .gc-case{min-height:92px;font-size:9.5px}
 }
-/* Mouvement réduit : tout ce qui bouge s'arrête, rien de ce qui informe ne
-   part. Le cerne, la couleur, la coche et le texte du message disent déjà
-   tout - la secousse, le rebond et le soulèvement n'étaient que la manière
+/* Mouvement reduit : tout ce qui bouge s'arrete, rien de ce qui informe ne
+   part. Le cerne, la couleur, la coche et le texte du message disent deja
+   tout - la secousse, le rebond et le soulevement n'etaient que la maniere
    de le dire. */
 @media (prefers-reduced-motion:reduce){
   .gc-case,.gc-case:hover:not(:disabled),.gc-case:active:not(:disabled),
@@ -923,4 +1185,6 @@
   .gc-case.faux{animation:none}
   .gc-coche{transform:none}
   .gc-message.dit{animation:none}
+  .qz-jeu:hover{transform:none}
+  .cta:hover,.cta:active{transform:none}
 }

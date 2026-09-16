@@ -59,6 +59,9 @@
         <span class="led"></span>&#9881;
       </button>
       <div class="menu" id="menu" hidden role="menu">
+        <!-- Seulement dans son propre classeur, comme tout ce qui écrit :
+             majVerrou() le montre quand le serveur a dit `write: true`. -->
+        <button class="menu-item" id="ajoutBtn" role="menuitem" hidden>Ajouter une carte&#8230;</button>
         <button class="menu-item" id="exportBtn" role="menuitem">Exporter&#8230;</button>
         <!-- Il n'y a plus de mode éditeur à déverrouiller : le serveur dit
              `write: true` quand le classeur affiché est celui du visiteur
@@ -663,6 +666,7 @@ function majVerrou(){
      désignée, donc dès l'arrivée sur la page */
   el('pSave').hidden = !CAN_WRITE;
   el('pDel').hidden = true;
+  el('ajoutBtn').hidden = !CAN_WRITE;
   if (S.sel !== null) majPanel(S.sel);   // rétablit pDel selon la carte
 }
 
@@ -1605,12 +1609,193 @@ function ouvrirModale(html){
   el('modal').classList.add('open');
 }
 function fermerModale(){
+  if (AJOUT){ clearTimeout(AJOUT.minuteur); if (AJOUT.stop) AJOUT.stop.abort(); AJOUT = null; }
   el('modal').classList.remove('open');
   el('sheetbox').innerHTML = '';
 }
 el('modal').addEventListener('click', e => {
   if (e.target === el('modal')) fermerModale();
 });
+
+/* =========================================================
+   Ajouter une carte qui vient de sortir
+
+   Le classeur ne connaissait que les cartes de l'import : une carte parue
+   depuis n'avait nulle part où se ranger. On choisit son onglet et son nom,
+   et elle arrive au bout de l'onglet, pochette vide - le panneau s'ouvre
+   ensuite dessus pour la ranger, comme n'importe quelle autre.
+
+   Au bout, et non à une place choisie : l'insérer au milieu décalerait
+   toutes les pochettes qui suivent. Voir ajouter() dans collection.py.
+
+   Le nom se tape librement, mais la liste propose les noms exacts du fichier
+   des cartes : c'est par ce nom, à la lettre près, que la pochette retrouve
+   son illustration. Une carte trop récente pour le fichier reste ajoutable,
+   elle montrera son nom en attendant.
+   ========================================================= */
+let AJOUT = null;   // { famille, noms, curseur, minuteur, stop }
+
+function ouvrirAjout(){
+  closeMenu();
+  if (!CAN_WRITE || !DATA.types.length) return;
+  const familles = DATA.types.map((t, i) =>
+    '<button type="button" class="exp-btn' + (i === S.t ? ' on' : '') + '" data-ti="' + i + '">'
+    + esc(t.label) + '</button>').join('');
+  ouvrirModale(
+    '<h2>Ajouter une carte</h2>'
+    + '<p>Une carte sortie après le remplissage du classeur. Elle arrive au bout'
+    + ' de son onglet, pochette vide, prête à être rangée.</p>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Onglet</span></div>'
+    +   '<div class="exp-format aj-familles" role="group" aria-label="Onglet">' + familles + '</div></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Nom de la carte</span></div>'
+    +   '<div class="aj-champ">'
+    +     '<input id="ajNom" type="text" maxlength="200" autocomplete="off" spellcheck="false"'
+    +     ' placeholder="Nom français de la carte..." aria-label="Nom de la carte"'
+    +     ' role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ajListe">'
+    +     '<div class="aj-liste" id="ajListe" role="listbox" hidden></div>'
+    +   '</div></div>'
+    + '<p class="exp-info" id="ajInfo"></p>'
+    + '<div class="row"><button class="act ghost" id="ajAnnuler">Annuler</button>'
+    + '<button class="act" id="ajGo">Ajouter</button></div>');
+
+  AJOUT = { famille: S.t, noms: [], curseur: -1, minuteur: 0, stop: null };
+  const b = el('sheetbox');
+  b.querySelectorAll('.aj-familles .exp-btn').forEach(btn => btn.onclick = () => {
+    b.querySelectorAll('.aj-familles .exp-btn').forEach(x => x.classList.remove('on'));
+    btn.classList.add('on');
+    AJOUT.famille = +btn.dataset.ti;
+    majAjoutInfo();
+  });
+  el('ajNom').addEventListener('input', () => { majAjoutInfo(); proposeNoms(); });
+  el('ajNom').addEventListener('keydown', toucheAjout);
+  el('ajListe').addEventListener('mousedown', e => e.preventDefault());   // garde le focus
+  el('ajListe').addEventListener('click', e => {
+    const o = e.target.closest('[data-k]'); if (o) choisitNom(+o.dataset.k);
+  });
+  el('ajAnnuler').onclick = fermerModale;
+  el('ajGo').onclick = lancerAjout;
+  majAjoutInfo();
+  el('ajNom').focus();
+}
+
+/* Où la carte va atterrir, ou pourquoi elle ne peut pas : un doublon se dit
+   avant d'appuyer sur le bouton, pas après. */
+function majAjoutInfo(){
+  if (!AJOUT || !el('ajInfo')) return;
+  const t = DATA.types[AJOUT.famille];
+  const nom = el('ajNom').value.trim();
+  const k = cle(nom);
+  const deja = !!k && t.classeurs.some(c => c.cards.some(x => cle(x[NOM]) === k));
+  const cs = t.classeurs, der = cs[cs.length - 1];
+  const plein = der && der.cards.length >= PAGES_PAR_CLASSEUR * PER_PAGE;
+  const n = der ? der.cards.length : 0;
+  const o = pos(plein ? 0 : n);
+  el('ajInfo').innerHTML = deja
+    ? '<b>Déjà dans l\'onglet ' + esc(t.label) + '.</b>'
+    : 'Classeur <b>' + (plein ? der.n + 1 : (der ? der.n : 1)) + '</b>, page <b>' + o.page
+      + '</b>, emplacement <b>' + o.slot + '</b> de l\'onglet ' + esc(t.label);
+  el('ajGo').disabled = !nom || deja;
+}
+
+function proposeNoms(){
+  clearTimeout(AJOUT.minuteur);
+  const q = el('ajNom').value.trim();
+  if (q.replace(/\s/g, '').length < 2){ montreNoms([]); return; }
+  AJOUT.minuteur = setTimeout(async () => {
+    if (AJOUT.stop) AJOUT.stop.abort();
+    const stop = AJOUT.stop = new AbortController();
+    try {
+      const r = await fetch('/api/collection/carte/noms?q=' + encodeURIComponent(q),
+                            { credentials:'same-origin', signal: stop.signal });
+      const d = await r.json();
+      if (AJOUT && AJOUT.stop === stop) montreNoms(Array.isArray(d.noms) ? d.noms : []);
+    } catch(e){ /* sans propositions, le nom se tape quand même */ }
+  }, 160);
+}
+
+function montreNoms(noms){
+  if (!AJOUT || !el('ajListe')) return;
+  AJOUT.noms = noms; AJOUT.curseur = -1;
+  const liste = el('ajListe');
+  liste.hidden = !noms.length;
+  el('ajNom').setAttribute('aria-expanded', noms.length ? 'true' : 'false');
+  liste.innerHTML = noms.map((n, k) =>
+    '<div class="aj-opt" role="option" data-k="' + k + '">'
+    + (n[1] ? '<img src="' + esc(DATA.vignettes + n[1]) + '" alt="" loading="lazy">'
+            : '<span class="aj-sans"></span>')
+    + '<span>' + esc(n[0]) + '</span></div>').join('');
+}
+
+function choisitNom(k){
+  const n = AJOUT.noms[k]; if (!n) return;
+  el('ajNom').value = n[0];
+  montreNoms([]);
+  majAjoutInfo();
+}
+
+function toucheAjout(e){
+  const noms = AJOUT.noms;
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && noms.length){
+    e.preventDefault();
+    AJOUT.curseur = (AJOUT.curseur + (e.key === 'ArrowDown' ? 1 : noms.length - 1)) % noms.length;
+    el('ajListe').querySelectorAll('.aj-opt').forEach((o, k) => {
+      o.classList.toggle('on', k === AJOUT.curseur);
+      if (k === AJOUT.curseur) o.scrollIntoView({ block:'nearest' });
+    });
+  } else if (e.key === 'Enter'){
+    e.preventDefault();
+    if (AJOUT.curseur >= 0 && noms.length) choisitNom(AJOUT.curseur);
+    else if (!el('ajGo').disabled) lancerAjout();
+  } else if (e.key === 'Escape' && noms.length){
+    e.stopPropagation();          // ferme la liste, pas la fenêtre
+    montreNoms([]);
+  }
+}
+
+async function lancerAjout(){
+  const t = DATA.types[AJOUT.famille];
+  const nom = el('ajNom').value.trim();
+  if (!t || !nom) return;
+  el('ajGo').disabled = true;
+  let data = null, pourquoi = '';
+  try {
+    const r = await fetch('/api/collection/carte', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ famille: t.key, nom: nom }),
+    });
+    try { data = await r.json(); } catch(e){}
+    if (!r.ok) pourquoi = (data && data.message) || ('réponse HTTP ' + r.status);
+  } catch(e){ pourquoi = 'serveur injoignable'; }
+  if (!data || data.ok === false || !Array.isArray(data.carte)){
+    toast("Échec de l'ajout : " + (pourquoi || 'erreur inconnue'), true);
+    if (el('ajGo')) el('ajGo').disabled = false;
+    return;
+  }
+
+  /* La carte se range là où le serveur l'a mise : le bout du bon tome, qu'on
+     crée s'il vient de s'ouvrir. Rien d'autre ne bouge, pas la peine de
+     recharger le classeur. */
+  const ti = DATA.types.indexOf(t);
+  let ci = t.classeurs.findIndex(c => c.n === data.classeur);
+  if (ci < 0){
+    t.classeurs.push({ n: data.classeur, cards: [] });
+    t.classeurs.sort((a, b) => a.n - b.n);
+    ci = t.classeurs.findIndex(c => c.n === data.classeur);
+  }
+  const cards = t.classeurs[ci].cards;
+  cards.push(data.carte);
+  ecrireCache(source().url, DATA);
+  fermerModale();
+  toast('« ' + data.carte[NOM] + ' » ajoutée à l\'onglet ' + t.label
+        + (data.autres ? ' (et à ' + data.autres + ' autre' + (data.autres > 1 ? 's' : '')
+                         + ' classeur' + (data.autres > 1 ? 's' : '') + ')' : '') + '.');
+  goToCard(ti, ci, cards.length - 1);   // le panneau s'ouvre dessus : reste à la ranger
+}
+el('ajoutBtn').onclick = ouvrirAjout;
 
 /* =========================================================
    Exporter le classeur

@@ -46,7 +46,11 @@
 /* ---------- une carte ---------- */
 .soc-liste{display:flex;flex-direction:column;gap:14px}
 .soc-post{
-  padding:15px 16px 11px;border-radius:14px;
+  /* Deux pixels de plus sur chaque bord qu'a l'origine : la note en haut a
+     droite, la photo en haut a gauche et la jaquette en bas touchaient
+     presque le cadre. Une carte qui serre son contenu contre ses bords se
+     lit comme un accident de mise en page, pas comme une carte. */
+  padding:17px 18px 13px;border-radius:14px;
   background:var(--bg2);border:1px solid var(--line);
   transition:border-color .15s,background .15s;
 }
@@ -217,7 +221,28 @@ button.soc-vers-jeu:hover,
    Meme coquille que les autres fenetres du site (.sheet), avec une largeur
    de lecture : un commentaire n'a pas besoin de 900 px. */
 .soc-sheet{max-width:640px}
-.soc-in{padding:16px;overflow:auto}
+/* C'est lui qui defile, et non .sheet -- voir « la boite rogne, un enfant
+   defile » dans archive.css : une barre de defilement n'etant jamais rognee
+   par un coin arrondi, celle de la fenetre sortait sous l'arrondi. Elle vit
+   maintenant ici, ou l'`overflow:hidden` de .sheet la coupe a la courbe.
+   L'`overflow-y:auto` lui vient de la regle generale de la-bas
+   (`.sheet > :not(.sheet-tools)`), il n'a pas a etre repete ici.
+
+   Ce qui se joue aussi la : `position:sticky` s'ancre sur le conteneur de
+   defilement le plus proche, et c'est desormais .soc-in lui-meme. La zone
+   d'ecriture collante du bas (voir plus bas) colle donc a lui -- avant, elle
+   avait besoin que .soc-in ne defile PAS pour s'ancrer sur .sheet.
+
+   Le bas est a zero : c'est la zone d'ecriture qui porte sa propre marge
+   basse, parce qu'elle doit pouvoir descendre jusqu'au bord de la fenetre. */
+.soc-in{padding:22px 24px 0}
+/* ... sauf quand il n'y a rien pour le porter. La fenetre « Avis » partage
+   ce meme .soc-in et n'a pas de zone d'ecriture : sans cette reprise, sa
+   liste d'avis se retrouvait collee au bord bas de la fenetre. Le `:has()`
+   pose la question a l'endroit ou elle se decide -- « ce panneau a-t-il un
+   bandeau en bas ? » -- plutot que d'ajouter une classe que le script
+   devrait penser a poser. */
+.soc-in:not(:has(> .soc-ecrire)):not(:has(> .soc-connexion)){padding-bottom:22px}
 /* La carte de tete d'une discussion : nue, parce qu'elle n'est pas un
    element d'une liste mais le sujet de la fenetre -- lui dessiner un cadre
    dans une fenetre qui en est deja un ferait une boite dans une boite.
@@ -229,8 +254,40 @@ button.soc-vers-jeu:hover,
    les donne a lire comme une pile de choses cliquables -- une par personne.
    Dix avis se suivaient alors sans rien pour dire ou l'un finit et ou
    l'autre commence. */
-.soc-in > .soc-post{border:none;background:none;padding:0}
-.soc-in > .soc-post .soc-pied{margin-bottom:4px}
+/* ---------- CORRECTION : le sujet devient un vrai panneau ----------
+   Il etait nu -- ni fond, ni bordure, ni marge -- au motif qu'un cadre dans
+   une fenetre qui en est deja un ferait une boite dans une boite. A l'usage
+   c'est l'inverse qui s'est verifie : le fond plus sombre qu'on devinait la
+   (celui de la fenetre, qui parait foncee parce que les bulles en dessous
+   sont plus claires) DELIMITE utilement l'avis, et c'est ce qui permet de le
+   voir en entier d'un coup d'oeil.
+
+   Ce qui n'allait pas n'etait donc pas la delimitation mais son absence de
+   marge : sans padding a lui, la note, la photo, le pseudo et la jaquette se
+   collaient au bord de la zone sombre. Les 24 px de .soc-in separent le
+   panneau du bord de la FENETRE ; il lui fallait les siens, a l'interieur.
+
+   Le fond descend d'un cran sous celui de la fenetre (--bg contre --bg2) :
+   la delimitation est alors voulue et nette, au lieu d'etre un effet de bord
+   du contraste avec les commentaires. */
+.soc-in > .soc-post{
+  padding:18px 20px 14px;border-radius:14px;
+  background:var(--bg);border:1px solid var(--line);
+}
+/* ---------- le sujet reste petit ----------
+   Il avait ete agrandi -- jaquette a 88 px, pastilles d'avis plus grosses --
+   et c'etait une erreur de lecture de l'ecran : dans un onglet qui s'appelle
+   « Discussion », l'avis est le SUJET, pas le contenu. Ce qu'on vient y lire
+   et y ecrire, ce sont les commentaires ; l'avis n'a qu'a dire de quoi l'on
+   parle, et se taire.
+
+   Il garde donc exactement les proportions d'une carte du fil (voir .soc-post
+   plus haut, et .soc-post .pt) : rien n'est repris ici. Ce qui lui manquait
+   n'etait pas de la taille mais de l'air autour -- la note, la jaquette et
+   les deux compteurs du bas touchaient le bord de la fenetre, faute de
+   padding sur .soc-in. C'est ce padding qui a ete corrige, la-haut, et lui
+   seul. */
+.soc-in > .soc-post .soc-pied{margin-bottom:0}
 
 /* ---------- la fenetre « Avis » ----------
    Le jeu une fois, en haut, puis les gens. Voir socialAvisTeteHTML. */
@@ -276,7 +333,10 @@ button.soc-vers-jeu:hover,
 .soc-compte b{color:var(--text);font-variant-numeric:tabular-nums}
 .soc-compte i{font-style:normal;opacity:.45}
 
-.soc-fil{margin:4px 0 14px}
+/* La conversation, detachee du sujet : les commentaires commencaient quatre
+   pixels sous le pied de l'avis, si bien que la premiere bulle se lisait
+   comme une suite de la carte plutot que comme une reponse a celle-ci. */
+.soc-fil{margin:18px 0 0}
 .soc-msgs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
 /* Un commentaire, ses reponses et la place du champ pour repondre : le bloc
    qui les tient ensemble. C'est lui l'element de la liste maintenant, et non
@@ -287,6 +347,33 @@ button.soc-vers-jeu:hover,
 .soc-msg-in{
   flex:1 1 auto;min-width:0;padding:8px 11px;border-radius:11px;
   background:var(--bg3);border:1px solid var(--line);
+}
+/* ---------- la couleur de celui qui parle ----------
+   Elle est sur le PSEUDO, et sur lui seul.
+
+   Elle avait d'abord ete posee en contour autour de la bulle et de la photo :
+   une bordure coloree plus une lueur, par message. Sur un fil ou trois
+   personnes se repondent, ca faisait une pile de cadres de couleurs qui se
+   disputaient l'oeil -- et la couleur se lisait comme une alerte alors
+   qu'elle ne dit qu'une chose, « c'est lui qui parle ».
+
+   Sur le nom, elle dit exactement la meme chose et ne coute rien : le pseudo
+   est deja ce qu'on lit en premier dans une bulle, le colorer ne fait que le
+   rendre reconnaissable d'un fil a l'autre. La bulle, elle, redevient sobre.
+
+   `--perso` est posee sur .soc-msg par le script (voir socialPerso dans
+   archive-social.js) et descend jusqu'ici. Sans couleur choisie -- la
+   plupart des comptes -- le repli est la couleur du texte : un pseudo reste
+   un pseudo, il ne devient pas invisible. */
+.soc-msg-in .soc-perso b{color:var(--perso,var(--text))}
+/* Le survol ne bascule plus vers l'or : ce serait perdre l'information qu'on
+   vient d'installer. Le nom s'eclaircit sur place -- c'est le meme signe
+   « ceci mene quelque part » sans effacer a qui il appartient.
+   Les deux chemins de survol de .soc-perso plus haut sont repris ici, parce
+   qu'une couleur posee sur le <b> l'emporte sur celle qu'il heriterait. */
+.soc-msg-in .soc-perso:hover b,
+.soc-perso-ava:hover ~ .soc-msg-in .soc-perso b{
+  color:var(--perso,var(--gold));filter:brightness(1.3);
 }
 /* La ligne du dessus : qui parle, la note qu'il a mise au jeu, et le rappel
    que le message a ete retouche. Sur une seule ligne et alignes sur la base
@@ -381,50 +468,24 @@ button.soc-vers-jeu:hover,
   list-style:none;margin:0;padding:0 0 0 36px;
   display:flex;flex-direction:column;gap:8px;
 }
+/* Le trait vertical qui reliait les reponses a leur commentaire est parti.
+   Il etait gris clair, epais de deux pixels, et il tombait le long de la
+   colonne comme une rature -- pour ne dire qu'une chose que le retrait
+   disait deja. Ce qui manquait n'etait pas un lien de plus mais de savoir
+   QUI parle, et c'est le contour colore de chaque bulle qui le dit
+   maintenant (voir --perso plus haut). */
 .soc-reponses > li{position:relative}
-/* Le fil, qui descend du centre de la photo du commentaire au-dessus -- 13,
-   la moitie de ses 27. Un pseudo-element et non un `border-left` : la
-   bordure se serait posee au bord du bloc, a zero, et le trait serait parti
-   de nulle part.
-
-   Un morceau par reponse plutot qu'un seul trait sur la liste, et c'est ce
-   qui permet la ligne suivante : le dernier s'arrete au centre de sa propre
-   photo au lieu de pendre dans le vide sous le dernier message. */
-/* Les segments SE TOUCHENT, ils ne se recouvrent pas : `top:0` et
-   `bottom:-8px` font descendre chacun jusqu'a l'ecart qui le suit, ou
-   commence le suivant. En les faisant deborder des deux cotes, ils se
-   chevauchaient sur huit pixels -- et comme --line est une couleur
-   translucide, deux traits l'un sur l'autre donnent un trait deux fois plus
-   clair : le fil se lisait en pointille, clair-fonce-clair. */
-/* Pas de `border-radius` ici, et c'est deliberé : sur une barre de deux
-   pixels de large il arrondit AUSSI les deux bouts, donc chaque jointure
-   entre deux segments se pincait. Le trait se lisait en pointille alors
-   qu'il etait parfaitement continu. Seul le dernier garde un bout arrondi,
-   parce que lui s'arrete vraiment. */
-.soc-reponses > li::before{
-  content:'';position:absolute;left:-23px;top:0;bottom:-8px;
-  width:2px;background:var(--line-strong);
-}
-/* Le premier remonte chercher la bulle du commentaire au-dessus. */
-.soc-reponses > li:first-child::before{top:-10px}
-/* Le dernier s'arrete au centre de sa propre photo au lieu de pendre dans le
-   vide sous le message : 12 px, la moitie d'une photo de 23. */
-.soc-reponses > li:last-child::before{bottom:auto;height:12px;border-radius:0 0 2px 2px}
-/* Une reponse seule est a la fois la premiere et la derniere : elle part de
-   -10 et doit finir au meme endroit, d'ou les 10 px rendus a sa hauteur. */
-.soc-reponses > li:first-child:last-child::before{height:22px}
 .soc-reponses .soc-ava.p{width:23px;height:23px}
-/* Une reponse pese moins que ce a quoi elle repond : pas de contour, un fond
-   a peine pose. La hierarchie ne peut pas tenir au seul retrait -- deux
-   bulles identiques decalees de trente pixels se lisent comme deux
-   messages, pas comme une question et sa reponse.
-   `transparent` et non `border:none` : le pixel de bordure reste compte, et
-   rien ne se decale entre une reponse et un commentaire de tete. */
-.soc-reponses .soc-msg-in{
-  font-size:13px;
-  background:rgba(38,31,51,.5);
-  border-color:transparent;
-}
+/* Une reponse a le meme fond que tout le monde. Elle en avait un a part --
+   un violet translucide -- pour peser moins que ce a quoi elle repond ; le
+   resultat etait deux bleus differents dans une meme colonne, qu'on lisait
+   comme un defaut d'affichage plutot que comme une hierarchie.
+
+   Ce qui la distingue tient maintenant a deux choses qui, elles, veulent
+   dire quelque chose : son retrait, qui dit DE QUOI elle depend, et le
+   contour colore de son auteur, qui dit QUI l'ecrit. Le texte reste d'un
+   demi-point plus petit, seul reste de la hierarchie d'avant. */
+.soc-reponses .soc-msg-in{font-size:13px}
 
 /* Le champ pour repondre, aligne sur les reponses au-dessus : il ecrit au
    meme endroit qu'elles, il part donc du meme bord. */
@@ -447,18 +508,92 @@ button.soc-vers-jeu:hover,
 .soc-mini-form .soc-envoi{height:32px;padding:0 15px;font-size:12.5px}
 
 
-.soc-ecrire{display:flex;gap:9px;align-items:flex-end}
+.soc-ecrire{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+
+/* ---------- « Réponse à Cremy » ----------
+   La barre qui coiffe la zone d'ecriture quand elle vise un commentaire.
+   Sur toute la largeur -- d'ou le `flex-wrap` ci-dessus -- pour qu'elle
+   pousse le champ d'une ligne au lieu de se glisser a cote : elle doit se
+   voir, c'est elle qui explique ou partira ce qu'on est en train de taper.
+
+   Dans la couleur du profil, comme le reste de ce qui engage : c'est un etat
+   du champ, pas un message d'erreur. La croix, elle, reprend le rouge de
+   toutes les croix du site. */
+.soc-cible{
+  flex:1 1 100%;display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:9px;
+  background:color-mix(in srgb,var(--gold) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--gold) 38%,transparent);
+  font-size:12.5px;color:var(--text);
+}
+.soc-cible[hidden]{display:none}
+.soc-cible-txt{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.soc-cible-txt b{color:var(--gold);font-weight:700}
+.soc-cible-x{
+  flex:0 0 auto;width:22px;height:22px;border:none;background:none;
+  border-radius:6px;cursor:pointer;display:grid;place-items:center;
+  font-family:var(--mono);font-size:15px;line-height:1;color:#E8607F;
+  transition:color .15s,background .15s;
+}
+.soc-cible-x:hover{color:#fff;background:#B4295C}
+.soc-cible-x:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* ---------- la zone d'ecriture, collee en bas ----------
+   Elle vivait a la suite du fil : dans une discussion de dix messages, il
+   fallait la faire defiler pour la trouver, ecrire, puis remonter pour
+   relire ce a quoi on repondait. Elle reste maintenant a l'ecran, comme le
+   titre de la fenetre reste en haut -- .sheet-tools fait deja exactement ca
+   avec `position:sticky`, et ce bandeau-ci en est le pendant.
+
+   `> .soc-ecrire` : seulement la zone du bas. Les formulaires « Repondre »
+   et « Modifier » portent la meme classe (voir .soc-ecrire.soc-mini-form
+   plus haut) mais vivent au fond du fil, sous le message qu'ils visent --
+   les rendre collants les aurait arraches a leur place.
+
+   Les marges negatives lui rendent les bords de la fenetre, que le padding
+   de .soc-in lui prenait : le bandeau va d'un cote a l'autre, sinon on
+   verrait le fil defiler dans les deux gouttieres laissees a cote.
+   `bottom:-1px` plutot que 0 pour la meme raison que .sheet-tools : un
+   cheveu de recouvrement, et aucune ligne du fil ne fuit sous le bandeau. */
+.soc-in > .soc-ecrire,
+.soc-in > .soc-connexion{
+  position:sticky;bottom:-1px;z-index:2;
+  margin:18px -24px 0;padding:14px 24px 18px;
+  /* Opaque sous le champ, fondu au-dessus : le texte qui passe dessous
+     s'efface au lieu de se couper net sur une arete. Le meme degrade que la
+     barre du haut, retourne. */
+  background:linear-gradient(0deg,var(--bg2) calc(100% - 14px),rgba(17,30,49,0));
+}
+/* Le trait qui separe la conversation de ce qu'on est en train d'ecrire.
+   Pose en pseudo-element et non en `border-top` : la bordure se serait
+   dessinee au-dessus du degrade, donc en travers du fondu. */
+.soc-in > .soc-ecrire::before{
+  content:'';position:absolute;left:24px;right:24px;top:0;height:1px;
+  background:var(--line);
+}
+
 /* Une ligne au depart, et le champ pousse a mesure qu'on ecrit jusqu'a ce
    plafond -- passe lui, c'est le champ qui defile et le bouton « Envoyer »
-   reste ou il est. Plus de poignee : voir static/commun/champs.js. */
+   reste ou il est. Plus de poignee : voir static/commun/champs.js, qui lit
+   `min-height` et `max-height` dans la feuille : les changer ici suffit, il
+   n'y a rien a toucher dans le script. */
 .soc-champ{
-  flex:1 1 auto;min-height:44px;max-height:180px;resize:none;
-  padding:11px 12px;border-radius:11px;font:inherit;font-size:13.5px;
+  flex:1 1 auto;min-height:48px;max-height:200px;resize:none;
+  padding:13px 15px;border-radius:12px;font:inherit;font-size:14px;
+  line-height:1.5;
   color:var(--text);background:var(--bg3);border:1px solid var(--line);outline:none;
+  transition:border-color .15s,box-shadow .15s,background .15s;
 }
-.soc-champ:focus{border-color:var(--line-strong)}
-.soc-champ::placeholder{color:var(--muted)}
-.soc-envoi{width:auto;padding:0 20px;height:44px;flex:0 0 auto}
+/* Le champ actif se cerne de la couleur du profil, comme tous les champs du
+   site (voir .fld input:focus dans archive.css) : il n'avait qu'un lisere a
+   peine plus clair, et on ne voyait pas ou l'on ecrivait. */
+.soc-champ:focus{
+  border-color:color-mix(in srgb,var(--gold) 60%,transparent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 14%,transparent);
+  background:var(--bg2);
+}
+.soc-champ::placeholder{color:var(--muted);opacity:.75}
+.soc-envoi{width:auto;padding:0 22px;height:48px;flex:0 0 auto}
 
 /* ---------- la cloche ----------
    Dans l'en-tete, a gauche de l'engrenage. Meme dessin que lui (.cog) : ce
@@ -481,13 +616,20 @@ button.soc-vers-jeu:hover,
   background:#B4295C;color:#fff;border:2px solid var(--bg);
   font-family:var(--mono);font-size:9.5px;font-style:normal;line-height:1;
 }
+/* Le meme montage que les fenetres du site (voir .sheet dans archive.css) :
+   le panneau arrondi rogne, la liste qu'il contient defile. Pose sur le
+   panneau, le defilement sortait sa barre par les coins arrondis. */
 .soc-cloche-panneau{
   position:absolute;top:calc(100% + 9px);right:0;z-index:60;
-  width:min(340px,calc(100vw - 24px));max-height:min(460px,70vh);overflow:auto;
+  width:min(340px,calc(100vw - 24px));max-height:min(460px,70vh);
+  display:flex;flex-direction:column;overflow:hidden;
   border-radius:13px;background:var(--bg2);border:1px solid var(--line-strong);
   box-shadow:0 18px 44px rgba(0,0,0,.5);
 }
-.soc-notifs{list-style:none;margin:0;padding:5px}
+/* `min-height:0` pour la meme raison que le bloc de contenu d'une fenetre :
+   un enfant de flex ne descend pas sous la hauteur de son contenu sans lui, et
+   la liste pousserait le panneau au lieu de defiler dedans. */
+.soc-notifs{list-style:none;margin:0;padding:5px;overflow-y:auto;min-height:0}
 .soc-notif{
   display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:9px;
   cursor:pointer;transition:background .15s;
@@ -550,14 +692,31 @@ button.soc-vers-jeu:hover,
   .soc-barre-vide{order:3;flex:1 1 auto;margin-left:0}
 
   .soc-colonne{padding:16px 0 80px}
-  .soc-post{padding:13px 13px 9px;border-radius:12px}
+  .soc-post{padding:15px 15px 11px;border-radius:12px}
+  /* Le panneau du sujet garde ses marges sur telephone, en plus serre : sans
+     elles on retombe exactement sur ce qui n'allait pas en grand. */
+  .soc-in > .soc-post{padding:14px 15px 11px;border-radius:12px}
   .soc-cov{width:52px}
   .soc-note{font-size:20px}
-  .soc-in{padding:13px}
+  .soc-in{padding:16px 15px 0}
+  .soc-in:not(:has(> .soc-ecrire)):not(:has(> .soc-connexion)){padding-bottom:16px}
+  /* Le bandeau d'ecriture suit le nouveau padding, et se cale sur le bas de
+     l'ecran plutot que sur celui de la fenetre : `env()` rend la barre
+     d'accueil des telephones sans encoche a zero. */
+  .soc-in > .soc-ecrire,
+  .soc-in > .soc-connexion{
+    margin:14px -15px 0;
+    padding:12px 15px calc(12px + env(safe-area-inset-bottom,0px));
+  }
+  .soc-in > .soc-ecrire::before{left:15px;right:15px}
   /* Le bouton d'envoi passe sous le champ : cote a cote, il ne restait plus
      de place pour ecrire. */
-  .soc-ecrire{flex-direction:column;align-items:stretch}
+  .soc-ecrire{flex-direction:column;align-items:stretch;gap:8px}
   .soc-envoi{width:100%}
+  /* Deux lignes de champ au maximum une fois le bouton passe dessous : a
+     200 px, le champ et son bouton mangeaient la moitie d'un ecran de
+     telephone et il ne restait plus rien de la conversation au-dessus. */
+  .soc-champ{max-height:132px}
   /* Le retrait des reponses ne bouge pas : c'est la largeur d'une photo, et
      une photo fait la meme taille ici qu'ailleurs. Le reduire aurait casse
      l'alignement sous le texte du parent, qui est tout ce qui fait lire la

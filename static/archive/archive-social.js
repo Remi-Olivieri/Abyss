@@ -419,9 +419,23 @@ function socialNoteMsgHTML(sonJeu){
    rangée, si bien qu'un message effaçable était plus étroit que le message
    d'à côté - deux bulles de largeurs différentes pour une différence qui ne
    regarde que les droits de qui lit. */
+/* La couleur de personnalisation de l'auteur, posee en variable sur son
+   message : la bulle et la photo s'en cernent (voir --perso dans social.css).
+
+   Filtree ici plutot que crue : la valeur finit dans un attribut `style`, et
+   esc() n'echappe ni le point-virgule ni l'accolade -- de quoi sortir de la
+   declaration et en ecrire d'autres. Le serveur ne stocke que des teintes de
+   PALETTE, mais un garde-fou qui depend d'une validation ecrite ailleurs
+   n'en est pas un. Sans couleur, rien n'est pose et la bulle garde la
+   bordure grise de la feuille. */
+const SOC_HEX = /^#[0-9A-Fa-f]{6}$/;
+function socialPerso(hex){
+  return SOC_HEX.test(String(hex || '')) ? ` style="--perso:${hex}"` : '';
+}
+
 function socialMsgHTML(c, reponse){
   const aime = c.aime === true;
-  return `<div class="soc-msg" data-id="${c.id}">
+  return `<div class="soc-msg" data-id="${c.id}"${socialPerso(c.couleur)}>
     ${socialAvatarLien(c.pseudo, c.avatar, 'p')}
     <div class="soc-msg-in">
       <div class="soc-msg-tete">
@@ -479,6 +493,15 @@ function socialEcrireHTML(connecte){
       <a href="/abyss?connexion=1">Connecte-toi</a> pour aimer et commenter.</p>`;
   }
   return `<form class="soc-ecrire" autocomplete="off">
+    <!-- La cible d'une reponse. Cachee tant qu'on ecrit un commentaire neuf,
+         elle apparait au-dessus du champ des qu'on clique « Repondre » :
+         c'est le meme endroit qui sert aux deux, et c'est tout l'interet.
+         Voir socialVise() dans ce fichier. -->
+    <div class="soc-cible" id="socCible" hidden>
+      <span class="soc-cible-txt">Réponse à <b id="socCibleNom"></b></span>
+      <button type="button" class="soc-cible-x" id="socCibleX"
+              aria-label="Ne plus répondre à ce commentaire">&times;</button>
+    </div>
     <textarea class="soc-champ" rows="1" maxlength="1000"
       placeholder="Écrire un commentaire..." aria-label="Écrire un commentaire"></textarea>
     <button type="submit" class="cta soc-envoi">Envoyer</button>
@@ -507,7 +530,39 @@ function socialMiniFormHTML(valeur, valider){
    notification. Quand elle s'ouvre par-dessus la liste des avis, celle-ci
    reste dessous : la refermer suffit à la retrouver là où on l'avait
    laissée, sans rien redemander au serveur. */
+/* ---------- à qui l'on répond ----------
+   L'identifiant du commentaire vise par la zone d'ecriture du bas, ou null
+   quand on ecrit un commentaire neuf. Un seul a la fois : il n'y a qu'un
+   champ, il ne peut viser qu'une chose.
+
+   Hors de socialBrancheFil parce que la discussion se rouvre et se redessine
+   -- la liste des messages est reecrite a chaque envoi -- et que la cible,
+   elle, ne doit pas survivre a la fermeture de la fenetre. D'ou la remise a
+   zero dans ouvrirFilSocial juste en dessous. */
+let SOC_CIBLE = null;
+
+function socialVise(h, id, pseudo){
+  SOC_CIBLE = id;
+  const barre = h.querySelector('#socCible');
+  const nom = h.querySelector('#socCibleNom');
+  if(nom) nom.textContent = pseudo || '';
+  if(barre) barre.hidden = false;
+  /* Le champ prend la main tout de suite : cliquer « Repondre » et devoir
+     ensuite viser le champ serait un geste de plus pour rien. `scrollIntoView`
+     parce que la zone d'ecriture colle en bas de la fenetre, mais que le
+     commentaire vise, lui, peut etre n'importe ou dans le fil. */
+  const champ = h.querySelector('.soc-champ');
+  if(champ){ champ.focus(); champ.scrollIntoView({block: 'nearest'}); }
+}
+
+function socialAnnuleCible(h){
+  SOC_CIBLE = null;
+  const barre = h.querySelector('#socCible');
+  if(barre) barre.hidden = true;
+}
+
 async function ouvrirFilSocial(jeuId){
+  SOC_CIBLE = null;
   socialCadre('socFil', 'Discussion', '<p class="soc-muet soc-vide">Chargement…</p>');
   let data;
   try{ data = await socialAppel(`/api/social/jeu/${jeuId}`); }
@@ -617,23 +672,26 @@ function socialBrancheFil(h, jeuId){
     if(window.Champs) Champs.ajuste(champ);
   };
 
-  /* Répondre : le champ s'ouvre sous le commentaire et ses réponses, à la
-     place que `.soc-repondre` gardait vide. Un seul ouvert à la fois - deux
-     champs ouverts dans une même discussion, on ne sait plus lequel on
-     remplit. */
+  /* ---------- répondre ----------
+     Le champ du bas vise le commentaire, au lieu d'ouvrir un second champ
+     sous lui.
+
+     Un mini-champ enfoui dans le fil demandait de comprendre qu'il existait :
+     on cliquait « Répondre », un formulaire s'ouvrait trente pixels plus
+     bas, et il fallait le retrouver. Dans les faits presque personne ne s'en
+     servait -- on écrivait dans la grande zone du bas, celle qu'on voit, et
+     la réponse partait en commentaire de tête. Au bout de quelques échanges
+     le fil ne disait plus qui répondait à qui, ce qui est précisément ce
+     qu'un fil doit dire.
+
+     Un seul endroit où écrire, donc, et c'est lui qui change d'état : il
+     s'intitule « Réponse à Cremy » et porte une croix pour y renoncer. Le
+     geste qu'on faisait déjà devient le bon. */
   const repondre = bloc=>{
-    h.querySelectorAll('.soc-repondre').forEach(z=>{
-      if(z !== bloc.querySelector('.soc-repondre')){ z.innerHTML = ''; z.hidden = true; }
-    });
-    const zone = bloc.querySelector('.soc-repondre');
-    if(!zone || !zone.hidden) return;             // déjà ouvert : on le laisse
-    const parent = bloc.querySelector('.soc-msg').dataset.id;
-    zone.innerHTML = socialMiniFormHTML('', 'Répondre');
-    zone.hidden = false;
-    brancheMini(zone.querySelector('form'),
-      texte => socialAppel(`/api/social/jeu/${jeuId}/commentaire`, 'POST',
-                           {texte: texte, parent: parent}),
-      ()=>{ zone.innerHTML = ''; zone.hidden = true; });
+    const msg = bloc.querySelector('.soc-msg');
+    if(!msg) return;
+    const nom = msg.querySelector('.soc-perso b');
+    socialVise(h, msg.dataset.id, nom ? nom.textContent : '');
   };
 
   /* Modifier : le champ prend la place du texte, dans la bulle même. Le
@@ -701,6 +759,11 @@ function socialBrancheFil(h, jeuId){
   const form = h.querySelector('.soc-ecrire');
   if(!form) return;
   const champ = form.querySelector('.soc-champ');
+  /* La croix de la barre « Réponse à... » : on renonce à répondre sans
+     renoncer à ce qu'on a déjà tapé. Le texte reste, il partira en
+     commentaire de tête. */
+  const croix = form.querySelector('#socCibleX');
+  if(croix) croix.addEventListener('click', ()=>{ socialAnnuleCible(h); champ.focus(); });
   const envoi = async ()=>{
     const texte = champ.value.trim();
     if(!texte) return;
@@ -708,8 +771,13 @@ function socialBrancheFil(h, jeuId){
     bouton.disabled = true;
     try{
       const data = await socialAppel(
-        `/api/social/jeu/${jeuId}/commentaire`, 'POST', {texte: texte});
+        `/api/social/jeu/${jeuId}/commentaire`, 'POST',
+        /* `parent` seulement quand on vise quelqu'un : le serveur refuse une
+           réponse à une réponse (voir _parent_ou_refus), et « Répondre »
+           n'est proposé que sous les commentaires de tête. */
+        SOC_CIBLE ? {texte: texte, parent: SOC_CIBLE} : {texte: texte});
       champ.value = '';
+      socialAnnuleCible(h);
       /* Le champ a grandi avec le texte : vidé, il doit redescendre. Rien ne
          le lui dit tout seul - on n'a pressé aucune touche. */
       if(window.Champs) Champs.ajuste(champ);

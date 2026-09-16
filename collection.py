@@ -75,6 +75,11 @@ COULEUR_DEFAUT = "#A086B7"
 NOM_MAXI = 200
 CARTES_MAXI = 20000        # par page : garde-fou contre un import qui s'emballe
 
+# Un tome du classeur : 30 pages de 18 pochettes, comme PAGES_PAR_CLASSEUR et
+# PER_PAGE cote page. Une carte ajoutee au bout d'un tome plein ouvre le
+# suivant, exactement comme l'import l'a fait pour Fusion et Xyz.
+CARTES_PAR_CLASSEUR = 30 * 18
+
 
 # --------------------------------------------------------------------------
 #   Les illustrations
@@ -120,6 +125,7 @@ URL_VIGNETTES = "/api/collection/vignette/"
 NOM_FICHIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}\.[A-Za-z0-9]{1,5}$")
 
 _illustrations = None      # nom normalise -> nom de fichier ('12345678.jpg')
+_noms = None               # [(nom normalise, nom, fichier ou None)], pour l'aide a la saisie
 _verrou = threading.Lock()
 
 
@@ -184,8 +190,42 @@ def illustrations() -> dict:
 
 def oublie_illustrations() -> None:
     """A appeler si le fonds d'images change en cours de route. Sert aux tests."""
-    global _illustrations
+    global _illustrations, _noms
     _illustrations = None
+    _noms = None
+
+
+def noms_connus() -> list:
+    """Tous les noms francais du fichier, avec leur artwork quand il existe.
+
+    Sert a l'aide a la saisie quand on ajoute une carte : un nom tape a la
+    main qui differe d'une lettre de celui du fichier est une pochette sans
+    illustration. Proposer le nom exact evite ca. Une carte trop recente pour
+    le fichier reste ajoutable -- elle affichera son nom en attendant.
+    """
+    global _noms
+    if _noms is None:
+        # avant le verrou : illustrations() le prend aussi, et il n'est pas
+        # reentrant
+        index = illustrations()
+        with _verrou:
+            if _noms is None:
+                liste, vus = [], set()
+                try:
+                    with open(FICHIER_NOMS, encoding="utf-8") as f:
+                        brut = json.load(f)
+                except (OSError, TypeError, ValueError):
+                    brut = {}
+                for nom in (brut.values() if isinstance(brut, dict) else []):
+                    if not isinstance(nom, str) or not nom.strip():
+                        continue
+                    cle = normalise_nom(nom)
+                    if cle and cle not in vus:
+                        vus.add(cle)
+                        liste.append((cle, nom.strip(), index.get(cle)))
+                liste.sort(key=lambda x: x[0])
+                _noms = liste
+    return _noms
 
 
 def vignette(fichier):
@@ -233,11 +273,12 @@ def branche(dossier_cartes, fichier_noms, url_publique="/static/yugioh/Cards/") 
     Meme facon de faire que blueprint_jaquettes et quiz.branche : les chemins
     sont decides par app.py, pas ecrits en dur ici.
     """
-    global DOSSIER_CARTES, FICHIER_NOMS, URL_CARTES, _illustrations
+    global DOSSIER_CARTES, FICHIER_NOMS, URL_CARTES, _illustrations, _noms
     DOSSIER_CARTES = Path(dossier_cartes)
     FICHIER_NOMS = Path(fichier_noms)
     URL_CARTES = url_publique if url_publique.endswith("/") else url_publique + "/"
     _illustrations = None
+    _noms = None
     return blueprint_collection
 
 
@@ -501,6 +542,48 @@ def pose(carte, rarete, etat) -> None:
     cx().commit()
 
 
+def ajoute(page, famille, nom):
+    """Ajoute une pochette vide au bout d'une famille. Rend son id, ou None si
+    la famille contient deja une carte de ce nom.
+
+    Au bout, et pas a une place choisie : une carte qui sort est la plus
+    recente, et l'inserer au milieu decalerait toutes les pochettes qui
+    suivent -- la page, la face et l'emplacement de cartes deja rangees
+    changeraient sans qu'on les ait touchees.
+
+    Pas de commit ici : l'appelant peut ajouter la meme carte a plusieurs
+    classeurs d'un coup, et c'est tout ou rien.
+    """
+    c = cx()
+    cle = normalise_nom(nom)
+    for l in c.execute("SELECT nom FROM carte WHERE famille_id = ?", (famille["id"],)):
+        if normalise_nom(l["nom"]) == cle:
+            return None
+    dernier = c.execute(
+        "SELECT classeur, COUNT(*) AS n, MAX(rang) AS rang FROM carte"
+        " WHERE famille_id = ? GROUP BY classeur ORDER BY classeur DESC LIMIT 1",
+        (famille["id"],)).fetchone()
+    if dernier is None:
+        tome, rang = 1, 0
+    elif dernier["n"] >= CARTES_PAR_CLASSEUR:
+        tome, rang = dernier["classeur"] + 1, 0
+    else:
+        tome, rang = dernier["classeur"], dernier["rang"] + 1
+    return c.execute(
+        "INSERT INTO carte(page_id, famille_id, classeur, rang, nom, maj_le)"
+        " VALUES(?,?,?,?,?,?)",
+        (page["id"], famille["id"], tome, rang, nom, maintenant())).lastrowid
+
+
+def nom_propre(v) -> str:
+    nom = re.sub(r"\s+", " ", str(v or "")).strip()
+    if not nom:
+        raise Refus("nom", "Donne le nom de la carte.")
+    if len(nom) > NOM_MAXI:
+        raise Refus("nom", "Ce nom est trop long.")
+    return nom
+
+
 # --------------------------------------------------------------------------
 #   Les routes
 # --------------------------------------------------------------------------
@@ -605,6 +688,73 @@ def poser(carte_id):
     d = corps()
     pose(carte, rarete_propre(d.get("rarete")), etat_propre(d.get("etat")))
     return reponse({"ok": True, "carte": en_json(carte_a_moi(carte_id, page))})
+
+
+@blueprint_collection.post("/carte")
+def ajouter():
+    """Ajoute une carte qui vient de sortir. { famille, nom }
+
+    La pochette arrive vide, au bout de sa famille ; la ranger reste le geste
+    habituel du panneau. Les classeurs partagent les memes pochettes (voir
+    page_modele) : quand c'est l'administrateur qui ajoute, la carte est donc
+    posee dans tous les classeurs qui ont cette famille et ne l'ont pas deja.
+    Un autre collectionneur n'ajoute qu'au sien -- il n'a pas a remplir les
+    classeurs des autres.
+
+    La reponse porte la carte telle que la page la range, et le tome ou elle
+    a atterri : c'est tout ce qui change, la page n'a pas a tout recharger.
+    """
+    u, page = ma_page_ou_refus()
+    d = corps()
+    nom = nom_propre(d.get("nom"))
+    famille = cx().execute("SELECT * FROM famille WHERE page_id = ? AND cle = ?",
+                           (page["id"], str(d.get("famille") or ""))).fetchone()
+    if famille is None:
+        raise Refus("famille", "Famille inconnue.")
+    if cx().execute("SELECT COUNT(*) FROM carte WHERE page_id = ?",
+                    (page["id"],)).fetchone()[0] >= CARTES_MAXI:
+        raise Refus("plein", "Ton classeur est plein.")
+
+    c = cx()
+    autres = 0
+    with c:
+        carte_id = ajoute(page, famille, nom)
+        if carte_id is None:
+            raise Refus("doublon", f"« {nom} » est deja dans cet onglet.", 409)
+        if u["admin"]:
+            for f in c.execute(
+                    "SELECT f.* FROM famille f JOIN page p ON p.id = f.page_id"
+                    " WHERE p.projet = ? AND f.cle = ? AND f.page_id != ?",
+                    (PROJET, famille["cle"], page["id"])).fetchall():
+                if ajoute({"id": f["page_id"]}, f, nom) is not None:
+                    autres += 1
+    carte = carte_a_moi(carte_id, page)
+    return reponse({"ok": True, "famille": famille["cle"], "classeur": carte["classeur"],
+                    "carte": en_json(carte), "autres": autres}, 201)
+
+
+@blueprint_collection.get("/carte/noms")
+def chercher_noms():
+    """Les noms de cartes connus qui contiennent tous les mots tapes.
+
+    Sous /carte/ et non a la racine : /api/collection/noms serait le classeur
+    d'un compte nomme « noms ».
+
+    Ouvert a tout le monde comme le fichier dont il vient : ce ne sont que
+    des noms de cartes, rien de ce que quelqu'un possede. Ceux qui commencent
+    par la saisie d'abord, les autres ensuite.
+    """
+    mots = normalise_nom(request.args.get("q", "")).split()
+    if not mots or len("".join(mots)) < 2:
+        return reponse({"ok": True, "noms": []})
+    debut, milieu = [], []
+    prefixe = " ".join(mots)
+    for cle, nom, fichier in noms_connus():
+        if all(m in cle for m in mots):
+            (debut if cle.startswith(prefixe) else milieu).append([nom, fichier])
+            if len(debut) >= 12:
+                break
+    return reponse({"ok": True, "noms": (debut + milieu)[:12]})
 
 
 # --------------------------------------------------------------------------
