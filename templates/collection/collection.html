@@ -167,6 +167,21 @@
   <div class="sheetbox" id="sheetbox"></div>
 </div>
 
+<!-- Le stock de cartes, pour l'administration seulement : hors du menu des
+     réglages, qui parle du classeur affiché, alors que ceci remplit les noms,
+     les artworks et les vues dont vivent aussi le Yu-Gi-Quiz et les classeurs
+     des autres. Montré par chargeAnnuaire(), ouvert par ouvrirStock(). -->
+<button class="stock-maj" id="stockBtn" type="button" hidden aria-label="Mettre à jour le stock de cartes">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 12a9 9 0 0 1-15.5 6.2L3 15.5"/>
+    <path d="M3 21v-5.5h5.5"/>
+    <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8.5"/>
+    <path d="M21 3v5.5h-5.5"/>
+  </svg>
+  <span>Mettre à jour</span>
+</button>
+
 <div class="toast" id="toast"></div>
 
 <!-- Les gestes du doigt, partagés avec l'Archive Jeux Vidéos : ici le
@@ -218,6 +233,8 @@ const RARETES = [
   ['PG','Premium Gold'], ['SPE','Spécial'], ['PLAT','Platinium'], ['STAR','Starlight']
 ];
 const CODES = RARETES.map(r => r[0]);
+const LIBELLE_RAR = {};
+RARETES.forEach(r => { LIBELLE_RAR[r[0]] = r[1]; });
 const ETATS = [[3,'Bon'], [2,'Moyen'], [1,'Mauvais']];
 
 /* Une carte est un petit tableau et non un objet : deux mille cartes en
@@ -225,14 +242,19 @@ const ETATS = [[3,'Bon'], [2,'Moyen'], [1,'Mauvais']];
    Ses cases, telles que collection.py les envoie (voir en_json) :
 
        [0] nom   [1] rareté   [2] état   [3] id   [4] fichier de l'artwork
+       [5] les raretés sous lesquelles cette carte est parue
 
-   Les deux dernières sont nouvelles. `id` remplace le couple ligne/colonne
-   de la feuille : c'est lui qu'on renvoie pour écrire. `fichier` remplace
-   tout un mécanisme - la page téléchargeait 570 Ko de noms français, en
-   construisait un index de quatorze mille entrées, puis essayait .jpg, .png
-   et .webp au hasard jusqu'à ce que l'une réponde. Le serveur le sait déjà,
-   il le dit une fois par carte. */
-const NOM = 0, RAR = 1, ETAT = 2, ID = 3, ART = 4;
+   `id` remplace le couple ligne/colonne de la feuille : c'est lui qu'on
+   renvoie pour écrire. `fichier` remplace tout un mécanisme - la page
+   téléchargeait 570 Ko de noms français, en construisait un index de
+   quatorze mille entrées, puis essayait .jpg, .png et .webp au hasard
+   jusqu'à ce que l'une réponde. Le serveur le sait déjà, il le dit une fois
+   par carte.
+
+   La sixième suit le même chemin, et pour la même raison : le fichier des
+   raretés pèse 550 Ko pour quatorze mille cartes, dont un classeur n'en
+   montre que deux mille. Voir raretes() dans collection.py. */
+const NOM = 0, RAR = 1, ETAT = 2, ID = 3, ART = 4, DISPO = 5;
 
 /* rareté normalisée d'une carte ('' si elle n'est pas dans le classeur) */
 const codeRar = card => !card || !card[RAR] ? ''
@@ -240,6 +262,42 @@ const codeRar = card => !card || !card[RAR] ? ''
 /* les communes et les rares n'ont aucun vernis sur l'illustration */
 const brille = c => !!c && c !== 'C';
 const FOIL = '<i class="foil"><span></span></i>';
+
+/* ---------------- ce qui existe, et ce qui n'existe pas ----------------
+   Une carte n'est pas parue dans toutes les raretés : le « Dragon Blanc aux
+   Yeux Bleus » existe en Commune, en Ultra et en Secrète, jamais en Gold
+   Secrète. Le panneau ne propose donc que ce qui existe.
+
+   `null` - une carte que le catalogue ne connaît pas - et `undefined` - un
+   classeur mis en cache avant cette version - valent « on ne sait pas », et
+   non « aucune » : le menu propose alors les treize, comme il l'a toujours
+   fait. Mieux vaut ça qu'une pochette qu'on ne peut plus remplir. */
+function dispoDe(card){
+  const d = card && card[DISPO];
+  return (Array.isArray(d) && d.length) ? d : null;
+}
+
+/* Le menu du panneau : ce qui existe pour cette carte, et rien d'autre. Avec
+   deux réserves, qui font que la liste n'est jamais un mur :
+
+     - la rareté déjà enregistrée y figure toujours, même si le catalogue ne
+       la connaît pas - sans elle, corriger l'état d'une carte changerait sa
+       rareté au passage ;
+     - « Autre rareté… », en dernier, redéploie les treize. ygoprodeck ignore
+       des tirages qui existent bel et bien - la Secrète de BLZD, la
+       Starlight de TN23, la Secrète de L26D - et une carte qu'on a en main
+       doit pouvoir se ranger même quand le catalogue la croit impossible.
+       C'est une aide à la saisie, pas une serrure. */
+const AUTRES = '+';
+function optionsRarete(card, tout){
+  const d = tout ? null : dispoDe(card);
+  const codes = d ? d.slice() : CODES.slice();
+  const actuelle = card && card[RAR];
+  if (actuelle && codes.indexOf(actuelle) < 0) codes.unshift(actuelle);
+  return codes.map(c => '<option value="' + esc(c) + '">'
+      + esc(LIBELLE_RAR[c] || c) + '</option>').join('')
+    + (d ? '<option value="' + AUTRES + '">Autre rareté…</option>' : '');
+}
 
 let DATA = { types: [], images: '/static/yugioh/Cards/', vignettes: '/api/collection/vignette/' };
 let MODE = 'offline';
@@ -307,7 +365,7 @@ function ecrireCache(url, d){
 let SOURCES = [];
 let SRC = 0;
 let CAN_WRITE = false;
-let MOI = { connecte: false, pseudo: null };
+let MOI = { connecte: false, pseudo: null, admin: false };
 
 const source = () => SOURCES[SRC] || null;
 const estLeMien = () => !!MOI.pseudo && !!source() && norm(source().nom) === norm(MOI.pseudo);
@@ -317,7 +375,8 @@ async function chargeAnnuaire(){
   const r = await fetch('/api/collection', { credentials: 'same-origin' });
   const d = await r.json();
   if (!d.ok) throw new Error(d.message || 'annuaire illisible');
-  MOI = { connecte: !!d.connecte, pseudo: d.moi ? d.moi.pseudo : null };
+  MOI = { connecte: !!d.connecte, pseudo: d.moi ? d.moi.pseudo : null,
+          admin: d.admin === true };
   SOURCES = (d.classeurs || []).map(c => ({
     nom: c.pseudo, titre: c.titre, cartes: c.cartes,
     avatar: c.avatar, banniere: c.banniere, url: urlClasseur(c.pseudo),
@@ -335,6 +394,11 @@ async function chargeAnnuaire(){
     SOURCES[0].avatar = d.moi.avatar;
     SOURCES[0].banniere = d.moi.banniere;
   }
+  /* Le stock de cartes n'est pas un réglage du classeur affiché : il parle
+     des cartes qui existent, pour tout le monde à la fois. Il vit donc hors
+     du menu de l'engrenage, en bas à gauche, comme la mise à jour depuis
+     IGDB dans l'Archive - et il n'apparaît que pour l'administration. */
+  el('stockBtn').hidden = !MOI.admin;
 }
 
 /* ---------------- l'état de la connexion ----------------
@@ -1189,7 +1253,12 @@ function majPanel(i){
       ['Face', o.face === 'recto' ? 'R' : 'V'], ['Emplacement', o.slot]]
     .map(kv => '<div class="cbox"><div class="k">' + kv[0] + '</div><div class="v">'
       + kv[1] + '</div></div>').join('');
+  el('pRar').innerHTML = optionsRarete(card);
   el('pRar').value = card[RAR] && CODES.indexOf(card[RAR]) >= 0 ? card[RAR] : 'C';
+  /* « Commune » n'est pas toujours proposée - une carte jamais parue en
+     Commune : le menu retombe alors sur sa première rareté plutôt que de
+     rester vide, ce que fait un select dont la valeur n'existe pas. */
+  if (el('pRar').selectedIndex < 0) el('pRar').selectedIndex = 0;
   el('pQual').value = card[ETAT] || 3;
   el('pSave').textContent = owned ? 'Enregistrer' : 'Ajouter au classeur';
   el('pSave').hidden = !CAN_WRITE;
@@ -1414,10 +1483,25 @@ function navCarte(dir){
 el('zPrev').onclick = () => navCarte(-1);
 el('zNext').onclick = () => navCarte(1);
 
+/* « Autre rareté… » redéploie les treize. Un select ne se rouvre pas par
+   programme : le toast dit donc ce qui vient de changer, plutôt que de
+   laisser un menu qui s'est refermé sur rien. */
+el('pRar').addEventListener('change', () => {
+  if (el('pRar').value !== AUTRES) return;
+  const card = S.sel === null ? null : C().cards[S.sel];
+  el('pRar').innerHTML = optionsRarete(card, true);
+  el('pRar').value = (card && card[RAR]) || 'C';
+  if (el('pRar').selectedIndex < 0) el('pRar').selectedIndex = 0;
+  toast('Toutes les raretés sont proposées.');
+});
+
 el('pSave').onclick = async () => {
   if (S.sel === null) return;
   const card = C().cards[S.sel];
   if (!card) return;
+  /* la liste vient d'être redéployée et rien n'a encore été choisi : il n'y
+     a pas de rareté « Autre » à enregistrer */
+  if (el('pRar').value === AUTRES) return;
   const avait = !!card[RAR];
   el('pSave').disabled = true;
   const ok = await poser(card, el('pRar').value, Number(el('pQual').value));
@@ -1986,6 +2070,461 @@ el('shine').onclick = () => {
   majReflets();
 };
 majReflets();
+
+/* =========================================================
+   Le stock de cartes
+
+   Une série paraît et trois choses manquent d'un coup : le nom français de
+   ses cartes, leurs artworks, et les vues dont le Yu-Gi-Quiz tire ses niveaux
+   de difficulté. C'étaient trois scripts à lancer à la main, dans le bon
+   ordre, depuis un dossier à part ; c'est maintenant ce bouton.
+
+   Rien ne part sans un clic, et pour la même raison que la mise à jour depuis
+   IGDB de l'Archive : ce qui s'écrit ici ne sert pas qu'au classeur affiché.
+   Les noms et les artworks nourrissent le Yu-Gi-Quiz et les classeurs de tout
+   le monde. L'analyse est donc un rapport, les images se choisissent une par
+   une, et l'écriture n'arrive qu'après.
+
+   Une carte que l'on refuse trois fois n'a pas à être reproposée à chaque
+   série : « Ne plus proposer » l'écrit dans cartes-ignorees.json, et elle
+   disparaît des rapports suivants.
+   ========================================================= */
+let ST = null;
+
+async function apiStock(chemin, corps){
+  const r = await fetch('/api/cartes' + chemin, corps ? {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(corps),
+  } : { credentials: 'same-origin' });
+  const d = await r.json().catch(() => null);
+  /* 404 est la réponse du serveur à qui n'administre pas : le dire tel quel
+     vaut mieux qu'un « erreur inconnue » - voir reserve() dans cartes.py. */
+  if (r.status === 404) throw new Error("réservé à l'administration");
+  if (!r.ok || !d || !d.ok) throw new Error((d && d.message) || 'http ' + r.status);
+  return d;
+}
+
+function stockEcran(titre, html){
+  ouvrirModale('<h2>' + esc(titre) + '</h2><div class="st-corps">' + html + '</div>');
+}
+
+function stockPanne(titre, souci, reprendre){
+  stockEcran(titre,
+    '<div class="st-erreur">' + esc(souci) + '</div>'
+    + '<div class="row"><button class="act ghost" id="stFermer">Fermer</button>'
+    + (reprendre ? '<button class="act" id="stEncore">Réessayer</button>' : '') + '</div>');
+  el('stFermer').onclick = fermerModale;
+  if (reprendre) el('stEncore').onclick = reprendre;
+}
+
+const stockPluriel = n => n > 1 ? 's' : '';
+
+/* ---------- étape 1 : quelle série ---------- */
+function ouvrirStock(){
+  closeMenu();
+  if (!MOI.admin){ toast("Le stock est réservé à l'administration.", true); return; }
+  ST = { jeton: 0, code: '', file: [], fi: 0, gardees: [], groupes: [], gi: 0, vues: 0,
+         compte: { images: 0, passees: 0, ignorees: 0 }, echecs: [] };
+  stockSeries();
+}
+
+async function stockSeries(){
+  const jeton = ++ST.jeton;
+  stockEcran('Mettre à jour le stock', '<p class="st-info">Lecture des séries parues…</p>');
+  let series = [];
+  try { series = (await apiStock('/series')).series || []; }
+  catch(e){
+    if (jeton !== ST.jeton) return;
+    stockPanne('Mettre à jour le stock',
+               "La liste des séries n'a pas pu être lue — " + e.message, stockSeries);
+    return;
+  }
+  if (jeton !== ST.jeton) return;
+  /* Les douze dernières suffisent : on vient ici quand une série paraît, pas
+     pour fouiller vingt ans de catalogue. Le champ reste là pour les autres. */
+  const liste = series.slice(0, 12).map(s =>
+    '<button type="button" class="aj-opt" data-code="' + esc(s.code) + '">'
+    + '<span class="st-tag">' + esc(s.code) + '</span>'
+    + '<span>' + esc(s.nom) + '</span></button>').join('');
+  stockEcran('Mettre à jour le stock',
+    '<div class="exp-section"><div class="exp-tete"><span class="exp-titre">Série</span>'
+    +   '<span class="exp-note">les douze dernières parues</span></div>'
+    /* Un catalogue qui ne remonte rien laissait un encadré vide et muet : le
+       dire, plutôt que de laisser croire à la panne d'affichage que c'était
+       vraiment avant (voir .st-series dans la feuille de style). */
+    +   (liste
+          ? '<div class="aj-liste st-series">' + liste + '</div>'
+          : '<p class="st-info" style="margin:0">Aucune série n\'est remontée du'
+            + ' catalogue. Son code, juste en dessous, marche quand même.</p>')
+    + '</div>'
+    + '<div class="exp-section"><div class="exp-tete"><span class="exp-titre">Ou son code</span></div>'
+    +   '<div class="aj-champ"><input id="stCode" type="text" maxlength="5" autocomplete="off"'
+    +   ' spellcheck="false" aria-label="Code de la série"></div></div>'
+    + '<div class="row"><button class="act ghost" id="stAnnuler">Annuler</button>'
+    + '<button class="act" id="stGo">Analyser</button></div>');
+  el('sheetbox').querySelectorAll('.st-series .aj-opt').forEach(b => {
+    b.onclick = () => stockAnalyse(b.dataset.code);
+  });
+  el('stAnnuler').onclick = fermerModale;
+  el('stGo').onclick = () => stockAnalyse(el('stCode').value.trim());
+  el('stCode').addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); stockAnalyse(el('stCode').value.trim()); }
+  });
+}
+
+/* ---------- étape 2 : ce qui manque ---------- */
+async function stockAnalyse(code){
+  const jeton = ++ST.jeton;
+  ST.code = String(code || '').toUpperCase();
+  stockEcran('Analyse',
+    '<p class="st-info">Lecture du catalogue' + (ST.code ? ' pour <b>' + esc(ST.code) + '</b>' : '')
+    + '…<br>Le premier passage télécharge les deux catalogues, ce qui prend quelques secondes.</p>');
+  let r;
+  try { r = await apiStock('/analyse', { code: ST.code }); }
+  catch(e){
+    if (jeton !== ST.jeton) return;
+    stockPanne('Analyse', "L'analyse n'a pas abouti — " + e.message, stockSeries);
+    return;
+  }
+  if (jeton !== ST.jeton) return;
+
+  /* Les cartes dont on ne connaît pas encore le nom français doivent d'abord
+     être lues chez Konami, une fiche à la fois. On le fait ici, avant de
+     montrer quoi que ce soit : un rapport qui annoncerait « 0 carte » parce
+     que les noms ne sont pas encore arrivés serait faux. */
+  if ((r.a_resoudre || []).length) {
+    r = await stockNomme(r.a_resoudre, jeton);
+    if (!r) return;
+  }
+
+  /* Deux sortes de cartes à compléter, et une seule mérite qu'on s'arrête
+     dessus. Celle dont l'artwork manque, qu'on regarde avant de télécharger ;
+     celle qui a déjà son image et à qui il ne manque que son nom français,
+     qu'il n'y a aucune raison de faire valider une par une. */
+  ST.file = (r.manquantes || []).filter(c => !c.a_limage);
+  /* Les cartes entières, et non leurs seuls identifiants : la relecture a
+     besoin du nom, de l'onglet et de la date pour montrer ce qu'elle range. */
+  ST.gardees = (r.manquantes || []).filter(c => c.a_limage);
+  ST.fi = 0;
+  const n = ST.file.length, noms = ST.gardees.length;
+
+  stockEcran('Analyse' + (ST.code ? ' — ' + esc(ST.code) : ''),
+    '<div class="st-chiffres">'
+    +   '<span class="st-chiffre"><b>' + r.total + '</b><u>carte' + stockPluriel(r.total)
+    +     (ST.code ? ' dans la série' : ' au catalogue') + '</u></span>'
+    +   '<span class="st-chiffre"><b>' + n + '</b><u>artwork' + stockPluriel(n) + ' à récupérer</u></span>'
+    +   '<span class="st-chiffre"><b>' + noms + '</b><u>nom' + stockPluriel(noms) + ' à compléter</u></span>'
+    + '</div>'
+    + '<p class="st-info">'
+    + (r.completes ? '<b>' + r.completes + '</b> carte' + stockPluriel(r.completes)
+        + ' déjà complète' + stockPluriel(r.completes) + '. ' : '')
+    + (r.sans_fr ? '<b>' + r.sans_fr + '</b> carte' + stockPluriel(r.sans_fr)
+        + (r.sans_fr > 1 ? " n'ont pas encore de nom français et sont laissées"
+            : " n'a pas encore de nom français et est laissée")
+        + ' de côté : elles seront reproposées quand la traduction paraîtra. ' : '')
+    + (r.sans_image ? '<b>' + r.sans_image + '</b> carte' + stockPluriel(r.sans_image)
+        + " sans artwork chez ygoprodeck : le téléchargement y a déjà échoué,"
+        + ' elles seront retentées dans une semaine. ' : '')
+    + (r.ignorees ? '<b>' + r.ignorees + '</b> écartée' + stockPluriel(r.ignorees)
+        + ' (ne plus proposer). ' : '')
+    + (!n && !noms ? "Il n'y a rien à faire." : '') + '</p>'
+    + '<div class="row"><button class="act ghost" id="stRetour">Retour</button>'
+    + '<button class="act" id="stGo"' + (!n && !noms ? ' disabled' : '') + '>'
+    + (n ? 'Voir les ' + n + ' carte' + stockPluriel(n) : 'Écrire') + '</button></div>');
+  el('stRetour').onclick = stockSeries;
+  /* Vers la relecture dans les deux cas, jamais vers l'écriture directe.
+     Sans artwork à choisir (n === 0) il reste les cartes qui ont déjà leur
+     image et à qui il ne manque que leur nom : elles ont un onglet, donc
+     elles reçoivent des pochettes, donc elles se relisent comme les autres.
+     Ce raccourci-là écrivait dans le classeur sans que rien n'ait été
+     montré. stockRelecture() enchaîne de lui-même quand il n'y a aucune
+     pochette à poser. */
+  el('stGo').onclick = () => n ? stockCarte() : stockRelecture();
+}
+
+/* ---------- étape 2 bis : lire les noms français chez Konami ----------
+   L'API d'ygoprodeck publie bien des noms français, mais avec plus de deux
+   ans de retard : elle ignorait les cent cartes de Chaos Origins. Les noms
+   viennent donc de la base officielle de l'éditeur, une fiche à la fois -
+   environ deux secondes chacune, soit quelques minutes pour une série.
+
+   D'où cette étape à part, avec sa jauge : bloquer la fenêtre trois minutes
+   sans rien dire donnerait l'impression d'un plantage. Les noms lus sont
+   gardés sur le disque, donc un second passage sur la même série est
+   immédiat.
+
+   On s'arrête si un tour ne fait plus descendre le compteur : une fiche qui
+   échoue reste à faire, et il ne sert à rien de tourner en rond dessus. */
+async function stockNomme(ids, jeton) {
+  const total = ids.length;
+  let restants = total, soucis = [];
+  while (restants > 0) {
+    const fait = total - restants;
+    stockEcran('Noms français',
+      '<p class="st-info">Lecture de la base officielle Konami : <b>' + fait
+      + '</b> / ' + total + ' carte' + stockPluriel(total) + '.<br>'
+      + "Environ deux secondes par carte, et c'est gardé pour la prochaine fois.</p>"
+      + '<div class="st-jauge"><i style="width:' + Math.round(fait / total * 100) + '%"></i></div>'
+      + '<div class="row">'
+      + '<button class="act ghost" id="stStop">Arrêter là</button></div>');
+    el('stStop').onclick = () => { ST.jeton++; fermerModale(); };
+    let d;
+    try { d = await apiStock('/noms', { ids: ids }); }
+    catch (e) {
+      if (jeton !== ST.jeton) return null;
+      stockPanne('Noms français', 'La base Konami n\'a pas répondu — ' + e.message,
+                 () => stockAnalyse(ST.code));
+      return null;
+    }
+    if (jeton !== ST.jeton) return null;
+    soucis = d.soucis || [];
+    /* Pas de progrès : inutile d'insister, on passe à la suite avec ce
+       qu'on a. Les cartes non résolues seront simplement comptées comme
+       « pas encore traduites ». */
+    if (d.restants >= restants) break;
+    restants = d.restants;
+  }
+  if (soucis.length) toast(soucis[0], true);
+  /* L'analyse est refaite : elle seule sait répartir les cartes entre ce
+     qu'on télécharge, ce qui attend une traduction et ce qui est complet. */
+  let r;
+  try { r = await apiStock('/analyse', { code: ST.code }); }
+  catch (e) {
+    stockPanne('Analyse', "L'analyse n'a pas abouti — " + e.message, stockSeries);
+    return null;
+  }
+  return (jeton === ST.jeton) ? r : null;
+}
+
+/* ---------- étape 3 : les cartes, une par une ---------- */
+function stockCarte(){
+  if (ST.fi >= ST.file.length){ stockRelecture(); return; }
+  const c = ST.file[ST.fi];
+  const avance = Math.round(ST.fi / ST.file.length * 100);
+  stockEcran('Carte ' + (ST.fi + 1) + ' / ' + ST.file.length,
+    '<div class="st-jauge"><i style="width:' + avance + '%"></i></div>'
+    + '<div class="st-carte">'
+    +   '<img src="' + esc(c.image) + '" alt="" loading="lazy" decoding="async">'
+    +   '<div class="st-quoi"><h3>' + esc(c.fr) + '</h3>'
+    +     '<p class="st-en">' + esc(c.en) + '</p>'
+    +     '<span class="st-tag">' + esc(c.type) + '</span>'
+    +     (c.famille
+        ? '<span class="st-tag onglet">onglet ' + esc(c.famille) + '</span>'
+        : '<span class="st-tag">hors classeur</span>')
+    +     '<p class="st-info" style="margin-top:10px">'
+    +       (c.famille
+          ? 'Elle ira au bout de son onglet, pochette vide, dans tous les classeurs.'
+          : "Aucun onglet ne l'accueille : elle ne sert qu'au Yu-Gi-Quiz.")
+    +     '</p></div></div>'
+    + '<div class="row"><button class="act ghost" id="stNon">Passer</button>'
+    + '<button class="act ghost" id="stJamais">Ne plus proposer</button>'
+    + '<button class="act" id="stOui">Télécharger</button></div>');
+  el('stOui').onclick = () => stockPrend(c);
+  el('stNon').onclick = () => { ST.compte.passees++; ST.fi++; stockCarte(); };
+  el('stJamais').onclick = () => stockJamais(c);
+}
+
+async function stockPrend(c){
+  const jeton = ST.jeton;
+  el('stOui').disabled = el('stNon').disabled = el('stJamais').disabled = true;
+  el('stOui').textContent = 'Téléchargement…';
+  try {
+    await apiStock('/image', { id: c.id });
+    ST.gardees.push(c);
+    ST.compte.images++;
+  } catch(e){
+    ST.echecs.push(c.fr + ' — ' + e.message);
+    toast('Téléchargement impossible — ' + e.message, true);
+  }
+  if (jeton !== ST.jeton) return;    // la fenêtre a été fermée entre-temps
+  ST.fi++;
+  stockCarte();
+}
+
+async function stockJamais(c){
+  const jeton = ST.jeton;
+  try { await apiStock('/ignorer', { id: c.id }); ST.compte.ignorees++; }
+  catch(e){ toast("La carte n'a pas pu être écartée — " + e.message, true); }
+  if (jeton !== ST.jeton) return;
+  ST.fi++;
+  stockCarte();
+}
+
+/* ---------- étape 4 : la relecture, avant d'écrire ----------
+   L'ordre des pochettes compte : le classeur suit l'ordre de parution, et une
+   carte posée au mauvais endroit décale tout ce qui la suit - page, face et
+   emplacement de cartes déjà rangées.
+
+   La page propose donc un ordre - date de sortie, puis numéro dans la série -
+   et le montre avant d'écrire quoi que ce soit. Proposé, jamais imposé : le
+   classeur contient des dizaines de cartes placées à la main qu'aucune
+   formule ne reproduit. Les flèches corrigent, et /ecrire suit l'ordre
+   affiché sans jamais le recalculer.
+
+   Un onglet par fenêtre, et non tout d'un bloc : une série pose des Fusion,
+   des Synchro et des Lien d'un seul coup, et une liste unique donnait six
+   classements entremêlés - deux lignes voisines à l'écran partent en réalité
+   au bout de deux onglets différents, à des dizaines de pages l'une de
+   l'autre. Chaque onglet se relit donc pour lui-même, dans l'ordre des
+   onglets du classeur, et l'écriture n'a lieu qu'au bout du dernier.
+
+   L'ordre d'un onglet à l'autre n'a aucune importance - chaque carte se pose
+   au bout du sien (voir pose_pochettes dans cartes.py) - ce qui est
+   exactement ce qui permet de les découper ainsi.
+
+   Seules les cartes qui vont dans un onglet apparaissent ici. Une Magie, un
+   Piège, un monstre de deck principal n'ont pas de pochette : ils comptent
+   pour le Yu-Gi-Quiz, pas pour le classeur. */
+function stockRelecture(){
+  ST.etape = 'relecture';
+  const pochettes = ST.gardees.filter(c => c.famille);
+  if (!pochettes.length){ ST.groupes = []; stockEcrire(); return; }
+  /* Retriées ici : celles qui avaient déjà leur image ouvraient la liste, et
+     les téléchargées s'y ajoutaient au fil des clics. */
+  pochettes.sort((a, b) =>
+    a.ordre[0] < b.ordre[0] ? -1 : a.ordre[0] > b.ordre[0] ? 1 : a.ordre[1] - b.ordre[1]);
+  /* Les onglets défilent dans l'ordre du classeur affiché - Fusion, Rituel,
+     Synchro, Xyz, Pendule, Lien - et non dans celui où les cartes sont
+     arrivées. Un onglet que ce classeur-là n'a pas passe à la fin, sous sa
+     clé : l'écriture, elle, sert tous les classeurs. */
+  const rang = {}, libelle = {};
+  (DATA.types || []).forEach((t, i) => { rang[t.key] = i; libelle[t.key] = t.label; });
+  const par = new Map();
+  pochettes.forEach(c => {
+    if (!par.has(c.famille)) par.set(c.famille, []);
+    par.get(c.famille).push(c);
+  });
+  ST.groupes = Array.from(par, ([cle, cartes]) => ({
+    cle: cle, cartes: cartes, label: libelle[cle] || cle,
+    rang: rang[cle] === undefined ? 99 : rang[cle],
+  })).sort((a, b) => a.rang - b.rang);
+  ST.gi = 0;
+  stockDessineRelecture();
+}
+
+function stockDessineRelecture(){
+  const g = ST.groupes[ST.gi];
+  if (!g){ stockEcrire(); return; }
+  const p = g.cartes;
+  const total = ST.groupes.length, dernier = ST.gi === total - 1;
+  const restantes = ST.groupes.slice(ST.gi + 1)
+    .reduce((n, x) => n + x.cartes.length, 0);
+  stockEcran('Relecture — ' + g.label,
+    '<div class="st-jauge"><i style="width:' + Math.round(ST.gi / total * 100)
+    + '%"></i></div>'
+    + '<p class="st-info">Onglet <b>' + (ST.gi + 1) + '</b> / ' + total
+    + ' · <b>' + p.length + '</b> pochette' + stockPluriel(p.length)
+    + ' au bout de l\'onglet <b>' + esc(g.label) + '</b>.'
+    + ' Les flèches corrigent ce que la date de parution ne devine pas.</p>'
+    + '<div class="st-liste">' + p.map((c, i) =>
+        '<div class="st-ligne">'
+        + '<span class="st-rang">' + (i + 1) + '</span>'
+        + '<span class="st-nom">' + esc(c.fr) + '</span>'
+        + '<span class="st-date">' + esc(c.ordre[0]) + ' · n°' + esc(c.ordre[1]) + '</span>'
+        + '<span class="st-fleches">'
+        +   '<button type="button" aria-label="Monter" data-h="' + i + '"'
+        +     (i ? '' : ' disabled') + '>&#8593;</button>'
+        +   '<button type="button" aria-label="Descendre" data-b="' + i + '"'
+        +     (i < p.length - 1 ? '' : ' disabled') + '>&#8595;</button>'
+        + '</span></div>').join('')
+    + '</div>'
+    + (dernier ? '' : '<p class="st-info" style="margin:12px 0 0">Encore <b>'
+        + restantes + '</b> pochette' + stockPluriel(restantes) + ' dans '
+        + (total - ST.gi - 1) + ' autre' + stockPluriel(total - ST.gi - 1)
+        + ' onglet' + stockPluriel(total - ST.gi - 1)
+        + '. Rien n\'est écrit avant le dernier.</p>')
+    + '<div class="row"><button class="act ghost" id="stAnnuler">'
+    + (ST.gi ? 'Onglet précédent' : 'Annuler') + '</button>'
+    + '<button class="act" id="stEcrire">'
+    + (dernier ? 'Écrire' : 'Onglet suivant') + '</button></div>');
+  el('sheetbox').querySelectorAll('.st-fleches button').forEach(b => {
+    b.onclick = () => {
+      const haut = b.dataset.h;
+      const i = +(haut !== undefined ? haut : b.dataset.b);
+      const j = haut !== undefined ? i - 1 : i + 1;
+      const t = p[i]; p[i] = p[j]; p[j] = t;
+      stockDessineRelecture();
+    };
+  });
+  /* Revenir sur l'onglet précédent plutôt que fermer : l'ordre corrigé deux
+     écrans plus tôt est encore là, rien n'a été écrit. */
+  el('stAnnuler').onclick = () => {
+    if (!ST.gi){ fermerModale(); return; }
+    ST.gi--;
+    stockDessineRelecture();
+  };
+  el('stEcrire').onclick = () => {
+    if (dernier){ stockEcrire(); return; }
+    ST.gi++;
+    stockDessineRelecture();
+  };
+}
+
+/* ---------- étape 5 : l'écriture, puis le bilan ---------- */
+async function stockEcrire(){
+  const jeton = ++ST.jeton;
+  if (!ST.gardees.length){ stockBilan(null); return; }
+  /* Les pochettes d'abord, dans l'ordre relu ; le reste ensuite - ces
+     cartes-là n'ont pas d'onglet, leur rang n'a donc aucune importance. */
+  const ordonnes = (ST.groupes || []).reduce((t, g) => t.concat(g.cartes), [])
+    .map(c => c.id)
+    .concat(ST.gardees.filter(c => !c.famille).map(c => c.id));
+  stockEcran('Écriture',
+    '<p class="st-info">Les noms, les vues et les pochettes…</p>');
+  let bilan = null;
+  try { bilan = await apiStock('/ecrire', { ids: ordonnes }); }
+  catch(e){
+    if (jeton !== ST.jeton) return;
+    stockPanne('Écriture', "Les fichiers n'ont pas pu être écrits — " + e.message, stockEcrire);
+    return;
+  }
+  if (jeton !== ST.jeton) return;
+  stockBilan(bilan);
+}
+
+function stockBilan(bilan){
+  const c = ST.compte;
+  stockEcran('Stock à jour',
+    '<div class="st-chiffres">'
+    +   '<span class="st-chiffre"><b>' + c.images + '</b><u>artwork' + stockPluriel(c.images)
+    +     ' récupéré' + stockPluriel(c.images) + '</u></span>'
+    +   '<span class="st-chiffre"><b>' + (bilan ? bilan.noms_fr : 0) + '</b><u>nom'
+    +     stockPluriel(bilan ? bilan.noms_fr : 0) + ' français ajouté' + '</u></span>'
+    +   '<span class="st-chiffre"><b>' + (bilan ? bilan.pochettes : 0) + '</b><u>pochette'
+    +     stockPluriel(bilan ? bilan.pochettes : 0) + ' posée' + '</u></span>'
+    + '</div>'
+    + (c.ignorees ? '<p class="st-info"><b>' + c.ignorees + '</b> carte'
+        + stockPluriel(c.ignorees) + ' ne sera plus proposée.</p>' : '')
+    /* Un renommage touche une pochette déjà rangée : ça se dit. Ces cartes
+       portaient leur nom anglais, faute de traduction au moment de l'import ;
+       la pochette a suivi le nom plutôt que d'être doublée. */
+    + (bilan && bilan.renommees ? '<p class="st-info"><b>' + bilan.renommees
+        + '</b> pochette' + stockPluriel(bilan.renommees) + ' renommée'
+        + stockPluriel(bilan.renommees) + ' : elle'
+        + (bilan.renommees > 1 ? 's portaient' : ' portait')
+        + ' leur nom anglais.</p>' : '')
+    + (ST.echecs.length ? '<div class="st-erreur">' + ST.echecs.map(esc).join('<br>') + '</div>' : '')
+    + '<div class="row">'
+    + (ST.code ? '<button class="act ghost" id="stReste">Continuer sur le reste</button>' : '')
+    + '<button class="act" id="stFin">Fermer</button></div>');
+  /* Le classeur affiché date d'avant : des pochettes viennent d'y être
+     posées. On le relit plutôt que de laisser une page qui ment. */
+  el('stFin').onclick = () => {
+    fermerModale();
+    if (bilan && bilan.pochettes) ouvreClasseurAffiche();
+  };
+  /* La série est faite ; le reste du site, lui, a toujours ses trous - des
+     cartes d'avant dont l'artwork n'est jamais arrivé. C'est la même analyse,
+     sans code. */
+  if (el('stReste')) el('stReste').onclick = () => {
+    ST.compte = { images: 0, passees: 0, ignorees: 0 };
+    ST.echecs = [];
+    stockAnalyse('');
+  };
+}
+
+el('stockBtn').onclick = ouvrirStock;
 
 /* ---------------- démarrage ----------------
    L'annuaire vient avant tout : sans lui on ne sait même pas quel classeur

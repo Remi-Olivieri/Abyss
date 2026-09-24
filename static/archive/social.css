@@ -26,6 +26,35 @@
   margin:0 0 6px;font-family:var(--display);font-weight:800;
   letter-spacing:-.03em;font-size:clamp(26px,5.2vw,38px);line-height:1.05;
 }
+/* Le menu « Tout le monde / une personne », sous le titre. Le bouton et
+   les lignes du panneau sont des .rsearch-item, ceux de la recherche de
+   journal (archive.css) : photo, pseudo, banniere en fond. Le bouton y
+   ajoute le cadre et le fond plein des champs de l'Archive (.sel), pour
+   qu'on voie qu'il se deplie. */
+.soc-filtre{position:relative;margin:12px 0 18px;width:min(380px,100%)}
+.soc-de{
+  background-color:#0E1A2C;border:1px solid rgba(160,205,230,.2);border-radius:12px;
+  padding:7px 14px 7px 8px;cursor:pointer;
+}
+.soc-de:hover{background-color:#122237}
+.soc-de[aria-expanded="true"]{border-color:color-mix(in srgb,var(--gold) 55%,transparent)}
+.soc-de:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.soc-de-chev{flex:0 0 auto;color:var(--muted);transition:transform .15s}
+.soc-de[aria-expanded="true"] .soc-de-chev{transform:rotate(180deg)}
+/* la rondelle de « Tout le monde » : un groupe dore a la place d'un visage */
+.rsearch-avatar.soc-de-tous{
+  color:var(--gold);background:color-mix(in srgb,var(--gold) 16%,#0E1A2C);
+}
+/* Le panneau : un .menu de l'en-tete, a la largeur du bouton, qui defile
+   au-dela d'une dizaine de journaux. `display:flex` masque [hidden] : on
+   le lui rend. */
+.soc-de-menu{
+  left:0;right:auto;width:100%;min-width:0;top:calc(100% + 6px);
+  display:flex;flex-direction:column;gap:3px;
+  max-height:min(60vh,440px);overflow-y:auto;overscroll-behavior:contain;
+}
+.soc-de-menu[hidden]{display:none}
+.soc-de-menu .rsearch-item{cursor:pointer}
 /* La phrase sous le titre : ce qu'on regarde, en une ligne. */
 .soc-quoi{color:var(--muted);font-size:13px;margin:0 0 20px;max-width:56ch}
 

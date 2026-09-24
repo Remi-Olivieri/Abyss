@@ -68,6 +68,21 @@
   .mon-carte > p{margin:0 0 18px;color:var(--brume);font-size:12.5px}
   .mon-vide{color:var(--brume);font-size:13.5px;margin:0}
 
+  /* ---------- redémarrer ----------
+     Teinte rouge, discrète : c'est la seule action de la page, et la seule
+     du site qui touche au serveur. Elle doit se distinguer des cartes qui ne
+     font que montrer des chiffres, sans pour autant crier. */
+  .mon-carte.mon-danger{border-color:rgba(232,106,106,.22)}
+  .redem{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+  .redem .bouton{border-color:rgba(232,106,106,.32)}
+  .redem .bouton:hover,.redem .bouton:focus-visible{
+    border-color:rgba(232,106,106,.65);box-shadow:0 0 22px -8px rgba(232,106,106,.55);
+  }
+  .redem .bouton:disabled{opacity:.5;cursor:default;box-shadow:none}
+  .redem-etat{color:var(--brume);font-size:13px}
+  .redem-etat.travaille{color:#FFD9A8}
+  .redem-etat.mauvais{color:#FFD9D9}
+
   /* ---------- la courbe des jours ----------
      Des barres et non une ligne : un jour est une case, pas un point sur un
      continuum, et relier deux jours donnerait à croire qu'on sait ce qui
@@ -216,6 +231,17 @@
       <h2>Ce que le site contient</h2>
       <p>Compté en base, pas dans les visites.</p>
       <div class="pages" id="contenu"></div>
+    </section>
+
+    <!-- Redémarrer le site. Sa place est ici : c'est la page où l'on vient
+         voir si quelque chose ne tourne pas rond, donc celle d'où l'on veut
+         pouvoir y remédier - de loin, sans ouvrir un terminal. -->
+    <section class="mon-carte mon-danger">
+      <h2>Redémarrer Abyss</h2>
+      <div class="redem">
+        <button class="bouton" id="redemBtn" type="button">Redémarrer</button>
+        <span class="redem-etat" id="redemEtat"></span>
+      </div>
     </section>
   </main>
 
@@ -436,6 +462,65 @@ async function relis(silencieux) {
     if (!PLAINTE && !silencieux) { toast(err.message, true); PLAINTE = true; }
   }
 }
+
+/* ---------- redémarrer ----------
+   Deux clics plutôt qu'une fenêtre de confirmation : un bouton qui coupe le
+   serveur ne doit pas partir sur un clic distrait, et une fenêtre pour un
+   seul bouton pèserait plus lourd que le geste. Le premier clic arme, le
+   second envoie, et l'armement retombe tout seul au bout de cinq secondes.
+
+   Ensuite on attend le retour. Pendant quelques secondes le serveur ne
+   répond plus : chaque tentative échoue, et c'est normal - rien ne doit
+   s'afficher comme une panne. On redemande jusqu'à ce que la page réponde de
+   nouveau, puis on recharge pour repartir sur un état propre. */
+let REDEM = 0;
+function redemEtat(texte, classe) {
+  const e = el("redemEtat");
+  e.textContent = texte;
+  e.className = "redem-etat" + (classe ? " " + classe : "");
+}
+async function attendsLeRetour(reste) {
+  if (reste <= 0) {
+    redemEtat("Toujours pas de réponse. Recharge la page dans un instant.", "mauvais");
+    el("redemBtn").disabled = false;
+    REDEM = 0;
+    return;
+  }
+  try {
+    await api("/api/monitoring");
+  } catch (e) {
+    setTimeout(() => attendsLeRetour(reste - 1), 2000);
+    return;
+  }
+  redemEtat("Le site est revenu.");
+  location.reload();
+}
+el("redemBtn").onclick = async () => {
+  const b = el("redemBtn");
+  if (REDEM === 0) {
+    REDEM = 1;
+    b.textContent = "Confirmer";
+    redemEtat("Clique à nouveau pour confirmer.");
+    setTimeout(() => {
+      if (REDEM === 1) { REDEM = 0; b.textContent = "Redémarrer"; redemEtat(""); }
+    }, 5000);
+    return;
+  }
+  REDEM = 2;
+  b.disabled = true;
+  b.textContent = "Redémarrer";
+  redemEtat("Arrêt en cours…", "travaille");
+  try {
+    await api("/api/monitoring/redemarrer", "POST", {});
+  } catch (err) {
+    redemEtat(err.message, "mauvais");
+    b.disabled = false;
+    REDEM = 0;
+    return;
+  }
+  redemEtat("Redémarrage… le site revient dans quelques secondes.", "travaille");
+  setTimeout(() => attendsLeRetour(15), 3000);
+};
 
 (async function () {
   let data;

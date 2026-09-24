@@ -236,42 +236,65 @@ def normalize(text):
     text = re.sub(r"[^a-z0-9 ]", " ", text)
     return text.strip()
 
-with open(STATIC / "yugioh" / "cartes-fr.json", encoding="utf-8") as f:
-    cards_fr = json.load(f)
-with open(STATIC / "yugioh" / "cartes-en.json", encoding="utf-8") as f:
-    cards_en = json.load(f)
-with open(STATIC / "yugioh" / "cartes-vues.json", encoding="utf-8") as f:
-    cards_views = json.load(f)
-    
-# Une carte n'est jouable que si ses DEUX images existent : l'artwork
-# recadre pour la deviner, la carte entiere pour la reveler. Le vivier ne
-# regardait que Cards/ -- un recadrage manquant donnait une manche a deviner
-# sur une image cassee, donc impossible.
-list_cards_set = set(list_cards) & set(os.listdir(STATIC / "yugioh" / "CardsCropped"))
-id_to_name_fr = {str(card_id): nom_fr for card_id, nom_fr in cards_fr.items() if nom_fr}
+def recharge() -> None:
+    """Relit les noms, les vues et les artworks, puis refait les viviers.
 
-CARD_POOLS = {}
-for diff, threshold in DIFFICULTY_THRESHOLDS.items():
-    if threshold == 0:
-        pool = [cid for cid in id_to_name_fr if f"{cid}.jpg" in list_cards_set]
-    else:
-        pool = [
-            cid for cid in id_to_name_fr
-            if f"{cid}.jpg" in list_cards_set
-            and cards_views.get(cards_en.get(cid, ''), 0) >= threshold
-        ]
-    CARD_POOLS[diff] = pool if pool else list(id_to_name_fr.keys())
+    Appelee une fois a l'import, et ensuite par cartes.py chaque fois qu'une
+    serie vient d'entrer dans le stock. Sans elle, une carte ajoutee n'etait
+    jouable qu'au redemarrage suivant : tout ce qui suit ne se calculait
+    qu'au chargement du module.
 
-CARD_INDEX = []
-for card_id, nom_fr in cards_fr.items():
-    if not nom_fr:
-        continue
-    nom_en = cards_en.get(str(card_id), "")
-    CARD_INDEX.append({
-        "fr_norm": normalize(nom_fr),
-        "en_norm": normalize(nom_en),
-        "display": nom_fr,
-    })
+    Le meme code dans les deux cas, plutot qu'un chargement a l'import et un
+    rechargement ecrit a cote : deux chemins finiraient par ne plus batir
+    tout a fait le meme vivier.
+
+    Une partie en cours ne bouge pas. CARD_POOLS est lu au lancement d'une
+    manche : celle qui tourne garde la liste qu'elle a deja tiree, la
+    suivante prend la nouvelle.
+    """
+    global cards_fr, cards_en, cards_views
+    global list_cards, list_cards_set, id_to_name_fr, CARD_POOLS, CARD_INDEX
+
+    with open(STATIC / "yugioh" / "cartes-fr.json", encoding="utf-8") as f:
+        cards_fr = json.load(f)
+    with open(STATIC / "yugioh" / "cartes-en.json", encoding="utf-8") as f:
+        cards_en = json.load(f)
+    with open(STATIC / "yugioh" / "cartes-vues.json", encoding="utf-8") as f:
+        cards_views = json.load(f)
+
+    # Une carte n'est jouable que si ses DEUX images existent : l'artwork
+    # recadre pour la deviner, la carte entiere pour la reveler. Le vivier ne
+    # regardait que Cards/ -- un recadrage manquant donnait une manche a deviner
+    # sur une image cassee, donc impossible.
+    list_cards = os.listdir(STATIC / "yugioh" / "Cards")
+    list_cards_set = set(list_cards) & set(os.listdir(STATIC / "yugioh" / "CardsCropped"))
+    id_to_name_fr = {str(card_id): nom_fr for card_id, nom_fr in cards_fr.items() if nom_fr}
+
+    CARD_POOLS = {}
+    for diff, threshold in DIFFICULTY_THRESHOLDS.items():
+        if threshold == 0:
+            pool = [cid for cid in id_to_name_fr if f"{cid}.jpg" in list_cards_set]
+        else:
+            pool = [
+                cid for cid in id_to_name_fr
+                if f"{cid}.jpg" in list_cards_set
+                and cards_views.get(cards_en.get(cid, ''), 0) >= threshold
+            ]
+        CARD_POOLS[diff] = pool if pool else list(id_to_name_fr.keys())
+
+    CARD_INDEX = []
+    for card_id, nom_fr in cards_fr.items():
+        if not nom_fr:
+            continue
+        nom_en = cards_en.get(str(card_id), "")
+        CARD_INDEX.append({
+            "fr_norm": normalize(nom_fr),
+            "en_norm": normalize(nom_en),
+            "display": nom_fr,
+        })
+
+
+recharge()
 
 def room_summary(room):
     return {

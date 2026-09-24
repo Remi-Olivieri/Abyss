@@ -12,6 +12,7 @@ from flask_socketio import SocketIO
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import alertes
+import cartes
 import collection
 import comptes
 import journal
@@ -162,9 +163,21 @@ sauvegarde.lance()           # la copie de la base, chaque nuit (voir sauvegarde
 
 app.register_blueprint(comptes.blueprint_comptes)
 app.register_blueprint(journal.blueprint_journal)
-app.register_blueprint(collection.branche(STATIQUE / "yugioh" / "Cards",
-                                          STATIQUE / "yugioh" / "cartes-fr.json"))
-app.register_blueprint(blueprint_jaquettes(STATIQUE / "archive" / "Cover"))
+app.register_blueprint(collection.branche(
+    STATIQUE / "yugioh" / "Cards",
+    STATIQUE / "yugioh" / "cartes-fr.json",
+    # les raretes sous lesquelles chaque carte est parue : le panneau du
+    # classeur ne propose que celles-la (voir cartes.py, qui l'ecrit)
+    fichier_raretes=STATIQUE / "yugioh" / "cartes-rarity.json"))
+# Le stock lui-meme -- les noms, les artworks, les vues -- tenu a jour depuis
+# ygoprodeck quand une serie parait. Un seul dossier lui suffit : tout ce
+# qu'il ecrit vit dans static/yugioh/. Reserve a l'administration, voir
+# cartes.py.
+app.register_blueprint(cartes.branche(STATIQUE / "yugioh"))
+# Chaque jaquette ecrite est annoncee au fil du Social : une carte arrivee
+# en direct la recoit sans rechargement (voir social.annonce_jaquette).
+app.register_blueprint(blueprint_jaquettes(STATIQUE / "archive" / "Cover",
+                                           sur_jaquette=social.annonce_jaquette))
 app.register_blueprint(blueprint_suggestions)
 app.register_blueprint(social.blueprint_social)
 # Le temps reel du Social se branche sur le meme serveur SocketIO que le

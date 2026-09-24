@@ -10,7 +10,7 @@ un seul compte : `app.py` branche chaque projet comme un blueprint.
 | **Abyss** — le hub, le compte, le profil | `/abyss` | `comptes.py` `monitoring.py` `suggestions.py` | `abyss/` | `abyss/` |
 | **Archive Jeux Vidéos** — journaux, fil social | `/archive` | `journal.py` `jaquettes.py` `social.py` | `archive/` | `archive/` |
 | **Mini-Jeux / Quiz** — jaquette floue, chronologie, grille | `/quiz` | `quiz.py` | `quiz/` | `quiz/` |
-| **Collection Yu-Gi-Oh!** — le classeur | `/collection` | `collection.py` | `collection/` | `collection/` |
+| **Collection Yu-Gi-Oh!** — le classeur | `/collection` | `collection.py` `cartes.py` | `collection/` | `collection/` |
 | **Yu-Gi-Quiz** — deviner une carte à son artwork | `/yugiquiz` | `yugiquiz.py` | `yugiquiz/` | `yugiquiz/` |
 | **Chainz** — le site du jeu | `/chainz` | *(page seule)* | `chainz/` | `chainz/` |
 
@@ -24,8 +24,9 @@ static/
 ├── abyss/        abyss.css
 ├── archive/      archive.css, social.css, archive-*.js · Cover/
 ├── quiz/         quiz.css            (jaquettes : voir archive/Cover/)
-├── yugioh/       cartes-fr.json, cartes-en.json, cartes-vues.json
-│                 · Cards/ CardsCropped/
+├── yugioh/       cartes-fr.json, cartes-en.json, cartes-vues.json,
+│                 cartes-rarity.json, cartes-ignorees.json ·
+│                 Cards/ CardsCropped/
 ├── collection/   collection.css              (cartes : voir yugioh/)
 ├── yugiquiz/     yugiquiz.css, commun.js     (cartes : voir yugioh/)
 └── chainz/       cartes.json, images.json, art/{old,new}/
@@ -73,7 +74,7 @@ Deux exceptions qui **servent** au lieu de rediriger :
 
 ```sh
 venv/bin/python app.py            # http://127.0.0.1:8000/abyss
-venv/bin/python -m unittest tests # 207 tests
+venv/bin/python -m unittest tests # 247 tests
 ```
 
 En ligne : `gunicorn -k gthread -w 1 --threads 8 app:app`. **Un seul worker** —

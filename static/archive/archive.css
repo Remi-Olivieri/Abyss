@@ -1382,9 +1382,14 @@ input,textarea{caret-color:var(--gold)}
   background:var(--bg2);border:1px solid var(--line-strong);border-radius:11px;
   box-shadow:0 22px 48px rgba(0,0,0,.6);
 }
+/* `flex:0 0 auto` pour la meme raison que .rsearch-item : ces lignes-la
+   servent aussi les resultats IGDB de la fenetre de recherche, et s'y
+   retrouvent donc enfants d'une colonne flex bridee en hauteur, ou elles
+   se feraient tasser au lieu de la faire defiler. Sans effet dans la liste
+   deroulante du champ « Nom du jeu », qui n'est pas un conteneur flex. */
 .ac-item{
   display:flex;gap:11px;align-items:center;width:100%;text-align:left;
-  padding:6px;border-radius:8px;transition:background .12s;
+  padding:6px;border-radius:8px;transition:background .12s;flex:0 0 auto;
 }
 .ac-item:hover,.ac-item.on{background:var(--bg3)}
 .ac-item img,.ac-vide{
@@ -1821,10 +1826,28 @@ body:has(.rattrapage) .igdb-maj{bottom:78px}
 .rsearch-box:focus-within{border-color:color-mix(in srgb,var(--gold) 50%,transparent);color:var(--text)}
 .rsearch-input{flex:1;height:100%;background:none;border:none;outline:none;color:var(--text);font-size:15px}
 .rsearch-input::placeholder{color:var(--muted)}
-.rsearch-list{display:flex;flex-direction:column;gap:3px;max-height:min(52vh,420px);overflow-y:auto}
+/* La liste defile, elle n'ecrase pas.
+
+   Une colonne flex bridee en hauteur ne se met pas a defiler d'elle-meme :
+   elle commence par retirer des pixels a ses enfants, qui acceptent tous de
+   retrecir par defaut. Tant qu'il y avait quatre journaux ca ne se voyait
+   pas ; le jour ou il y en a eu dix, chaque ligne s'est tassee sous sa
+   hauteur naturelle -- et l'avatar, lui, garde ses 38 px (flex:0 0 auto
+   plus bas), donc il debordait de sa propre ligne et mordait sur la
+   suivante. On voyait des pseudos empiles les uns sur les autres.
+
+   `flex:0 0 auto` sur les lignes rend le geste a la liste : elles gardent
+   leur taille, la hauteur totale depasse le plafond, et c'est l'overflow
+   qui prend le relais. `overscroll-behavior` pour la meme raison que sur
+   l'accueil : arrive au bout des resultats, la molette s'arrete la au lieu
+   d'emporter le corps de la fenetre derriere. */
+.rsearch-list{
+  display:flex;flex-direction:column;gap:3px;min-height:0;
+  max-height:min(52vh,420px);overflow-y:auto;overscroll-behavior:contain;
+}
 .rsearch-item{
   display:flex;align-items:center;gap:12px;width:100%;padding:8px 9px;border-radius:10px;
-  text-align:left;transition:background .15s;
+  text-align:left;transition:background .15s;flex:0 0 auto;
 }
 .rsearch-item:hover{background:var(--bg3)}
 .rsearch-item.on{background:color-mix(in srgb,var(--gold) 9%,transparent)}
@@ -2237,7 +2260,20 @@ body:has(.rattrapage) .igdb-maj{bottom:78px}
 .detail-temps b{display:block;font-family:var(--mono);font-size:18px;font-variant-numeric:tabular-nums;color:var(--gold)}
 .detail-temps span{display:block;margin-top:3px;font-size:11.5px;color:var(--muted)}
 
-.detail-galerie{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin:0 -28px;padding-left:28px;padding-right:28px}
+/* `flex:0 0 auto` pour la meme raison que .rsearch-list et .ac-item, mais
+   en pire : la bande de captures se faisait ecraser.
+
+   Elle defile horizontalement, donc c'est un conteneur de defilement - et
+   la taille minimale automatique d'un enfant de flex qui defile vaut ZERO,
+   la ou un paragraphe est au moins retenu par la hauteur de son texte. Or
+   .detail-in est lui-meme une colonne flex bridee en hauteur (88vh, voir
+   .sheet) : la galerie y etait le seul enfant vraiment compressible, et
+   elle absorbait a elle seule tout le debordement de la fiche. Elle
+   tombait a un lisere de quelques pixels - ses vignettes de 120px rognees
+   net - pendant que la description et les temps pour finir gardaient leur
+   taille. Elle ne retrecit plus : c'est la fiche qui defile, ce qu'on
+   voulait. */
+.detail-galerie{flex:0 0 auto;display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin:0 -28px;padding-left:28px;padding-right:28px}
 .detail-galerie img{
   flex:0 0 auto;height:120px;width:auto;border-radius:10px;object-fit:cover;background:var(--bg);
   cursor:zoom-in;border:1px solid transparent;transition:border-color .15s,transform .15s;

@@ -334,7 +334,7 @@ def _habille(lignes, u) -> list:
             for l in lignes]
 
 
-def fil(u, avant=None, limite=FEED_LOT) -> dict:
+def fil(u, avant=None, limite=FEED_LOT, de=None) -> dict:
     """Le fil : les derniers jeux termines, du plus recent au plus ancien.
 
     « Recent » se compte a la date d'entree dans le fil (voir ENTREE), et
@@ -346,9 +346,17 @@ def fil(u, avant=None, limite=FEED_LOT) -> dict:
     se perime pas. C'est la requete qui va relire la date de cette ligne-la,
     et la comparaison porte sur le couple entier -- comparer la seule date
     aurait saute les jeux termines a la meme seconde que le dernier affiche.
+
+    `de` restreint le fil au journal d'une seule personne -- le menu sous le
+    titre de la page. Compare au pseudo normalise, comme page_de dans
+    journal.py : l'adresse ?de=Jokrem doit donner le meme fil que ?de=jokrem.
+    Le curseur n'a pas a le savoir, il descend dans ce qui reste.
     """
     conditions = [VISIBLE]
     args = list(VISIBLE_ARGS)
+    if de:
+        conditions.append(" u.pseudo_norm = ?")
+        args.append(comptes.normalise(de))
     if avant:
         conditions.append(
             f" ({ENTREE}, j.id) <"
@@ -1171,6 +1179,18 @@ def annonce_jeu(jeu_id) -> None:
     _emet("jeu", {"post": _habille([ligne], None)[0]}, SALON_FIL)
 
 
+def annonce_jaquette(cle, horodatage) -> None:
+    """Une jaquette vient d'arriver sur le disque : les pages ouvertes la
+    posent sur leurs cartes.
+
+    Une carte part a l'enregistrement du jeu, et sa jaquette n'est
+    telechargee qu'apres -- la page qui l'a recue a donc dessine des
+    initiales, faute de fichier. Ce signal les remplace, sans rechargement.
+    Branche dans app.py sur jaquettes.blueprint_jaquettes.
+    """
+    _emet("jaquette", {"cle": str(cle), "v": int(horodatage)}, SALON_FIL)
+
+
 def annonce_retrait(jeu_id) -> None:
     """Un jeu quitte le fil : remis en cours, reclasse en wishlist, ou efface."""
     _emet("jeu-retire", {"id": int(jeu_id)}, SALON_FIL)
@@ -1214,7 +1234,8 @@ def refus(err):
 
 @blueprint_social.get("/feed")
 def route_feed():
-    return reponse(fil(actuel(), request.args.get("avant")))
+    return reponse(fil(actuel(), request.args.get("avant"),
+                       de=request.args.get("de")))
 
 
 @blueprint_social.get("/feed/neuf")

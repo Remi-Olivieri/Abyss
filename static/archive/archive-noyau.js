@@ -408,14 +408,32 @@ function statutDe(g){
    case au moment même où elle se construit. Une fonction déclarée dans un
    fichier chargé après celui-ci n'existerait pas encore à cet instant :
    les déclarations ne remontent qu'en tête de LEUR fichier, pas en tête de
-   la page. */
+   la page.
+
+   Le rang de l'onglet, et non l'année portée par le jeu : un onglet qui
+   n'est pas une année pleine - « Entre 2008 et 2016 », « Avant 2000 » -
+   ne pose aucune année sur ce qu'il range (voir annee_de dans journal.py).
+   La date de SORTIE prenait alors le relais, et deux jeux du même onglet
+   se retrouvaient à dix places l'un de l'autre, chacun avec son intertitre
+   : le mur annonçait trois fois « Entre 2008 et 2016 » (voir renderWall,
+   qui ouvre un titre dès que le libellé change).
+
+   BUCKETS arrive déjà dans l'ordre du temps, calculé une fois par le
+   serveur pour les quatre formes d'onglet (voir cle_chrono et
+   periodes_de) : s'y ranger tient le même ordre que les pastilles au-dessus
+   du mur, et garde d'un bloc les jeux d'un même onglet. Le mois ne classe
+   plus qu'à l'intérieur du sien - et il n'y en a de toute façon que dans
+   une année pleine. */
 function chronoKey(g){
   // un jeu en cours n'a pas de date de fin : il se range après tout le reste,
   // sinon sa date de sortie l'éparpillerait au milieu des années terminées.
   // La wishlist vient encore après : elle n'a même pas de date de début.
   if(estWishlist(g)) return 9.1e9;
   if(estEnCours(g)) return 9e9;
-  return (g.year ?? yearOf(g.release) ?? 0)*100 + (g.month ?? 0);
+  // un onglet d'avant la règle, que BUCKETS ne saurait placer, se range
+  // après les onglets datés mais avant les statuts
+  const rang = BUCKETS.indexOf(g.bucket);
+  return (rang < 0 ? BUCKETS.length : rang)*100 + (g.month ?? 0);
 }
 
 /* Un critère de tri par ligne, et non plus un par sens : la liste

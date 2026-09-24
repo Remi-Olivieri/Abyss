@@ -51,6 +51,22 @@ function teinteAvatar(nom){
   for(const c of (nom || '?')) h = (h * 31 + c.codePointAt(0)) % 360;
   return h;
 }
+
+/* L'intérieur d'une ligne de journal : la photo (ou les initiales sur la
+   teinte du pseudo), le pseudo, et le nombre de jeux terminés. Sorti de
+   journaux() plus bas pour le menu « Tout le monde / une personne » du
+   fil (feed.html) : la même personne doit s'y reconnaître au même dessin.
+   La bannière n'est pas là - elle se pose sur la ligne entière, en
+   JavaScript, après coup (voir journaux()). */
+function journalLigne(s){
+  const compte = typeof s.jeux === 'number' ? `${s.jeux} jeu${s.jeux>1?'x':''} terminé${s.jeux>1?'s':''}` : 'journal public';
+  const sous = s.moi ? `Ton journal - ${compte}` : compte.charAt(0).toUpperCase() + compte.slice(1);
+  const avatar = s.avatar
+    ? `<img class="rsearch-avatar" src="${esc(s.avatar)}" alt="">`
+    : `<span class="rsearch-avatar" style="--h:${teinteAvatar(s.nom)}">${esc(initials(s.nom || '?'))}</span>`;
+  return `${avatar}
+        <span class="rsearch-meta"><b>${esc(s.nom || '?')}</b><i>${esc(sous)}</i></span>`;
+}
 /* =======================================================================
    La recherche : un journal, ou un jeu
    Deux choses à chercher et une seule barre. Le choix se fait dedans, à
@@ -161,11 +177,6 @@ function monteRecherche(hote, opts){
     nomme('list', 'Journaux trouvés');
     const ici = actif();
     liste.innerHTML = items.map(({s,i})=>{
-      const compte = typeof s.jeux === 'number' ? `${s.jeux} jeu${s.jeux>1?'x':''} terminé${s.jeux>1?'s':''}` : 'journal public';
-      const sous = s.moi ? `Ton journal - ${compte}` : compte.charAt(0).toUpperCase() + compte.slice(1);
-      const avatar = s.avatar
-        ? `<img class="rsearch-avatar" src="${esc(s.avatar)}" alt="">`
-        : `<span class="rsearch-avatar" style="--h:${teinteAvatar(s.nom)}">${esc(initials(s.nom || '?'))}</span>`;
       /* La bannière tapisse la ligne, très en retrait : elle dit à qui
          appartient le journal d'un coup d'œil sans rendre le texte illisible.
          L'adresse n'est pas écrite dans le HTML mais posée juste après, en
@@ -173,8 +184,7 @@ function monteRecherche(hote, opts){
          d'un url('...') et à injecter du CSS. Rien à échapper, rien à oublier. */
       return `<button class="rsearch-item${i===ici?' on':''}${
           s.banniere ? ' rsearch-orne' : ''}" data-i="${i}">
-        ${avatar}
-        <span class="rsearch-meta"><b>${esc(s.nom || '?')}</b><i>${esc(sous)}</i></span>
+        ${journalLigne(s)}
         ${i===ici?'<span class="tick">✓</span>':''}
       </button>`;
     }).join('');

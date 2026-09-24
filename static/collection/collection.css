@@ -357,6 +357,92 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
   .aj-champ input{font-size:16px}   /* en dessous, iOS zoome sur le champ */
 }
 
+/* ---------------- le stock de cartes ----------------
+   Le bouton se pose en bas à gauche, loin des réglages du classeur : il ne
+   parle pas de ce qui est affiché mais des cartes qui existent. Même place et
+   même dessin que « Mettre à jour depuis IGDB » dans l'Archive - c'est le
+   même geste, sur l'autre moitié du site. */
+.stock-maj{
+  position:fixed;z-index:34;
+  left:max(18px,env(safe-area-inset-left,0px));
+  bottom:max(18px,env(safe-area-inset-bottom,0px));
+  display:flex;align-items:center;gap:8px;
+  height:34px;padding:0 15px 0 13px;border-radius:99px;
+  color:var(--ink-dim);border:1px solid var(--edge);background:rgba(6,13,24,.62);
+  font-family:'DM Mono';font-size:12.5px;letter-spacing:.02em;white-space:nowrap;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.stock-maj:hover{
+  color:var(--ink);border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+  background:color-mix(in srgb,var(--accent) 12%,transparent);
+}
+@media (max-width:560px){
+  /* rond, comme les boutons de l'en-tête sur téléphone */
+  .stock-maj{width:38px;height:38px;padding:0;justify-content:center;border-radius:50%;
+    left:max(14px,env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+  .stock-maj span{display:none}
+}
+
+/* La fenêtre du stock est plus large que les autres : elle montre une carte
+   en grand pendant qu'on décide de la garder ou non. La largeur tient au
+   contenu et non à une classe posée sur la fenêtre : fermerModale() vide la
+   boîte sans rien savoir du stock, et une classe oubliée là aurait élargi la
+   fenêtre suivante - « Ajouter une carte », « Exporter ». */
+.sheetbox:has(.st-corps){width:min(680px,100%)}
+.st-info{font-size:12.5px;color:var(--ink-dim);line-height:1.55;margin-bottom:12px}
+.st-info b{color:var(--ink)}
+/* La liste des séries reprend l'habillage du menu « ajouter une carte », mais
+   pas son placement : .aj-liste est un menu déroulant, posé en absolu sous
+   son champ. Ici il n'y a pas de champ au-dessus, et le seul ancêtre
+   positionné est .modal, qui fait tout l'écran - la liste partait donc se
+   poser juste en dessous, hors de vue, et l'encadré « Série » paraissait
+   vide. Elle se pose dans le flux, comme le reste de la fenêtre. */
+.st-series{position:static;max-height:min(38vh,250px)}
+.st-chiffres{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.st-chiffre{flex:1 1 120px;padding:10px 12px;border-radius:11px;background:rgba(5,11,20,.45);
+  border:1px solid var(--edge)}
+.st-chiffre b{display:block;font-family:'DM Mono';font-size:19px;color:var(--ink)}
+.st-chiffre u{text-decoration:none;font-size:11px;color:var(--ink-faint)}
+/* La carte proposée : l'artwork entier, à la taille où on peut vraiment
+   juger s'il vaut la peine d'être gardé. */
+.st-carte{display:flex;gap:16px;align-items:flex-start;margin:14px 0}
+.st-carte img{width:170px;flex:0 0 auto;border-radius:8px;background:#0000004d;
+  box-shadow:0 12px 30px -12px #000c}
+.st-quoi{flex:1;min-width:0}
+.st-quoi h3{font-family:'Bricolage Grotesque';font-weight:600;font-size:17px;line-height:1.25}
+.st-quoi .st-en{font-size:12.5px;color:var(--ink-faint);margin:2px 0 10px}
+.st-tag{display:inline-block;padding:3px 9px;border-radius:99px;font-family:'DM Mono';
+  font-size:10.5px;letter-spacing:.04em;background:#ffffff0f;color:var(--ink-dim);margin:0 5px 5px 0}
+.st-tag.onglet{background:color-mix(in srgb,var(--accent) 24%,transparent);color:var(--ink)}
+.st-jauge{height:3px;border-radius:99px;background:#ffffff14;overflow:hidden;margin:4px 0 14px}
+.st-jauge i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.st-erreur{margin-top:12px;padding:9px 12px;border-radius:9px;font-size:12.5px;
+  background:rgba(217,96,112,.12);border:1px solid #8B4A52;color:#F4C8CC}
+/* La relecture : une ligne par pochette, dans l'ordre où elles seront
+   posées. Le rang en tête parce que c'est lui qu'on vérifie, les flèches au
+   bout parce qu'on ne s'en sert qu'après avoir lu la ligne. */
+.st-liste{max-height:min(46vh,380px);overflow-y:auto;border:1px solid var(--edge);
+  border-radius:11px;background:#00000026}
+.st-ligne{display:flex;align-items:center;gap:10px;padding:7px 10px;font-size:13px;
+  border-bottom:1px solid var(--edge)}
+.st-ligne:last-child{border-bottom:none}
+.st-rang{flex:0 0 22px;font-family:'DM Mono';font-size:11px;color:var(--ink-faint);
+  text-align:right}
+.st-nom{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-date{flex:0 0 auto;font-family:'DM Mono';font-size:10.5px;color:var(--ink-faint)}
+.st-fleches{flex:0 0 auto;display:flex;gap:2px}
+.st-fleches button{width:24px;height:24px;border-radius:6px;color:var(--ink-dim);
+  border:1px solid var(--edge);line-height:1;transition:.15s}
+.st-fleches button:hover:not(:disabled){color:var(--ink);border-color:var(--accent)}
+.st-fleches button:disabled{opacity:.3;cursor:default}
+@media (max-width:560px){
+  .st-date{display:none}
+}
+@media (max-width:560px){
+  .st-carte{flex-direction:column;align-items:center;text-align:center}
+  .st-carte img{width:150px}
+}
+
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#101017;
   border:1px solid var(--edge);border-radius:10px;padding:11px 17px;font-size:13px;z-index:90;
   max-width:min(460px,92vw);opacity:0;visibility:hidden;pointer-events:none;
@@ -792,6 +878,9 @@ h1{
   box-shadow:0 18px 42px rgba(0,0,0,.6);
 }
 .menu-item:hover,.results button:hover,.results button.on,.aj-opt:hover,.aj-opt.on{background:rgba(107,166,255,.13)}
+/* Posee dans le flux et non en menu deroulant, la liste des series n'a rien a
+   faire de l'ombre portee d'un menu -- voir .st-series plus haut. */
+.st-series{background:rgba(5,11,20,.35);box-shadow:none}
 
 /* ---------- recherche et jauge ---------- */
 .search input,.jump input,.rsearch-box{background:rgba(5,11,20,.55)}

@@ -101,6 +101,10 @@ CARTES_PAR_CLASSEUR = 30 * 18
 # telecharge un catalogue pour afficher une vignette.
 DOSSIER_CARTES = None      # poses par branche(), comme jaquettes.py
 FICHIER_NOMS = None
+# { passcode -> raretes parues }, ecrit par la mise a jour du stock (voir
+# raretes_du_catalogue dans cartes.py). Meme detour que les illustrations :
+# le fichier est range par passcode, une pochette ne connait que son nom.
+FICHIER_RARETES = None
 URL_CARTES = "/static/yugioh/Cards/"
 
 # --- les vignettes ---------------------------------------------------------
@@ -126,6 +130,7 @@ NOM_FICHIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}\.[A-Za-z0-9]{1,5}$")
 
 _illustrations = None      # nom normalise -> nom de fichier ('12345678.jpg')
 _noms = None               # [(nom normalise, nom, fichier ou None)], pour l'aide a la saisie
+_raretes = None            # nom normalise -> [raretes parues]
 _verrou = threading.Lock()
 
 
@@ -189,10 +194,16 @@ def illustrations() -> dict:
 
 
 def oublie_illustrations() -> None:
-    """A appeler si le fonds d'images change en cours de route. Sert aux tests."""
-    global _illustrations, _noms
+    """A appeler si le fonds change en cours de route. Sert aux tests.
+
+    Les trois index d'un coup : une mise a jour du stock pose des artworks,
+    complete les noms et refait les raretes parues (voir ecrit() dans
+    cartes.py), et les trois se lisent des memes fichiers.
+    """
+    global _illustrations, _noms, _raretes
     _illustrations = None
     _noms = None
+    _raretes = None
 
 
 def noms_connus() -> list:
@@ -226,6 +237,62 @@ def noms_connus() -> list:
                 liste.sort(key=lambda x: x[0])
                 _noms = liste
     return _noms
+
+
+# --- les raretes parues ----------------------------------------------------
+# Une carte n'est pas parue dans toutes les raretes : le « Dragon Blanc aux
+# Yeux Bleus » existe en Commune, en Ultra et en Secrete, jamais en Gold
+# Secrete. Le panneau ne propose donc que ce qui existe.
+#
+# Une aide a la saisie, et non une serrure : ygoprodeck ignore des tirages
+# qui existent bel et bien -- la Secrete de BLZD, la Starlight de TN23, la
+# Secrete de L26D, verifiees contre l'API en direct et non contre le cache.
+# Le panneau garde donc une entree « Autre rarete... » qui redeploie les
+# treize, et rien ici ne refuse une rarete : rarete_propre continue
+# d'accepter les treize codes du classeur.
+#
+# Ce qui est envoye a la page, ce sont des raretes par carte et non le
+# fichier entier : il pese 550 Ko pour quatorze mille cartes, dont un
+# classeur n'en montre que deux mille. C'est la meme economie que les
+# illustrations, dont la page telechargeait autrefois tout l'index.
+def _construit_raretes() -> dict:
+    """{ nom normalise -> [raretes parues] }, dans l'ordre de RARETES."""
+    if not FICHIER_RARETES or not FICHIER_NOMS:
+        return {}
+    try:
+        with open(FICHIER_NOMS, encoding="utf-8") as f:
+            noms = json.load(f)
+        with open(FICHIER_RARETES, encoding="utf-8") as f:
+            parues = json.load(f)
+    except (OSError, ValueError):
+        # Pas encore de fichier -- il nait de la premiere mise a jour du
+        # stock : le panneau proposera les treize raretes, comme avant. Mieux
+        # vaut ca qu'un classeur ou l'on ne peut plus rien ranger.
+        return {}
+    if not isinstance(noms, dict) or not isinstance(parues, dict):
+        return {}
+    brut = {}
+    for passcode, nom in noms.items():
+        codes = parues.get(str(passcode))
+        cle = normalise_nom(nom)
+        if not cle or not isinstance(codes, list):
+            continue
+        # Deux cartes homonymes mettent leurs raretes en commun, la ou elles
+        # partagent deja leur illustration : garder celles de la premiere
+        # seulement ferait refuser a la seconde ses propres tirages.
+        brut.setdefault(cle, set()).update(c for c in codes if c in RARETES)
+    return {cle: [r for r in RARETES if r in codes]
+            for cle, codes in brut.items() if codes}
+
+
+def raretes() -> dict:
+    """L'index des raretes, construit au premier besoin et garde ensuite."""
+    global _raretes
+    if _raretes is None:
+        with _verrou:
+            if _raretes is None:
+                _raretes = _construit_raretes()
+    return _raretes
 
 
 def vignette(fichier):
@@ -267,25 +334,33 @@ def vignette(fichier):
     return cible
 
 
-def branche(dossier_cartes, fichier_noms, url_publique="/static/yugioh/Cards/") -> Blueprint:
+def branche(dossier_cartes, fichier_noms, url_publique="/static/yugioh/Cards/",
+            fichier_raretes=None) -> Blueprint:
     """Dit au module ou vivent les artworks, et rend le blueprint.
 
     Meme facon de faire que blueprint_jaquettes et quiz.branche : les chemins
     sont decides par app.py, pas ecrits en dur ici.
+
+    Sans `fichier_raretes`, on le cherche a cote des noms : les deux sortent
+    de la meme mise a jour et vivent dans le meme dossier.
     """
-    global DOSSIER_CARTES, FICHIER_NOMS, URL_CARTES, _illustrations, _noms
+    global DOSSIER_CARTES, FICHIER_NOMS, FICHIER_RARETES, URL_CARTES
+    global _illustrations, _noms, _raretes
     DOSSIER_CARTES = Path(dossier_cartes)
     FICHIER_NOMS = Path(fichier_noms)
+    FICHIER_RARETES = (Path(fichier_raretes) if fichier_raretes
+                       else FICHIER_NOMS.with_name("cartes-rarity.json"))
     URL_CARTES = url_publique if url_publique.endswith("/") else url_publique + "/"
     _illustrations = None
     _noms = None
+    _raretes = None
     return blueprint_collection
 
 
 # --------------------------------------------------------------------------
 #   Traduction base <-> page
 # --------------------------------------------------------------------------
-def en_json(l, index=None) -> list:
+def en_json(l, index=None, parues=None) -> list:
     """Une ligne SQL vers la carte que collection/collection.html manipule.
 
     L'id en quatrieme case : c'est ce que la page renvoie pour ecrire, la ou
@@ -293,14 +368,23 @@ def en_json(l, index=None) -> list:
     l'illustration en cinquieme, sans son dossier -- il est le meme pour
     toutes, la page le remet (voir CARTES cote navigateur).
 
-    `index` est passe par contenu(), qui l'a deja en main : le resoudre carte
-    par carte referait deux mille fois la meme recherche de dictionnaire pour
-    rien.
+    En sixieme, les raretes sous lesquelles la carte est parue : c'est ce que
+    le panneau propose d'emblee, « Autre rarete... » restant la pour les
+    tirages qu'ygoprodeck ignore. `null` n'est pas une liste vide mais « le
+    catalogue ne connait pas cette carte » -- la page propose alors les
+    treize raretes plutot que d'interdire de la ranger.
+
+    `index` et `parues` sont passes par contenu(), qui les a deja en main :
+    les resoudre carte par carte referait deux mille fois la meme recherche
+    de dictionnaire pour rien.
     """
     if index is None:
         index = illustrations()
+    if parues is None:
+        parues = raretes()
+    cle = normalise_nom(l["nom"])
     return [l["nom"], l["rarete"], l["etat"], l["id"],
-            index.get(normalise_nom(l["nom"]))]
+            index.get(cle), parues.get(cle)]
 
 
 def couleur_sure(c) -> str:
@@ -465,12 +549,13 @@ def contenu(page, u) -> dict:
 
     # famille_id -> { numero de tome -> cartes }
     index = illustrations()
+    parues = raretes()
     par_famille = {f["id"]: {} for f in familles}
     for l in cartes:
         tomes = par_famille.get(l["famille_id"])
         if tomes is None:           # carte orpheline : la cascade l'interdit
             continue
-        tomes.setdefault(l["classeur"], []).append(en_json(l, index))
+        tomes.setdefault(l["classeur"], []).append(en_json(l, index, parues))
 
     types = []
     for f in familles:
@@ -621,6 +706,10 @@ def liste():
     return reponse({"ok": True,
                     "classeurs": annuaire(),
                     "connecte": u is not None,
+                    # La page s'en sert pour montrer le bouton du stock, et
+                    # pour rien d'autre : le serveur ne s'en remet pas a elle,
+                    # /api/cartes repond 404 a qui n'est pas administrateur.
+                    "admin": u is not None and bool(u["admin"]),
                     "moi": moi})
 
 

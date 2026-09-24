@@ -116,10 +116,36 @@ function socialVersProfil(e){ return !!e.target.closest('a'); }
    IGDB quand il existe, du titre sinon, et le manifeste dit ce qui est
    réellement sur le disque. Rien à demander au serveur pour ça. */
 function socialCover(p){
-  const url = coverURL(cleJaquette({idIgdb: p.idIgdb, name: p.nom}));
-  if(url) return `<img class="soc-cov" src="${esc(url)}" alt="" loading="lazy" decoding="async">`;
-  return `<span class="soc-cov soc-cov-vide" style="--c:${noteColor(p.note)}"
+  /* data-cle, data-nom et data-note : de quoi la refaire sur place quand sa
+     jaquette arrive après elle - voir socialJaquetteArrivee. */
+  const cle = cleJaquette({idIgdb: p.idIgdb, name: p.nom});
+  const attrs = `data-cle="${esc(cle)}" data-nom="${esc(p.nom)}" data-note="${esc(p.note)}"`;
+  const url = coverURL(cle);
+  if(url) return `<img class="soc-cov" src="${esc(url)}" alt="" loading="lazy" decoding="async" ${attrs}>`;
+  return `<span class="soc-cov soc-cov-vide" style="--c:${noteColor(p.note)}" ${attrs}
     >${esc(initials(p.nom))}</span>`;
+}
+
+/* Une jaquette vient d'atterrir sur le disque (voir annonce_jaquette dans
+   social.py). La carte d'un jeu part à son enregistrement, sa jaquette
+   n'est téléchargée qu'après : la carte arrivée en direct portait donc des
+   initiales, et les gardait jusqu'au rechargement. On inscrit le fichier
+   au manifeste, puis on refait sur place les jaquettes qui l'attendaient -
+   et celles qui montraient une ancienne version, pour une image remplacée. */
+function socialJaquetteArrivee(cle, v){
+  if(!cle) return;
+  if(!JAQUETTES) JAQUETTES = {};
+  if(JAQUETTES[cle] === v) return;          // déjà connue, déjà posée
+  JAQUETTES[cle] = v;
+  retientManifeste();
+  document.querySelectorAll('.soc-cov[data-cle]').forEach(el => {
+    if(el.dataset.cle !== cle) return;
+    const note = el.dataset.note === '' ? null : Number(el.dataset.note);
+    el.outerHTML = socialCover({idIgdb: /^\d+$/.test(cle) ? cle : null,
+                                nom: el.dataset.nom, note: note});
+  });
+  // le mur du journal, s'il est là : seules les tuiles concernées se refont
+  if(typeof renderWall === 'function') renderWall();
 }
 
 /* L'avis tel qu'il est écrit dans le journal : les « + » puis les « − ».
@@ -1330,12 +1356,13 @@ function socialTempsReel(quoi){
 
   /* Un jeu vient d'entrer dans le fil. Deux lectures possibles selon la
      page, et c'est `surJeu` qui les separe : la page du fil le recoit pour
-     poser sa carte - elle est donc lue dans la seconde, et la pastille n'a
-     rien a annoncer - tandis que le journal, qui n'a pas de fil a remplir,
-     n'a justement que la pastille pour le dire. */
+     poser sa carte - et decide elle-meme s'il est lu, puisqu'elle peut
+     n'afficher le fil que d'une personne (voir feedLu dans feed.html) -
+     tandis que le journal, qui n'a pas de fil a remplir, n'a justement que
+     la pastille pour le dire. */
   prise.on('jeu', d => {
     if(!(d && d.post)) return;
-    if(quoi && quoi.surJeu){ feedLu(d.post.id); quoi.surJeu(d.post); return; }
+    if(quoi && quoi.surJeu){ quoi.surJeu(d.post); return; }
     /* Mon propre jeu : je sais que je viens de le terminer. La carte part a
        tout le monde, batie pour un visiteur (voir annonce_jeu), d'ou la
        comparaison au pseudo plutot qu'au champ `moi`. */
@@ -1346,6 +1373,9 @@ function socialTempsReel(quoi){
      effacé. Le retirer aussi, sinon le fil garde à l'écran un jeu que
      personne ne retrouvera en rechargeant. */
   if(quoi && quoi.surRetrait) prise.on('jeu-retire', d => d && quoi.surRetrait(d.id));
+  /* Sa jaquette, arrivée après elle : pour toutes les pages, la carte d'un
+     jeu pouvant aussi se trouver dans une discussion ou la page des avis. */
+  prise.on('jaquette', d => d && socialJaquetteArrivee(d.cle, d.v));
   return prise;
 }
 

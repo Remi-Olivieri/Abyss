@@ -26,6 +26,10 @@ vaut mieux qu'une page blanche.
 from __future__ import annotations
 
 import hashlib
+import os
+import signal
+import threading
+import time
 from datetime import timedelta
 
 from flask import Blueprint, request
@@ -263,3 +267,86 @@ def voir():
     if u is None or not u["admin"]:
         raise Refus("introuvable", "Page inconnue.", 404)
     return reponse(resume())
+
+
+# --------------------------------------------------------------------------
+#   Redemarrer le site
+# --------------------------------------------------------------------------
+# systemd lance le service avec Restart=always et RestartSec=5 : il suffit que
+# le processus maitre s'arrete pour qu'il reparte cinq secondes plus tard.
+# C'est tout ce que fait ce bouton. Pas de sudo, pas de mot de passe tape dans
+# une page web, pas de regle sudoers a tenir : ce que `systemctl restart
+# abyss` ferait, l'unite le fait deja d'elle-meme.
+#
+# Le signal va au MAITRE et non au worker. Gunicorn tourne en deux processus :
+# un maitre, qui est le MainPID du service, et un worker qui execute ce code.
+# Arreter le worker ne redemarrerait rien -- le maitre en relancerait un
+# aussitot et systemd n'aurait rien vu passer. C'est donc le parent qu'on vise.
+#
+# Deux controles avant d'envoyer quoi que ce soit, un SIGTERM au mauvais
+# processus n'ayant pas de retour en arriere :
+#
+#   - le parent doit etre fils de systemd (PPid 1), ce qu'est le maitre ;
+#   - son executable doit vraiment etre gunicorn.
+#
+# Le mot est cherche dans l'executable et dans les deux premiers arguments,
+# jamais n'importe ou dans la ligne de commande : « gunicorn » peut figurer
+# dans un chemin de travail sans que le parent soit gunicorn pour autant --
+# c'est exactement ce qui m'a donne un faux positif en mettant ce controle au
+# point.
+#
+# Lance a la main (`python app.py`), aucune des deux conditions n'est vraie :
+# le parent est un terminal, et la route refuse en le disant. Mieux vaut un
+# bouton inerte en developpement qu'un bouton qui ferme le terminal.
+DELAI_REDEMARRAGE = 0.7
+
+
+def _maitre():
+    """Le processus a arreter pour que systemd relance le site.
+
+    Rend (pid, "") si on l'a trouve, (None, raison) sinon.
+    """
+    parent = os.getppid()
+    if parent <= 1:
+        return None, "le site ne tourne pas sous gunicorn"
+    try:
+        with open(f"/proc/{parent}/status", encoding="utf-8") as f:
+            grand_parent = next(
+                (int(l.split()[1]) for l in f if l.startswith("PPid:")), -1)
+        with open(f"/proc/{parent}/cmdline", "rb") as f:
+            arguments = f.read().split(b"\0")
+    except (OSError, ValueError, IndexError):
+        return None, "processus parent illisible"
+    noms = [a.decode("utf-8", "replace").rsplit("/", 1)[-1] for a in arguments[:2] if a]
+    try:
+        noms.append(os.path.realpath(f"/proc/{parent}/exe").rsplit("/", 1)[-1])
+    except OSError:
+        pass
+    if grand_parent != 1 or "gunicorn" not in noms:
+        return None, "le site ne tourne pas sous systemd"
+    return parent, ""
+
+
+@blueprint_monitoring.post("/monitoring/redemarrer")
+def redemarrer():
+    """Coupe le site ; systemd le relance. Pour l'administration seulement.
+
+    La reponse part AVANT le signal : une fois le maitre arrete plus rien ne
+    repond, et le navigateur n'aurait qu'une connexion coupee a montrer. Le
+    fil laisse donc le temps a la reponse d'etre ecrite, puis signale.
+    """
+    u = actuel()
+    if u is None or not u["admin"]:
+        raise Refus("introuvable", "Page inconnue.", 404)
+    if (request.mimetype or "") != "application/json":
+        return echec("format", "Les ecritures attendent du JSON.", 415)
+    maitre, raison = _maitre()
+    if maitre is None:
+        return echec("impossible", f"Redemarrage impossible : {raison}.", 409)
+
+    def coupe():
+        time.sleep(DELAI_REDEMARRAGE)
+        os.kill(maitre, signal.SIGTERM)
+
+    threading.Thread(target=coupe, daemon=True).start()
+    return reponse({"ok": True, "secondes": 5})

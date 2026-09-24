@@ -1319,6 +1319,26 @@ def telecharge(image, cible):
 # il n'a aucune raison de connaitre l'arborescence du site.
 DOSSIER_JAQUETTES = None
 
+# Qui prevenir quand une jaquette atterrit sur le disque : fonction(cle,
+# horodatage), donnee au montage du blueprint. Le fil du Social recoit la
+# carte d'un jeu a l'enregistrement, donc AVANT sa jaquette -- celle-ci
+# n'est telechargee qu'ensuite, souvent apres un clic dans la fenetre de
+# choix. Sans ce signal, la carte gardait ses initiales jusqu'au
+# rechargement. Ce module ne sait rien des sockets : app.py decide.
+SUR_JAQUETTE = None
+
+
+def signale_jaquette(cible):
+    """Previent que `cible` vient d'etre ecrite. Ne fait jamais echouer
+    l'appelant : l'image est sur le disque, c'est tout ce qui compte."""
+    if SUR_JAQUETTE is None:
+        return
+    try:
+        # le meme horodatage que le manifeste : c'est la version de l'adresse
+        SUR_JAQUETTE(cible.name[: -len(EXTENSION)], int(cible.stat().st_mtime * 1000))
+    except Exception as err:            # noqa: BLE001 - supplement, jamais dependance
+        _dit(f"signal de {cible.name} : {type(err).__name__}: {err}")
+
 
 def cle_jaquette(nom, id_igdb=None):
     """Le nom de fichier d'une jaquette, sans extension.
@@ -1367,10 +1387,12 @@ def renomme_jaquette(ancienne, nouvelle):
         if not source.is_file() or cible.exists():
             return False
         os.replace(source, cible)
-        return True
     except OSError as err:
         _dit(f"renommage {source.name} -> {cible.name} : {err}")
         return False
+    # une cle nouvelle, que les pages ouvertes ne connaissent pas encore
+    signale_jaquette(cible)
+    return True
 
 
 # Ce qu'une proposition de jaquette emporte avec elle. Pas seulement de quoi
@@ -1384,7 +1406,7 @@ CHAMPS_PROPOSITION = ("id", "titre", "date", "iso", "nature",
 # --------------------------------------------------------------------------
 #   Les deux routes
 # --------------------------------------------------------------------------
-def blueprint_jaquettes(dossier, url_publique="/static/archive/Cover/"):
+def blueprint_jaquettes(dossier, url_publique="/static/archive/Cover/", sur_jaquette=None):
     """Les huit routes du module :
 
       /api/jaquette          cherche les jaquettes possibles d'un nom
@@ -1400,14 +1422,18 @@ def blueprint_jaquettes(dossier, url_publique="/static/archive/Cover/"):
     journal.py : /api/journal/jeu/<id>/detail, qui sait en plus retomber sur
     la plateforme/le developpeur/les genres deja en base si IGDB ne repond
     pas.
+
+    `sur_jaquette(cle, horodatage)` est appelee a chaque jaquette ecrite ou
+    renommee -- voir SUR_JAQUETTE.
     """
     dossier = Path(dossier)
     if not url_publique.endswith("/"):
         url_publique += "/"
     bp = Blueprint("jaquettes", __name__)
 
-    global DOSSIER_JAQUETTES
+    global DOSSIER_JAQUETTES, SUR_JAQUETTE
     DOSSIER_JAQUETTES = dossier
+    SUR_JAQUETTE = sur_jaquette
 
     def _cible(nom, id_igdb=None):
         """Le fichier ou doit atterrir la jaquette, ou None si rien
@@ -1478,6 +1504,7 @@ def blueprint_jaquettes(dossier, url_publique="/static/archive/Cover/"):
                 return jsonify(etat="introuvable")
             ecrit, souci = telecharge(str(donnees.get("image") or ""), cible)
             if ecrit:
+                signale_jaquette(cible)
                 return jsonify(etat="telechargee", url=url_publique + fichier + EXTENSION)
             return jsonify(etat="injoignable", raison=souci)
         return _protege("choisir", travail)

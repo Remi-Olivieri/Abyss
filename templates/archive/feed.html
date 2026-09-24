@@ -104,7 +104,19 @@
          trouve. Celui-ci le dit, et assez gros pour qu'on le lise avant la
          première carte. -->
     <h1 class="soc-titre">Feed des jeux terminés</h1>
-    <br>
+    <!-- Le fil d'une seule personne. Le bouton montre qui l'on regarde,
+         dessiné comme une ligne de la recherche de journal - photo, pseudo,
+         bannière en fond - et le panneau dessous liste tout le monde de la
+         même façon (voir journalLigne dans archive-recherche.js). Rempli
+         par l'annuaire des journaux publics : voir remplisDe plus bas.
+         « Tout le monde » est le fil entier, et le seul qui compte comme lu
+         pour la pastille. -->
+    <div class="soc-filtre" id="feedDeWrap">
+      <button type="button" class="rsearch-item soc-de" id="feedDe"
+              aria-haspopup="menu" aria-expanded="false"
+              aria-label="Afficher le fil de"></button>
+      <div class="menu soc-de-menu" id="feedDeMenu" role="menu" hidden></div>
+    </div>
 
     <div class="soc-liste" id="feed"></div>
     <p class="soc-muet soc-vide" id="feedEtat">Chargement du fil…</p>
@@ -189,6 +201,8 @@ const feed = document.getElementById('feed');
 const etat = document.getElementById('feedEtat');
 const plusZone = document.getElementById('feedPlusZone');
 const plus = document.getElementById('feedPlus');
+const deBtn = document.getElementById('feedDe');
+const deMenu = document.getElementById('feedDeMenu');
 
 /* La barre du haut sans fond ni trait tant qu'on est tout en haut, comme
    sur le journal (voir body.en-haut dans archive.css). Le journal le pose
@@ -207,19 +221,38 @@ let ENCOURS = false;
 /* Le premier lot est passé : les suivants descendent dans le passé et ne
    déplacent plus le repère de ce qu'on a vu. */
 let SUITE_DEJA = false;
+/* Le fil d'une seule personne, par son pseudo ; vide pour tout le monde.
+   Pris dans l'adresse (?de=) pour qu'on puisse la copier et la donner, et
+   pour qu'un rechargement garde le choix. */
+let DE = new URLSearchParams(location.search).get('de') || '';
+/* Change à chaque changement de personne : un lot qui revient après coup
+   appartient à l'ancien fil et ne doit pas se poser dans le nouveau. */
+let TOUR = 0;
 
 function mot(txt){
   etat.textContent = txt;
   etat.hidden = !txt;
+}
+function motVide(){
+  return DE ? DE + " n'a encore terminé aucun jeu dans un journal public."
+            : "Personne n'a encore terminé de jeu dans un journal public.";
+}
+function deCettePersonne(post){
+  return !DE || (post.pseudo || '').toLowerCase() === DE.toLowerCase();
 }
 
 async function chargeFil(){
   if(ENCOURS) return;
   ENCOURS = true;
   plus.disabled = true;
+  const tour = TOUR;
   try{
+    const q = new URLSearchParams();
+    if(DE) q.set('de', DE);
+    if(SUITE) q.set('avant', SUITE);
     const data = await socialAppel('/api/social/feed'
-      + (SUITE ? '?avant=' + encodeURIComponent(SUITE) : ''));
+      + (q.toString() ? '?' + q : ''));
+    if(tour !== TOUR) return;
     const posts = data.posts || [];
     /* insertAdjacentHTML et non innerHTML += : réécrire tout le fil à
        chaque « Voir plus » recréerait les cartes déjà lues, donc
@@ -232,18 +265,140 @@ async function chargeFil(){
        « Communauté » s'éteint, et c'est d'ici que repartira le compte à la
        prochaine visite du journal. Seulement sur le premier lot - « Voir
        plus » descend dans le passé, il n'apprend rien de nouveau.
+       Et seulement sur le fil entier : celui d'une seule personne ne dit
+       rien des jeux que les autres ont terminés entre-temps.
        Voir feedLu dans archive-social.js. */
-    if(!SUITE_DEJA && posts.length) feedLu(posts[0].id);
+    if(!SUITE_DEJA && !DE && posts.length) feedLu(posts[0].id);
     SUITE_DEJA = true;
-    mot(feed.children.length ? '' :
-        "Personne n'a encore terminé de jeu dans un journal public.");
+    mot(feed.children.length ? '' : motVide());
   }catch(e){
+    if(tour !== TOUR) return;
     mot(e.message || 'Le fil n\'a pas pu être chargé.');
     plusZone.hidden = true;
   }finally{
-    ENCOURS = false;
-    plus.disabled = false;
+    if(tour === TOUR){
+      ENCOURS = false;
+      plus.disabled = false;
+    }
   }
+}
+
+/* Une autre personne choisie : le fil repart de sa tête. */
+function changeDe(pseudo){
+  DE = pseudo || '';
+  dessineDe();
+  TOUR++;
+  ENCOURS = false;
+  SUITE = null;
+  SUITE_DEJA = false;
+  feed.innerHTML = '';
+  plusZone.hidden = true;
+  mot('Chargement du fil…');
+  const q = new URLSearchParams(location.search);
+  if(DE) q.set('de', DE); else q.delete('de');
+  try{ history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }catch(e){}
+  chargeFil();
+}
+
+/* ---------- le menu « Tout le monde / une personne » ----------
+   Les lignes sont celles de la recherche de journal (journalLigne), dans
+   un panneau .menu comme ceux de l'en-tête. Un menu maison et non un
+   <select> : une liste native ne sait montrer ni photo ni bannière. */
+let PERSONNES = [];
+function personne(nom){
+  const n = (nom || '').toLowerCase();
+  return PERSONNES.find(s => s.nom.toLowerCase() === n);
+}
+/* « Tout le monde » n'a ni photo ni bannière : un groupe, dans la rondelle
+   où les autres ont leur visage. */
+const TOUS = `<span class="rsearch-avatar soc-de-tous" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"/>
+      <circle cx="10" cy="8" r="3.5"/>
+      <path d="M20 20v-1.5a3.5 3.5 0 0 0-2.6-3.4M15.5 4.6a3.5 3.5 0 0 1 0 6.8"/>
+    </svg>
+  </span>
+  <span class="rsearch-meta"><b>Tout le monde</b><i>Tous les journaux publics</i></span>`;
+const CHEVRON = `<svg class="soc-de-chev" width="12" height="12" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+    stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+
+/* La bannière en fond de ligne, posée en JavaScript et non écrite dans le
+   HTML - même raison que dans la recherche : esc() n'échappe pas
+   l'apostrophe, qui suffirait à sortir d'un url('...'). */
+function orne(el, s){
+  const b = s && s.banniere;
+  el.classList.toggle('rsearch-orne', !!b);
+  if(b) el.style.setProperty('--banniere', `url("${b}")`);
+  else el.style.removeProperty('--banniere');
+}
+
+/* Le bouton : la personne qu'on regarde. Une personne demandée par
+   l'adresse et que l'annuaire ne connaît pas garde au moins son pseudo. */
+function dessineDe(){
+  const s = DE ? (personne(DE) || {nom: DE, jeux: 0}) : null;
+  deBtn.innerHTML = (s ? journalLigne(s) : TOUS) + CHEVRON;
+  orne(deBtn, s);
+}
+
+function deOuvert(){ return !deMenu.hidden; }
+function deFerme(){
+  if(!deOuvert()) return;
+  deMenu.hidden = true;
+  deBtn.setAttribute('aria-expanded', 'false');
+}
+function deOuvre(){
+  /* Un seul panneau ouvert à la fois, comme dans l'en-tête. */
+  menuMoiFerme();
+  socialClocheFerme();
+  const lignes = [null, ...PERSONNES];
+  deMenu.innerHTML = lignes.map((s, i)=>{
+    const on = s ? s.nom.toLowerCase() === DE.toLowerCase() : !DE;
+    return `<button type="button" class="rsearch-item${on ? ' on' : ''}" role="menuitemradio"
+        aria-checked="${on}" data-i="${i}">
+        ${s ? journalLigne(s) : TOUS}
+        ${on ? '<span class="tick">✓</span>' : ''}
+      </button>`;
+  }).join('');
+  deMenu.querySelectorAll('.rsearch-item').forEach(b=>{
+    const s = lignes[+b.dataset.i];
+    orne(b, s);
+    b.addEventListener('click', ()=>{
+      deFerme();
+      // la personne qu'on regarde déjà : rien à recharger
+      if(!b.classList.contains('on')) changeDe(s ? s.nom : '');
+    });
+  });
+  deMenu.hidden = false;
+  deBtn.setAttribute('aria-expanded', 'true');
+  const on = deMenu.querySelector('.on');
+  if(on) on.scrollIntoView({block: 'nearest'});
+}
+deBtn.addEventListener('click', ()=>{ if(deOuvert()) deFerme(); else deOuvre(); });
+/* Un clic ailleurs referme. À la capture, et non à la remontée : la
+   pastille d'identité et la cloche arrêtent leur clic (stopPropagation),
+   et les ouvrir laisserait sinon ce panneau-ci ouvert sous le leur. */
+document.addEventListener('click', e=>{
+  if(deOuvert() && !e.target.closest('#feedDeWrap')) deFerme();
+}, true);
+dessineDe();
+
+/* Les personnes, depuis l'annuaire : les journaux publics qui ont au moins
+   un jeu terminé - les autres donneraient un fil vide -, par ordre
+   alphabétique. Une personne demandée par l'adresse mais absente de la
+   liste y est ajoutée quand même, pour que le menu dise ce qu'on regarde. */
+function remplisDe(journaux, moi){
+  PERSONNES = journaux.filter(j => j.jeux > 0)
+    .map(j => ({nom: j.pseudo, jeux: j.jeux, avatar: j.avatar,
+                banniere: j.banniere, moi: j.pseudo === moi}))
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr', {sensitivity: 'base'}));
+  if(DE){
+    const s = personne(DE);
+    if(s) DE = s.nom;
+    else PERSONNES.unshift({nom: DE, jeux: 0});
+  }
+  dessineDe();
 }
 
 /* Une seule écoute pour tout le fil : les cartes arrivent par paquets, et
@@ -273,6 +428,17 @@ plus.addEventListener('click', chargeFil);
    (voir _salon_de dans social.py). */
 socialTempsReel({
   surJeu: post => {
+    /* Le fil d'une seule personne ne prend que ses jeux à elle. Ceux des
+       autres ne sont pas lus pour autant : la pastille les annonce, comme
+       sur le journal - sauf les miens, je sais ce que je viens de finir. */
+    if(!deCettePersonne(post)){
+      if(!(MOI.pseudo && post.pseudo === MOI.pseudo))
+        socialFeedNeuves(SOC_FEED_NEUVES + 1);
+      return;
+    }
+    /* Le fil entier est lu jusqu'à cette carte ; celui d'une personne
+       ne dit rien des autres, le repère ne bouge donc pas. */
+    if(!DE) feedLu(post.id);
     /* Déjà là : ça arrive quand on vient de charger une page qui contenait
        déjà ce jeu, ou qu'un même navigateur reçoit deux fois l'événement.
        On ne l'ajoute pas une seconde fois - un doublon dans un fil se voit
@@ -295,8 +461,7 @@ socialTempsReel({
   surRetrait: id => {
     const carte = feed.querySelector(`.soc-post[data-id="${id}"]`);
     if(carte) carte.remove();
-    if(!feed.children.length && !SUITE)
-      mot("Personne n'a encore terminé de jeu dans un journal public.");
+    if(!feed.children.length && !SUITE) mot(motVide());
   },
 });
 
@@ -317,11 +482,12 @@ regleRecherche({
   actif: () => -1,
 });
 
-/* Échap referme ce qui pend sous un bouton de la barre. Cette page n'a ni
-   engrenage ni onglets : il n'y a que le menu d'identité et la cloche, et
-   ni l'un ni l'autre n'est une fenêtre de la pile - archive-noyau.js ne les
-   connaît donc pas. */
+/* Échap referme ce qui pend sous un bouton. Cette page n'a ni engrenage
+   ni onglets : il n'y a que le menu d'identité, la cloche et le choix de
+   la personne sous le titre, et aucun n'est une fenêtre de la pile -
+   archive-noyau.js ne les connaît donc pas. */
 ECHAP_SANS_FENETRE = function(){
+  if(deOuvert()){ deFerme(); deBtn.focus(); return; }
   if(menuMoiOuvert()){ menuMoiFerme(); return; }
   if(socialClocheOuverte()) socialClocheFerme();
 };
@@ -370,6 +536,8 @@ if(window.Suggestion){
   }
   try{
     const d = await (await fetch('/api/journal', {credentials: 'same-origin'})).json();
+    // le menu « Tout le monde / une personne » sous le titre
+    remplisDe(d.journaux || [], d.moi && d.moi.pseudo);
     /* Ma pastille n'apparaît que si j'ai un journal, et elle pointe droit
        dessus : /archive ouvrirait le mien de toute façon, mais l'adresse
        nominative est celle qu'on peut copier et donner. */
