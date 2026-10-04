@@ -147,35 +147,44 @@ TYPES_ECARTES = ("Skill Card", "Token")
 # ------------------------------------------------------------------
 #   De la carte a l'onglet du classeur
 # ------------------------------------------------------------------
-# Le classeur a six onglets, et six seulement : Fusion, Rituel, Synchro, Xyz,
-# Pendule, Lien. Un monstre de deck principal, une Magie, un Piege n'y ont pas
-# de place -- ils comptent pour le Yu-Gi-Quiz (nom, artwork, vues), pas pour
-# le classeur. C'est pourquoi une serie de cent cartes n'en pose qu'une
-# vingtaine dans les pochettes.
+# Le classeur a quatre onglets, et quatre seulement : Fusion, Synchro, Xyz,
+# Lien. Un monstre de deck principal, une Magie, un Piege n'y ont pas de
+# place -- ils comptent pour le Yu-Gi-Quiz (nom, artwork, vues), pas pour le
+# classeur. C'est pourquoi une serie de cent cartes n'en pose qu'une vingtaine
+# dans les pochettes.
 #
 # La table est batie sur frameType et non sur type : c'est lui qui distingue
 # un Pendule d'un monstre a effet, la ou `type` melange les deux (« Pendulum
 # Effect Monster »). Verifiee sur les 2 096 pochettes deja rangees : elle
 # les retrouve toutes, « Synchro Tuner Monster » compris.
 #
-# Un Pendule croise avec autre chose -- Fusion Pendule, Xyz Pendule, Synchro
-# Pendule, Rituel Pendule -- va dans l'onglet Pendule, et non dans celui de son
-# Extra Deck. C'est le classement du proprietaire du classeur : le Pendule
-# prime, parce que c'est lui qui decide de la place de la carte dans une
-# collection. Aucune carte deja rangee ne bouge -- le classeur n'en contenait
-# aucune de ce genre au moment ou la regle a ete inversee.
+# Les onglets Rituel et Pendule ont existe, et ont ete retires avant d'avoir
+# ete remplis : un Rituel n'a plus de pochette. Un Pendule non plus, meme
+# croise avec l'Extra Deck -- Fusion Pendule, Xyz Pendule, Synchro Pendule.
+# Quand l'onglet Pendule existait, c'est lui qui les prenait, et non celui de
+# leur Extra Deck : les onglets Fusion, Synchro et Xyz n'en contiennent donc
+# aucun, et n'en recoivent pas davantage aujourd'hui.
 FAMILLES = {
     "fusion": "fusion",
     "synchro": "synchro",
     "xyz": "xyz",
     "link": "lien",
-    "ritual": "rituel",
-    "normal_pendulum": "pendule",
-    "effect_pendulum": "pendule",
-    "fusion_pendulum": "pendule",
-    "synchro_pendulum": "pendule",
-    "xyz_pendulum": "pendule",
-    "ritual_pendulum": "pendule",
+}
+
+# Les types de la liste « par type » de la mise a jour du stock : toutes les
+# cartes sorties d'un type, de la plus ancienne a la plus recente. Ce sont
+# les six onglets d'origine, Rituel et Pendule compris -- la liste sert
+# justement a preparer un classeur qui n'existe pas encore. Le classement est
+# celui que le classeur appliquait : un Pendule croise avec l'Extra Deck va
+# dans Pendule, et dans Pendule seulement.
+TYPES = {
+    "fusion": ("Fusion", ("fusion",)),
+    "rituel": ("Rituel", ("ritual",)),
+    "synchro": ("Synchro", ("synchro",)),
+    "xyz": ("Xyz", ("xyz",)),
+    "pendule": ("Pendule", ("normal_pendulum", "effect_pendulum", "fusion_pendulum",
+                            "synchro_pendulum", "xyz_pendulum", "ritual_pendulum")),
+    "lien": ("Lien", ("link",)),
 }
 
 # ------------------------------------------------------------------
@@ -382,7 +391,9 @@ def vues() -> dict:
 # « Ne plus proposer cette carte » : une promo, une variante, tout ce qu'on
 # ne veut ni dans le classeur ni dans le quiz. Elle ne se remplit que d'un
 # refus explicite, et rien ne l'efface tout seul -- c'est ce qui la distingue
-# du filtre Excel qu'elle remplace, qu'il fallait penser a tenir a jour.
+# du filtre Excel qu'elle remplace, qu'il fallait penser a tenir a jour. Elle
+# ne se vide de meme que d'un geste explicite : l'onglet « Liste noire » de
+# la mise a jour (voir ecartees et reprend).
 def liste_noire() -> set:
     return {str(x) for x in _lit(FICHIER_NOIRE, [])}
 
@@ -391,6 +402,20 @@ def ignore(cid) -> None:
     noire = liste_noire()
     noire.add(str(cid))
     _ecrit(FICHIER_NOIRE, sorted(noire))
+
+
+def reprend(cid) -> bool:
+    """Retire une carte de la liste noire. False si elle n'y etait pas.
+
+    Elle redevient une carte comme une autre : la prochaine analyse la
+    propose de nouveau, si elle manque encore. Rien d'autre ne bouge.
+    """
+    noire = liste_noire()
+    if str(cid) not in noire:
+        return False
+    noire.discard(str(cid))
+    _ecrit(FICHIER_NOIRE, sorted(noire))
+    return True
 
 
 # --------------------------------------------------------------------------
@@ -479,12 +504,23 @@ def series(force=False):
     brut, souci = _catalogue(API_SETS, "sets.json", force)
     if souci:
         return [], souci
+    # ygoprodeck annonce les series des que Konami les date : Beyond the
+    # Brave figurait en tete un mois avant sa sortie. Une entree dont la date
+    # TCG n'est pas encore passee est donc ecartee, et c'est l'entree, pas le
+    # code, qu'on ecarte -- une reedition a venir ne cache pas la serie
+    # d'origine. Le tri se refait a chaque appel : la serie apparait d'elle-
+    # meme le jour J, sans attendre que le cache soit retelecharge. La date
+    # est parfois celle du vendredi americain, un jour apres l'Europe ; le
+    # champ du code sert pour ce jour-la.
+    aujourdhui = _date.today().isoformat()
     par_code = {}
     for s in brut if isinstance(brut, list) else []:
         code = (s.get("set_code") or "").upper()
         if not code:
             continue
         date = s.get("tcg_date") or ""
+        if date > aujourdhui:
+            continue
         garde = par_code.get(code)
         if garde is None or date > garde["date"]:
             par_code[code] = {"code": code, "nom": s.get("set_name") or code,
@@ -672,6 +708,23 @@ def _du_set(carte, code) -> bool:
     return False
 
 
+def _a_venir(carte, dates, aujourdhui) -> bool:
+    """Cette carte attend-elle encore sa sortie ?
+
+    Deux temoins : la premiere sortie TCG que la fiche donne elle-meme dans
+    misc_info, et la date de chacune de ses series. Un seul passe suffit a
+    la dire sortie -- une carte deja parue que Beyond the Brave reedite n'est
+    pas une carte a venir, et un tirage que le catalogue aurait oublie ne
+    doit pas la retenir. Sans aucune date, rien ne permet de trancher, et
+    elle reste proposee comme avant.
+    """
+    connues = [(carte.get("misc_info") or [{}])[0].get("tcg_date")]
+    connues += [dates.get((s.get("set_code") or "").split("-")[0].upper())
+                for s in carte.get("card_sets") or []]
+    connues = [d for d in connues if d]
+    return bool(connues) and min(connues) > aujourdhui
+
+
 def _dates_des_series() -> dict:
     """{ code de serie -> date de sortie TCG la plus ancienne }."""
     brut, souci = _catalogue(API_SETS, "sets.json")
@@ -683,6 +736,25 @@ def _dates_des_series() -> dict:
         if code and s.get("tcg_date"):
             dates[code] = min(dates.get(code, "9999"), s["tcg_date"])
     return dates
+
+
+def _lots_de_tournoi() -> set:
+    """Les codes de serie qui ne designent que des cartes de lot de tournoi.
+
+    « Yu-Gi-Oh! World Championship 2017 prize cards », « Battle Pack
+    Tournament Prize Cards »... : une poignee d'exemplaires remis aux
+    vainqueurs, sans nom francais pour la plupart. Un code qu'une vraie serie
+    partage n'en fait pas partie.
+    """
+    brut, souci = _catalogue(API_SETS, "sets.json")
+    if souci:
+        return set()
+    noms = {}
+    for s in brut if isinstance(brut, list) else []:
+        code = (s.get("set_code") or "").upper()
+        if code:
+            noms.setdefault(code, []).append((s.get("set_name") or "").lower())
+    return {code for code, ns in noms.items() if all("prize" in n for n in ns)}
 
 
 # Ce qui separe le code de serie du numero : « CORI-EN067 ». EN pour
@@ -706,6 +778,19 @@ def _ordre(carte, dates) -> tuple:
     montre a la relecture, le proprietaire le corrige, et /ecrire suit
     l'ordre qu'on lui donne sans jamais le recalculer.
     """
+    tirage = _premier_tirage(carte, dates)
+    # Sans date connue, la carte part en fin de liste plutot qu'en tete :
+    # une serie que le catalogue ne date pas ne doit pas passer devant tout.
+    return (tirage[0], tirage[1]) if tirage else ("9999-99-99", 0)
+
+
+def _premier_tirage(carte, dates):
+    """(date de sortie TCG, numero dans la serie, code de la serie), ou None.
+
+    Le tirage le plus ancien, et dans sa serie le tirage principal (voir
+    LANGUES). None quand aucune serie de la carte n'est datee : une carte
+    qui n'est parue qu'en OCG, le plus souvent.
+    """
     meilleur = None
     for s in carte.get("card_sets") or []:
         code = (s.get("set_code") or "").upper()
@@ -717,12 +802,10 @@ def _ordre(carte, dates) -> tuple:
         if not decoupe or not date:
             continue
         candidat = (date, 0 if decoupe.group(1) in LANGUES else 1,
-                    int(decoupe.group(2)))
+                    int(decoupe.group(2)), prefixe)
         if meilleur is None or candidat < meilleur:
             meilleur = candidat
-    # Sans date connue, la carte part en fin de liste plutot qu'en tete :
-    # une serie que le catalogue ne date pas ne doit pas passer devant tout.
-    return (meilleur[0], meilleur[2]) if meilleur else ("9999-99-99", 0)
+    return (meilleur[0], meilleur[2], meilleur[3]) if meilleur else None
 
 
 def famille_de(carte):
@@ -803,6 +886,9 @@ def analyse(code="", force=False):
                       telechargement a deja echoue dessus ; elle repassera
                       dans une semaine (voir IMAGE_REESSAI).
       - `completes`: image et nom deja la, il n'y a rien a en faire.
+      - `a_venir`  : sans code seulement, les cartes pas encore sorties.
+                     Ecartees avant tout le reste : ni examinees, ni
+                     comptees dans le total, ni envoyees chez Konami.
     """
     en, konami, souci = catalogues(force)
     if souci:
@@ -813,12 +899,21 @@ def analyse(code="", force=False):
     sans_artwork = _sans_image()
     dates = _dates_des_series()
 
+    a_venir = 0
     if code:
         lot = {cid: c for cid, c in en.items() if _du_set(c, code)}
         if not lot:
             return None, f"aucune carte ne porte le code {code}"
     else:
-        lot = en
+        # Tout le site, c'est tout ce qui est sorti. Le catalogue publie les
+        # cartes d'une serie des qu'elle est annoncee, un mois avant qu'on
+        # puisse l'ouvrir ; elles apparaitront d'elles-memes le jour J. Un
+        # code tape a la main, lui, n'est pas filtre : c'est un choix, et le
+        # recours du jour ou la date donnee est celle du vendredi americain.
+        aujourdhui = _date.today().isoformat()
+        lot = {cid: c for cid, c in en.items()
+               if not _a_venir(c, dates, aujourdhui)}
+        a_venir = len(en) - len(lot)
 
     manquantes, a_resoudre, sans_fr = [], [], 0
     ignorees = completes = sans_image = 0
@@ -889,7 +984,136 @@ def analyse(code="", force=False):
         "sans_image": sans_image,
         "ignorees": ignorees,
         "completes": completes,
+        "a_venir": a_venir,
     }, None
+
+
+# --------------------------------------------------------------------------
+#   Les cartes sorties, par type
+# --------------------------------------------------------------------------
+def listes_par_type():
+    """Les cartes sorties de chaque type de TYPES, par ordre de parution.
+
+    Rend ([{cle, label, cartes, hors_tcg, a_venir, lots, en_anglais}], souci).
+
+    L'ordre est celui du classeur : date de sortie TCG, puis numero dans la
+    serie (voir _ordre). Deux series parues le meme jour ne s'entremelent
+    pas -- la premiere au code alphabetique passe d'abord, toute entiere.
+
+    Une carte sortie, c'est une carte dont le premier tirage est deja paru.
+    Quand le catalogue ne lui connait aucune serie datee, la date de sortie
+    TCG de sa fiche prend le relais, et la carte passe apres les series du
+    meme jour : c'est la place que le classeur donne aux cinq cartes du 3
+    juillet 2025 dont ygoprodeck a perdu le tirage. Restent dehors, et
+    comptees a part : celles qui n'ont aucune date TCG -- l'OCG seulement --,
+    celles qu'une serie a venir annonce, et celles qui n'ont jamais ete
+    qu'un lot de tournoi (voir _lots_de_tournoi). Ces dernieres ne sont dans
+    aucun classeur : sans elles, chaque carte des quatre classeurs se
+    retrouve dans sa liste, et la liste n'a qu'une carte de plus qu'eux.
+
+    La liste noire, elle, n'ecarte rien : elle dit ce qu'il ne faut plus
+    telecharger, pas ce qui n'existe pas. Le Dragon Pendule aux Yeux
+    Impairs y est, parce qu'ygoprodeck l'a renumerote ; il est bien sorti.
+
+    Le nom est celui que la mise a jour ecrirait (voir analyse). Une carte
+    que personne ne nomme en francais garde son nom anglais, et compte dans
+    `en_anglais` -- « Super Robolady », que le classeur range ainsi.
+    """
+    en, konami, souci = catalogues()
+    if souci:
+        return None, souci
+    fr = noms_fr()
+    dates = _dates_des_series()
+    lots = _lots_de_tournoi()
+    aujourdhui = _date.today().isoformat()
+    type_du_cadre = {cadre: cle for cle, (_label, cadres) in TYPES.items()
+                     for cadre in cadres}
+    listes = {cle: {"cle": cle, "label": label, "cartes": [],
+                    "hors_tcg": 0, "a_venir": 0, "lots": 0, "en_anglais": 0}
+              for cle, (label, _cadres) in TYPES.items()}
+    places = {cle: [] for cle in TYPES}
+    for cid, carte in en.items():
+        cle = type_du_cadre.get(carte.get("frameType") or "")
+        if cle is None:
+            continue
+        liste = listes[cle]
+        series = {(s.get("set_code") or "").split("-")[0].upper()
+                  for s in carte.get("card_sets") or []}
+        if series and series <= lots:
+            liste["lots"] += 1
+            continue
+        tirage = _premier_tirage(carte, dates)
+        if tirage is None:
+            fiche = (carte.get("misc_info") or [{}])[0].get("tcg_date")
+            if not fiche:
+                liste["hors_tcg"] += 1
+                continue
+            tirage = (fiche, 0, None)
+        date, numero, serie = tirage
+        if date > aujourdhui:
+            liste["a_venir"] += 1
+            continue
+        du_konami = konami.get(cid)
+        nom = _nom_retenu(fr.get(cid), du_konami, carte.get("name")) \
+            or carte.get("name") or cid
+        if not du_konami and _meme_nom(nom, carte.get("name")):
+            liste["en_anglais"] += 1
+        places[cle].append(((date, serie is None, serie or "", numero, nom), nom))
+    for cle, cartes in places.items():
+        cartes.sort(key=lambda c: c[0])
+        listes[cle]["cartes"] = [nom for _place, nom in cartes]
+    return list(listes.values()), None
+
+
+def _nom_retenu(au_fichier, du_konami, nom_anglais):
+    """Le nom francais que la mise a jour ecrirait, ou None. Voir analyse.
+
+    Celui du fichier, sauf s'il n'est que le nom anglais et que Konami en
+    donne un autre -- un bouche-trou de l'import, voir _meme_nom.
+    """
+    if au_fichier and du_konami and _meme_nom(au_fichier, nom_anglais):
+        return du_konami
+    return au_fichier or du_konami
+
+
+# --------------------------------------------------------------------------
+#   Ce que la liste noire contient
+# --------------------------------------------------------------------------
+def ecartees():
+    """Les cartes de la liste noire, de quoi les reconnaitre. (liste, souci).
+
+    [{id, fr, en, type, image, doublon}], par nom. `doublon` est le numero
+    sous lequel le fichier des noms connait deja cette carte, ou None : la
+    plupart des refus viennent de la, ygoprodeck ayant renumerote une carte
+    que le stock avait deja -- la reproposer en ferait un double dans le
+    quiz. Une carte que le catalogue ne connait plus reste listee, sous son
+    numero : elle reste refusee tant qu'on ne la reprend pas.
+    """
+    en, konami, souci = catalogues()
+    if souci:
+        return None, souci
+    fr = noms_fr()
+    connues = {}
+    for autre, nom in fr.items():
+        if isinstance(nom, str) and nom.strip():
+            connues.setdefault(collection.normalise_nom(nom), autre)
+    liste = []
+    for cid in liste_noire():
+        carte = en.get(cid) or {}
+        anglais = carte.get("name") or ""
+        nom = _nom_retenu(fr.get(cid), konami.get(cid), anglais) or anglais
+        images = carte.get("card_images") or [{}]
+        autre = connues.get(collection.normalise_nom(nom)) if nom else None
+        liste.append({
+            "id": cid,
+            "fr": nom,
+            "en": anglais,
+            "type": carte.get("humanReadableCardType") or carte.get("type") or "",
+            "image": images[0].get("image_url_small") or images[0].get("image_url") or "",
+            "doublon": autre if autre and autre != cid else None,
+        })
+    liste.sort(key=lambda c: (collection.normalise_nom(c["fr"]) or "~", c["id"]))
+    return liste, None
 
 
 # --------------------------------------------------------------------------
@@ -1035,11 +1259,10 @@ def _renomme(index, ancien, nouveau) -> int:
 def pose_pochettes(nom, cle) -> int:
     """Ajoute cette carte au bout de cet onglet, dans tous les classeurs.
 
-    Le meme geste que l'administration qui ajoute une carte depuis le
-    classeur (voir ajouter() dans collection.py) : les classeurs partagent
-    les memes pochettes, une carte qui parait les concerne tous. `ajoute`
-    rend None quand l'onglet a deja cette carte, ce qui rend l'operation
-    rejouable sans creer de doublon.
+    C'est par la, et par la seulement, qu'une carte qui parait entre dans
+    les classeurs : ils partagent les memes pochettes, elle les concerne
+    tous. `ajoute` (dans collection.py) rend None quand l'onglet a deja
+    cette carte, ce qui rend l'operation rejouable sans creer de doublon.
     """
     if not cle:
         return 0
@@ -1235,6 +1458,20 @@ def voir_series():
     return reponse({"ok": True, "series": liste[:60]})
 
 
+@blueprint_cartes.get("/types")
+def voir_types():
+    """Les cartes sorties de chaque type, par ordre de parution.
+
+    Les six listes d'un coup, et non une par clic : c'est un seul passage
+    sur le catalogue, et la page passe ensuite d'un type a l'autre sans
+    rien redemander. Deux mille cinq cents noms, une centaine de Ko.
+    """
+    listes, souci = listes_par_type()
+    if souci:
+        return echec("injoignable", souci, 502)
+    return reponse({"ok": True, "types": listes})
+
+
 @blueprint_cartes.post("/analyse")
 def voir_analyse():
     """Ce qui manque. { code } -- code vide = tout le site."""
@@ -1284,6 +1521,28 @@ def ne_plus_proposer():
         raise Refus("id", "Identifiant de carte invalide.")
     ignore(cid)
     return reponse({"ok": True, "id": cid})
+
+
+@blueprint_cartes.get("/ecartees")
+def voir_ecartees():
+    """La liste noire, carte par carte."""
+    liste, souci = ecartees()
+    if souci:
+        return echec("injoignable", souci, 502)
+    return reponse({"ok": True, "cartes": liste})
+
+
+@blueprint_cartes.post("/reprendre")
+def reprendre():
+    """Retire une carte de la liste noire. { id }
+
+    Rejouable : une carte qui n'y est deja plus n'est pas une erreur, la
+    page a pu etre ouverte deux fois.
+    """
+    cid = str(corps().get("id") or "").strip()
+    if not cid.isdigit():
+        raise Refus("id", "Identifiant de carte invalide.")
+    return reponse({"ok": True, "id": cid, "retiree": reprend(cid)})
 
 
 @blueprint_cartes.post("/ecrire")

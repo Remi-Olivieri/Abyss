@@ -148,6 +148,12 @@ const EMBLEMES = {
     <path d="M4 34h40"/><path d="M11 34v-7M23 34V19M35 34v-11"/>
     <rect x="6" y="9" width="10" height="9" rx="2"/><rect x="18" y="4" width="10" height="9" rx="2"/>
     <rect x="30" y="11" width="10" height="9" rx="2"/></svg>`,
+  /* La frise qui ne s'arrête pas : l'infini au-dessus d'un axe du temps
+     dont la flèche sort du cadre. */
+  infini: `<svg class="qz-embleme" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M24 17c-3-4-6-6-9-6a6 6 0 0 0 0 12c3 0 6-2 9-6s6-6 9-6a6 6 0 0 1 0 12c-3 0-6-2-9-6z"/>
+    <path d="M4 36h38M38 32l4 4-4 4"/><path d="M11 36v-4M20 36v-4M29 36v-4"/></svg>`,
   grille: `<svg class="qz-embleme" viewBox="0 0 48 48" fill="none" stroke="currentColor"
     stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
     <rect x="5" y="5" width="16" height="16" rx="2.5"/><rect x="27" y="5" width="16" height="16" rx="2.5"/>
@@ -178,6 +184,9 @@ const JEUX = [
   { famille: "jv", cle: "chronologie", embleme: "frise", nom: "Chronologie",
     texte: "Cinq jeux à remettre dans l'ordre de sortie, du plus ancien au plus récent.",
     lance: lanceChrono },
+  { famille: "jv", cle: "chronologie-sans-fin", embleme: "infini", nom: "Chronologie sans fin",
+    texte: "Un jeu à la fois, à placer dans une frise qui s'allonge. Trois vies, et chaque carte rapporte plus que la précédente.",
+    lance: lanceEndurance },
   { famille: "jv", cle: "grille", embleme: "grille", nom: "Grille de connexions",
     texte: "Seize jeux, quatre groupes de quatre à retrouver : même studio, même année, un genre ou un mot en commun... Quatre erreurs et c'est perdu.",
     lance: lanceGrille },
@@ -240,7 +249,7 @@ function navAbandon(titre) {
 
 function quitte() {
   clearTimeout(MINUTEUR_ABANDON);
-  PARTIE = null; ETAT = null; CHRONO = null; PRISE = null; GRILLE = null;
+  PARTIE = null; ETAT = null; CHRONO = null; PRISE = null; GRILLE = null; ENDU = null;
   dessineMenu();
 }
 
@@ -1165,6 +1174,294 @@ function chronoTermine() {
   el("rejouer").addEventListener("click", lanceChrono);
   el("autres").addEventListener("click", dessineMenu);
   el("rejouer").focus();
+}
+
+/* =========================================================
+   Chronologie sans fin
+
+   La variante endurance : un jeu à la fois, à placer dans une frise qui
+   s'allonge, jusqu'à la troisième erreur. La première carte est posée
+   d'office, date visible - c'est le premier repère.
+
+   La frise est une colonne, du plus ancien en haut au plus récent en bas,
+   et non une ligne comme celle de la Chronologie : elle grandit sans fin,
+   et trente jaquettes côte à côte ne tiennent sur aucun écran. Entre deux
+   cartes, et aux deux bouts, une fente où poser la carte en main. Un clic
+   ou un appui suffit, sans glisser : c'est un geste qu'on répète trente
+   fois d'affilée, il doit être le plus court possible.
+
+   La carte en main reste collée en haut de l'écran pendant qu'on descend
+   la frise chercher sa place : sans ça, on perdrait de vue ce qu'on range.
+
+   Une erreur coûte une vie, et la carte se pose quand même, à sa vraie
+   place et en rouge. La frise est aussi ce qu'on apprend en jouant : une
+   date ratée est celle dont on se souvient à la partie suivante.
+
+   Le score : une carte bien placée vaut ENDU.parJeu points par jeu déjà sur
+   la frise (voir ENDURANCE_PAR_JEU dans quiz.py) - elle rapporte autant
+   qu'elle était difficile. Pas de maximum, donc pas de jauge sur mille
+   comme les trois autres jeux : on joue contre son record, gardé par le
+   navigateur, et un par vivier - « Mes jeux » se connaît mieux que « Tous
+   les jeux », les deux records ne se comparent pas.
+   ========================================================= */
+let ENDU = null;   // { pioche, frise, carte, vies, viesMax, parJeu, score, bien, verdict, fini, fige, record, nouveau, vide }
+
+const COEUR = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"
+  aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.1
+  5.4 3.1 1.8-2 3.3-3.1 5.4-3.1 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z"/></svg>`;
+
+/* Le record. Le stockage du navigateur peut manquer - navigation privée,
+   stockage bloqué : on joue alors sans record, et rien d'autre ne change. */
+const cleRecord = () => "quiz-chronologie-sans-fin-" + SOURCE;
+function lisRecord() {
+  try { return Math.max(0, parseInt(localStorage.getItem(cleRecord()), 10) || 0); }
+  catch (e) { return 0; }
+}
+function poseRecord(n) {
+  try { localStorage.setItem(cleRecord(), String(n)); } catch (e) { /* pas de record */ }
+}
+
+// ce que rapporte la carte en main si elle est bien placée
+const enValeur = () => ENDU.frise.length * ENDU.parJeu;
+const enDoux = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+
+async function lanceEndurance() {
+  marque("Chronologie sans fin");
+  navRetour(dessineMenu, "Tirage…");
+  el("hero").hidden = true;
+  el("scene").innerHTML = '<p class="qz-etat">Tirage des jeux…</p>';
+  let data;
+  try {
+    data = await api("/api/quiz/chronologie-sans-fin?source=" + encodeURIComponent(SOURCE));
+  } catch (err) {
+    el("scene").innerHTML = `<p class="qz-etat"><b>Impossible de lancer la partie.</b>
+      ${esc(err.message)}</p>
+      <p class="qz-boutons" style="margin-top:18px">
+        <button type="button" class="cta" id="retour">Revenir aux jeux</button></p>`;
+    el("retour").addEventListener("click", dessineMenu);
+    return;
+  }
+  const jeux = data.jeux || [];
+  ENDU = {
+    pioche: jeux.slice(2),
+    frise: [{ jeu: jeux[0], etat: "depart" }],
+    carte: jeux[1],
+    vies: data.vies || 3,
+    viesMax: data.vies || 3,
+    parJeu: data.parJeu || 10,
+    score: 0,
+    bien: 0,
+    verdict: null,      // ce qui vient de se passer, dit sous la carte en main
+    fini: false,
+    fige: false,        // le court temps d'arrêt après chaque placement
+    record: lisRecord(),
+    nouveau: false,
+    vide: false,        // la pioche s'est épuisée avant les vies
+  };
+  dessineEndurance();
+  window.scrollTo(0, 0);
+}
+
+function dessineEndurance() {
+  navAbandon("Chronologie sans fin");
+  el("scene").innerHTML = `
+    <div class="qz-partie qz-endu">
+      <div class="qz-barre">
+        <span class="en-vies" id="enVies" role="img"></span>
+        <span id="enLong"></span>
+        <span class="qz-score">Score<b id="enScore">0</b></span>
+      </div>
+      <!-- aria-live sur le conteneur, qui reste, et non sur le verdict,
+           redessiné à chaque carte : une région annoncée doit exister avant
+           que son contenu change. -->
+      <div class="en-main" id="enMain" aria-live="polite"></div>
+      <ol class="en-frise" id="enFrise"></ol>
+    </div>`;
+  /* Une seule écoute pour toutes les fentes : elles sont redessinées à
+     chaque placement, des écoutes posées une à une seraient à reposer. */
+  el("enFrise").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-k]");
+    if (b) enPlace(+b.dataset.k);
+  });
+  peintEndurance();
+}
+
+const enFace = (j) => `<span class="en-face">${j.image
+  ? `<img src="${esc(j.image)}" alt="" draggable="false">`
+  : `<span class="qz-vide" aria-hidden="true">${esc((j.titre || "?").charAt(0))}</span>`}</span>`;
+
+/* Une carte de la frise : sa date se lit deux fois, l'année en grand au bout
+   de la ligne pour chercher sa place d'un coup d'œil en descendant, le jour
+   exact sous le titre pour les voisins de la même année. */
+function enCarteHTML(x) {
+  const j = x.jeu;
+  return `<li class="en-carte ${x.etat}${x.neuve ? " neuve" : ""}">
+    ${enFace(j)}
+    <span class="en-txt"><b>${esc(j.titre)}</b><i>${esc(dateFr(j.sortie))}</i></span>
+    <span class="en-an">${esc(String(j.sortie || "").slice(0, 4))}</span>
+    ${x.neuve && x.etat === "juste" ? `<span class="en-gain" aria-hidden="true">+${x.pts}</span>` : ""}
+  </li>`;
+}
+
+/* Une fente, là où la carte en main peut aller. Les deux bouts disent dans
+   quel sens se lit la frise ; celles du milieu n'ont qu'à dire « ici ». Le
+   nom lu à voix haute dit entre quoi et quoi, puisque l'œil, lui, le voit. */
+function enFente(k) {
+  const f = ENDU.frise, n = f.length;
+  const avant = k > 0 ? f[k - 1].jeu.titre : null;
+  const apres = k < n ? f[k].jeu.titre : null;
+  const ou = !avant ? `avant ${apres}` : !apres ? `après ${avant}` : `entre ${avant} et ${apres}`;
+  const texte = k === 0 ? "Plus ancien" : k === n ? "Plus récent" : "Placer ici";
+  return `<li class="en-fente${k === 0 ? " en-debut" : k === n ? " en-bout" : ""}">
+    <button type="button" data-k="${k}"
+            aria-label="Placer ${esc(ENDU.carte.titre)} ${esc(ou)}"><span>${texte}</span></button>
+  </li>`;
+}
+
+function enMainHTML() {
+  const e = ENDU, v = e.verdict;
+  return `
+    <div class="en-carte en-tenue">
+      ${enFace(e.carte)}
+      <span class="en-txt"><b>${esc(e.carte.titre)}</b><i>Où se place-t-il ?</i></span>
+      <span class="en-mise">+${enValeur()}</span>
+    </div>
+    <p class="en-verdict${v ? (v.juste ? " bon" : " mauvais") : ""}">${
+      v ? v.texte : "Choisis sa place dans la frise."}</p>`;
+}
+
+/* Le bilan, là où était la carte en main : c'est le haut de la partie, et
+   la frise complète reste dessous, toutes dates visibles. */
+const EN_MENTIONS = [
+  { bien: 25, texte: "Légendaire",       classe: "parfait" },
+  { bien: 15, texte: "Excellent",        classe: "haut" },
+  { bien: 8,  texte: "Bien joué",        classe: "haut" },
+  { bien: 4,  texte: "Pas mal",          classe: "moyen" },
+  { bien: 1,  texte: "Peut mieux faire", classe: "moyen" },
+  { bien: 0,  texte: "Aïe...",           classe: "bas" },
+];
+
+function enBilanHTML() {
+  const e = ENDU;
+  const m = EN_MENTIONS.find((x) => e.bien >= x.bien);
+  const s = e.bien > 1 ? "s" : "";
+  const record = e.nouveau
+    ? `<p class="en-record neuf">Nouveau record${e.record ? ` · l'ancien était ${e.record}` : ""}</p>`
+    : e.record ? `<p class="en-record">Record : ${e.record}</p>` : "";
+  return `<div class="qz-bilan en-bilan">
+      <p class="qz-mention ${e.vide ? "parfait" : m.classe}">${e.vide ? "Pioche épuisée" : m.texte}</p>
+      <p class="qz-total">${e.score}<span class="qz-max">points</span></p>
+      ${record}
+      <p class="qz-sur">${e.bien
+        ? `${e.bien} jeu${s ? "x" : ""} bien placé${s}` : "aucun jeu bien placé"}
+        · frise de ${e.frise.length} cartes</p>
+      <div class="qz-boutons">
+        <button type="button" class="cta" id="enRejouer">Rejouer</button>
+        <button type="button" class="cta" id="enAutres"
+                style="background:none;color:var(--muted);border:1px solid var(--line)">Autres jeux</button>
+      </div>
+    </div>`;
+}
+
+function peintEndurance() {
+  const e = ENDU;
+  /* La carte en main se colle sous l'en-tête, dont la hauteur change avec la
+     largeur - deux rangées sur un téléphone. Mesurée plutôt que devinée. */
+  const haut = document.querySelector(".top");
+  el("scene").style.setProperty("--en-haut", (haut ? haut.offsetHeight : 0) + "px");
+  const vies = el("enVies");
+  vies.innerHTML = Array.from({ length: e.viesMax }, (_, i) =>
+    `<i class="en-vie${i < e.vies ? "" : " perdue"}">${COEUR}</i>`).join("");
+  vies.setAttribute("aria-label", `${e.vies} vie${e.vies > 1 ? "s" : ""} sur ${e.viesMax}`);
+  el("enLong").innerHTML = `Frise <b>${e.frise.length}</b>`;
+  el("enScore").textContent = e.score;
+  const main = el("enMain");
+  main.classList.toggle("termine", e.fini);
+  main.innerHTML = e.fini ? enBilanHTML() : enMainHTML();
+  const frise = el("enFrise");
+  frise.innerHTML = e.fini
+    ? e.frise.map(enCarteHTML).join("")
+    : enFente(0) + e.frise.map((x, i) => enCarteHTML(x) + enFente(i + 1)).join("");
+  frise.classList.toggle("fige", e.fige);
+  if (e.fini) {
+    el("enRejouer").addEventListener("click", lanceEndurance);
+    el("enAutres").addEventListener("click", dessineMenu);
+  }
+}
+
+function enPlace(k) {
+  const e = ENDU;
+  if (!e || e.fini || e.fige) return;
+  const f = e.frise, c = e.carte;
+  /* Juste si la carte tient entre ses deux voisines. Le serveur n'envoie
+     jamais deux fois la même date, mais l'égalité est acceptée quand même :
+     la refuser punirait une réponse qui n'a pas tort. */
+  const juste = (k === 0 || f[k - 1].jeu.sortie <= c.sortie)
+             && (k === f.length || c.sortie <= f[k].jeu.sortie);
+  const pts = enValeur();
+  f.forEach((x) => { x.neuve = false; });
+  let place = k;
+  if (juste) {
+    e.score += pts;
+    e.bien += 1;
+    e.verdict = { juste: true, texte: `<b>Bien placé</b> · +${pts}` };
+  } else {
+    place = f.findIndex((x) => x.jeu.sortie > c.sortie);
+    if (place < 0) place = f.length;
+    e.vies -= 1;
+    e.verdict = { juste: false, texte: `<b>Raté</b> · ${esc(c.titre)} est sorti le ${
+      esc(dateFr(c.sortie))}${e.vies === 1 ? " · plus qu'une vie" : ""}` };
+  }
+  f.splice(place, 0, { jeu: c, etat: juste ? "juste" : "faux", neuve: true, pts: pts });
+
+  if (e.vies <= 0 || !e.pioche.length) {
+    enTermine();
+    return;
+  }
+  e.carte = e.pioche.shift();
+  /* Un temps d'arrêt après chaque placement : la frise vient de bouger
+     sous le doigt, et un second appui parti trop vite tomberait dans une
+     fente qui n'est plus celle qu'on visait. */
+  e.fige = true;
+  setTimeout(() => {
+    if (ENDU !== e) return;
+    e.fige = false;
+    const fr = el("enFrise");
+    if (fr) fr.classList.remove("fige");
+  }, 450);
+
+  const avant = document.activeElement && document.activeElement.closest
+    && document.activeElement.closest("#enFrise [data-k]");
+  peintEndurance();
+  /* Le clavier garde sa place : redessiner la frise a emporté le bouton
+     qui avait le focus, on le rend à la fente du même rang. */
+  if (avant) {
+    const b = el("enFrise").querySelector(`[data-k="${Math.min(k, f.length)}"]`);
+    if (b) b.focus({ preventScroll: true });
+  }
+  /* Une carte ratée se pose à sa vraie place, qui peut être loin de celle
+     qu'on visait : on la montre. */
+  if (!juste) {
+    const neuve = el("enFrise").querySelector(".en-carte.neuve");
+    if (neuve) neuve.scrollIntoView({ block: "nearest", behavior: enDoux() });
+  }
+}
+
+function enTermine() {
+  const e = ENDU;
+  e.fini = true;
+  e.fige = false;
+  e.vide = e.vies > 0;
+  e.nouveau = e.score > e.record;
+  if (e.nouveau) poseRecord(e.score);
+  /* La croix d'abandon n'a plus rien à abandonner : la flèche ramène au
+     salon. */
+  navRetour(dessineMenu, "Terminé");
+  peintEndurance();
+  /* Le bilan est en haut de la partie, et on peut être loin dessous, au
+     fond d'une frise de trente cartes. */
+  window.scrollTo({ top: 0, behavior: enDoux() });
+  el("enRejouer").focus({ preventScroll: true });
 }
 
 /* =========================================================

@@ -768,6 +768,16 @@ window.addEventListener("pagehide", () => {
   }
   dessine();
   el("corps").hidden = false;
+  /* La liste est à l'écran : tout ce qui est arrivé jusqu'ici est vu, et
+     la pastille du bouton de compte repart de zéro (voir vus dans
+     suggestions.py). Après l'affichage et non avant : un chargement raté
+     ne doit pas effacer ce qu'on n'a pas pu lire. */
+  if (MOI.utilisateur.suggestionsNeuves) {
+    api("/api/changements/vus", "POST", {}).then(() => {
+      MOI.utilisateur.suggestionsNeuves = 0;
+      Compte.dessine(MOI);
+    }).catch(() => { /* la pastille restera jusqu'à la prochaine visite */ });
+  }
 })();
 
 

@@ -401,10 +401,36 @@ async function ajouteALaWishlist(g, data, btn){
       applyData(rep, true);
       render();
     }
+    /* Après le rendu, pas avant : poseJaquette redessine le mur, qui doit
+       déjà connaître le jeu pour lui donner son image. */
+    if(data && data.jaquette) recupereJaquette(g, data.jaquette);
   }catch(e){
     btn.disabled = false; btn.innerHTML = avant;
     toast('Ajout impossible - ' + (e.message || 'erreur inconnue'), true);
   }
+}
+
+/* La jaquette du jeu qu'on vient d'ajouter. Le « + Wishlist » des
+   suggestions de découverte la rapatriait déjà ; celui-ci l'oubliait, et le
+   jeu arrivait au classeur avec ses seules initiales.
+
+   La fiche IGDB dit laquelle c'est (`jaquette`, voir detail_complet) : rien
+   à choisir, on la télécharge directement. Sous la même clé que le jeu -
+   son identifiant IGDB, son nom à défaut - sans quoi la page la
+   chercherait sous un autre nom.
+
+   Sur le journal, poseJaquetteChoisie (archive-jaquette.js) fait le
+   téléchargement et remet le mur à jour. La page Social ne charge pas ce
+   fichier, et n'a pas de mur à redessiner : l'appel seul suffit, en
+   silence - un échec y laisse les initiales, que le bouton de la tuile
+   sait remplacer plus tard. */
+function recupereJaquette(g, image){
+  if(typeof poseJaquetteChoisie === 'function'){
+    poseJaquetteChoisie(g.name, image, g.idIgdb);
+    return;
+  }
+  api('/api/jaquette/choisir', {nom: g.name, image: image, id_igdb: g.idIgdb || null})
+    .catch(()=>{});
 }
 
 /* Les deux boutons de la ligne du titre, une fois la fiche revenue.

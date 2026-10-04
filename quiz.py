@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Les mini-jeux du Quiz Jeux Video.
 
-Trois : « Jaquette floue », « Chronologie » et « Grille de connexions ».
+Quatre : « Jaquette floue », « Chronologie », sa variante « Chronologie
+sans fin », et « Grille de connexions ».
 Tous puisent au meme endroit -- les journaux de jeu deja remplis -- et rien
 n'est prevu a l'avance pour des jeux qui n'existent pas encore.
 
@@ -96,6 +97,27 @@ CHRONO_JEUX = 5
 # Le maximum d'une partie vaut donc CHRONO_JEUX * CHRONO_PAR_JEU, soit les
 # 1000 sur lesquels les trois mini-jeux se comptent (voir POINTS).
 CHRONO_PAR_JEU = 200
+
+# --- Chronologie sans fin --------------------------------------------------
+# La meme matiere, une autre partie : un jeu a la fois, a placer dans une
+# frise qui s'allonge, jusqu'a la troisieme erreur. Pas de maximum, donc pas
+# de note sur mille comme les trois autres -- on joue contre son record.
+ENDURANCE_VIES = 3
+
+# Ce que rapporte une carte bien placee : tant de points PAR JEU DEJA SUR LA
+# FRISE. La premiere se pose a cote d'un seul jeu, une chance sur deux au
+# hasard, et vaut 10 ; la vingtieme se glisse entre dix-neuf dates, souvent
+# a quelques mois pres, et en vaut 190. Le score monte donc comme la
+# difficulte, et une longue frise pese bien plus que plusieurs courtes.
+ENDURANCE_PAR_JEU = 10
+
+# Les cartes envoyees d'un coup. Trois vies n'ont jamais tenu cent cinquante
+# placements : au-dela, ce serait du poids pour rien. Un vivier plus petit
+# part en entier, et la page annonce la pioche epuisee quand il l'est.
+ENDURANCE_PIOCHE = 150
+
+# En dessous, la partie serait finie avant d'avoir commence.
+ENDURANCE_MINIMUM = 10
 
 blueprint_quiz = Blueprint("quiz", __name__, url_prefix="/api/quiz")
 
@@ -267,6 +289,41 @@ def partie_chronologie(u=None):
         "ok": True,
         "jeux": jeux,
         "parJeu": CHRONO_PAR_JEU,
+        "vivier": len(vivier),
+    }
+
+
+def partie_endurance(u=None):
+    """Une partie de « Chronologie sans fin » : la pioche entiere, melangee.
+
+    La meme regle de tirage que partie_chronologie, pour la meme raison :
+    une date ne sort qu'une fois. Deux jeux du meme jour se placeraient
+    indifferemment l'un avant l'autre, et une frise de trente cartes finirait
+    forcement par en croiser deux.
+
+    La premiere carte de la liste est posee d'office : c'est le premier
+    repere de la frise, sa date se voit, et il n'y a rien a deviner dessus.
+
+    Et comme partout ici, la page corrige elle-meme : les dates partent avec
+    les cartes. Le record est garde par le navigateur, pas par le serveur --
+    voir l'avertissement en tete de module pour le jour ou ca comptera.
+    """
+    vivier = _vivier(u, jaquette_requise=False)
+    par_date = {}
+    for j in vivier:
+        par_date.setdefault(j["sortie"], []).append(j)
+    if len(par_date) < ENDURANCE_MINIMUM:
+        n = len(par_date)
+        raise Refus("vide", "Pas assez de jeux sortis à des dates différentes"
+                            f" pour jouer ({n} date{'s' if n > 1 else ''} trouvée"
+                            f"{'s' if n > 1 else ''}, {ENDURANCE_MINIMUM} au moins).", 409)
+
+    dates = random.sample(sorted(par_date), min(len(par_date), ENDURANCE_PIOCHE))
+    return {
+        "ok": True,
+        "jeux": [random.choice(par_date[d]) for d in dates],
+        "vies": ENDURANCE_VIES,
+        "parJeu": ENDURANCE_PAR_JEU,
         "vivier": len(vivier),
     }
 
@@ -726,7 +783,7 @@ def _refus(err):
     return echec(err.code, err.message, err.statut)
 
 
-# Les trois routes ci-dessous etaient reservees a l'administration tant que
+# Les routes ci-dessous etaient reservees a l'administration tant que
 # les jeux n'etaient pas finis. Elles sont ouvertes a tout le monde depuis
 # qu'ils le sont, visiteurs compris : le vivier par defaut est celui des
 # journaux publics, et jouer avec ne demande pas de compte.
@@ -760,6 +817,17 @@ def chronologie():
     u = actuel()
     mien = request.args.get("source", "tous") == "moi"
     return reponse(partie_chronologie(u if mien else None))
+
+
+@blueprint_quiz.get("/chronologie-sans-fin")
+def chronologie_sans_fin():
+    """?source=moi|tous
+
+    La variante endurance de la chronologie, avec le meme reglage.
+    """
+    u = actuel()
+    mien = request.args.get("source", "tous") == "moi"
+    return reponse(partie_endurance(u if mien else None))
 
 
 @blueprint_quiz.get("/grille")

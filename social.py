@@ -981,6 +981,25 @@ def supprime_commentaire(commentaire_id, u) -> dict:
 # --------------------------------------------------------------------------
 #   Notifications
 # --------------------------------------------------------------------------
+def _ce_qui_est_rempli(ligne) -> str:
+    """Ce qu'un j'aime ou un commentaire a vise, pour que la cloche le nomme.
+
+    On aime la carte entiere du fil, et elle ne porte pas toujours un avis :
+    « a aime ton avis » sur une ligne qui n'a qu'une note decrivait quelque
+    chose qui n'existe pas. On la nomme donc par ce qu'elle a de plus
+    personnel -- l'avis s'il y en a un, la note sinon, la carte elle-meme
+    (« ton post ») quand il n'y a ni l'un ni l'autre.
+
+    Lu a l'affichage et non fige a l'envoi : c'est la carte telle qu'elle est
+    aujourd'hui que la notification ouvre.
+    """
+    if (ligne["avis"] or "").strip():
+        return "avis"
+    if ligne["note"] is not None:
+        return "note"
+    return "post"
+
+
 def notifications(u) -> dict:
     """La cloche : ce qui s'est passe sans nous, du plus recent au plus vieux.
 
@@ -995,7 +1014,7 @@ def notifications(u) -> dict:
     lignes = cx().execute(
         "SELECT n.id, n.genre, n.jeu_id, n.lu, n.cree_le,"
         " a.id AS auteur_id, a.pseudo, a.avatar, a.avatar_maj_le, j.nom,"
-        " c.texte AS commentaire"
+        " j.avis, j.note, c.texte AS commentaire"
         " FROM notification n"
         " JOIN utilisateur a ON a.id = n.auteur_id"
         " JOIN jeu j ON j.id = n.jeu_id"
@@ -1010,6 +1029,7 @@ def notifications(u) -> dict:
             "id": l["id"],
             "genre": l["genre"],
             "jeu": l["nom"],
+            "quoi": _ce_qui_est_rempli(l),
             "jeuId": l["jeu_id"],
             "pseudo": l["pseudo"],
             "avatar": _avatar(l),

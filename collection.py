@@ -69,10 +69,8 @@ ETATS = (1, 2, 3)
 COULEUR = re.compile(r"^(#[0-9a-f]{3,8}|rgba?\([0-9\s.,%/]+\)|[a-z]{3,20})$", re.I)
 COULEUR_DEFAUT = "#A086B7"
 
-# Deux garde-fous que seul l'import utilise aujourd'hui (voir
-# importer_collection.py), poses ici parce que ce sont des regles du
-# classeur et non de l'outil qui le remplit.
-NOM_MAXI = 200
+# Un garde-fou pose ici parce que c'est une regle du classeur et non de
+# l'outil qui le remplit.
 CARTES_MAXI = 20000        # par page : garde-fou contre un import qui s'emballe
 
 # Un tome du classeur : 30 pages de 18 pochettes, comme PAGES_PAR_CLASSEUR et
@@ -105,6 +103,9 @@ FICHIER_NOMS = None
 # raretes_du_catalogue dans cartes.py). Meme detour que les illustrations :
 # le fichier est range par passcode, une pochette ne connait que son nom.
 FICHIER_RARETES = None
+# { passcode -> nom anglais }, ecrit par la mise a jour du stock, lu pour la
+# liste de souhaits Cardmarket (voir « les noms anglais » plus bas).
+FICHIER_EN = None
 URL_CARTES = "/static/yugioh/Cards/"
 
 # --- les vignettes ---------------------------------------------------------
@@ -129,8 +130,8 @@ URL_VIGNETTES = "/api/collection/vignette/"
 NOM_FICHIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}\.[A-Za-z0-9]{1,5}$")
 
 _illustrations = None      # nom normalise -> nom de fichier ('12345678.jpg')
-_noms = None               # [(nom normalise, nom, fichier ou None)], pour l'aide a la saisie
 _raretes = None            # nom normalise -> [raretes parues]
+_anglais = None            # (nom exact, nom normalise) -> [noms anglais]
 _verrou = threading.Lock()
 
 
@@ -200,43 +201,10 @@ def oublie_illustrations() -> None:
     complete les noms et refait les raretes parues (voir ecrit() dans
     cartes.py), et les trois se lisent des memes fichiers.
     """
-    global _illustrations, _noms, _raretes
+    global _illustrations, _raretes, _anglais
     _illustrations = None
-    _noms = None
     _raretes = None
-
-
-def noms_connus() -> list:
-    """Tous les noms francais du fichier, avec leur artwork quand il existe.
-
-    Sert a l'aide a la saisie quand on ajoute une carte : un nom tape a la
-    main qui differe d'une lettre de celui du fichier est une pochette sans
-    illustration. Proposer le nom exact evite ca. Une carte trop recente pour
-    le fichier reste ajoutable -- elle affichera son nom en attendant.
-    """
-    global _noms
-    if _noms is None:
-        # avant le verrou : illustrations() le prend aussi, et il n'est pas
-        # reentrant
-        index = illustrations()
-        with _verrou:
-            if _noms is None:
-                liste, vus = [], set()
-                try:
-                    with open(FICHIER_NOMS, encoding="utf-8") as f:
-                        brut = json.load(f)
-                except (OSError, TypeError, ValueError):
-                    brut = {}
-                for nom in (brut.values() if isinstance(brut, dict) else []):
-                    if not isinstance(nom, str) or not nom.strip():
-                        continue
-                    cle = normalise_nom(nom)
-                    if cle and cle not in vus:
-                        vus.add(cle)
-                        liste.append((cle, nom.strip(), index.get(cle)))
-                liste.sort(key=lambda x: x[0])
-                _noms = liste
-    return _noms
+    _anglais = None
 
 
 # --- les raretes parues ----------------------------------------------------
@@ -295,6 +263,58 @@ def raretes() -> dict:
     return _raretes
 
 
+# --- les noms anglais ------------------------------------------------------
+# Cardmarket ne connait les cartes Yu-Gi-Oh que sous leur nom anglais : une
+# liste de souhaits collee en francais n'y trouverait rien. Le classeur, lui,
+# ne connait que le nom francais -- meme detour par le passcode que les
+# illustrations, avec static/yugioh/cartes-en.json en face.
+#
+# Deux cartes peuvent porter le meme nom francais, ou presque : « Sauvetage »
+# (Salvage) et « SAUVETAGE ! » (RESCUE!) ne different que par ce que la
+# normalisation efface. Le nom exact de la pochette passe donc en premier ;
+# le nom normalise ne sert qu'a rattraper un accent ou une ponctuation ecrits
+# autrement. Restent les noms vraiment identiques -- « Lutine a la Cle » est a
+# la fois Key Mace et Key Mace #2, sans doute la meme erreur de fichier que
+# « Crane Chevalier », qui nommait aussi Skull Knight #2 -- et la rien dans
+# une pochette ne permet de trancher : les deux noms repartent ensemble, et
+# la page les laisse hors des listes plutot que de parier sur l'un d'eux.
+def _construit_anglais() -> tuple:
+    """({ nom exact -> [noms anglais] }, { nom normalise -> [noms anglais] })."""
+    if not FICHIER_EN or not FICHIER_NOMS:
+        return {}, {}
+    try:
+        with open(FICHIER_NOMS, encoding="utf-8") as f:
+            noms = json.load(f)
+        with open(FICHIER_EN, encoding="utf-8") as f:
+            anglais = json.load(f)
+    except (OSError, ValueError):
+        return {}, {}
+    if not isinstance(noms, dict) or not isinstance(anglais, dict):
+        return {}, {}
+    exact, proche = {}, {}
+    for passcode, nom in noms.items():
+        en = anglais.get(str(passcode))
+        if not isinstance(nom, str) or not isinstance(en, str) or not en.strip():
+            continue
+        for index, cle in ((exact, " ".join(nom.split())), (proche, normalise_nom(nom))):
+            if not cle:
+                continue
+            deja = index.setdefault(cle, [])
+            if en.strip() not in deja:
+                deja.append(en.strip())
+    return exact, proche
+
+
+def anglais() -> tuple:
+    """Les deux index des noms anglais, construits au premier besoin."""
+    global _anglais
+    if _anglais is None:
+        with _verrou:
+            if _anglais is None:
+                _anglais = _construit_anglais()
+    return _anglais
+
+
 def vignette(fichier):
     """Le chemin de la vignette d'un artwork, fabriquee si elle manque.
 
@@ -342,18 +362,20 @@ def branche(dossier_cartes, fichier_noms, url_publique="/static/yugioh/Cards/",
     sont decides par app.py, pas ecrits en dur ici.
 
     Sans `fichier_raretes`, on le cherche a cote des noms : les deux sortent
-    de la meme mise a jour et vivent dans le meme dossier.
+    de la meme mise a jour et vivent dans le meme dossier. Les noms anglais
+    aussi, toujours a cote -- cartes.py les ecrit la sans qu'on le lui dise.
     """
-    global DOSSIER_CARTES, FICHIER_NOMS, FICHIER_RARETES, URL_CARTES
-    global _illustrations, _noms, _raretes
+    global DOSSIER_CARTES, FICHIER_NOMS, FICHIER_RARETES, FICHIER_EN, URL_CARTES
+    global _illustrations, _raretes, _anglais
     DOSSIER_CARTES = Path(dossier_cartes)
     FICHIER_NOMS = Path(fichier_noms)
     FICHIER_RARETES = (Path(fichier_raretes) if fichier_raretes
                        else FICHIER_NOMS.with_name("cartes-rarity.json"))
+    FICHIER_EN = FICHIER_NOMS.with_name("cartes-en.json")
     URL_CARTES = url_publique if url_publique.endswith("/") else url_publique + "/"
     _illustrations = None
-    _noms = None
     _raretes = None
+    _anglais = None
     return blueprint_collection
 
 
@@ -660,15 +682,6 @@ def ajoute(page, famille, nom):
         (page["id"], famille["id"], tome, rang, nom, maintenant())).lastrowid
 
 
-def nom_propre(v) -> str:
-    nom = re.sub(r"\s+", " ", str(v or "")).strip()
-    if not nom:
-        raise Refus("nom", "Donne le nom de la carte.")
-    if len(nom) > NOM_MAXI:
-        raise Refus("nom", "Ce nom est trop long.")
-    return nom
-
-
 # --------------------------------------------------------------------------
 #   Les routes
 # --------------------------------------------------------------------------
@@ -779,71 +792,31 @@ def poser(carte_id):
     return reponse({"ok": True, "carte": en_json(carte_a_moi(carte_id, page))})
 
 
-@blueprint_collection.post("/carte")
-def ajouter():
-    """Ajoute une carte qui vient de sortir. { famille, nom }
+@blueprint_collection.post("/carte/anglais")
+def traduire_noms():
+    """Le nom anglais de chaque carte. { noms: [...] } -> { noms: [...] }
 
-    La pochette arrive vide, au bout de sa famille ; la ranger reste le geste
-    habituel du panneau. Les classeurs partagent les memes pochettes (voir
-    page_modele) : quand c'est l'administrateur qui ajoute, la carte est donc
-    posee dans tous les classeurs qui ont cette famille et ne l'ont pas deja.
-    Un autre collectionneur n'ajoute qu'au sien -- il n'a pas a remplir les
-    classeurs des autres.
+    Pour la liste de souhaits Cardmarket, qui ne connait que l'anglais. La
+    page choisit les cartes -- elle a deja le classeur en main, avec la
+    selection de l'export -- et le serveur ne fait que traduire, dans le
+    meme ordre. Un nom, le plus souvent ; une liste quand le francais en
+    recouvre plusieurs (voir « les noms anglais ») ; `null` pour une carte
+    que le fichier ne connait pas -- un nom tape a la main, ou trop recent
+    pour la derniere mise a jour du stock.
 
-    La reponse porte la carte telle que la page la range, et le tome ou elle
-    a atterri : c'est tout ce qui change, la page n'a pas a tout recharger.
+    Ouvert a tout le monde : ce ne sont que des noms de cartes. En POST parce que deux mille noms ne tiennent pas dans une
+    adresse.
     """
-    u, page = ma_page_ou_refus()
-    d = corps()
-    nom = nom_propre(d.get("nom"))
-    famille = cx().execute("SELECT * FROM famille WHERE page_id = ? AND cle = ?",
-                           (page["id"], str(d.get("famille") or ""))).fetchone()
-    if famille is None:
-        raise Refus("famille", "Famille inconnue.")
-    if cx().execute("SELECT COUNT(*) FROM carte WHERE page_id = ?",
-                    (page["id"],)).fetchone()[0] >= CARTES_MAXI:
-        raise Refus("plein", "Ton classeur est plein.")
-
-    c = cx()
-    autres = 0
-    with c:
-        carte_id = ajoute(page, famille, nom)
-        if carte_id is None:
-            raise Refus("doublon", f"« {nom} » est deja dans cet onglet.", 409)
-        if u["admin"]:
-            for f in c.execute(
-                    "SELECT f.* FROM famille f JOIN page p ON p.id = f.page_id"
-                    " WHERE p.projet = ? AND f.cle = ? AND f.page_id != ?",
-                    (PROJET, famille["cle"], page["id"])).fetchall():
-                if ajoute({"id": f["page_id"]}, f, nom) is not None:
-                    autres += 1
-    carte = carte_a_moi(carte_id, page)
-    return reponse({"ok": True, "famille": famille["cle"], "classeur": carte["classeur"],
-                    "carte": en_json(carte), "autres": autres}, 201)
-
-
-@blueprint_collection.get("/carte/noms")
-def chercher_noms():
-    """Les noms de cartes connus qui contiennent tous les mots tapes.
-
-    Sous /carte/ et non a la racine : /api/collection/noms serait le classeur
-    d'un compte nomme « noms ».
-
-    Ouvert a tout le monde comme le fichier dont il vient : ce ne sont que
-    des noms de cartes, rien de ce que quelqu'un possede. Ceux qui commencent
-    par la saisie d'abord, les autres ensuite.
-    """
-    mots = normalise_nom(request.args.get("q", "")).split()
-    if not mots or len("".join(mots)) < 2:
-        return reponse({"ok": True, "noms": []})
-    debut, milieu = [], []
-    prefixe = " ".join(mots)
-    for cle, nom, fichier in noms_connus():
-        if all(m in cle for m in mots):
-            (debut if cle.startswith(prefixe) else milieu).append([nom, fichier])
-            if len(debut) >= 12:
-                break
-    return reponse({"ok": True, "noms": (debut + milieu)[:12]})
+    noms = corps().get("noms")
+    if not isinstance(noms, list) or len(noms) > CARTES_MAXI:
+        raise Refus("noms", "Une liste de noms de cartes, s'il te plait.")
+    exact, proche = anglais()
+    sortie = []
+    for n in noms:
+        en = (exact.get(" ".join(n.split())) or proche.get(normalise_nom(n))
+              if isinstance(n, str) else None)
+        sortie.append(None if not en else en[0] if len(en) == 1 else en)
+    return reponse({"ok": True, "noms": sortie})
 
 
 # --------------------------------------------------------------------------

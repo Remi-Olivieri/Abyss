@@ -335,23 +335,43 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
 .exp-case span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .exp-info{margin:14px 0 0;font-size:12.5px;color:var(--ink-dim);text-align:center}
 .exp-info b{color:var(--accent);font-weight:600}
+/* Trois formats au lieu de deux : sur un telephone la bascule passe a la
+   ligne plutot que de deborder de la fenetre. */
+.exp-quel{flex-wrap:wrap}
 
-/* ---------------- ajouter une carte ----------------
-   Meme fenetre que l'export. Les onglets passent a la ligne : six familles
-   ne tiennent pas sur une bascule a la largeur d'un telephone. */
-.aj-familles{display:flex;flex-wrap:wrap}
-.aj-champ{position:relative}
+/* ---------------- la liste de souhaits Cardmarket ----------------
+   Une tuile par liste de cent cinquante, cochee une fois copiee, et le
+   texte de la derniere en dessous. */
+.cm-listes{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px}
+.cm-liste{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 11px;
+  border-radius:8px;background:#00000047;border:1px solid var(--edge);text-align:left;transition:.15s}
+.cm-liste b{font-size:12.5px;font-weight:600}
+.cm-liste span{font-family:'DM Mono';font-size:10.5px;color:var(--ink-faint)}
+.cm-liste:hover{border-color:#ffffff2b}
+.cm-liste.on{border-color:var(--accent)}
+.cm-liste.fait b::after{content:" \2713";color:var(--algue)}
+.cm-texte{display:block;width:100%;height:150px;margin-top:12px;padding:9px 11px;resize:vertical;
+  border-radius:8px;background:#00000059;border:1px solid var(--edge);color:var(--ink-dim);
+  font-family:'DM Mono';font-size:11.5px;line-height:1.5;outline:none}
+.cm-texte:focus{border-color:var(--accent)}
+.cm-apart{list-style:none;max-height:140px;overflow-y:auto;font-size:12.5px;line-height:1.5}
+.cm-apart li+li{margin-top:4px}
+.cm-apart i{font-style:normal;color:var(--ink-faint)}
+
+/* ---------------- le champ et la liste du stock ----------------
+   Le code d'une série, et les dernières parues en liste juste au-dessus.
+   Le préfixe vient de l'ancienne fenêtre « Ajouter une carte », retirée depuis
+   que la mise à jour du stock pose les nouvelles pochettes elle-même. */
 .aj-champ input{width:100%;padding:9px 11px;border-radius:8px;background:#00000059;
   border:1px solid var(--edge);color:var(--ink);font-size:13.5px;outline:none;transition:border-color .15s}
 .aj-champ input:focus{border-color:var(--accent)}
 .aj-champ input::placeholder{color:var(--ink-faint)}
-.aj-liste{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:2;max-height:252px;overflow:auto;
+.aj-liste{max-height:252px;overflow:auto;
   background:var(--bg-2);border:1px solid var(--edge);border-radius:var(--r);box-shadow:0 18px 40px #000a}
 .aj-opt{display:flex;align-items:center;gap:10px;padding:6px 11px;font-size:13px;cursor:pointer;
   border-bottom:1px solid var(--edge)}
 .aj-opt:last-child{border-bottom:none}
 .aj-opt:hover,.aj-opt.on{background:#ffffff0d}
-.aj-opt img,.aj-sans{width:24px;height:35px;flex:0 0 auto;border-radius:3px;object-fit:cover;background:#0000004d}
 .aj-opt span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
   .aj-champ input{font-size:16px}   /* en dessous, iOS zoome sur le champ */
@@ -387,17 +407,29 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
    en grand pendant qu'on décide de la garder ou non. La largeur tient au
    contenu et non à une classe posée sur la fenêtre : fermerModale() vide la
    boîte sans rien savoir du stock, et une classe oubliée là aurait élargi la
-   fenêtre suivante - « Ajouter une carte », « Exporter ». */
+   fenêtre suivante - « Exporter ». */
 .sheetbox:has(.st-corps){width:min(680px,100%)}
 .st-info{font-size:12.5px;color:var(--ink-dim);line-height:1.55;margin-bottom:12px}
 .st-info b{color:var(--ink)}
-/* La liste des séries reprend l'habillage du menu « ajouter une carte », mais
-   pas son placement : .aj-liste est un menu déroulant, posé en absolu sous
-   son champ. Ici il n'y a pas de champ au-dessus, et le seul ancêtre
-   positionné est .modal, qui fait tout l'écran - la liste partait donc se
-   poser juste en dessous, hors de vue, et l'encadré « Série » paraissait
-   vide. Elle se pose dans le flux, comme le reste de la fenêtre. */
-.st-series{position:static;max-height:min(38vh,250px)}
+.st-series{max-height:min(38vh,250px)}
+/* Les deux onglets du premier écran - Séries, Liste par type - et la liste
+   d'un type : plus haute que la zone de l'export, elle se lit autant
+   qu'elle se copie. */
+.st-onglets{margin-top:6px}
+.st-onglets + .st-info{margin-top:14px}
+.st-texte{height:min(42vh,340px)}
+.st-notes{margin:10px 0 0}
+/* La liste noire : la carte en petit, son nom, de quoi la reconnaitre, et
+   le bouton au bout de la ligne. Le doublon se dit en couleur : c'est la
+   ligne qu'il vaut mieux ne pas reprendre. */
+.st-vignette{flex:0 0 32px;width:32px;height:47px;border-radius:3px;object-fit:cover;
+  background:#0000004d}
+.st-noms{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.st-noms b,.st-noms small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-noms b{font-weight:600}
+.st-noms small{font-size:11.5px;color:var(--ink-faint)}
+.st-noms .st-doublon{color:var(--meduse)}
+.st-reprendre{flex:0 0 auto;padding:6px 11px;font-size:12px}
 .st-chiffres{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
 .st-chiffre{flex:1 1 120px;padding:10px 12px;border-radius:11px;background:rgba(5,11,20,.45);
   border:1px solid var(--edge)}

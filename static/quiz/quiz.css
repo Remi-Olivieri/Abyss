@@ -861,6 +861,160 @@ html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
 }
 
 /* =======================================================================
+   Chronologie sans fin
+
+   Une colonne et non une ligne : la frise grandit sans fin, et les cartes y
+   sont des lignes compactes -- une vignette, le titre, la date -- comme la
+   Chronologie les dessine deja sur telephone. Entre deux cartes, une fente
+   ou poser celle qu'on a en main ; la carte en main, elle, reste collee
+   sous l'en-tete pendant qu'on descend chercher sa place.
+
+   --en-haut est la hauteur de l'en-tete, mesuree par le script (voir
+   peintEndurance) : elle n'est pas la meme en ligne et sur telephone, ou
+   la barre passe sur deux rangees.
+   ======================================================================= */
+.qz-partie.qz-endu{max-width:620px}
+
+/* Les vies : trois coeurs, eteints un a un. */
+.en-vies{display:flex;gap:5px}
+.en-vie{
+  display:grid;color:var(--faux);filter:drop-shadow(0 0 6px rgba(255,92,92,.55));
+  transition:color .3s,filter .3s;
+}
+.en-vie.perdue{color:var(--bg3);filter:none}
+#enLong b{
+  font-family:var(--titre);font-size:15px;font-weight:700;color:var(--text);
+  margin-left:7px;letter-spacing:.04em;font-variant-numeric:tabular-nums;
+}
+
+/* ---------- la carte en main ---------- */
+.en-main{
+  position:sticky;top:calc(var(--en-haut,63px) + 8px);z-index:5;
+  margin:0 0 14px;padding:12px 12px 8px;border-radius:16px;
+  background:rgba(7,6,14,.93);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border:1px solid var(--line-strong);
+  box-shadow:0 18px 40px -22px #000,var(--ombre-or);
+}
+/* La partie finie, le bilan prend sa place : plus rien a garder en vue. */
+.en-main.termine{
+  position:static;padding:0;background:none;border:0;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+.en-tenue{
+  min-height:78px;border-color:var(--gold);
+  background:linear-gradient(160deg,#241C0C 0%,var(--bg2) 60%,#0B0910 100%);
+  box-shadow:0 0 26px -14px var(--or-vif);
+}
+.en-tenue .en-face{width:58px}
+.en-tenue .en-txt b{font-size:15.5px}
+.en-tenue .en-txt i{color:var(--gold)}
+/* Ce que la carte rapporte si elle tombe juste : la mise monte avec la
+   frise, et c'est ce qui donne envie de tenir une carte de plus. */
+.en-mise{
+  flex:0 0 auto;font-family:var(--titre);font-weight:700;font-size:18px;
+  color:var(--or-vif);text-shadow:0 0 14px rgba(255,215,0,.45);
+  font-variant-numeric:tabular-nums;
+}
+/* Deux lignes reservees : un verdict plus long que le precedent ne doit pas
+   faire sauter la frise sous le doigt. */
+.en-verdict{
+  margin:9px 4px 0;min-height:2.8em;line-height:1.4;
+  font-size:12.5px;color:var(--muted);text-align:center;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.en-verdict b{font-family:var(--titre);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.en-verdict.bon b{color:var(--juste)}
+.en-verdict.mauvais b{color:var(--faux)}
+
+/* ---------- la frise ---------- */
+.en-frise{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.en-carte{
+  position:relative;display:flex;align-items:center;gap:12px;
+  min-height:62px;padding:0 14px 0 0;overflow:hidden;
+  border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(160deg,#16120A 0%,var(--bg2) 55%,#0B0910 100%);
+  /* une carte ratee se montre en defilant : elle ne doit pas s'arreter
+     sous la carte en main, collee en haut */
+  scroll-margin-top:calc(var(--en-haut,63px) + 200px);scroll-margin-bottom:24px;
+}
+.en-face{flex:0 0 auto;align-self:stretch;width:48px;background:var(--bg3);overflow:hidden}
+.en-face img{display:block;width:100%;height:100%;object-fit:cover}
+.en-face .qz-vide{font-size:17px}
+.en-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:8px 0}
+.en-txt b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.en-txt i{
+  font-style:normal;font-family:var(--titre);font-size:10.5px;
+  letter-spacing:.1em;color:var(--muted);
+}
+/* L'annee en grand au bout de la ligne : c'est elle qu'on cherche en
+   descendant la frise, le jour exact ne sert qu'entre voisins. */
+.en-an{
+  flex:0 0 auto;font-family:var(--titre);font-weight:700;font-size:17px;
+  color:var(--or-clair);letter-spacing:.04em;font-variant-numeric:tabular-nums;
+}
+.en-carte.depart{border-color:var(--line-strong)}
+.en-carte.juste{border-color:color-mix(in srgb,var(--juste) 28%,transparent)}
+.en-carte.faux{border-color:rgba(255,92,92,.42)}
+.en-carte.faux .en-an{color:var(--faux)}
+.en-carte.neuve{animation:en-pose .45s cubic-bezier(.2,.7,.3,1) both}
+.en-carte.neuve.juste{box-shadow:0 0 30px -12px var(--juste)}
+.en-carte.neuve.faux{box-shadow:0 0 30px -12px var(--faux)}
+@keyframes en-pose{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+/* Les points gagnes montent de la carte et s'effacent. */
+.en-gain{
+  position:absolute;right:66px;top:50%;margin-top:-.6em;pointer-events:none;
+  font-family:var(--titre);font-weight:700;font-size:15px;color:var(--juste);
+  text-shadow:0 0 12px rgba(76,255,145,.6);
+  animation:en-gain 1.1s ease-out both;
+}
+@keyframes en-gain{
+  0%{opacity:0;transform:translateY(40%)}
+  25%{opacity:1}
+  100%{opacity:0;transform:translateY(-120%)}
+}
+
+/* Les fentes. Toujours visibles, en pointille : sur un telephone il n'y a
+   pas de survol pour les faire apparaitre, et une cible qu'on ne voit pas
+   ne se vise pas. Hauteur fixe, meme au survol -- une fente qui grandirait
+   sous la souris ferait descendre toutes les autres pendant qu'on vise. */
+.en-fente{display:flex;padding:4px 0}
+.en-fente button{
+  flex:1;height:34px;border-radius:9px;
+  border:1px dashed rgba(201,168,76,.24);background:transparent;
+  font-family:var(--titre);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(201,168,76,.42);
+  transition:border-color .15s,background .15s,color .15s;
+}
+.en-fente.en-debut button,.en-fente.en-bout button{color:var(--muted)}
+.en-fente button:hover,.en-fente button:focus-visible{
+  outline:none;border-style:solid;border-color:var(--gold);
+  background:rgba(201,168,76,.1);color:var(--or-clair);
+}
+.en-frise.fige{pointer-events:none}
+.en-frise.fige .en-fente button{opacity:.45}
+
+/* ---------- le bilan, a la place de la carte en main ---------- */
+.en-bilan{margin:6px 0 24px}
+.en-record{
+  margin:12px 0 0;font-family:var(--titre);font-size:11px;font-weight:600;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
+}
+.en-record.neuf{color:var(--or-vif);text-shadow:0 0 16px rgba(255,215,0,.55)}
+
+@media (prefers-reduced-motion:reduce){
+  .en-carte.neuve,.en-gain{animation:none}
+  .en-gain{display:none}
+}
+@media (max-width:640px){
+  .en-main{padding:10px 10px 6px}
+  .en-tenue{min-height:68px}
+  .en-tenue .en-face{width:50px}
+  .en-an{font-size:15px}
+  .en-carte{gap:10px;padding-right:11px}
+}
+
+/* =======================================================================
    Le telephone
 
    La barre de titre est celle de l'Archive : sous 640 px elle passe en une

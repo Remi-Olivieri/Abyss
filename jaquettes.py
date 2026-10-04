@@ -1117,7 +1117,7 @@ def images_larges(ids):
 CHAMPS_DETAIL = ("platforms.name, involved_companies.company.name, "
                   "involved_companies.developer, genres.name, themes.name, summary, "
                   "screenshots.image_id, videos.video_id, aggregated_rating, "
-                  "first_release_date, url, "
+                  "first_release_date, url, cover.image_id, "
                   "external_games.category, external_games.uid, external_games.url")
 CAPTURES_MAX = 8
 
@@ -1210,6 +1210,11 @@ def detail_complet(id_igdb):
         "date": date, "annee": annee, "iso": iso,
         "lien": jeu.get("url") or "",
         "steam": f"https://store.steampowered.com/app/{appid}/" if appid else "",
+        # l'identifiant d'image de la jaquette, comme le `image` d'une fiche
+        # (voir _fiche) : le « + Wishlist » de la fenetre le passe a
+        # /api/jaquette/choisir une fois le jeu ajoute. Sans lui, le jeu
+        # arrivait au classeur avec ses seules initiales.
+        "jaquette": (jeu.get("cover") or {}).get("image_id") or "",
     }
     _DETAIL[id_igdb] = (detail, time.time())
     return detail, None

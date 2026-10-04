@@ -1047,8 +1047,10 @@ async function socialSurveilleFeed(){
 }
 
 const SOC_GENRES = {
-  jaime:       'a aimé ton avis sur',
-  commentaire: 'a commenté ton avis sur',
+  // ces deux-là visent la carte entière : la suite de la phrase dit ce
+  // qu'elle contient (voir SOC_CIBLES)
+  jaime:       'a aimé',
+  commentaire: 'a commenté',
   // « a répondu à ton commentaire » et « a répondu après toi » ne disent pas
   // la même chose : la première s'adresse à nous, la seconde nous tient au
   // courant. Deux phrases pour deux gestes, et la cloche ne sonne qu'une
@@ -1056,6 +1058,17 @@ const SOC_GENRES = {
   reponse:     'a répondu à ton commentaire sur',
   fil:         'a répondu après toi sur',
 };
+/* Une carte n'a pas toujours d'avis : « a aimé ton avis » sur un jeu
+   seulement noté parlait de quelque chose qui n'existe pas. Le serveur dit
+   ce qui est rempli (voir _ce_qui_est_rempli dans social.py) ; « ton post »
+   quand il n'a rien dit, le seul des trois qui soit toujours vrai. */
+const SOC_CIBLES = {avis: 'ton avis sur', note: 'ta note sur', post: 'ton post sur'};
+function socialNotifPhrase(n){
+  const verbe = SOC_GENRES[n.genre];
+  if(!verbe) return 'a réagi à';
+  if(n.genre !== 'jaime' && n.genre !== 'commentaire') return verbe;
+  return verbe + ' ' + (SOC_CIBLES[n.quoi] || SOC_CIBLES.post);
+}
 
 function socialNotifHTML(n){
   /* `data-fil` et non `data-jeu` : ce qu'on ouvre ici est une discussion,
@@ -1065,7 +1078,7 @@ function socialNotifHTML(n){
   return `<li class="soc-notif${n.lu ? '' : ' neuve'}" data-fil="${n.jeuId}">
     ${socialAvatar(n.pseudo, n.avatar, 'p')}
     <span class="soc-notif-in">
-      <b>${esc(n.pseudo)}</b> ${esc(SOC_GENRES[n.genre] || 'a réagi à')}
+      <b>${esc(n.pseudo)}</b> ${esc(socialNotifPhrase(n))}
       <u>${esc(n.jeu)}</u>
       ${n.texte ? `<i>« ${esc(n.texte)} »</i>` : ''}
     </span>
