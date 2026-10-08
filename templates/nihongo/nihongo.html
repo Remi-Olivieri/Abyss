@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nihongo - Abyss</title>
+<!-- le logo du site : voir static/commun/logo/ -->
+<link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
+<link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
+<!-- Trois polices japonaises, servies par Google et non par Abyss : une
+     police japonaise pèse plusieurs mégaoctets, et Google la découpe en
+     tranches de caractères - la page ne télécharge que les glyphes qu'elle
+     affiche. Voir la tête de static/nihongo/nihongo.css pour le rôle de
+     chacune. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Shippori+Mincho+B1:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/nihongo/nihongo.css">
+<!-- La matière, citée pour que le serveur ajoute à chaque adresse la date
+     du fichier (?v=) : la page la garde d'une visite à l'autre tant que
+     cette date ne change pas (voir static/nihongo/matiere.js). Un <link>
+     « alternate » ne se télécharge pas de lui-même. -->
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/kanji.json">
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/vocabulaire.json">
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/grammaire.json">
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/lecture.json">
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/traces-kana.json">
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/traces-kanji-n5.json">
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/traces-kanji-n4.json">
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/traces-kanji-n3.json">
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/traces-kanji-n2.json">
+<link rel="alternate" type="application/json" data-matiere href="/static/nihongo/traces-kanji-n1.json">
+<!-- Le thème avant le premier affichage, sinon la page clignote : le choix
+     fait sur cet appareil, à défaut celui du système. -->
+<script>
+  (function () {
+    var t = null;
+    try { t = JSON.parse(localStorage.getItem("nihongo:theme")); } catch (e) { /* rien */ }
+    if (t !== "jour" && t !== "nuit") {
+      t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "nuit" : "jour";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+</head>
+<body>
+
+<!-- La même paire qu'en tête des autres projets : le retour au hub à un
+     bout, le signalement à l'autre. Entre les deux, le thème. -->
+<header class="top">
+  <div class="wrap top-in">
+    <a class="entete-action" id="abyssBtn" href="/abyss" aria-label="Retour à Abyss">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      <span>Abyss</span>
+    </a>
+    <a class="marque" href="/nihongo">
+      <span class="hanko" aria-hidden="true" lang="ja">日</span>
+      <span class="marque-nom">Nihongo</span>
+      <span class="marque-jp" lang="ja">日本語</span>
+    </a>
+    <span class="top-espace"></span>
+    <button type="button" class="entete-action entete-rond" id="themeBtn" aria-label="Passer au thème sombre">
+      <span lang="ja" aria-hidden="true">夜</span>
+    </button>
+    <!-- Caché tant que la page n'est pas ouverte : le projet est réservé à
+         l'administration, et sa destination de suggestion l'est avec lui. -->
+    <a class="entete-action" id="suggBtn" href="/abyss?suggestion=nihongo" aria-label="Suggestion / Bug" hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>
+      </svg>
+      <span>Suggestion / Bug</span>
+    </a>
+  </div>
+
+  <!-- Les rubriques. Chaque nom est un mot japonais avec sa lecture : la
+       barre elle-même se lit, et finit par s'apprendre. -->
+  <nav class="onglets" id="onglets" aria-label="Rubriques" hidden>
+    <div class="wrap onglets-in">
+      <a href="/nihongo" data-rubrique=""><ruby lang="ja">今日<rt>きょう</rt></ruby><span>Aujourd'hui</span></a>
+      <a href="/nihongo/kana" data-rubrique="kana"><ruby lang="ja">仮名<rt>かな</rt></ruby><span>Kanas</span></a>
+      <a href="/nihongo/kanji" data-rubrique="kanji"><ruby lang="ja">漢字<rt>かんじ</rt></ruby><span>Kanjis</span></a>
+      <a href="/nihongo/vocabulaire" data-rubrique="vocabulaire"><ruby lang="ja">単語<rt>たんご</rt></ruby><span>Vocabulaire</span></a>
+      <a href="/nihongo/grammaire" data-rubrique="grammaire"><ruby lang="ja">文法<rt>ぶんぽう</rt></ruby><span>Grammaire</span></a>
+      <a href="/nihongo/lecture" data-rubrique="lecture"><ruby lang="ja">読解<rt>どっかい</rt></ruby><span>Lecture</span></a>
+      <a href="/nihongo/progres" data-rubrique="progres"><ruby lang="ja">記録<rt>きろく</rt></ruby><span>Progrès</span></a>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap" id="vue">
+  <p class="chargement">読み込み中…</p>
+</main>
+
+<!-- Les licences des sources le demandent : leur nom, en clair. -->
+<footer class="pied wrap">
+  Tracés : <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a>
+  (Ulrich Apel, CC BY-SA 3.0) · Kanjis et mots :
+  <a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project" target="_blank" rel="noopener">KANJIDIC2</a> et
+  <a href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project" target="_blank" rel="noopener">JMdict</a>
+  (EDRDG, CC BY-SA 4.0) · Niveaux JLPT : listes de Jonathan Waller, rattachées à JMdict par
+  <a href="https://github.com/stephenmk/yomitan-jlpt-vocab" target="_blank" rel="noopener">yomitan-jlpt-vocab</a> ·
+  Voix : <a href="https://voicevox.hiroshiba.jp/nemo/" target="_blank" rel="noopener">VOICEVOX Nemo</a> ·
+  Découpage des textes : <a href="https://github.com/WorksApplications/sudachi.rs" target="_blank" rel="noopener">SudachiPy</a>.
+</footer>
+
+<!-- La séance : par-dessus tout, rien d'autre à l'écran. -->
+<div class="seance-ecran" id="seance" hidden>
+  <div class="sc-barre">
+    <button type="button" class="sc-quitter" id="scQuitter" aria-label="Quitter la séance">&times;</button>
+    <div class="sc-jauge" aria-hidden="true"><i id="scJauge"></i></div>
+    <span class="sc-compte" id="scCompte"></span>
+  </div>
+  <div class="sc-scene" id="scScene"></div>
+</div>
+
+<!-- La fiche d'un kana, remplie à l'ouverture. -->
+<div class="voile" id="fiche" hidden></div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<!-- le battement de presence : voir static/commun/presence.js -->
+<script src="/static/commun/presence.js"></script>
+<script src="/static/commun/gestes.js"></script>
+<script src="/static/commun/champs.js"></script>
+<script src="/static/commun/suggestion.js"></script>
+<script src="/static/nihongo/matiere.js"></script>
+<script src="/static/nihongo/kana.js"></script>
+<script src="/static/nihongo/kanji.js"></script>
+<script src="/static/nihongo/mots.js"></script>
+<script src="/static/nihongo/grammaire.js"></script>
+<script src="/static/nihongo/lecture.js"></script>
+<script src="/static/nihongo/trace.js"></script>
+<script src="/static/nihongo/nihongo.js"></script>
+</body>
+</html>

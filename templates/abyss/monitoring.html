@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Monitoring - Abyss</title>
+<!-- le logo du site : voir static/commun/logo/ -->
+<link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
+<link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
@@ -55,6 +59,37 @@
     .vivant{animation:battement 2.4s ease-in-out infinite}
   }
   @keyframes battement{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ---------- les onglets ----------
+     Collés en haut de l'écran quand on descend : le fil d'activité est
+     long, et remonter tout un mois pour changer de rubrique, c'était ce
+     qu'on reprochait à la page d'un seul tenant. Une barre qui défile de
+     côté plutôt qu'une qui passe à la ligne : sur 360 px, cinq libellés
+     sur deux rangées feraient deux barres. z-index:1 et pas plus : le menu
+     du compte (.barre, z-index:2) doit pouvoir s'ouvrir par-dessus. */
+  .mon-onglets{
+    position:sticky;top:10px;z-index:1;
+    display:flex;gap:4px;margin:0 0 22px;padding:4px;
+    border-radius:13px;border:1px solid rgba(150,195,220,.12);
+    background:rgba(4,9,16,.84);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    overflow-x:auto;scrollbar-width:none;
+  }
+  .mon-onglets::-webkit-scrollbar{display:none}
+  .mon-onglet{
+    flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    font:inherit;font-size:13.5px;color:var(--brume);white-space:nowrap;
+    padding:8px 14px;border:0;border-radius:9px;background:transparent;cursor:pointer;
+    transition:color .2s ease,background .2s ease;
+  }
+  .mon-onglet:hover{color:var(--os)}
+  .mon-onglet[aria-selected="true"]{color:var(--os);background:rgba(120,190,225,.14)}
+  .mon-onglet:focus-visible{outline:2px solid var(--plancton);outline-offset:-2px}
+  /* qui est là, compté jusque sur l'onglet : on le voit depuis les autres */
+  .mon-onglet-n{
+    font-size:11px;font-weight:500;line-height:1.6;padding:0 7px;border-radius:99px;
+    font-variant-numeric:tabular-nums;color:var(--algue);background:rgba(63,217,164,.12);
+  }
 
   /* ---------- une carte ---------- */
   .mon-carte{
@@ -133,15 +168,101 @@
   }
   .page-val b{color:var(--os);font-weight:500}
 
-  /* ---------- qui est là ---------- */
-  .qui{display:flex;flex-wrap:wrap;gap:8px}
-  .qui span{
-    padding:5px 12px;border-radius:999px;font-size:13px;color:var(--os);
-    border:1px solid rgba(63,217,164,.35);background:rgba(63,217,164,.1);
+  /* ---------- une personne ----------
+     Le même dessin pour « qui est là » et pour les comptes : une photo, un
+     nom, l'heure à droite, puis quelques lignes de détail sous le nom. Une
+     ligne par fait plutôt qu'un tableau : le lieu, le geste et l'appareil
+     sont des phrases, et un tableau de phrases ne tient pas sur un
+     téléphone. */
+  .gens{display:flex;flex-direction:column;gap:8px}
+  .gen{
+    display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:3px 12px;
+    align-items:start;padding:11px 13px;border-radius:12px;
+    border:1px solid rgba(150,195,220,.1);background:rgba(3,8,15,.35);
   }
-  .qui span.anonyme{
-    color:var(--brume);border-color:rgba(150,195,220,.2);background:rgba(3,8,15,.5);
+  .gen.ici{border-color:rgba(63,217,164,.22)}
+  .gen-av{
+    grid-row:1 / span 4;width:38px;height:38px;border-radius:50%;
+    object-fit:cover;display:grid;place-items:center;
+    font-family:"Eczar",Georgia,serif;font-weight:600;font-size:16px;
+    color:var(--os);background:rgba(150,195,220,.12);
   }
+  .gen.anonyme .gen-av{color:var(--brume);background:rgba(150,195,220,.06)}
+  .gen-nom{
+    display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;
+    font-size:14px;font-weight:500;color:var(--os);min-width:0;
+  }
+  .gen.anonyme .gen-nom{color:var(--brume);font-weight:400}
+  .gen-quand{
+    font-size:12px;color:var(--brume);white-space:nowrap;text-align:right;
+    font-variant-numeric:tabular-nums;padding-top:2px;
+  }
+  .gen-l{
+    grid-column:2 / -1;font-size:12.5px;line-height:1.5;color:var(--brume);
+    min-width:0;overflow-wrap:anywhere;
+  }
+  .gen-l b{color:var(--os);font-weight:500}
+  .gen-l.lieu b{color:var(--plancton)}
+  .etiq{
+    font-size:10.5px;font-weight:500;letter-spacing:.05em;line-height:1.5;
+    padding:1px 8px;border-radius:999px;white-space:nowrap;
+    color:var(--brume);border:1px solid rgba(150,195,220,.2);
+  }
+  .etiq.actif{color:var(--algue);border-color:rgba(63,217,164,.35);background:rgba(63,217,164,.1)}
+  .etiq.session{color:var(--plancton);border-color:rgba(91,155,245,.3)}
+
+  /* ceux qui viennent de partir : une ligne chacun, plus discrète */
+  .partis{margin-top:16px;padding-top:14px;border-top:1px solid rgba(150,195,220,.1)}
+  .mon-carte h3{
+    margin:0 0 8px;font-size:10.5px;font-weight:500;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--brume);
+  }
+  .parti-l{
+    display:flex;flex-wrap:wrap;gap:2px 10px;padding:5px 0;
+    font-size:12.5px;color:var(--brume);
+    border-bottom:1px solid rgba(150,195,220,.06);
+  }
+  .parti-l:last-child{border-bottom:0}
+  .parti-l b{color:var(--os);font-weight:500}
+
+  /* ---------- l'activité ----------
+     Un fil par jour, l'heure dans une colonne à part : on le parcourt de
+     haut en bas en cherchant un moment, puis une personne. */
+  .filtres{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 14px}
+  .filtre{
+    font:inherit;font-size:12px;padding:4px 11px;border-radius:999px;cursor:pointer;
+    color:var(--brume);background:rgba(3,8,15,.5);border:1px solid rgba(150,195,220,.2);
+  }
+  .filtre:hover{color:var(--os)}
+  .filtre[aria-pressed="true"]{
+    color:var(--os);border-color:rgba(91,155,245,.5);background:rgba(91,155,245,.14);
+  }
+  .filtre:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  .fil-jour{margin:18px 0 4px}
+  .fil-jour:first-child{margin-top:0}
+  .fil-l{
+    display:grid;grid-template-columns:3.2em minmax(0,1fr);gap:10px;
+    padding:6px 0;font-size:13px;line-height:1.5;color:var(--os);
+    border-bottom:1px solid rgba(150,195,220,.06);
+  }
+  .fil-h{color:var(--brume);font-size:12px;font-variant-numeric:tabular-nums;padding-top:1px}
+  .fil-l b{font-weight:500}
+  .fil-l .app{display:block;font-size:11.5px;color:var(--brume)}
+  .fil-l details summary{cursor:pointer;list-style:none}
+  .fil-l details summary::-webkit-details-marker{display:none}
+  .fil-plus{margin-left:6px;font-size:12px;color:var(--plancton);white-space:nowrap}
+  .fil-l details[open] .fil-plus{color:var(--brume)}
+  .fil-l ul{margin:6px 0 2px;padding-left:16px;font-size:12.5px;color:var(--brume)}
+  .fil-l li{padding:1px 0}
+  .fil-l li span{font-variant-numeric:tabular-nums;margin-right:6px}
+  .supprime{color:var(--brume);font-weight:400;font-size:12px}
+
+  .plus-gens{margin-top:10px}
+  .plus-gens summary{
+    cursor:pointer;font-size:12.5px;color:var(--plancton);list-style:none;padding:4px 0;
+  }
+  .plus-gens summary::-webkit-details-marker{display:none}
+  .plus-gens .gens{margin-top:8px}
 
   /* ---------- infobulle ----------
      Une barre est trop étroite pour porter son chiffre : il vient au
@@ -174,6 +295,8 @@
     .mon-tuile u{font-size:9.5px;letter-spacing:.12em}
     .mon-tuile b{font-size:26px;margin:7px 0 2px}
     .mon-tuile i{font-size:11.5px}
+    .mon-onglets{margin-bottom:16px}
+    .mon-onglet{font-size:13px;padding:7px 11px}
     .mon-carte{padding:16px 14px 18px;border-radius:14px}
     .jours{height:118px}
     /* Le nom de la page passe au-dessus de sa barre : treize em de libellé,
@@ -181,7 +304,12 @@
        libellé se retrouvait coupé au deuxième mot. */
     .page-l{grid-template-columns:1fr auto;gap:3px 10px}
     .page-nom{grid-column:1/-1}
-    .qui span{font-size:12.5px}
+    /* la photo rapetisse, l'heure passe sous le nom : sur 360 px, trois
+       colonnes laissaient au nom la place d'un seul mot */
+    .gen{grid-template-columns:32px minmax(0,1fr);padding:10px 11px;gap:2px 10px}
+    .gen-av{width:32px;height:32px;font-size:14px}
+    .gen-quand{grid-column:2;text-align:left;padding-top:0}
+    .fil-l{grid-template-columns:2.9em minmax(0,1fr);gap:8px}
   }
 
 </style>
@@ -208,41 +336,82 @@
 
     <div class="mon-tuiles" id="tuiles"></div>
 
-    <section class="mon-carte">
-      <h2>Visiteurs par jour</h2>
-      <p id="joursSous"></p>
-      <div class="jours" id="jours"></div>
-      <div class="jours-axe" id="joursAxe"></div>
-    </section>
+    <!-- Les chiffres de tête restent au-dessus des onglets : c'est le coup
+         d'œil qu'on vient chercher en ouvrant la page, quelle que soit la
+         rubrique où on l'a laissée. -->
+    <div class="mon-onglets" id="onglets" role="tablist" aria-label="Rubriques">
+      <button type="button" class="mon-onglet" role="tab" id="ong-direct"
+              aria-controls="pan-direct" data-onglet="direct">En direct<span
+              class="mon-onglet-n" id="ongDirectN" hidden></span></button>
+      <button type="button" class="mon-onglet" role="tab" id="ong-activite"
+              aria-controls="pan-activite" data-onglet="activite">Activité</button>
+      <button type="button" class="mon-onglet" role="tab" id="ong-comptes"
+              aria-controls="pan-comptes" data-onglet="comptes">Comptes</button>
+      <button type="button" class="mon-onglet" role="tab" id="ong-audience"
+              aria-controls="pan-audience" data-onglet="audience">Audience</button>
+      <button type="button" class="mon-onglet" role="tab" id="ong-site"
+              aria-controls="pan-site" data-onglet="site">Site</button>
+    </div>
 
-    <section class="mon-carte">
-      <h2>Qui est là en ce moment</h2>
-      <p id="quiSous"></p>
-      <div class="qui" id="qui"></div>
-    </section>
+    <div role="tabpanel" id="pan-direct" aria-labelledby="ong-direct">
+      <section class="mon-carte">
+        <h2>Qui est là en ce moment</h2>
+        <p id="quiSous"></p>
+        <div class="gens" id="qui"></div>
+        <div class="partis" id="partis" hidden></div>
+      </section>
+    </div>
 
-    <section class="mon-carte">
-      <h2>Pages</h2>
-      <p id="pagesSous"></p>
-      <div class="pages" id="pages"></div>
-    </section>
+    <div role="tabpanel" id="pan-activite" aria-labelledby="ong-activite" hidden>
+      <section class="mon-carte">
+        <h2>Activité</h2>
+        <p id="filSous"></p>
+        <div class="filtres" id="filtres" role="group" aria-label="Filtrer par compte"></div>
+        <div id="fil"></div>
+      </section>
+    </div>
 
-    <section class="mon-carte">
-      <h2>Ce que le site contient</h2>
-      <p>Compté en base, pas dans les visites.</p>
-      <div class="pages" id="contenu"></div>
-    </section>
+    <div role="tabpanel" id="pan-comptes" aria-labelledby="ong-comptes" hidden>
+      <section class="mon-carte">
+        <h2>Comptes</h2>
+        <p id="comptesSous"></p>
+        <div id="comptesListe"></div>
+      </section>
+    </div>
 
-    <!-- Redémarrer le site. Sa place est ici : c'est la page où l'on vient
-         voir si quelque chose ne tourne pas rond, donc celle d'où l'on veut
-         pouvoir y remédier - de loin, sans ouvrir un terminal. -->
-    <section class="mon-carte mon-danger">
-      <h2>Redémarrer Abyss</h2>
-      <div class="redem">
-        <button class="bouton" id="redemBtn" type="button">Redémarrer</button>
-        <span class="redem-etat" id="redemEtat"></span>
-      </div>
-    </section>
+    <div role="tabpanel" id="pan-audience" aria-labelledby="ong-audience" hidden>
+      <section class="mon-carte">
+        <h2>Visiteurs par jour</h2>
+        <p id="joursSous"></p>
+        <div class="jours" id="jours"></div>
+        <div class="jours-axe" id="joursAxe"></div>
+      </section>
+
+      <section class="mon-carte">
+        <h2>Pages</h2>
+        <p id="pagesSous"></p>
+        <div class="pages" id="pages"></div>
+      </section>
+    </div>
+
+    <div role="tabpanel" id="pan-site" aria-labelledby="ong-site" hidden>
+      <section class="mon-carte">
+        <h2>Ce que le site contient</h2>
+        <p>Compté en base, pas dans les visites.</p>
+        <div class="pages" id="contenu"></div>
+      </section>
+
+      <!-- Redémarrer le site. Sa place est ici : c'est la page où l'on vient
+           voir si quelque chose ne tourne pas rond, donc celle d'où l'on veut
+           pouvoir y remédier - de loin, sans ouvrir un terminal. -->
+      <section class="mon-carte mon-danger">
+        <h2>Redémarrer Abyss</h2>
+        <div class="redem">
+          <button class="bouton" id="redemBtn" type="button">Redémarrer</button>
+          <span class="redem-etat" id="redemEtat"></span>
+        </div>
+      </section>
+    </div>
   </main>
 
   <section class="carte-profil" id="gate" hidden>
@@ -255,6 +424,8 @@
 <div class="bulle" id="bulle" hidden></div>
 <div class="toast" id="toast" hidden></div>
 
+<!-- le battement de presence : voir static/commun/presence.js -->
+<script src="/static/commun/presence.js"></script>
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
      /api/moi - un defer arriverait peut-être trop tard. -->
@@ -305,6 +476,62 @@ function dateCourte(iso) {
   const d = new Date(iso + "T12:00:00Z");
   return isNaN(d) ? iso : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
+const pagesVues = (n) => `${n} page${n > 1 ? "s" : ""} vue${n > 1 ? "s" : ""}`;
+
+/* ---------- l'heure ----------
+   Les « il y a » se comptent depuis l'heure du serveur, rattrapée du temps
+   écoulé depuis sa réponse : une horloge locale en avance de trois minutes
+   ferait sinon passer pour absents des gens qui sont là. */
+let HEURE = { serveur: Date.now(), locale: Date.now() };
+const maintenantServeur = () => HEURE.serveur + (Date.now() - HEURE.locale);
+const secondesDepuis = (iso) => Math.max(0, (maintenantServeur() - Date.parse(iso)) / 1000);
+
+function ilYa(iso) {
+  if (!iso) return "";
+  const s = secondesDepuis(iso);
+  if (s < 50) return "à l'instant";
+  if (s < 3600) return `il y a ${Math.max(1, Math.round(s / 60))} min`;
+  if (s < 86400) return `il y a ${Math.floor(s / 3600)} h`;
+  const j = Math.floor(s / 86400);
+  if (j < 31) return `il y a ${j} jour${j > 1 ? "s" : ""}`;
+  return "le " + new Date(iso).toLocaleDateString("fr-FR",
+    { day: "numeric", month: "long", year: "numeric" });
+}
+function dureeDepuis(iso) {
+  const m = Math.round(secondesDepuis(iso) / 60);
+  if (m < 1) return "moins d'une minute";
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60), r = m % 60;
+  return r ? `${h} h ${String(r).padStart(2, "0")}` : `${h} h`;
+}
+const heureCourte = (iso) =>
+  new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const heureExacte = (iso) => new Date(iso).toLocaleString("fr-FR",
+  { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+/* Un « il y a » qui donne l'heure exacte au survol, dans l'infobulle de la
+   page. Échappé deux fois : une pour l'attribut, une parce que l'infobulle
+   pose son contenu en HTML. */
+function quand(iso, texte, prefixe) {
+  if (!iso) return "";
+  const bulle = (prefixe ? prefixe + " " : "") + heureExacte(iso);
+  return `<span data-bulle="${echappe(echappe(bulle))}">${echappe(texte || ilYa(iso))}</span>`;
+}
+/* le jour local, pour regrouper le fil : AAAA-MM-JJ */
+const jourDe = (iso) => new Date(iso).toLocaleDateString("fr-CA");
+function libelleJour(iso) {
+  const jour = jourDe(iso);
+  const auj = new Date(maintenantServeur());
+  if (jour === auj.toLocaleDateString("fr-CA")) return "Aujourd'hui";
+  auj.setDate(auj.getDate() - 1);
+  if (jour === auj.toLocaleDateString("fr-CA")) return "Hier";
+  return new Date(iso).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+}
+
+function avatarHTML(p) {
+  if (p.avatar) return `<img class="gen-av" src="${echappe(p.avatar)}" alt="" loading="lazy">`;
+  const initiale = p.pseudo ? p.pseudo.charAt(0).toUpperCase() : "?";
+  return `<span class="gen-av" aria-hidden="true">${echappe(initiale)}</span>`;
+}
 
 /* ---------- l'infobulle ----------
    Elle suit le pointeur et lit ce que la barre porte dans data-bulle. Une
@@ -326,16 +553,70 @@ function brancheBulle() {
   });
 }
 
+/* ---------- les onglets ----------
+   Une rubrique à la fois : la page empilait sept cartes, et trente jours
+   d'activité repoussaient les comptes et les courbes à plusieurs écrans
+   de là. L'onglet ouvert vit dans l'adresse (#comptes) : un rechargement
+   - celui qui suit un redémarrage compris - ramène au même endroit, et
+   l'adresse se garde en favori. Le premier onglet n'y laisse rien, c'est
+   la page telle qu'on l'ouvre. Les flèches passent d'un onglet à l'autre,
+   comme dans toute barre d'onglets ; Tab sort de la barre. */
+const ONGLETS = [...document.querySelectorAll(".mon-onglet")];
+
+function montreOnglet(nom, focus) {
+  const choisi = ONGLETS.find((o) => o.dataset.onglet === nom) || ONGLETS[0];
+  for (const o of ONGLETS) {
+    const actif = o === choisi;
+    o.setAttribute("aria-selected", actif ? "true" : "false");
+    o.tabIndex = actif ? 0 : -1;
+    el(o.getAttribute("aria-controls")).hidden = !actif;
+  }
+  if (focus) choisi.focus();
+  devoile(choisi);
+  const adresse = choisi === ONGLETS[0] ? location.pathname + location.search
+                                        : "#" + choisi.dataset.onglet;
+  if (adresse !== location.pathname + location.search + location.hash) {
+    history.replaceState(null, "", adresse);
+  }
+}
+/* Sur un téléphone la barre déborde et défile de côté : l'onglet choisi
+   (« Site », arrivé par l'adresse) ne doit pas rester hors de vue. À la
+   main plutôt que scrollIntoView, qui ferait aussi défiler la page. */
+function devoile(o) {
+  const barre = el("onglets");
+  if (o.offsetLeft < barre.scrollLeft) barre.scrollLeft = o.offsetLeft - 4;
+  else if (o.offsetLeft + o.offsetWidth > barre.scrollLeft + barre.clientWidth) {
+    barre.scrollLeft = o.offsetLeft + o.offsetWidth - barre.clientWidth + 4;
+  }
+}
+el("onglets").addEventListener("click", (e) => {
+  const o = e.target.closest(".mon-onglet");
+  if (o) montreOnglet(o.dataset.onglet);
+});
+el("onglets").addEventListener("keydown", (e) => {
+  const i = ONGLETS.indexOf(document.activeElement);
+  if (i < 0) return;
+  const n = ONGLETS.length;
+  const j = { ArrowRight: (i + 1) % n, ArrowLeft: (i - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
+  if (j === undefined) return;
+  e.preventDefault();
+  montreOnglet(ONGLETS[j].dataset.onglet, true);
+});
+window.addEventListener("hashchange", () => montreOnglet(location.hash.slice(1)));
+montreOnglet(location.hash.slice(1));
+
 /* ---------- les chiffres de tête ---------- */
 function dessineTuiles() {
   const m = DATA.maintenant, a = DATA.aujourdhui, c = DATA.comptes;
   const tuiles = [
     { u: `<span class="vivant" aria-hidden="true"></span>En ce moment`,
       b: m.visiteurs,
-      i: `sur les ${m.minutes} dernières minutes` },
+      i: m.connectes ? `dont ${pluriel(m.connectes, "compte")}`
+                     : `sur les ${m.minutes} dernières minutes` },
     { u: "Aujourd'hui",
       b: a.visiteurs,
-      i: `${pluriel(a.vues, "page vue")}` },
+      i: `${pluriel(a.vues, "page vue")}${
+        a.ecartes ? ` · ${pluriel(a.ecartes, "robot")} écarté${a.ecartes > 1 ? "s" : ""}` : ""}` },
     { u: "Comptes",
       b: c.total,
       i: c.mois ? `dont ${c.mois} ce mois-ci` : "aucun ce mois-ci" },
@@ -365,10 +646,12 @@ function dessineJours() {
   el("jours").innerHTML = jours.map((j) => {
     const creux = !j.visiteurs;
     const h = creux ? 2 : Math.max(4, Math.round((j.visiteurs / haut) * 100)) + "%";
+    /* Les écartés : les passages qui n'ont jamais donné de battement - des
+       robots pour l'essentiel, ou une page fermée dans les trois secondes. */
     const bulle = `<u>${echappe(dateCourte(j.jour))}</u>` +
-      `${pluriel(j.visiteurs, "visiteur")} · ${pluriel(j.vues, "page vue")}`;
-    return `<div class="jour${creux ? " creux" : ""}${
-      j.visiteurs === haut && !creux ? " pointe" : ""}"
+      `${pluriel(j.visiteurs, "visiteur")} · ${pluriel(j.vues, "page vue")}` +
+      (j.ecartes ? `<br>${pluriel(j.ecartes, "robot")} écarté${j.ecartes > 1 ? "s" : ""}` : "");
+    return `<div class="jour${creux ? " creux" : ""}${j.visiteurs === haut && !creux ? " pointe" : ""}"
       data-bulle="${echappe(bulle)}" role="img"
       aria-label="${echappe(dateCourte(j.jour))} : ${echappe(pluriel(j.visiteurs, "visiteur"))}"
       ><i style="height:${creux ? "2px" : h}"></i></div>`;
@@ -383,24 +666,200 @@ function dessineJours() {
   }).join("");
 }
 
-/* ---------- qui est là ---------- */
+/* ---------- qui est là ----------
+   Une ligne par personne : où elle est, ce qu'elle vient de faire, depuis
+   quand elle est là et sur quoi. « En ligne » tant qu'un signe de vie date
+   de moins d'une minute et demie - le battement de la page en envoie un par
+   minute, onglet visible. Au-delà, l'onglet est caché ou la personne
+   relit sans bouger : on donne l'heure du dernier signe plutôt que de
+   deviner lequel. */
+function presentHTML(p) {
+  const nom = p.pseudo ? echappe(p.pseudo) : "Visiteur anonyme";
+  const etat = secondesDepuis(p.vu_le) < 90
+    ? '<span class="etiq actif">en ligne</span>'
+    : `<span class="etiq">dernier signe ${echappe(ilYa(p.vu_le))}</span>`;
+  const lignes = [
+    `<div class="gen-l lieu">sur <b>${echappe(p.lieu || "une page inconnue")}</b></div>`,
+    p.action ? `<div class="gen-l">${echappe(p.action)} · ${quand(p.action_le)}</div>` : "",
+    p.appareil ? `<div class="gen-l">${echappe(p.appareil)}</div>` : "",
+  ];
+  return `<div class="gen ici${p.pseudo ? "" : " anonyme"}">
+    ${avatarHTML(p)}
+    <div class="gen-nom">${nom}${etat}</div>
+    <span class="gen-quand">${quand(p.arrive_le, "là depuis " + dureeDepuis(p.arrive_le), "Arrivée :")}</span>
+    ${lignes.join("")}
+  </div>`;
+}
+
+function partiHTML(p) {
+  const depart = p.parti_le
+    ? quand(p.parti_le, "départ " + ilYa(p.parti_le))
+    : quand(p.vu_le, "dernier signe " + ilYa(p.vu_le));
+  return `<div class="parti-l">
+    <b>${p.pseudo ? echappe(p.pseudo) : "Visiteur anonyme"}</b>
+    ${p.lieu ? `<span>${echappe(p.lieu)}</span>` : ""}
+    <span>${depart}</span>
+    ${p.appareil ? `<span>${echappe(p.appareil)}</span>` : ""}
+  </div>`;
+}
+
 function dessineQui() {
   const m = DATA.maintenant;
-  const anonymes = Math.max(0, m.visiteurs - m.connectes.length);
+  const anonymes = m.visiteurs - m.connectes;
+  const qui = [m.connectes ? pluriel(m.connectes, "compte") : "",
+               anonymes ? `${pluriel(anonymes, "visiteur")} sans compte` : ""]
+    .filter(Boolean).join(" et ");
   el("quiSous").textContent = m.visiteurs
-    ? `${pluriel(m.visiteurs, "visiteur")} sur les ${m.minutes} dernières minutes.`
+    ? `${qui}, d'après les ${m.minutes} dernières minutes.`
+    : `Personne depuis ${m.minutes} minutes.`;
+  el("qui").innerHTML = m.presents.length
+    ? m.presents.map(presentHTML).join("")
+    : '<p class="mon-vide">Personne pour l\'instant.</p>';
+  el("ongDirectN").hidden = !m.visiteurs;
+  el("ongDirectN").textContent = m.visiteurs;
+  const partis = el("partis");
+  partis.hidden = !m.partis.length;
+  partis.innerHTML = m.partis.length
+    ? `<h3>Vus dans les ${m.pause} dernières minutes</h3>` + m.partis.map(partiHTML).join("")
     : "";
-  if (!m.visiteurs) {
-    el("qui").innerHTML = '<p class="mon-vide">Personne pour l\'instant.</p>';
+}
+
+/* ---------- l'activité ----------
+   Ce que les comptes ont fait, du plus récent au plus ancien, un bloc par
+   jour. Vingt cartes rangées d'affilée feraient vingt lignes : les gestes
+   consécutifs d'une même personne et d'une même famille (voir GESTES dans
+   monitoring.py), à moins d'une demi-heure d'écart, se replient en une
+   seule, qu'on déplie pour le détail. Les connexions ne se replient pas :
+   chacune compte. */
+let FILTRE = "";                 // un pseudo, ou "" pour tout le monde
+const OUVERTS = new Set();       // les groupes dépliés, d'un rafraîchissement à l'autre
+const REPLI = 30 * 60 * 1000;
+
+function groupes(liste) {
+  const sortie = [];
+  for (const a of liste) {
+    const der = sortie[sortie.length - 1];
+    const ancien = der && der.items[der.items.length - 1];
+    if (der && a.genre !== "compte" && der.pseudo === a.pseudo && der.genre === a.genre
+        && jourDe(ancien.quand) === jourDe(a.quand)
+        && Date.parse(ancien.quand) - Date.parse(a.quand) < REPLI) {
+      der.items.push(a);
+    } else {
+      sortie.push({ pseudo: a.pseudo, genre: a.genre, items: [a] });
+    }
+  }
+  return sortie;
+}
+
+function groupeHTML(gr) {
+  const a = gr.items[0];                       // le plus récent
+  const qui = `<b>${echappe(a.pseudo)}</b>${
+    a.supprime ? ' <span class="supprime">(compte supprimé)</span>' : ""}`;
+  const app = a.appareil ? `<span class="app">${echappe(a.appareil)}</span>` : "";
+  const h = `<span class="fil-h">${quand(a.quand, heureCourte(a.quand))}</span>`;
+  if (gr.items.length === 1) {
+    return `<div class="fil-l">${h}<div>${qui} ${echappe(a.action)}${app}</div></div>`;
+  }
+  // la clé tient au plus ancien du groupe : c'est lui qui ne change pas
+  // quand un nouveau geste vient s'ajouter en tête
+  const fin = gr.items[gr.items.length - 1];
+  const cle = `${fin.quand}|${fin.pseudo}|${fin.genre}`;
+  const n = gr.items.length - 1;
+  return `<div class="fil-l">${h}<div>
+    <details data-cle="${echappe(cle)}"${OUVERTS.has(cle) ? " open" : ""}>
+      <summary>${qui} ${echappe(a.action)}<span class="fil-plus">+ ${n} autre${n > 1 ? "s" : ""}</span></summary>
+      <ul>${gr.items.slice(1).map((x) =>
+        `<li><span>${heureCourte(x.quand)}</span>${echappe(x.action)}</li>`).join("")}</ul>
+    </details>${app}</div></div>`;
+}
+
+function dessineFil() {
+  const tout = DATA.activite;
+  const pseudos = [...new Set(tout.map((a) => a.pseudo))];
+  if (FILTRE && !pseudos.includes(FILTRE)) FILTRE = "";
+  el("filSous").textContent = tout.length
+    ? `Les ${DATA.jours_activite} derniers jours. Une fiche ouverte ou un fil parcouru `
+      + "n'y entre pas : ce sont des lectures, elles s'affichent dans « Qui est là »."
+    : "";
+  el("filtres").hidden = pseudos.length < 2;
+  el("filtres").innerHTML = ["", ...pseudos].map((p) =>
+    `<button type="button" class="filtre" data-pseudo="${echappe(p)}"
+      aria-pressed="${p === FILTRE}">${p ? echappe(p) : "Tout le monde"}</button>`).join("");
+
+  const liste = FILTRE ? tout.filter((a) => a.pseudo === FILTRE) : tout;
+  if (!liste.length) {
+    el("fil").innerHTML = `<p class="mon-vide">Aucune activité sur les ${
+      DATA.jours_activite} derniers jours.</p>`;
     return;
   }
-  el("qui").innerHTML =
-    m.connectes.map((p) => `<span>${echappe(p)}</span>`).join("") +
-    (anonymes ? `<span class="anonyme">${pluriel(anonymes, "visiteur")} sans compte</span>` : "") +
-    (m.pages.length
-      ? `<span class="anonyme">${m.pages.map((p) =>
-          `${echappe(p.nom)} (${p.visiteurs})`).join(" · ")}</span>`
-      : "");
+  let jour = null, html = "";
+  for (const gr of groupes(liste)) {
+    const j = jourDe(gr.items[0].quand);
+    if (j !== jour) {
+      jour = j;
+      html += `<h3 class="fil-jour">${echappe(libelleJour(gr.items[0].quand))}</h3>`;
+    }
+    html += groupeHTML(gr);
+  }
+  el("fil").innerHTML = html;
+  el("fil").querySelectorAll("details[data-cle]").forEach((d) =>
+    d.addEventListener("toggle", () => {
+      if (d.open) OUVERTS.add(d.dataset.cle); else OUVERTS.delete(d.dataset.cle);
+    }));
+}
+el("filtres").addEventListener("click", (e) => {
+  const b = e.target.closest(".filtre");
+  if (!b) return;
+  FILTRE = b.dataset.pseudo;
+  dessineFil();
+});
+
+/* ---------- les comptes ----------
+   Tous, du plus récemment vu au plus ancien : « qui est passé cette
+   semaine » se lit en haut, « qui n'est jamais revenu » en bas. Les dix
+   premiers d'emblée, les autres sous un repli. */
+const COMPTES_VISIBLES = 10;
+let PLUS_OUVERT = false;
+
+function compteHTML(c, enLigne) {
+  const etiq = enLigne ? '<span class="etiq actif">en ligne</span>'
+    : c.sessions ? '<span class="etiq session">session ouverte</span>' : "";
+  const lignes = [];
+  if (c.vu_le) {
+    lignes.push(`${c.jours} jour${c.jours > 1 ? "s" : ""} actif${c.jours > 1 ? "s" : ""} sur 30`
+      + ` · ${pagesVues(c.vues)}`
+      + (c.favoris.length ? ` · surtout <b>${c.favoris.map(echappe).join(", ")}</b>` : ""));
+    const ou = [c.lieu ? `dernière page : ${echappe(c.lieu)}` : "",
+                c.appareil ? echappe(c.appareil) : ""].filter(Boolean).join(" · ");
+    if (ou) lignes.push(ou);
+  }
+  if (c.action) lignes.push(`${echappe(c.action)} · ${quand(c.action_le)}`);
+  lignes.push(`compte créé ${quand(c.cree_le, ilYa(c.cree_le))}`);
+  return `<div class="gen${enLigne ? " ici" : ""}">
+    ${avatarHTML(c)}
+    <div class="gen-nom">${echappe(c.pseudo)}${etiq}</div>
+    <span class="gen-quand">${c.vu_le ? quand(c.vu_le, ilYa(c.vu_le), "Dernier passage :")
+                                      : "aucune visite"}</span>
+    ${lignes.map((l) => `<div class="gen-l">${l}</div>`).join("")}
+  </div>`;
+}
+
+function dessineComptes() {
+  const tous = DATA.comptes_vus;
+  const ici = new Set(DATA.maintenant.presents.filter((p) => p.pseudo).map((p) => p.pseudo));
+  const semaine = tous.filter((c) => c.vu_le && secondesDepuis(c.vu_le) < 7 * 86400).length;
+  el("comptesSous").textContent =
+    `${pluriel(tous.length, "compte")}, dont ${semaine} passé${semaine > 1 ? "s" : ""} ces 7 derniers jours.`;
+  const html = (liste) => liste.map((c) => compteHTML(c, ici.has(c.pseudo))).join("");
+  const reste = tous.slice(COMPTES_VISIBLES);
+  el("comptesListe").innerHTML =
+    `<div class="gens">${html(tous.slice(0, COMPTES_VISIBLES))}</div>` +
+    (reste.length ? `<details class="plus-gens"${PLUS_OUVERT ? " open" : ""}>
+        <summary>${reste.length > 1 ? `Voir les ${reste.length} autres` : "Voir le dernier"}</summary>
+        <div class="gens">${html(reste)}</div>
+      </details>` : "");
+  const plus = el("comptesListe").querySelector(".plus-gens");
+  if (plus) plus.addEventListener("toggle", () => { PLUS_OUVERT = plus.open; });
 }
 
 /* ---------- barres horizontales ----------
@@ -420,7 +879,7 @@ function barres(hote, lignes, vide) {
 
 function dessinePages() {
   el("pagesSous").textContent =
-    `Visiteurs distincts sur les ${DATA.jours.length} derniers jours.`;
+    `Visiteurs distincts sur les ${DATA.jours.length} derniers jours, robots écartés.`;
   barres("pages", DATA.pages.map((p) => ({
     nom: p.nom, valeur: p.visiteurs, suite: `· ${p.vues} vues`,
     bulle: `<u>${echappe(p.chemin)}</u>${pluriel(p.visiteurs, "visiteur")} · ${
@@ -441,8 +900,10 @@ function dessine() {
   el("sous").textContent =
     `Mis à jour à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
   dessineTuiles();
-  dessineJours();
   dessineQui();
+  dessineFil();
+  dessineComptes();
+  dessineJours();
   dessinePages();
   dessineContenu();
 }
@@ -455,6 +916,7 @@ let PLAINTE = false;
 async function relis(silencieux) {
   try {
     DATA = await api("/api/monitoring");
+    HEURE = { serveur: Date.parse(DATA.heure) || Date.now(), locale: Date.now() };
     PLAINTE = false;
     dessine();
   } catch (err) {
@@ -536,6 +998,8 @@ el("redemBtn").onclick = async () => {
 
   brancheBulle();
   el("corps").hidden = false;
+  // la barre n'avait pas de largeur tant que la page était cachée
+  devoile(ONGLETS.find((o) => o.getAttribute("aria-selected") === "true"));
   setInterval(() => relis(true), CADENCE);
 })();
 </script>

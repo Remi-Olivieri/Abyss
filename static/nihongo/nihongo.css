@@ -1,0 +1,1162 @@
+/* Nihongo, une pièce d'Abyss qui change de registre.
+
+   Le reste du site vit au fond de l'eau : bleu nuit, bioluminescence,
+   neige marine. Ici, on remonte à la surface et on s'assoit à une table
+   d'écriture : du papier washi, de l'encre sumi, le vermillon d'un sceau
+   (朱, shu) et l'indigo des teintures (藍, ai). Le lien avec l'abysse tient
+   dans un motif : les vagues seigaiha (青海波, « les vagues de la mer
+   bleue ») en tête de page.
+
+   Deux thèmes : le papier le jour, l'encre la nuit. Les deux définissent
+   les mêmes jetons, rien d'autre ne connaît une couleur en dur.
+
+   Trois polices japonaises, chacune à sa place :
+     - Shippori Mincho B1, les titres : un mincho, l'empattement des livres ;
+     - Zen Kaku Gothic New, le texte courant ;
+     - Klee One, les caractères qu'on apprend. C'est une écriture de
+       manuel scolaire, au crayon : き et さ y ont leurs traits séparés,
+       comme on les trace, et non liés comme dans les polices d'imprimerie.
+       Apprendre à lire dans une police qui ne montre pas les traits, c'est
+       apprendre à écrire faux. */
+
+:root{
+  --papier:#F4EFE6;
+  --papier-creux:#ECE5D8;
+  --feuille:#FBF8F2;
+  --encre:#1E1C19;
+  --encre-2:#514C44;
+  --encre-3:#8A8377;
+  --filet:rgba(30,28,25,.11);
+  --filet-fort:rgba(30,28,25,.22);
+  --shu:#C23B2A;
+  --shu-pale:rgba(194,59,42,.09);
+  --sur-shu:#FFF8F0;
+  --ai:#284B78;
+  --ai-pale:rgba(40,75,120,.09);
+  --matcha:#5F7F37;
+  --kin:#B08A2E;
+  --voile:rgba(30,24,16,.42);
+  --ombre:0 1px 1px rgba(70,50,20,.04), 0 12px 32px -20px rgba(70,50,20,.4);
+  --vagues:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cg fill='none' stroke='%23E2D8C6' stroke-width='.7'%3E%3Ccircle cx='0' cy='0' r='20' fill='%23F4EFE6' stroke='none'/%3E%3Ccircle cx='0' cy='0' r='19.2'/%3E%3Ccircle cx='0' cy='0' r='14.8'/%3E%3Ccircle cx='0' cy='0' r='10.4'/%3E%3Ccircle cx='0' cy='0' r='6'/%3E%3Ccircle cx='40' cy='0' r='20' fill='%23F4EFE6' stroke='none'/%3E%3Ccircle cx='40' cy='0' r='19.2'/%3E%3Ccircle cx='40' cy='0' r='14.8'/%3E%3Ccircle cx='40' cy='0' r='10.4'/%3E%3Ccircle cx='40' cy='0' r='6'/%3E%3Ccircle cx='20' cy='10' r='20' fill='%23F4EFE6' stroke='none'/%3E%3Ccircle cx='20' cy='10' r='19.2'/%3E%3Ccircle cx='20' cy='10' r='14.8'/%3E%3Ccircle cx='20' cy='10' r='10.4'/%3E%3Ccircle cx='20' cy='10' r='6'/%3E%3Ccircle cx='0' cy='20' r='20' fill='%23F4EFE6' stroke='none'/%3E%3Ccircle cx='0' cy='20' r='19.2'/%3E%3Ccircle cx='0' cy='20' r='14.8'/%3E%3Ccircle cx='0' cy='20' r='10.4'/%3E%3Ccircle cx='0' cy='20' r='6'/%3E%3Ccircle cx='40' cy='20' r='20' fill='%23F4EFE6' stroke='none'/%3E%3Ccircle cx='40' cy='20' r='19.2'/%3E%3Ccircle cx='40' cy='20' r='14.8'/%3E%3Ccircle cx='40' cy='20' r='10.4'/%3E%3Ccircle cx='40' cy='20' r='6'/%3E%3Ccircle cx='20' cy='30' r='20' fill='%23F4EFE6' stroke='none'/%3E%3Ccircle cx='20' cy='30' r='19.2'/%3E%3Ccircle cx='20' cy='30' r='14.8'/%3E%3Ccircle cx='20' cy='30' r='10.4'/%3E%3Ccircle cx='20' cy='30' r='6'/%3E%3C/g%3E%3C/svg%3E");
+
+  /* les niveaux d'une carte : en cours, su, acquis */
+  --niv-0:var(--filet-fort);
+  --niv-1:#9DB1CE;
+  --niv-2:var(--matcha);
+  --niv-3:var(--kin);
+
+  --titre:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",Georgia,serif;
+  --corps:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Segoe UI",system-ui,sans-serif;
+  --pinceau:"Klee One","Hiragino Mincho ProN","Yu Mincho",serif;
+  --r:10px;
+  --maxw:1040px;
+  color-scheme:light;
+}
+
+:root[data-theme="nuit"]{
+  --papier:#15171B;
+  --papier-creux:#101216;
+  --feuille:#1C1F25;
+  --encre:#EDE6D8;
+  --encre-2:#B9B1A2;
+  --encre-3:#80796E;
+  --filet:rgba(237,230,216,.09);
+  --filet-fort:rgba(237,230,216,.2);
+  --shu:#E2604B;
+  --shu-pale:rgba(226,96,75,.13);
+  --sur-shu:#FFF8F0;
+  --ai:#93B3DE;
+  --ai-pale:rgba(147,179,222,.12);
+  --matcha:#9CBD69;
+  --kin:#D8B254;
+  --voile:rgba(0,0,0,.62);
+  --ombre:0 12px 32px -18px rgba(0,0,0,.85);
+  --vagues:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cg fill='none' stroke='%2323262D' stroke-width='.7'%3E%3Ccircle cx='0' cy='0' r='20' fill='%2315171B' stroke='none'/%3E%3Ccircle cx='0' cy='0' r='19.2'/%3E%3Ccircle cx='0' cy='0' r='14.8'/%3E%3Ccircle cx='0' cy='0' r='10.4'/%3E%3Ccircle cx='0' cy='0' r='6'/%3E%3Ccircle cx='40' cy='0' r='20' fill='%2315171B' stroke='none'/%3E%3Ccircle cx='40' cy='0' r='19.2'/%3E%3Ccircle cx='40' cy='0' r='14.8'/%3E%3Ccircle cx='40' cy='0' r='10.4'/%3E%3Ccircle cx='40' cy='0' r='6'/%3E%3Ccircle cx='20' cy='10' r='20' fill='%2315171B' stroke='none'/%3E%3Ccircle cx='20' cy='10' r='19.2'/%3E%3Ccircle cx='20' cy='10' r='14.8'/%3E%3Ccircle cx='20' cy='10' r='10.4'/%3E%3Ccircle cx='20' cy='10' r='6'/%3E%3Ccircle cx='0' cy='20' r='20' fill='%2315171B' stroke='none'/%3E%3Ccircle cx='0' cy='20' r='19.2'/%3E%3Ccircle cx='0' cy='20' r='14.8'/%3E%3Ccircle cx='0' cy='20' r='10.4'/%3E%3Ccircle cx='0' cy='20' r='6'/%3E%3Ccircle cx='40' cy='20' r='20' fill='%2315171B' stroke='none'/%3E%3Ccircle cx='40' cy='20' r='19.2'/%3E%3Ccircle cx='40' cy='20' r='14.8'/%3E%3Ccircle cx='40' cy='20' r='10.4'/%3E%3Ccircle cx='40' cy='20' r='6'/%3E%3Ccircle cx='20' cy='30' r='20' fill='%2315171B' stroke='none'/%3E%3Ccircle cx='20' cy='30' r='19.2'/%3E%3Ccircle cx='20' cy='30' r='14.8'/%3E%3Ccircle cx='20' cy='30' r='10.4'/%3E%3Ccircle cx='20' cy='30' r='6'/%3E%3C/g%3E%3C/svg%3E");
+  --niv-1:#4E6C95;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{scrollbar-gutter:stable}
+[hidden]{display:none !important}
+body{
+  position:relative;
+  min-height:100vh;
+  background:var(--papier);
+  color:var(--encre);
+  font-family:var(--corps);
+  font-size:15.5px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  transition:background-color .3s,color .3s;
+}
+/* Les vagues, en haut de page, qui s'effacent vers le bas. Le motif est
+   peint avec la couleur du papier pour que chaque vague cache celle de
+   derrière : il y en a donc un par thème (voir --vagues). Chaque tuile
+   fait 40 x 20 : six cercles de rayon 20, tracés du haut vers le bas pour
+   que les rangs du dessous recouvrent ceux du dessus. */
+body::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:420px;z-index:0;
+  background-image:var(--vagues);background-size:40px 20px;
+  -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.85),transparent);
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.85),transparent);
+  pointer-events:none;
+}
+body.en-seance,body.voile-ouvert{overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--ai);text-underline-offset:3px}
+::selection{background:var(--shu-pale)}
+:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+main{position:relative;z-index:1;padding-bottom:64px;min-height:60vh}
+
+/* ---------- l'en-tête ----------
+   La même barre que les autres projets : le retour au hub à un bout, le
+   signalement à l'autre. Opaque : le motif ne passe pas dessous. */
+.top{
+  position:sticky;top:0;z-index:40;
+  background:color-mix(in srgb,var(--papier) 94%,transparent);
+  border-bottom:1px solid var(--filet);
+}
+.top-in{display:flex;align-items:center;gap:14px;height:58px}
+.top-espace{flex:1}
+.entete-action{
+  flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  height:34px;padding:0 14px 0 12px;border-radius:8px;
+  color:var(--encre-2);border:1px solid var(--filet);background:transparent;
+  font-size:13px;text-decoration:none;white-space:nowrap;cursor:pointer;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.entete-action:hover{color:var(--encre);border-color:var(--filet-fort);background:var(--feuille)}
+.entete-rond{width:34px;padding:0;justify-content:center;font-family:var(--titre);font-size:15px}
+.marque{display:flex;align-items:center;gap:10px;color:var(--encre);text-decoration:none;min-width:0}
+.hanko{
+  display:grid;place-items:center;width:30px;height:30px;border-radius:5px;flex:0 0 auto;
+  background:var(--shu);color:var(--sur-shu);
+  font-family:var(--titre);font-weight:700;font-size:18px;line-height:1;
+  transform:rotate(-4deg);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.2);
+}
+.marque-nom{font-family:var(--titre);font-weight:700;font-size:21px;letter-spacing:.02em;line-height:1}
+.marque-jp{font-family:var(--titre);font-size:13px;color:var(--encre-3);letter-spacing:.12em;line-height:1}
+@media (min-width:1500px){
+  #abyssBtn,#suggBtn{position:absolute;top:29px;transform:translateY(-50%)}
+  #abyssBtn{left:24px}
+  #suggBtn{right:24px}
+}
+
+/* Les rubriques : un mot japonais, sa lecture au-dessus, sa traduction
+   dessous. Défilantes sur un téléphone plutôt que repliées : on voit
+   qu'il y en a d'autres. */
+.onglets{border-top:1px solid var(--filet)}
+.onglets-in{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.onglets-in::-webkit-scrollbar{display:none}
+.onglets a{
+  flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;
+  padding:7px 14px 8px;color:var(--encre-3);text-decoration:none;
+  border-bottom:2px solid transparent;transition:color .15s,border-color .15s;
+}
+.onglets a:hover{color:var(--encre)}
+.onglets a[aria-current="page"]{color:var(--encre);border-bottom-color:var(--shu)}
+.onglets ruby{font-family:var(--titre);font-size:17px;line-height:1.25;font-weight:500}
+.onglets rt{font-family:var(--corps);font-size:9px;letter-spacing:.06em;color:var(--encre-3)}
+.onglets a > span{font-size:11.5px;line-height:1.2}
+
+/* ---------- les boutons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  padding:10px 20px;border:0;border-radius:8px;cursor:pointer;
+  background:var(--encre);color:var(--papier);font-weight:500;text-decoration:none;
+  transition:background .2s,transform .1s;
+}
+.btn:hover{background:var(--shu);color:var(--sur-shu)}
+.btn:active{transform:translateY(1px)}
+.btn-grand{padding:15px 28px;font-family:var(--titre);font-weight:700;font-size:19px;letter-spacing:.08em;line-height:1}
+.btn-grand span{font-family:var(--corps);font-weight:500;font-size:15px;letter-spacing:0}
+.btn-second{background:transparent;color:var(--encre);border:1px solid var(--filet-fort)}
+.btn-second:hover{background:var(--feuille);color:var(--encre);border-color:var(--encre-3)}
+.btn-lien{
+  background:none;border:0;padding:4px 2px;cursor:pointer;color:var(--ai);
+  text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--ai) 40%,transparent);
+  text-underline-offset:3px;font-size:14px;
+}
+.btn-lien:hover{text-decoration-color:currentColor}
+.btn-son{
+  display:inline-flex;align-items:center;gap:7px;vertical-align:middle;
+  padding:6px 13px 6px 10px;border-radius:99px;cursor:pointer;
+  border:1px solid color-mix(in srgb,var(--ai) 35%,transparent);background:var(--ai-pale);color:var(--ai);
+  font-size:13.5px;transition:background .15s,border-color .15s;
+}
+.btn-son:hover{border-color:var(--ai)}
+.segment{display:inline-flex;padding:3px;gap:2px;border:1px solid var(--filet-fort);border-radius:9px;background:var(--feuille)}
+.segment button{border:0;background:transparent;padding:7px 14px;border-radius:6px;cursor:pointer;color:var(--encre-2);font-size:14px}
+.segment button:hover{color:var(--encre)}
+.segment button[aria-checked="true"]{background:var(--encre);color:var(--papier)}
+.segment-petit button{padding:4px 11px;font-size:13px}
+
+/* ---------- les surfaces ---------- */
+.feuille{
+  background:var(--feuille);border:1px solid var(--filet);border-radius:var(--r);
+  box-shadow:var(--ombre);padding:22px 24px;
+}
+.rubrique-tete{padding:34px 0 22px}
+.titre{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin:0;line-height:1.1}
+.titre-jp{font-family:var(--titre);font-weight:700;font-size:clamp(40px,7vw,58px);letter-spacing:.06em}
+.titre-fr{font-family:var(--titre);font-weight:500;font-size:clamp(20px,3vw,26px);color:var(--encre-2)}
+.chapeau{max-width:66ch;color:var(--encre-2);margin:14px 0 0}
+.section-titre{
+  display:flex;align-items:baseline;gap:10px;margin:0 0 14px;
+  font-family:var(--titre);font-weight:700;font-size:19px;
+}
+.section-titre [lang="ja"]{color:var(--shu)}
+/* le mot japonais de tête ne se coupe pas (濁 / 音) : c'est la suite qui passe à la ligne */
+.section-titre > [lang="ja"]:first-child{flex:none;white-space:nowrap}
+
+/* ---------- 今日, aujourd'hui ---------- */
+.accueil-tete{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:38px 0 26px}
+.date{margin:0;color:var(--encre-3);font-size:13.5px}
+.date [lang="ja"]{font-family:var(--titre);color:var(--encre-2)}
+.salut{margin:6px 0 0;font-family:var(--titre);font-weight:700;font-size:clamp(32px,6vw,52px);line-height:1.15;letter-spacing:.04em}
+.salut-trad{margin:6px 0 0;color:var(--encre-2)}
+/* « Un peu chaque jour », à la verticale : le sens où le japonais s'écrit
+   d'abord. Un liseré vermillon, comme la marge d'un cahier. */
+.devise{
+  writing-mode:vertical-rl;margin:0;padding:4px 0 4px 12px;
+  font-family:var(--titre);font-size:21px;letter-spacing:.32em;line-height:1;
+  color:var(--shu);border-left:2px solid var(--shu-pale);
+}
+
+.chiffres{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.chiffre{
+  display:flex;flex-direction:column;gap:2px;padding:14px 16px;
+  background:var(--feuille);border:1px solid var(--filet);border-radius:var(--r);
+}
+.chiffre-jp{font-family:var(--titre);font-size:13px;color:var(--shu);letter-spacing:.12em}
+.chiffre-valeur{font-family:var(--titre);font-weight:700;font-size:32px;line-height:1.15}
+.chiffre-legende{font-size:12.5px;color:var(--encre-3);line-height:1.3}
+.chiffre-serie .chiffre-valeur{color:var(--shu)}
+
+.seance{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative}
+.seance-texte{flex:1 1 320px;min-width:0}
+.seance-titre{margin:0 0 4px;font-family:var(--titre);font-weight:700;font-size:23px}
+.seance p{margin:0}
+.seance-duree{color:var(--encre-3);font-size:13.5px;margin-top:4px !important}
+/* ce qu'il y a à découvrir : une ligne par sorte, chaque élément ouvre sa fiche */
+.seance-nouveaux{list-style:none;margin:8px 0 2px;padding:0;display:flex;flex-direction:column;gap:6px}
+.seance-nouveaux li{display:grid;grid-template-columns:5.5em minmax(0,1fr);align-items:baseline;gap:4px 12px}
+.seance-sorte{color:var(--encre-2)}
+.seance-dont{display:block}
+.seance-dont{color:var(--encre-3);font-size:13px}
+.apercu-kanas{display:flex;flex-wrap:wrap;gap:4px;font-family:var(--pinceau);font-size:21px;color:var(--encre)}
+.apercu-el{
+  padding:1px 8px;border:1px solid var(--filet);border-radius:7px;background:var(--papier);
+  font:inherit;color:inherit;line-height:1.35;cursor:pointer;
+}
+.apercu-el:hover{border-color:var(--encre-3)}
+.seance .tampon{position:absolute;right:26px;top:50%;margin-top:-44px}
+.seance:has(.tampon) .seance-texte{padding-right:110px}
+
+.reglage-nouveaux{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;margin:14px 4px 0;font-size:13.5px;color:var(--encre-2)}
+.reglage{display:inline-flex;align-items:center;gap:6px}
+.reglage select{
+  padding:4px 8px;border-radius:6px;border:1px solid var(--filet-fort);background:var(--feuille);cursor:pointer;
+}
+.reglage-aide{color:var(--encre-3)}
+/* les réglages, repliés : leur titre dit ce qui est réglé */
+.reglages{margin:16px 4px 0}
+.reglages summary{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;cursor:pointer;
+  font-size:13.5px;color:var(--encre-2);list-style:none}
+.reglages summary::-webkit-details-marker{display:none}
+.reglages summary .reglage-titre::after{content:" ▾";color:var(--encre-3)}
+.reglages[open] summary .reglage-titre::after{content:" ▴"}
+.reglages .reglage-nouveaux{margin-top:10px}
+.seance-encore{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+/* la séance, puis ce qui se propose à côté : le test, la grammaire, un texte */
+.accueil-cartes{display:flex;flex-direction:column;gap:14px}
+.accueil-cartes .lc-suivant{margin:0}
+.reglage-voix{margin-top:10px}
+.reglage-voix .btn-son{padding:4px 11px 4px 9px;font-size:13px}
+
+.programme{margin-top:40px}
+.etapes{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.etape a{
+  display:flex;align-items:center;gap:16px;padding:12px 16px;border-radius:var(--r);
+  border:1px solid var(--filet);background:color-mix(in srgb,var(--feuille) 60%,transparent);
+  color:inherit;text-decoration:none;transition:border-color .15s,background .15s;
+}
+.etape a:hover{border-color:var(--filet-fort);background:var(--feuille)}
+.etape-jp{font-family:var(--titre);font-weight:700;font-size:24px;letter-spacing:.06em;color:var(--shu);flex:0 0 auto;width:62px}
+.etape-texte{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.4}
+.etape-texte span{color:var(--encre-3);font-size:13.5px}
+.etape-etat{flex:0 0 auto;font-size:12.5px;padding:3px 10px;border-radius:99px;background:var(--ai-pale);color:var(--ai);white-space:nowrap}
+.programme-test{margin:12px 4px 0;font-size:13.5px;color:var(--encre-3)}
+
+/* Le sceau : ce qui est fait est tamponné. Deux cercles vermillon, le
+   caractère au milieu, posé de travers comme à la main. */
+.tampon{
+  width:88px;height:88px;border-radius:50%;flex:0 0 auto;
+  display:grid;place-items:center;color:var(--shu);
+  border:3px solid var(--shu);
+  box-shadow:inset 0 0 0 3px var(--feuille),inset 0 0 0 4.5px var(--shu);
+  font-family:var(--titre);font-weight:700;font-size:44px;line-height:1;
+  transform:rotate(-12deg);opacity:.92;
+  animation:tamponne .45s cubic-bezier(.3,1.5,.5,1) .2s both;
+}
+.tampon-pose{animation:none}
+@keyframes tamponne{from{transform:scale(1.9) rotate(-12deg);opacity:0}}
+
+/* ---------- 仮名, les kanas ---------- */
+.kana-barre{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.kana-bilan{margin:0;color:var(--encre-2);font-size:14px}
+/* le dernier bilan avant une grille : de l'air avant les cases */
+.bilan-fin{margin-bottom:26px}
+.niv-0{background:var(--niv-0)}
+.niv-1{background:var(--niv-1)}
+.niv-2{background:var(--niv-2)}
+.niv-3{background:var(--niv-3)}
+
+.kn-section{margin-bottom:34px}
+.kn-grille{display:grid;gap:6px;align-items:stretch}
+.kn-grille-5{grid-template-columns:26px repeat(5,minmax(0,1fr));max-width:620px}
+.kn-grille-3{grid-template-columns:26px repeat(3,minmax(0,1fr));max-width:430px}
+.kn-col-tete{text-align:center;font-size:12px;color:var(--encre-3);letter-spacing:.05em}
+.kn-ligne-tete{display:grid;place-items:center;font-size:12px;color:var(--encre-3)}
+.kn-case{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  aspect-ratio:1/1.02;min-width:0;padding:4px 2px 10px;cursor:pointer;
+  background:var(--feuille);border:1px solid var(--filet);border-radius:8px;
+  transition:border-color .15s,transform .15s,box-shadow .15s;
+}
+.kn-case-large{aspect-ratio:1.5/1}
+.kn-case:hover{border-color:var(--encre-3);transform:translateY(-1px);box-shadow:var(--ombre)}
+.kn-glyphe{font-family:var(--pinceau);font-size:clamp(22px,5.4vw,32px);line-height:1.15}
+.kn-romaji{font-size:11.5px;color:var(--encre-3);line-height:1.2}
+.kn-jauges{position:absolute;left:8px;right:8px;bottom:5px;display:flex;gap:3px}
+.kn-jauges i{flex:1;height:3px;border-radius:2px}
+
+/* ---------- 漢字, les kanjis ---------- */
+.lecture-seule{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.recherche input{
+  width:min(300px,70vw);padding:8px 12px;border-radius:8px;border:1px solid var(--filet-fort);
+  background:var(--feuille);outline:none;font-size:14px;
+}
+.recherche input:focus{border-color:var(--ai);box-shadow:0 0 0 3px var(--ai-pale)}
+.kj-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;margin-bottom:34px}
+.kj-case{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  min-width:0;padding:8px 4px 12px;cursor:pointer;
+  background:var(--feuille);border:1px solid var(--filet);border-radius:8px;
+  transition:border-color .15s,transform .15s,box-shadow .15s;
+}
+.kj-case:hover{border-color:var(--encre-3);transform:translateY(-1px);box-shadow:var(--ombre)}
+.kj-glyphe{font-family:var(--pinceau);font-size:30px;line-height:1.2}
+.kj-sens{max-width:100%;font-size:11px;color:var(--encre-3);line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kj-niveau{position:absolute;top:3px;left:5px;font-size:9.5px;color:var(--shu);letter-spacing:.04em}
+.vide{grid-column:1/-1;color:var(--encre-3);margin:10px 0}
+
+/* les lectures : 音 on (katakanas), 訓 kun (hiraganas, ce qui s'écrit en
+   kanas après le kanji en plus pâle) */
+.lectures{margin:6px 0 0;display:grid;gap:3px;text-align:left}
+.lectures div{display:flex;gap:10px;align-items:baseline}
+.lectures dt{flex:0 0 auto;width:52px;font-size:12.5px;color:var(--encre-3)}
+.lectures dt [lang="ja"]{font-family:var(--titre);color:var(--shu);margin-right:2px}
+.lectures dd{margin:0;font-size:17px;line-height:1.5}
+.okuri{color:var(--encre-3)}
+.en{font-style:normal;font-size:.85em;color:var(--encre-3)}
+
+.composants{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:12px 0 0;font-size:13.5px}
+.composants-titre{color:var(--encre-3);margin-right:2px}
+.composant{
+  display:inline-flex;align-items:baseline;gap:6px;padding:3px 10px;border-radius:7px;
+  border:1px solid var(--filet);background:var(--papier-creux);color:inherit;font:inherit;
+}
+button.composant{cursor:pointer}
+button.composant:hover{border-color:var(--encre-3)}
+.cp-forme{font-family:var(--pinceau);font-size:20px;line-height:1.2}
+.cp-sens{color:var(--encre-2)}
+.cp-plus{color:var(--encre-3)}
+
+.mots{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:4px;width:100%;text-align:left}
+.mots li{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 10px;border-radius:8px;background:var(--papier-creux)}
+.mot{
+  display:inline-flex;align-items:baseline;gap:8px;padding:0;border:0;background:none;cursor:pointer;color:var(--encre);
+}
+.mot svg{align-self:center;color:var(--ai);width:15px;height:15px;opacity:.7}
+.mot:hover svg{opacity:1}
+.mot-jp{font-family:var(--pinceau);font-size:21px;line-height:1.3}
+.mot-jp b{color:var(--shu);font-weight:600}
+.mot-kana{font-size:13px;color:var(--encre-2)}
+.mot-sens{font-size:13.5px;color:var(--encre-2);flex:1;min-width:12ch}
+
+/* ---------- 単語, le vocabulaire ----------
+   Une liste plutôt qu'une grille : un mot a besoin de sa lecture et de son
+   sens à côté de lui. */
+.mt-avertissement{margin:-4px 0 14px;font-size:13px;color:var(--encre-3)}
+.mt-liste{list-style:none;margin:0 0 14px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px}
+/* le bouton remplit sa case : un mot sans kanji n'a pas de ligne de lecture,
+   il serait sinon plus court que ses voisins */
+.mt-liste>li{display:flex}
+.mt-ligne{
+  position:relative;width:100%;display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);
+  align-items:baseline;gap:4px 14px;padding:9px 12px 13px;cursor:pointer;text-align:left;color:inherit;font:inherit;
+  background:var(--feuille);border:1px solid var(--filet);border-radius:8px;
+  transition:border-color .15s,transform .15s,box-shadow .15s;
+}
+.mt-ligne:hover{border-color:var(--encre-3);transform:translateY(-1px);box-shadow:var(--ombre)}
+.mt-ligne .kj-niveau{top:2px;left:auto;right:7px}
+.mt-ligne-jp{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.mt-ligne-mot{font-family:var(--pinceau);font-size:22px;white-space:nowrap}
+.mt-ligne-kana{font-size:12px;color:var(--encre-3)}
+.mt-ligne-sens{font-size:13.5px;color:var(--encre-2);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mt-jauges{left:12px;right:12px}
+.mt-liste .vide{list-style:none}
+.mt-suite{margin:0 0 34px;text-align:center}
+
+/* un mot en séance : la taille suit la longueur (--n caractères) */
+.sc-mot{
+  font-family:var(--pinceau);font-weight:600;line-height:1.1;margin:6px 0 4px;white-space:nowrap;
+  font-size:max(34px,min(120px,calc(min(88vw,560px) / var(--n) / 1.08)));
+}
+.sc-mot-moyen{font-size:max(30px,min(72px,calc(min(80vw,420px) / var(--n) / 1.08)));margin:0}
+.mt-ecoute{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.mt-lecture{font-family:var(--titre);font-size:26px;line-height:1.2}
+.mt-nature{margin:0;font-size:13px;color:var(--encre-3)}
+.mt-nature [lang="ja"]{font-family:var(--pinceau);font-size:1.2em;color:var(--encre-2)}
+.mt-en{margin:2px 0 0;font-size:13px;color:var(--encre-3)}
+.mt-kanjis{justify-content:center}
+.sc-indice{margin:0;font-family:var(--pinceau);font-size:26px;letter-spacing:.12em;color:var(--ai)}
+
+/* la fiche d'un mot : pas de case de tracé, tout au centre */
+.fi-boite-mot{width:min(560px,100%)}
+.fi-mot{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;margin-top:4px}
+.fi-mot .fi-titre{margin:0}
+.fi-glyphe-mot{margin:0;font-size:max(34px,min(84px,calc(min(80vw,460px) / var(--n) / 1.08)))}
+.fi-mot .fi-sens{margin:2px 0 0;font-size:18px}
+.fi-mot .fi-etat{margin-top:10px}
+
+/* ---------- 文法, la grammaire ----------
+   Le japonais qu'on apprend dans la police au crayon, comme les kanas ; le
+   français autour, en texte courant. Les furigana en petit, à l'encre pâle :
+   on peut les cacher (html.sans-furigana) - un mot touché montre alors les
+   siens. */
+ruby.f rt{font-family:var(--corps);font-size:.5em;color:var(--encre-3);letter-spacing:0}
+.sans-furigana ruby.f rt{visibility:hidden}
+.sans-furigana ruby.f:hover rt,.sans-furigana ruby.f.vu rt{visibility:visible}
+.sans-furigana ruby.f{cursor:help}
+
+.gr-barre{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+
+/* le sommaire : un bouton par chapitre, son numéro en vermillon */
+.gr-sommaire{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 34px}
+.gr-sommaire button{
+  display:inline-flex;align-items:baseline;gap:8px;padding:5px 13px 6px 11px;cursor:pointer;
+  font:inherit;font-size:13.5px;color:var(--encre-2);background:transparent;
+  border:1px solid var(--filet);border-radius:99px;transition:color .15s,border-color .15s,background .15s;
+}
+.gr-sommaire button:hover{color:var(--encre);border-color:var(--filet-fort);background:var(--feuille)}
+.gr-sommaire-n{font-family:var(--titre);font-weight:700;color:var(--shu)}
+
+/* un chapitre : son sceau, son titre, ce qu'il contient, sa jauge (un
+   trait par point) ; dessous, ses points */
+.gr-chapitre{margin:0 0 26px;scroll-margin-top:128px}
+.gr-chapitre[open]{margin-bottom:42px}
+/* la tête du chapitre le replie : un chevron au bout de la jauge */
+summary.gr-chapitre-tete{cursor:pointer;list-style:none;position:relative;padding-right:22px}
+summary.gr-chapitre-tete::-webkit-details-marker{display:none}
+summary.gr-chapitre-tete::after{
+  content:"▾";position:absolute;top:2px;right:2px;color:var(--encre-3);font-size:14px;
+  transition:transform .15s;
+}
+.gr-chapitre[open] > summary.gr-chapitre-tete::after{transform:rotate(180deg)}
+.gr-chapitre:not([open]) > summary.gr-chapitre-tete{margin-bottom:0}
+.gr-chapitre-tete{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 18px;
+  padding:0 0 14px;margin:0 0 14px;border-bottom:1px solid var(--filet);
+}
+/* un sceau carré, en creux : le cachet que pose un chapitre de manuel */
+.gr-sceau{
+  display:grid;place-items:center;width:50px;height:50px;border-radius:7px;
+  color:var(--shu);border:2px solid var(--shu);
+  box-shadow:inset 0 0 0 2px var(--papier),inset 0 0 0 3px var(--shu);
+  font-family:var(--titre);font-weight:700;font-size:25px;line-height:1;
+  transform:rotate(-4deg);
+}
+.gr-chapitre-sur{margin:0;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--encre-3)}
+.gr-chapitre-titre{margin:2px 0 0;font-family:var(--titre);font-weight:700;font-size:23px;line-height:1.25}
+.gr-chapitre-titre [lang="ja"]{color:var(--shu)}
+.gr-chapitre-intro{margin:5px 0 0;max-width:72ch;font-size:14px;line-height:1.55;color:var(--encre-2)}
+.gr-chapitre-intro [lang="ja"]{font-family:var(--pinceau);font-size:1.1em}
+.gr-chapitre-jauge{display:flex;gap:3px;width:clamp(90px,16vw,170px);align-self:end;margin-bottom:6px}
+.gr-chapitre-jauge i{flex:1;height:4px;border-radius:2px}
+
+/* un point : son motif en titre, son sens dessous, son numéro dans le coin */
+.gr-liste{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:8px}
+.gr-liste>li{display:flex}
+.gr-ligne{
+  position:relative;width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:11px 40px 18px 16px;cursor:pointer;text-align:left;color:inherit;font:inherit;
+  background:var(--feuille);border:1px solid var(--filet);border-radius:8px;
+  transition:border-color .15s,transform .15s,box-shadow .15s;
+}
+.gr-ligne:hover{border-color:var(--encre-3);transform:translateY(-1px);box-shadow:var(--ombre)}
+.gr-numero{position:absolute;top:10px;right:13px;font-family:var(--titre);font-size:12.5px;color:var(--encre-3)}
+.gr-ligne-titre{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px}
+.gr-motif{word-break:keep-all}
+.gr-ligne .gr-motif{font-family:var(--pinceau);font-size:23px;line-height:1.5}
+.gr-precision{font-family:var(--corps);font-size:12.5px;font-weight:400;color:var(--ai)}
+.gr-ligne-sens{font-size:13.5px;color:var(--encre-2);line-height:1.4}
+.gr-ligne-sens [lang="ja"]{font-family:var(--pinceau)}
+.gr-jauges{left:16px;right:16px;bottom:7px}
+.gr-chapitre .vide,.gr-liste .vide{list-style:none}
+
+/* l'en-tête d'un point : son motif, son sens, ses constructions */
+.gr-titre{margin:0;font-family:var(--pinceau);font-weight:600;font-size:clamp(30px,6vw,42px);line-height:1.5}
+.gr-titre .gr-precision{display:block;margin-top:-4px;font-family:var(--titre);font-size:16px;color:var(--encre-3);line-height:1.3}
+.gr-sens{margin:0;font-family:var(--titre);font-size:20px;color:var(--encre)}
+.gr-sens [lang="ja"]{font-family:var(--pinceau)}
+.gr-formes{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.gr-formes li{padding:3px 12px;border-radius:6px;background:var(--ai-pale);color:var(--ai);font-size:14px}
+.gr-formes [lang="ja"]{font-family:var(--pinceau);font-size:1.15em}
+
+/* l'explication : du texte qui se lit, aligné à gauche même dans une carte */
+.gr-texte{width:100%;text-align:left;font-size:15px;line-height:1.65;color:var(--encre)}
+.gr-texte p{margin:0 0 10px}
+.gr-texte ul{margin:0 0 10px;padding-left:20px}
+.gr-texte li{margin:2px 0}
+.gr-texte [lang="ja"]{font-family:var(--pinceau);font-size:1.12em}
+.gr-texte strong{color:var(--shu);font-weight:700}
+.gr-note{padding:9px 14px;border-left:3px solid var(--shu);background:var(--shu-pale);border-radius:0 8px 8px 0;color:var(--encre-2)}
+.gr-tableau{overflow-x:auto;margin:0 0 12px}
+.gr-tableau table{border-collapse:collapse;font-size:14px;min-width:60%}
+.gr-tableau th{text-align:left;font-weight:500;color:var(--encre-3);font-size:12.5px;padding:4px 14px 6px 0;border-bottom:1px solid var(--filet-fort)}
+.gr-tableau td{padding:5px 14px 5px 0;border-bottom:1px solid var(--filet);vertical-align:baseline}
+
+/* les exemples : la phrase, sa traduction, sa voix */
+.gr-sous-titre{margin:6px 0 0;font-family:var(--titre);font-size:17px;align-self:flex-start}
+.gr-ex-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:6px}
+.gr-ex-tete .gr-sous-titre{margin:0}
+.gr-exemples{list-style:none;margin:0;padding:0;width:100%;display:flex;flex-direction:column;gap:8px;text-align:left}
+.gr-ex{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;background:var(--papier-creux)}
+.gr-ex-son{
+  flex:0 0 auto;width:32px;height:32px;margin-top:6px;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+  border:1px solid color-mix(in srgb,var(--ai) 35%,transparent);background:var(--ai-pale);color:var(--ai);
+}
+.gr-ex-son:hover{border-color:var(--ai)}
+.gr-phrase{margin:0;font-family:var(--pinceau);font-size:20px;line-height:1.9}
+.gr-ex-fr{margin:0;font-size:14px;color:var(--encre-2)}
+.gr-rempli{background:transparent;color:inherit;padding:0 1px;border-bottom:2px solid var(--shu)}
+.gr-montre{border-bottom-color:color-mix(in srgb,var(--shu) 55%,transparent)}
+.gr-juste{color:var(--matcha);border-bottom-color:var(--matcha)}
+.gr-faux{color:var(--shu)}
+.gr-trou{
+  display:inline-block;min-width:calc(var(--n,2) * 1em + 10px);margin:0 3px;padding:0 4px;
+  border-bottom:2px solid var(--encre);text-align:center;color:var(--encre-3);line-height:1.4;vertical-align:baseline;
+}
+
+/* en séance */
+.carte-gram{gap:12px}
+.carte-gram .gr-texte{max-width:56ch}
+.gr-consigne{margin:0;font-family:var(--titre);font-size:21px;color:var(--encre);max-width:40ch}
+.gr-phrase-seance{font-size:clamp(24px,5.5vw,32px);text-align:center}
+.gr-indice{margin:0;padding:4px 12px;border-radius:6px;background:var(--ai-pale);color:var(--ai);font-size:15px}
+.gr-indice [lang="ja"],.gr-rappel-titre [lang="ja"]{font-family:var(--pinceau);font-size:1.2em}
+.gr-rappel{width:100%;max-width:56ch;display:flex;flex-direction:column;align-items:center;gap:6px}
+.gr-rappel-titre{margin:0;display:flex;align-items:center;justify-content:center;gap:6px 12px;flex-wrap:wrap;font-size:16px}
+.gr-rappel .gr-texte{margin-top:6px}
+
+/* la fiche d'un point */
+.fi-boite-gram{width:min(700px,100%)}
+.gr-fiche{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;margin-top:6px}
+.gr-fiche .gr-ex-tete{width:100%}
+.gr-voir{margin:4px 0 0;font-size:14px;color:var(--encre-2)}
+.gr-voir [lang="ja"]{font-family:var(--pinceau);font-size:1.15em}
+.gr-fiche .fi-etat{margin-top:6px}
+
+/* ---------- 読解, la lecture ----------
+   La liste des textes : le prochain en grand, puis les cartes du niveau,
+   tamponnées 済 une fois lues. */
+.btn-petit{padding:6px 14px;font-size:13.5px}
+.lc-sur{margin:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--encre-3)}
+.lc-suivant{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 22px;margin:0 0 30px}
+.lc-suivant-jp{
+  display:grid;place-items:center;width:62px;height:62px;border-radius:8px;
+  color:var(--shu);border:2px solid var(--shu);
+  box-shadow:inset 0 0 0 2px var(--feuille),inset 0 0 0 3px var(--shu);
+  font-family:var(--titre);font-weight:700;font-size:32px;line-height:1;transform:rotate(-4deg);
+}
+.lc-suivant-titre{margin:2px 0 0;font-family:var(--titre);font-weight:700;font-size:26px;line-height:1.5}
+.lc-suivant-titre [lang="ja"]{font-family:var(--pinceau);font-weight:600}
+.lc-suivant-fr{font-size:17px;font-weight:500;color:var(--encre-2);margin-left:6px}
+.lc-suivant-intro{margin:0 0 4px;color:var(--encre-2);font-size:14.5px;max-width:62ch}
+.lc-suivant .btn-grand{white-space:nowrap}
+/* pas encore à portée : le sceau à l'encre pâle, pas au vermillon */
+.lc-bientot .lc-suivant-jp{color:var(--encre-3);border-color:var(--encre-3);
+  box-shadow:inset 0 0 0 2px var(--feuille),inset 0 0 0 3px var(--encre-3)}
+.lc-barre{margin-bottom:18px}
+.lc-grille{list-style:none;margin:0 0 34px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.lc-grille>li{display:flex}
+.lc-carte{
+  position:relative;width:100%;display:flex;flex-direction:column;gap:3px;text-align:left;
+  padding:14px 16px 13px;border:1px solid var(--filet);border-radius:var(--r);background:var(--feuille);
+  cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;
+}
+.lc-carte:hover{border-color:var(--encre-3);transform:translateY(-1px);box-shadow:var(--ombre)}
+.lc-carte-titre{font-family:var(--pinceau);font-weight:600;font-size:23px;line-height:1.6;padding-right:44px}
+.lc-carte-fr{font-family:var(--titre);font-size:15.5px;color:var(--encre-2);margin-top:-4px}
+.lc-carte-intro{font-size:13.5px;color:var(--encre-2);line-height:1.45;margin-top:4px;flex:1}
+.lc-carte-intro [lang="ja"]{font-family:var(--pinceau)}
+.lc-carte-pied{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--encre-3)}
+.lc-vus{flex:0 0 64px;height:4px;border-radius:2px;background:var(--niv-0);overflow:hidden}
+.lc-vus i{display:block;height:100%;background:var(--niv-2)}
+.lc-tampon{
+  position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:50%;
+  display:grid;place-items:center;color:var(--shu);border:2px solid var(--shu);
+  box-shadow:inset 0 0 0 2px var(--feuille),inset 0 0 0 3px var(--shu);
+  font-family:var(--titre);font-weight:700;font-size:18px;line-height:1;transform:rotate(-12deg);opacity:.9;
+}
+
+/* La liseuse : le texte en grand, dans la police des manuels, avec la
+   place qu'il faut aux furigana. Un paragraphe commence en retrait d'un
+   caractère, comme dans un livre japonais. */
+.ls{max-width:780px;margin:0 auto}
+.ls-nav{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding-top:22px;font-size:13px;color:var(--encre-3)}
+.ls-tete{padding:18px 0 8px;text-align:center}
+.ls-titre{margin:0;font-family:var(--pinceau);font-weight:600;font-size:clamp(34px,6vw,46px);line-height:1.6;letter-spacing:.04em}
+.ls-titre-fr{margin:-2px 0 0;font-family:var(--titre);font-size:19px;color:var(--encre-2)}
+.ls-intro{margin:10px auto 0;max-width:56ch;font-size:14.5px;color:var(--encre-3)}
+.ls-intro [lang="ja"]{font-family:var(--pinceau)}
+.ls-outils{display:flex;align-items:center;justify-content:space-between;gap:10px 18px;flex-wrap:wrap;
+  margin:16px 0 10px;padding:10px 0;border-top:1px solid var(--filet);border-bottom:1px solid var(--filet)}
+.ls-outil{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ls-outil-nom{font-size:13px;color:var(--encre-3)}
+.ls-bascule{
+  padding:6px 14px;border-radius:99px;cursor:pointer;font-size:13.5px;
+  border:1px solid var(--filet-fort);background:transparent;color:var(--encre-2);
+  transition:background .15s,color .15s,border-color .15s;
+}
+.ls-bascule:hover{border-color:var(--encre-3);color:var(--encre)}
+.ls-bascule[aria-pressed="true"]{background:var(--encre);border-color:var(--encre);color:var(--papier)}
+.ls-texte{
+  margin:22px 0 6px;font-family:var(--pinceau);font-size:23px;line-height:2.25;
+  color:var(--encre);word-break:normal;line-break:strict;
+}
+.ls-texte ruby.f rt{visibility:visible;font-size:.48em}
+.ls-par{margin:0 0 .7em;text-indent:1em}
+.ls-dialogue{margin:0 0 .7em}
+.ls-replique{margin:0;display:grid;grid-template-columns:4.6em minmax(0,1fr);gap:0 14px}
+.ls-qui{font-family:var(--titre);font-weight:700;font-size:.68em;color:var(--shu);text-align:right;line-height:3.3;white-space:nowrap}
+.ls-qui ruby.f rt{font-size:.6em}
+.ls-mot{cursor:pointer;border-radius:4px;transition:background .12s;-webkit-tap-highlight-color:transparent}
+.ls-mot:focus-visible{outline:2px solid var(--ai);outline-offset:1px}
+.ls-mot.choisi{background:var(--shu-pale);box-shadow:inset 0 -2px 0 var(--shu)}
+.ls-phrase{transition:background .25s}
+.ls-phrase.dite{background:color-mix(in srgb,var(--kin) 20%,transparent);border-radius:4px;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone}
+.ls-fr{display:none}
+.ls-traduite .ls-phrase{display:block}
+.ls-traduite .ls-par{text-indent:0}
+.ls-traduite .ls-fr{display:block;margin:-.15em 0 .75em;font-family:var(--corps);font-size:14.5px;line-height:1.5;color:var(--encre-3)}
+.ls-traduite .ls-dit .ls-fr{margin-bottom:.5em}
+/* Les furigana : sauf sur les mots sus, ou nulle part. Masqués et non
+   retirés : la ligne garde sa hauteur, rien ne saute quand on change. Le
+   mot touché montre toujours les siens ; la souris aussi, au survol. */
+.furi-auto .ls-mot.su ruby.f rt,.furi-aucune ruby.f rt{visibility:hidden}
+.ls-texte .ls-mot.choisi ruby.f rt{visibility:visible}
+@media (hover:hover){
+  .ls-mot:hover{background:var(--ai-pale)}
+  .ls-texte .ls-mot:hover ruby.f rt{visibility:visible}
+}
+.ls-aide{margin:0 0 26px;font-size:12.5px;color:var(--encre-3);text-align:center}
+
+.ls-questions,.ls-fin{margin-bottom:16px}
+.ls-q-aide{margin:-8px 0 12px;font-size:13px;color:var(--encre-3)}
+.ls-q{margin:0;padding-left:20px;display:grid;gap:14px}
+.ls-q li::marker{color:var(--shu);font-family:var(--titre);font-weight:700}
+.ls-q-texte{margin:0 0 6px}
+.ls-q-texte [lang="ja"],.ls-choix [lang="ja"]{font-family:var(--pinceau);font-size:1.1em}
+.ls-choix{display:flex;flex-wrap:wrap;gap:6px}
+.ls-choix button{
+  padding:7px 14px;border-radius:8px;cursor:pointer;text-align:left;font-size:14px;
+  border:1px solid var(--filet-fort);background:var(--papier);color:var(--encre);
+  transition:border-color .15s,background .15s;
+}
+.ls-choix button:hover:not(:disabled){border-color:var(--encre-3)}
+.ls-choix button:disabled{cursor:default;opacity:.55}
+.ls-choix button.juste{opacity:1;border-color:var(--matcha);color:var(--matcha);background:color-mix(in srgb,var(--matcha) 12%,transparent)}
+.ls-choix button.faux{opacity:1;border-color:var(--shu);color:var(--shu);background:var(--shu-pale);text-decoration:line-through}
+.ls-q-bilan{margin:12px 0 0;min-height:1.4em;font-family:var(--titre);color:var(--encre-2)}
+.ls-fin{text-align:center}
+.ls-fin .section-titre{justify-content:center}
+.ls-fin-texte{margin:-6px 0 12px;color:var(--encre-2)}
+.ls-compris{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ls-deja{margin:12px 0 0;font-size:13px;color:var(--encre-3)}
+.ls-fait{display:flex;align-items:center;justify-content:center;gap:22px;text-align:left;flex-wrap:wrap}
+.ls-fait .tampon{width:76px;height:76px;font-size:38px}
+.ls-fait p{margin:0 0 8px;color:var(--encre-2);max-width:48ch}
+.ls-fait .section-titre{margin-bottom:6px}
+.ls-fait .btn [lang="ja"]{font-family:var(--pinceau);font-size:1.1em}
+.ls-mots{margin:22px 0 10px}
+.ls-mots summary{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;cursor:pointer;list-style:none;padding:8px 0}
+.ls-mots summary::-webkit-details-marker{display:none}
+.ls-mots summary .section-titre{margin:0}
+.ls-mots summary .section-titre::after{content:"▾";font-size:13px;color:var(--encre-3);margin-left:4px}
+.ls-mots[open] summary .section-titre::after{content:"▴"}
+.ls-mots-bilan{font-size:13.5px;color:var(--encre-3)}
+.ls-mots-action{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;margin:4px 0 14px;font-size:13px;color:var(--encre-3)}
+.ls-liste{margin-top:6px}
+.ls-suite{margin:26px 0 0}
+.ls-suite [lang="ja"]{font-size:17px}
+
+/* Le pupitre : en bas de l'écran, ce qu'on sait du mot touché, et de quoi
+   écouter ou traduire sa phrase. Le texte garde de quoi défiler
+   au-dessus. */
+body.pupitre-ouvert main{padding-bottom:52vh}
+.pupitre{
+  position:fixed;left:0;right:0;bottom:0;z-index:45;max-height:50vh;overflow:auto;
+  background:var(--feuille);border-top:1px solid var(--filet-fort);
+  box-shadow:0 -14px 34px -22px rgba(0,0,0,.5);animation:monte .2s ease-out;
+}
+.pp-boite{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,300px);gap:6px 30px;
+  padding-top:14px;padding-bottom:16px}
+.pp-corps{display:flex;flex-direction:column;gap:5px;min-width:0;padding-right:40px}
+.pp-x{
+  position:absolute;top:10px;right:16px;width:32px;height:32px;border-radius:8px;
+  border:1px solid var(--filet);background:transparent;font-size:20px;line-height:1;cursor:pointer;color:var(--encre-2);
+}
+.pp-x:hover{color:var(--shu);border-color:var(--shu)}
+.pp-tete{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap}
+.pp-mot{font-family:var(--pinceau);font-weight:600;font-size:34px;line-height:1.35}
+.pp-mot ruby.f rt{font-size:.42em}
+.pp-kana{font-family:var(--titre);font-size:19px;color:var(--encre-2)}
+.pp-son{
+  display:grid;place-items:center;width:34px;height:34px;border-radius:50%;cursor:pointer;
+  border:1px solid color-mix(in srgb,var(--ai) 35%,transparent);background:var(--ai-pale);color:var(--ai);
+}
+.pp-son:hover{border-color:var(--ai)}
+.pp-nature{margin:0;font-size:13px;color:var(--encre-3)}
+.pp-nature [lang="ja"]{font-family:var(--pinceau);font-size:1.15em;color:var(--encre-2)}
+.pp-sens{margin:0;font-size:17px;line-height:1.45}
+.pp-sens [lang="ja"]{font-family:var(--pinceau)}
+.pp-forme{margin:2px 0 0;font-size:14px;color:var(--encre-2)}
+.pp-forme [lang="ja"]{font-family:var(--pinceau);font-size:1.25em;color:var(--encre)}
+.pp-ici{display:inline-block;padding:0 7px;border-radius:5px;background:var(--papier-creux);
+  font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--encre-3);vertical-align:2px}
+.pp-gram{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
+.pp-gram-titre{font-size:12.5px;color:var(--encre-3);margin-right:2px}
+.pp-point{
+  padding:1px 11px;border-radius:99px;cursor:pointer;font-size:13px;line-height:1.7;
+  border:1px solid color-mix(in srgb,var(--ai) 35%,transparent);background:var(--ai-pale);color:var(--ai);
+}
+.pp-point:hover{border-color:var(--ai)}
+.pp-point .gr-motif{font-family:var(--pinceau);font-size:1.12em}
+.pp-point .gr-precision{font-size:11.5px}
+.pp-etat{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin-top:6px;font-size:13.5px;color:var(--encre-2)}
+.pp-etat .niv{display:inline-block;width:14px;height:4px;border-radius:2px}
+.pp-demande{color:var(--matcha)}
+.pp-phrase{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding-left:24px;border-left:1px solid var(--filet)}
+.pp-fr{margin:0;font-size:15px;color:var(--encre);line-height:1.5}
+.sc-fin-lire{display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 6px;color:var(--encre-2)}
+.sc-fin-lire p{margin:0}
+.sc-fin-recap{display:flex;flex-direction:column;gap:10px;width:100%;margin:2px 0 10px}
+.sc-fin-rangee{display:flex;flex-direction:column;align-items:center;gap:6px}
+.sc-fin-rangee p{margin:0;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--encre-3)}
+.sc-fin-rangee .apercu-kanas{justify-content:center}
+.sc-fin-lire [lang="ja"]{font-family:var(--pinceau);font-size:1.15em}
+
+/* ---------- la case de tracé ----------
+   Le carré de KanjiVG (109 unités), une croix en pointillé comme sur les
+   cahiers d'écriture japonais (le « 田 »). Le doigt trace en indigo ; un
+   trait accepté est remplacé par celui du modèle, à l'encre. */
+.tr-hote{width:min(100%,320px);aspect-ratio:1;margin:0 auto}
+.tr-svg{
+  display:block;width:100%;height:100%;
+  background:var(--feuille);border-radius:10px;
+  touch-action:none;-webkit-user-select:none;user-select:none;cursor:crosshair;
+}
+.tr-grille rect{fill:none;stroke:var(--filet-fort);stroke-width:.6}
+.tr-croix{fill:none;stroke:var(--filet-fort);stroke-width:.45;stroke-dasharray:2 2}
+.tr-modele path{fill:none;stroke:var(--encre);stroke-opacity:.12;stroke-width:5.6;stroke-linecap:round;stroke-linejoin:round}
+.tr-trait{fill:none;stroke:var(--encre);stroke-width:4.4;stroke-linecap:round;stroke-linejoin:round}
+.tr-pose{animation:pose .25s ease-out}
+@keyframes pose{from{stroke:var(--ai)}}
+.tr-trait-indice{fill:none;stroke:var(--shu);stroke-opacity:.5;stroke-width:4.4;stroke-linecap:round;stroke-linejoin:round}
+.tr-encre{fill:none;stroke:var(--ai);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.tr-rate{stroke:var(--shu);animation:rate .65s ease-in forwards}
+@keyframes rate{60%{opacity:1}to{opacity:0}}
+.tr-depart{fill:var(--shu);transition:cx .2s,cy .2s}
+.tr-numeros text{font-family:var(--corps);font-size:7px;font-weight:700;fill:var(--shu);text-anchor:middle}
+.tr-fini{cursor:default}
+.tr-fini .tr-faits .tr-trait{animation:encre .6s ease-out}
+@keyframes encre{50%{stroke:var(--shu)}}
+
+/* ---------- la fiche d'un kana ---------- */
+.voile{
+  position:fixed;inset:0;z-index:70;background:var(--voile);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.fi-boite{
+  width:min(760px,100%);max-height:100%;overflow:auto;
+  background:var(--feuille);border:1px solid var(--filet);border-radius:14px;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.45);padding:18px 24px 18px;
+}
+.fi-tete{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.fi-sys{margin:0;color:var(--encre-3);font-size:13px}
+.fi-sys [lang="ja"]{font-family:var(--titre);color:var(--shu)}
+.fi-x{
+  width:34px;height:34px;border-radius:8px;border:1px solid var(--filet);background:transparent;
+  font-size:21px;line-height:1;cursor:pointer;color:var(--encre-2);
+}
+.fi-x:hover{color:var(--shu);border-color:var(--shu)}
+.fi-corps{display:grid;grid-template-columns:230px minmax(0,1fr);gap:26px;align-items:start;margin-top:10px}
+.fi-demo{width:230px}
+.fi-demo-texte{
+  display:grid;place-items:center;aspect-ratio:1;border-radius:10px;
+  background:var(--papier-creux);font-family:var(--pinceau);font-size:92px;line-height:1;
+}
+.fi-sous-demo{margin:6px 0 0;text-align:center;font-size:13px;color:var(--encre-3)}
+.fi-titre{display:flex;align-items:baseline;gap:16px;margin:4px 0 12px}
+.fi-glyphe{font-family:var(--pinceau);font-size:68px;line-height:1;font-weight:600}
+.fi-romaji{font-family:var(--titre);font-size:30px;color:var(--encre-2)}
+.fi-note{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--shu);background:var(--shu-pale);border-radius:0 8px 8px 0;font-size:14px;color:var(--encre-2)}
+.fi-etat{margin:16px 0 0;display:grid;gap:6px;font-size:13.5px}
+.fi-etat div{display:flex;gap:10px;align-items:baseline}
+.fi-etat dt{width:74px;color:var(--encre-3);flex:0 0 auto}
+.fi-etat dd{margin:0;color:var(--encre-2);display:flex;align-items:center;gap:8px}
+.fi-etat .niv{display:inline-block;width:14px;height:4px;border-radius:2px}
+.fi-sens{margin:0 0 6px;font-size:16px;color:var(--encre)}
+.fi-mots{margin-top:18px}
+.fi-mots h3{margin:0;font-family:var(--titre);font-size:17px}
+.fi-pratique{margin-top:20px;padding-top:16px;border-top:1px solid var(--filet);display:flex;flex-direction:column;align-items:center;gap:10px}
+.fi-pratique-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;flex-wrap:wrap}
+.fi-pratique-tete h3{margin:0;font-family:var(--titre);font-size:18px}
+.fi-trace{width:min(100%,280px)}
+.fi-retour{margin:0;min-height:1.6em;font-size:14px;color:var(--encre-2);text-align:center}
+.fi-nav{display:flex;justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid var(--filet)}
+.fi-nav [lang="ja"]{font-family:var(--pinceau);font-size:18px}
+
+/* ---------- la séance ----------
+   Par-dessus tout : une chose à la fois, rien d'autre à l'écran. */
+.seance-ecran{
+  position:fixed;inset:0;z-index:60;overflow:auto;
+  background:var(--papier);display:flex;flex-direction:column;
+}
+.sc-barre{
+  position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:16px;
+  padding:12px 20px;background:var(--papier);border-bottom:1px solid var(--filet);
+}
+.sc-quitter{
+  width:36px;height:36px;border-radius:8px;border:1px solid var(--filet-fort);background:transparent;
+  font-size:22px;line-height:1;cursor:pointer;color:var(--encre-2);flex:0 0 auto;
+}
+.sc-quitter:hover{color:var(--shu);border-color:var(--shu)}
+.sc-jauge{flex:1;height:6px;border-radius:99px;background:var(--papier-creux);overflow:hidden}
+.sc-jauge i{display:block;height:100%;width:0;background:var(--shu);border-radius:99px;transition:width .35s ease}
+.sc-compte{font-size:13px;color:var(--encre-3);min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
+.sc-scene{flex:1;display:flex;justify-content:center;padding:28px 20px 48px}
+.sc-scene.entree .carte-seance{animation:monte .3s ease-out}
+@keyframes monte{from{opacity:0;transform:translateY(10px)}}
+.carte-seance{width:min(600px,100%);display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.sc-genre{margin:0;display:flex;align-items:center;gap:8px;color:var(--encre-3);font-size:13.5px}
+.sc-marque{
+  display:inline-grid;place-items:center;width:24px;height:24px;border-radius:4px;
+  background:var(--shu);color:var(--sur-shu);font-family:var(--titre);font-weight:700;font-size:14px;line-height:1;
+}
+.sc-presentation{display:flex;align-items:center;gap:30px;justify-content:center;flex-wrap:wrap}
+.sc-glyphe{font-family:var(--pinceau);font-weight:600;font-size:clamp(96px,22vw,150px);line-height:1.05}
+.sc-glyphe-seul{font-size:clamp(110px,28vw,180px);margin:6px 0 4px}
+.sc-lecture{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.sc-romaji{margin:0;font-family:var(--titre);font-size:40px;line-height:1}
+.sc-sens{margin:0;font-size:19px;color:var(--encre);max-width:40ch}
+.sc-kanji-infos{max-width:340px}
+.sc-detail{width:min(520px,100%);display:flex;flex-direction:column;align-items:center;gap:4px}
+.sc-detail .lectures{align-self:center}
+.sc-saisie-sens{font-size:18px;letter-spacing:0}
+.sc-demande-sens{font-size:26px !important}
+.carte-seance > .lectures{margin-top:-4px}
+.sc-note{margin:0;max-width:52ch;padding:10px 14px;border-left:3px solid var(--shu);background:var(--shu-pale);border-radius:0 8px 8px 0;font-size:14px;color:var(--encre-2);text-align:left}
+.sc-guide{display:flex;align-items:center;gap:22px;justify-content:center;flex-wrap:wrap;width:100%;margin-top:6px}
+.sc-guide .tr-hote{width:min(100%,250px);margin:0}
+.sc-guide-texte{flex:0 1 220px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.sc-consigne{margin:0;font-size:14px;color:var(--encre-2)}
+.sc-actions{display:flex;gap:14px;align-items:center;justify-content:center;margin-top:6px;flex-wrap:wrap}
+.sc-reponse{position:relative;display:flex;gap:10px;width:min(420px,100%)}
+.sc-saisie{
+  flex:1;min-width:0;padding:11px 14px;border-radius:8px;border:1px solid var(--tache-bord,var(--filet-fort));
+  background:var(--feuille);font-size:20px;text-align:center;letter-spacing:.06em;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.sc-saisie:focus{border-color:var(--tache,var(--ai));box-shadow:0 0 0 3px var(--tache-pale,var(--ai-pale))}
+.sc-saisie.juste{border-color:var(--matcha);color:var(--matcha)}
+.sc-saisie.faux{border-color:var(--shu);color:var(--shu);text-decoration:line-through}
+.sc-retour{margin:0;min-height:1.7em;font-size:15px;color:var(--encre-2);max-width:52ch}
+.sc-retour [lang="ja"]{font-family:var(--pinceau);font-size:1.15em}
+.verdict{display:inline-block;padding:1px 9px;border-radius:5px;font-family:var(--titre);font-weight:700;margin-right:4px}
+.verdict-juste{background:color-mix(in srgb,var(--matcha) 16%,transparent);color:var(--matcha)}
+.verdict-faux{background:var(--shu-pale);color:var(--shu)}
+.sc-demande{margin:0;font-size:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+.sc-demande strong{font-family:var(--titre);font-size:34px}
+
+/* « ji » de la ligne z ou de la ligne d : voir homophoneHtml */
+.sc-precision{margin:-6px 0 0;font-size:15px;color:var(--encre-2)}
+.sc-precision strong{font-family:var(--titre);font-size:18px;color:var(--encre)}
+.sc-precision-ligne{
+  display:inline-block;margin-left:4px;padding:2px 11px;border-radius:99px;
+  background:var(--papier-creux);color:var(--encre-3);letter-spacing:.05em;word-spacing:.2em;
+}
+.sc-precision-ligne b{color:var(--shu)}
+
+/* ---------- dans quelle langue on répond ----------
+   Un mot à kanjis revient sous deux cartes qui se ressemblaient trait
+   pour trait - le mot en grand, un champ dessous : sa lecture (読) et son
+   sens (意). Seuls un libellé gris en tête et le texte fantôme du champ les
+   distinguaient, et on répondait l'un pour l'autre. La langue attendue se
+   dit maintenant trois fois, au plus près de là où l'on tape : une
+   question juste au-dessus du champ, une pastille dans le champ (JP ou
+   FR), et sa couleur - l'indigo pour le japonais, le vermillon pour le
+   français. Les mêmes sur toutes les cartes à taper, pour que la couleur
+   suffise une fois l'habitude prise. */
+.tache-jp{--tache:var(--ai);--tache-pale:var(--ai-pale)}
+.tache-fr{--tache:var(--shu);--tache-pale:var(--shu-pale)}
+.tache-jp,.tache-fr{--tache-bord:color-mix(in srgb,var(--tache) 50%,var(--filet-fort))}
+.tache-jp .sc-marque{background:var(--ai);color:var(--papier)}
+.sc-tache{margin:4px 0 -4px;font-size:17px;color:var(--encre);display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.sc-tache-langue{
+  padding:2px 12px;border-radius:99px;font-size:15px;font-weight:700;letter-spacing:.02em;
+  background:var(--tache);color:var(--papier);
+}
+.sc-reponse[data-langue]::before{
+  content:attr(data-langue);position:absolute;left:8px;top:50%;transform:translateY(-50%);
+  min-width:32px;padding:3px 6px;border-radius:6px;text-align:center;pointer-events:none;
+  background:var(--tache);color:var(--papier);
+  font-size:13px;font-weight:700;letter-spacing:.04em;line-height:1.35;
+}
+.sc-reponse[data-langue] .sc-saisie{padding-left:50px}
+.sc-trace-memoire{width:min(100%,320px)}
+.sc-rappel{display:inline-block;margin-left:8px;font-family:var(--pinceau);font-size:30px;vertical-align:middle}
+
+.sc-fin{padding-top:30px}
+.sc-fin .tampon{width:112px;height:112px;font-size:58px}
+.sc-fin-titre{margin:12px 0 0;font-family:var(--titre);font-weight:700;font-size:clamp(28px,6vw,40px)}
+.sc-fin-trad{margin:0;color:var(--encre-2)}
+.bilan{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%;margin:14px 0 8px}
+.bilan div{padding:12px 8px;border:1px solid var(--filet);border-radius:var(--r);background:var(--feuille)}
+.bilan dt{font-size:12px;color:var(--encre-3);line-height:1.3}
+.bilan dd{margin:4px 0 0;font-family:var(--titre);font-weight:700;font-size:24px}
+
+/* ---------- 記録, les progrès ---------- */
+.progres-bloc{margin-top:18px}
+/* les thèmes, en onglets : comme la barre des rubriques, en plus petit */
+.pg-onglets{display:flex;gap:2px;margin-top:28px;border-bottom:1px solid var(--filet);overflow-x:auto;scrollbar-width:none}
+.pg-onglets::-webkit-scrollbar{display:none}
+.pg-onglets button{
+  flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;
+  padding:6px 16px 8px;margin-bottom:-1px;border:0;border-bottom:2px solid transparent;background:transparent;
+  color:var(--encre-3);font-size:12.5px;cursor:pointer;transition:color .15s,border-color .15s;
+}
+.pg-onglets button:hover{color:var(--encre)}
+.pg-onglets button[aria-selected="true"]{color:var(--encre);border-bottom-color:var(--shu)}
+.pg-onglet-jp{font-family:var(--titre);font-weight:700;font-size:19px;line-height:1.3}
+.pg-onglets button[aria-selected="true"] .pg-onglet-jp{color:var(--shu)}
+.progres-theme{margin-top:14px}
+.calendrier{
+  display:grid;grid-template-rows:repeat(7,13px);grid-auto-flow:column;grid-auto-columns:13px;gap:3px;
+  overflow-x:auto;padding-bottom:4px;
+}
+.cal-j{display:block;width:13px;height:13px;border-radius:3px}
+.cal-0{background:var(--papier-creux)}
+.cal-1{background:color-mix(in srgb,var(--shu) 25%,var(--papier-creux))}
+.cal-2{background:color-mix(in srgb,var(--shu) 50%,var(--papier-creux))}
+.cal-3{background:color-mix(in srgb,var(--shu) 75%,var(--papier-creux))}
+.cal-4{background:var(--shu)}
+.cal-choisi{outline:2px solid var(--encre);outline-offset:1px}
+.cal-legende{display:flex;align-items:center;gap:3px;justify-content:flex-end;font-size:12px;color:var(--encre-3);margin-top:8px}
+.cal-legende .cal-j{width:11px;height:11px}
+.cal-legende .cal-j:first-child{margin-left:6px}
+.cal-legende .cal-j:last-child{margin-right:6px}
+.calendrier-info{margin:6px 0 0;font-size:13.5px;color:var(--encre-2);min-height:1.6em}
+.barres-sys + .barres-sys{margin-top:18px}
+.barres-sys h3{margin:0 0 8px;font-family:var(--titre);font-size:18px}
+.barres-sys h3 span{font-family:var(--corps);font-size:13px;font-weight:400;color:var(--encre-3);margin-left:6px}
+.barre-kana{display:grid;grid-template-columns:80px minmax(0,1fr) 64px;align-items:center;gap:12px;margin:6px 0}
+.barre-titre{font-size:13.5px;color:var(--encre-2)}
+.barre{display:flex;height:10px;border-radius:99px;background:var(--papier-creux);overflow:hidden}
+.barre i{display:block;height:100%}
+.barre-chiffre{font-size:13px;color:var(--encre-3);text-align:right;font-variant-numeric:tabular-nums}
+
+/* ---------- 試験, le test de niveau ----------
+   D'abord le niveau qu'on se donne, puis des questions à choix : quatre
+   réponses, et « Je ne sais pas ». */
+.nv-intro,.nv-fin{padding-top:20px}
+.nv-texte{margin:0;max-width:52ch;color:var(--encre-2);font-size:15px;line-height:1.55}
+.nv-departs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;width:100%}
+.nv-depart{
+  display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;cursor:pointer;
+  border:1px solid var(--filet-fort);border-radius:var(--r);background:var(--feuille);color:var(--encre-2);
+  font-size:12.5px;line-height:1.3;transition:border-color .15s;
+}
+.nv-depart strong{font-family:var(--titre);font-size:24px;color:var(--encre);line-height:1.1}
+.nv-depart:hover{border-color:var(--shu)}
+.nv-depart:hover strong{color:var(--shu)}
+.nv-aide{margin:0;font-size:13px;color:var(--encre-3)}
+.nv-glyphe{font-size:clamp(80px,20vw,128px);margin:2px 0}
+.nv-choix{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:min(540px,100%)}
+.nv-choix button{
+  display:flex;align-items:center;gap:10px;min-height:52px;padding:10px 14px;text-align:left;cursor:pointer;
+  border:1px solid var(--filet-fort);border-radius:var(--r);background:var(--feuille);color:var(--encre);
+  font-size:15.5px;line-height:1.35;transition:border-color .15s,background .15s;
+}
+.nv-choix button[lang="ja"]{font-family:var(--pinceau);font-size:21px}
+.nv-choix button:hover:not(:disabled){border-color:var(--encre-3)}
+.nv-choix button:disabled{cursor:default;opacity:.5}
+.nv-choix button.juste{opacity:1;border-color:var(--matcha);color:var(--matcha);background:color-mix(in srgb,var(--matcha) 12%,transparent)}
+.nv-choix button.faux{opacity:1;border-color:var(--shu);color:var(--shu);background:var(--shu-pale)}
+.nv-choix button.faux .nv-choix-texte{text-decoration:line-through}
+.nv-touche{
+  flex:0 0 auto;display:grid;place-items:center;width:22px;height:22px;border-radius:5px;
+  background:var(--papier-creux);color:var(--encre-3);font-family:var(--corps);font-size:12px;font-weight:700;
+}
+@media (hover:none){.nv-touche{display:none}}
+.nv-resultats{margin:6px 0 0;display:grid;gap:8px;width:min(540px,100%);text-align:left}
+.nv-resultats div{
+  display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;align-items:baseline;
+  padding:10px 14px;border:1px solid var(--filet);border-radius:var(--r);background:var(--feuille);
+}
+.nv-resultats dt{font-family:var(--titre);font-weight:700;font-size:16px}
+.nv-resultats dt [lang="ja"]{color:var(--shu);margin-right:4px}
+.nv-resultats dd{margin:0;color:var(--encre-2);font-size:14.5px}
+
+/* ---------- porte close, chargement, pied ---------- */
+.ferme{display:flex;flex-direction:column;align-items:center;text-align:center;padding:80px 0 40px;gap:4px}
+.ferme .tampon{margin-bottom:18px}
+.chargement{text-align:center;padding:80px 0;font-family:var(--titre);color:var(--encre-3);letter-spacing:.2em}
+.erreur-page{margin:60px auto;max-width:520px;padding:14px 18px;border-radius:var(--r);background:var(--shu-pale);color:var(--shu)}
+.pied{position:relative;z-index:1;padding:20px 22px 34px;text-align:center;font-size:12px;color:var(--encre-3)}
+.pied a{color:inherit}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:90;
+  max-width:min(520px,calc(100% - 32px));padding:10px 16px;border-radius:9px;
+  background:var(--encre);color:var(--papier);font-size:14px;box-shadow:var(--ombre);
+}
+.toast.mauvais{background:var(--shu);color:var(--sur-shu)}
+
+/* =======================================================================
+   La fenêtre « Suggestion / Bug » -- balisage de static/commun/suggestion.js,
+   habillage de la page, comme sur les autres projets : ici, du papier.
+   ======================================================================= */
+.sg-fond{position:fixed;inset:0;z-index:86;background:var(--voile);
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.sg-boite{width:min(480px,100%);max-height:100%;display:flex;flex-direction:column;
+  background:var(--feuille);border:1px solid var(--filet);border-radius:14px;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.45);overflow:hidden}
+.sg-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:20px 20px 12px;flex:0 0 auto}
+.sg-titre{font-family:var(--titre);font-weight:700;font-size:22px;margin:0}
+.sg-x{width:32px;height:32px;border-radius:8px;border:1px solid var(--filet);background:transparent;
+  color:var(--encre-2);display:grid;place-items:center;font-size:19px;line-height:1;cursor:pointer}
+.sg-x:hover{color:var(--shu);border-color:var(--shu)}
+.sg-form{padding:0 20px 22px;overflow:auto;min-height:0}
+.sg-genres{display:flex;gap:4px;padding:4px;margin-bottom:16px;border-radius:9px;background:var(--papier-creux)}
+.sg-genre{flex:1;min-width:0}
+.sg-genre input{position:absolute;opacity:0;width:0;height:0}
+.sg-genre span{display:flex;align-items:center;justify-content:center;height:32px;
+  border-radius:6px;font-size:13.5px;color:var(--encre-2);cursor:pointer;transition:color .2s,background .2s}
+.sg-genre:hover span{color:var(--encre)}
+.sg-genre input:checked + span{color:var(--papier);background:var(--encre)}
+.sg-genre input:focus-visible + span{outline:2px solid var(--ai);outline-offset:2px}
+.sg-champ{display:block;margin-bottom:14px;min-width:0}
+.sg-champ > span{display:block;font-size:12.5px;color:var(--encre-2);margin-bottom:6px}
+.sg-oblig{color:var(--shu);margin-left:2px}
+.sg-select,.sg-zone{width:100%;padding:10px 12px;border-radius:8px;background:var(--papier);
+  border:1px solid var(--filet-fort);color:var(--encre);font:inherit;font-size:14.5px;outline:none;
+  transition:border-color .2s,box-shadow .2s}
+.sg-select{cursor:pointer}
+.sg-zone{min-height:96px;max-height:min(340px,42vh);line-height:1.5;resize:none}
+.sg-select:focus,.sg-zone:focus{border-color:var(--ai);box-shadow:0 0 0 3px var(--ai-pale)}
+.sg-compteur{font-size:11.5px;color:var(--encre-3);margin:0 0 12px}
+.sg-err,.sg-ok{margin:0 0 12px;padding:9px 12px;border-radius:8px;font-size:13px;line-height:1.5}
+.sg-err{color:var(--shu);background:var(--shu-pale)}
+.sg-ok{color:var(--matcha);background:color-mix(in srgb,var(--matcha) 12%,transparent)}
+.sg-go{width:100%;padding:11px 16px;border:0;border-radius:8px;cursor:pointer;
+  font-size:15px;font-weight:500;color:var(--papier);background:var(--encre);transition:background .2s}
+.sg-go:hover{background:var(--shu);color:var(--sur-shu)}
+.sg-go[disabled]{opacity:.55;cursor:progress}
+
+/* ---------- téléphone ---------- */
+@media (max-width:720px){
+  .wrap{padding:0 16px}
+  .top-in{gap:10px;height:54px}
+  .entete-action{padding:0;width:34px;justify-content:center}
+  .entete-action span:not([lang]){display:none}
+  .marque-jp{display:none}
+  .onglets a{padding:6px 10px 7px}
+  .accueil-tete{padding-top:26px}
+  .devise{font-size:17px}
+  .chiffres{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .feuille{padding:18px 16px}
+  .seance .tampon{position:static;margin:0}
+  .seance:has(.tampon) .seance-texte{padding-right:0}
+  .btn-grand{width:100%}
+  .etape-jp{width:auto;font-size:20px}
+  .etape a{gap:12px;padding:11px 12px}
+  .kn-grille{gap:4px}
+  .kn-grille-5,.kn-grille-3{grid-template-columns:18px repeat(var(--cols,5),minmax(0,1fr))}
+  .kn-grille-3{--cols:3}
+  .voile{padding:0;align-items:flex-end}
+  .fi-boite{border-radius:16px 16px 0 0;max-height:94dvh;padding:14px 16px 18px;animation:monte .26s ease-out}
+  .fi-corps{grid-template-columns:1fr;justify-items:center;text-align:center;gap:12px}
+  .fi-titre{justify-content:center}
+  .fi-etat div{justify-content:center}
+  .fi-demo{width:min(200px,60vw)}
+  .sc-barre{padding:10px 14px;gap:12px}
+  .sc-scene{padding:18px 14px 40px}
+  .sc-lecture{align-items:center}
+  .sc-guide-texte{text-align:center;align-items:center}
+  .bilan{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .barre-kana{grid-template-columns:66px minmax(0,1fr) 54px;gap:8px}
+  /* 16 px : en dessous, iOS zoome sur le champ dès qu'on y pose le doigt */
+  .sc-saisie,.sg-select,.sg-zone,.reglage select,.recherche input{font-size:16px}
+  .kj-grille{grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:4px}
+  .kj-glyphe{font-size:26px}
+  .mt-liste{grid-template-columns:1fr}
+  /* des lignes serrées : cent cinquante mots à faire défiler */
+  .mt-ligne{padding:6px 12px 10px;column-gap:12px}
+  .mt-ligne-mot{font-size:20px}
+  .gr-liste{grid-template-columns:1fr}
+  .gr-chapitre-tete{grid-template-columns:auto minmax(0,1fr);column-gap:14px}
+  .gr-sceau{width:42px;height:42px;font-size:21px;align-self:start}
+  .gr-chapitre-titre{font-size:20px}
+  .gr-chapitre-jauge{grid-column:2;width:min(100%,220px);margin:2px 0 0}
+  .gr-phrase{font-size:18px}
+  .lc-suivant{grid-template-columns:auto minmax(0,1fr);gap:10px 14px}
+  .lc-suivant-jp{width:46px;height:46px;font-size:24px;align-self:start}
+  .lc-suivant-titre{font-size:22px}
+  /* tout bouton sous le texte : laissé dans la grille, il élargissait la
+     colonne du sceau et écrasait le texte (« Apprendre ses 14 mots ») */
+  .lc-suivant > .btn{grid-column:1/-1}
+  .lc-grille{grid-template-columns:1fr}
+  .pg-onglets button{padding:6px 12px 8px}
+  .nv-departs{grid-template-columns:1fr;gap:6px}
+  .nv-depart{flex-direction:row;gap:14px;padding:9px 14px;text-align:left}
+  .nv-depart strong{font-size:20px;width:36px;flex:0 0 auto}
+  .nv-choix{grid-template-columns:1fr}
+  .nv-resultats div{grid-template-columns:1fr;gap:2px}
+  .ls-texte{font-size:20px;line-height:2.2}
+  .ls-replique{grid-template-columns:3.4em minmax(0,1fr);gap:0 10px}
+  .ls-outils{justify-content:center}
+  .pupitre{max-height:60vh;border-radius:14px 14px 0 0}
+  .pp-boite{grid-template-columns:1fr;gap:10px}
+  .pp-mot{font-size:30px}
+  .pp-phrase{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 14px;
+    padding:10px 0 0;border-left:0;border-top:1px solid var(--filet)}
+  .pp-fr{flex-basis:100%}
+  .sg-fond{padding:0;align-items:flex-end}
+  .sg-boite{width:100%;max-height:92dvh;border-radius:16px 16px 0 0;border-bottom:none;
+    animation:monte .26s cubic-bezier(.2,.8,.3,1)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms !important;animation-duration:.01ms !important}
+}

@@ -1,0 +1,437 @@
+# Nihongo - les textes a lire du N5.
+#
+# Ecrits pour ce site, comme la grammaire : voir « La lecture » dans
+# nihongo.py. Ils suivent Lea, une etudiante francaise arrivee a Tokyo pour
+# apprendre le japonais. Un texte :
+#
+#   === nom-du-texte            (minuscules, chiffres, tirets ; ne jamais
+#                                renommer un texte deja lu)
+#   titre: {私|わたし}の{一日|いちにち}
+#   fr: Ma journée
+#   genre: récit                (dialogue, récit, journal, lettre, conte,
+#                                article, essai, entretien, annonce)
+#   intro: une phrase, en français, qui dit de quoi parle le texte
+#
+#   une phrase en japonais | sa traduction
+#   une autre phrase | sa traduction | te-iru, kara-raison
+#
+#   (une ligne vide : un nouveau paragraphe)
+#   {山田|やまだ}：はい、そうです。 | Oui, c'est ça.
+#                               (un dialogue : qui parle, deux-points
+#                                japonais « ： », puis la réplique)
+#
+#   ? Une question de compréhension, en français
+#   + la bonne réponse
+#   - une mauvaise
+#   - une autre mauvaise
+#
+# Tout kanji porte ses furigana, {学生|がくせい}, comme dans la grammaire.
+# Un troisième champ, facultatif, nomme les points de grammaire de la
+# phrase que la fabrication ne trouve pas seule (elle reconnaît les
+# particules et les terminaisons des verbes). Chaque mot doit pouvoir se
+# toucher : un mot que ni le vocabulaire ni matiere/lecture-mots.tsv ne
+# connaissent arrête la fabrication.
+
+=== hajimemashite
+titre: はじめまして
+fr: Enchantée
+genre: récit
+intro: Léa vient d'arriver à Tokyo. Elle se présente.
+
+はじめまして。 | Enchantée.
+{私|わたし}はレアです。 | Je m'appelle Léa.
+フランス{人|じん}です。 | Je suis française.
+リヨンから{来|き}ました。 | Je viens de Lyon.
+{二十歳|はたち}です。 | J'ai vingt ans.
+{日本語|にほんご}の{学生|がくせい}です。 | Je suis étudiante en japonais.
+
+{今|いま}は{東京|とうきょう}に{住|す}んでいます。 | J'habite à Tokyo maintenant.
+{日本語|にほんご}の{学校|がっこう}は{新宿|しんじゅく}にあります。 | Mon école de japonais est à Shinjuku.
+{日本|にほん}の{料理|りょうり}が{大好|だいす}きです。 | J'adore la cuisine japonaise.
+{日本語|にほんご}は{難|むずか}しいですが、おもしろいです。 | Le japonais, c'est difficile, mais c'est intéressant.
+どうぞよろしくお{願|ねが}いします。 | Ravie de faire votre connaissance.
+
+? D'où vient Léa ?
++ De Lyon
+- De Paris
+- De Shinjuku
+? Où se trouve son école ?
+- À Lyon
++ À Shinjuku
+- Dans sa maison
+? Que pense Léa du japonais ?
+- C'est facile et amusant
++ C'est difficile, mais intéressant
+- C'est difficile et ennuyeux
+
+=== watashi-no-heya
+titre: {私|わたし}の{部屋|へや}
+fr: Ma chambre
+genre: récit
+intro: Léa habite dans une maison partagée, une « share house ». Elle décrit sa chambre et la maison.
+
+{私|わたし}はシェアハウスに{住|す}んでいます。 | J'habite dans une maison partagée.
+{私|わたし}の{部屋|へや}は{二階|にかい}にあります。 | Ma chambre est au premier étage.
+{部屋|へや}は{小|ちい}さいですが、{明|あか}るいです。 | Elle est petite, mais lumineuse.
+{窓|まど}の{前|まえ}に{机|つくえ}があります。 | Devant la fenêtre, il y a un bureau.
+{机|つくえ}の{上|うえ}にパソコンと{日本語|にほんご}の{本|ほん}があります。 | Sur le bureau, il y a un ordinateur et des livres de japonais.
+ベッドの{下|した}に{大|おお}きいかばんがあります。 | Sous le lit, il y a un grand sac de voyage.
+{壁|かべ}にリヨンの{写真|しゃしん}があります。 | Au mur, il y a une photo de Lyon.
+
+このうちには{五人|ごにん}{住|す}んでいます。 | Cinq personnes habitent dans cette maison.
+{台所|だいどころ}とおふろはみんなで{使|つか}います。 | La cuisine et la salle de bain sont pour tout le monde.
+{山田|やまだ}さんはこのうちの{大家|おおや}さんです。 | Mme Yamada est la propriétaire de la maison.
+{山田|やまだ}さんはとても{優|やさ}しい{人|ひと}です。 | Mme Yamada est une personne très gentille.
+{私|わたし}はこの{部屋|へや}がとても{好|す}きです。 | J'aime beaucoup cette chambre.
+
+? Où se trouve la chambre de Léa ?
++ Au premier étage
+- Au rez-de-chaussée
+- Au deuxième étage
+? Qu'y a-t-il sous le lit ?
+- Un ordinateur
++ Un grand sac de voyage
+- Une photo de Lyon
+? Qui est Mme Yamada ?
+- Une étudiante de l'école
++ La propriétaire de la maison
+- La mère de Léa
+
+=== konbini-de
+titre: コンビニで
+fr: Au konbini
+genre: dialogue
+intro: Le soir, Léa entre dans une supérette ouverte jour et nuit. Elle a faim.
+
+{店員|てんいん}：いらっしゃいませ。 | Bienvenue !
+レア：すみません、お{茶|ちゃ}はどこですか。 | Excusez-moi, où est le thé ?
+{店員|てんいん}：お{茶|ちゃ}はあそこです。{冷蔵庫|れいぞうこ}の{中|なか}です。 | Le thé est là-bas, dans le réfrigérateur.
+レア：ありがとうございます。 | Merci beaucoup.
+
+レア：このお{弁当|べんとう}とお{茶|ちゃ}をください。 | Ce bentō et ce thé, s'il vous plaît.
+{店員|てんいん}：お{弁当|べんとう}は{温|あたた}めますか。 | Je vous réchauffe le bentō ?
+レア：はい、お{願|ねが}いします。 | Oui, s'il vous plaît.
+{店員|てんいん}：{袋|ふくろ}は{要|い}りますか。 | Vous voulez un sac ?
+レア：いいえ、{要|い}りません。 | Non, ça ira.
+{店員|てんいん}：{全部|ぜんぶ}で{六百八十円|ろっぴゃくはちじゅうえん}です。 | Ça fait six cent quatre-vingts yens en tout.
+レア：カードでいいですか。 | Je peux payer par carte ?
+{店員|てんいん}：はい、どうぞ。 | Oui, bien sûr.
+{店員|てんいん}：ありがとうございました。 | Merci, au revoir !
+
+? Où est le thé ?
++ Dans le réfrigérateur
+- Près de la caisse
+- Il n'y en a plus
+? Que fait l'employé avec le bentō ?
+- Il le met dans un sac
++ Il le réchauffe
+- Il l'échange
+? Combien Léa paie-t-elle ?
+- 580 yens
++ 680 yens
+- 860 yens
+
+=== watashi-no-ichinichi
+titre: {私|わたし}の{一日|いちにち}
+fr: Ma journée
+genre: récit
+intro: Une journée de semaine de Léa, du réveil au coucher.
+
+{私|わたし}は{毎朝|まいあさ}{七時|しちじ}に{起|お}きます。 | Je me lève tous les matins à sept heures.
+{朝|あさ}ごはんはパンとコーヒーです。 | Au petit déjeuner, je prends du pain et du café.
+{八時半|はちじはん}にうちを{出|で}ます。 | Je pars de la maison à huit heures et demie.
+{電車|でんしゃ}で{学校|がっこう}へ{行|い}きます。 | Je vais à l'école en train.
+{授業|じゅぎょう}は{九時|くじ}から{十二時半|じゅうにじはん}までです。 | Les cours vont de neuf heures à midi et demi.
+
+{昼|ひる}ごはんはクラスの{友|とも}だちと{食|た}べます。 | Je déjeune avec des amis de ma classe.
+{午後|ごご}は{図書館|としょかん}で{宿題|しゅくだい}をします。 | L'après-midi, je fais mes devoirs à la bibliothèque.
+ときどき{新宿|しんじゅく}で{買|か}い{物|もの}をします。 | Parfois, je fais des courses à Shinjuku.
+{六時|ろくじ}ごろうちへ{帰|かえ}ります。 | Je rentre à la maison vers six heures.
+{晩|ばん}ごはんは{自分|じぶん}で{作|つく}ります。 | Je prépare le dîner moi-même.
+{晩|ばん}ごはんのあとで、{少|すこ}し{日本|にほん}のドラマを{見|み}ます。 | Après le dîner, je regarde un peu une série japonaise.
+そして、{十一時|じゅういちじ}に{寝|ね}ます。 | Et je me couche à onze heures.
+
+? Comment Léa va-t-elle à l'école ?
+- À pied
++ En train
+- À vélo
+? Que fait-elle l'après-midi ?
++ Ses devoirs, à la bibliothèque
+- Du sport
+- La cuisine
+? À quelle heure se couche-t-elle ?
+- À dix heures
++ À onze heures
+- À minuit
+
+=== sakura-san
+titre: さくらさん
+fr: Sakura
+genre: dialogue
+intro: Un soir, dans la cuisine de la maison, Léa rencontre une autre locataire. Sakura parle en style familier, entre jeunes.
+
+さくら：こんばんは。{新|あたら}しい{人|ひと}ですか。 | Bonsoir. Tu es nouvelle ?
+レア：はい、{先週|せんしゅう}{来|き}ました。レアです。 | Oui, je suis arrivée la semaine dernière. Je m'appelle Léa.
+さくら：さくらです。よろしくね。 | Moi, c'est Sakura. Enchantée !
+レア：よろしくお{願|ねが}いします。さくらさんは{学生|がくせい}ですか。 | Enchantée. Tu es étudiante ?
+さくら：うん、{大学|だいがく}の{二年生|にねんせい}。{経済|けいざい}を{勉強|べんきょう}しているの。 | Oui, en deuxième année d'université. J'étudie l'économie.
+さくら：レアさんは？ | Et toi, Léa ?
+レア：{私|わたし}は{日本語|にほんご}の{学校|がっこう}の{学生|がくせい}です。 | Moi, je suis élève dans une école de japonais.
+さくら：へえ、{日本語|にほんご}、{上手|じょうず}だね。 | Ah oui ? Tu parles bien japonais !
+レア：いいえ、まだまだです。 | Non, j'ai encore beaucoup à apprendre.
+さくら：それ、{何|なに}？いいにおい！ | C'est quoi, ça ? Ça sent bon !
+レア：クレープです。フランスの{料理|りょうり}です。{一緒|いっしょ}に{食|た}べませんか。 | Des crêpes. C'est un plat français. Tu en manges avec moi ?
+さくら：え、いいの？ありがとう！ | Quoi, je peux ? Merci !
+
+? Que fait Sakura dans la vie ?
+- Elle travaille dans un konbini
++ Elle étudie l'économie à l'université
+- Elle enseigne le japonais
+? Quand Léa est-elle arrivée ?
++ La semaine dernière
+- Hier
+- Il y a un mois
+? Que propose Léa à Sakura ?
+- D'aller au cinéma
++ De manger des crêpes avec elle
+- De réviser ensemble
+
+=== asakusa
+titre: {浅草|あさくさ}へ{行|い}きました
+fr: Une journée à Asakusa
+genre: récit
+intro: Un dimanche, Sakura emmène Léa dans un vieux quartier de Tokyo.
+
+{日曜日|にちようび}に、さくらさんと{浅草|あさくさ}へ{行|い}きました。 | Dimanche, je suis allée à Asakusa avec Sakura.
+{天気|てんき}がよかったです。 | Il faisait beau.
+{駅|えき}から{少|すこ}し{歩|ある}きました。 | Nous avons marché un peu depuis la gare.
+{大|おお}きい{門|もん}がありました。 | Il y avait une grande porte.
+{門|もん}は{赤|あか}くて、とてもきれいでした。 | Elle était rouge, et très belle.
+{門|もん}の{前|まえ}で{写真|しゃしん}をたくさん{撮|と}りました。 | Nous avons pris beaucoup de photos devant la porte.
+
+{古|ふる}いお{寺|てら}も{見|み}ました。 | Nous avons aussi vu un vieux temple.
+{人|ひと}がとても{多|おお}かったです。 | Il y avait énormément de monde.
+{外国人|がいこくじん}もたくさんいました。 | Il y avait aussi beaucoup d'étrangers.
+お{昼|ひる}に{天|てん}ぷらを{食|た}べました。 | À midi, nous avons mangé des tempuras.
+{少|すこ}し{高|たか}かったですが、おいしかったです。 | C'était un peu cher, mais c'était bon.
+それから、お{土産|みやげ}を{買|か}いました。 | Ensuite, nous avons acheté des souvenirs.
+{楽|たの}しい{一日|いちにち}でした。また{行|い}きたいです。 | C'était une belle journée. J'ai envie d'y retourner.
+
+? Quel temps faisait-il ?
++ Beau
+- Il pleuvait
+- Il faisait froid
+? De quelle couleur était la grande porte ?
+- Blanche
+- Noire
++ Rouge
+? Qu'ont-elles mangé à midi ?
+- Des sushis
++ Des tempuras
+- Des ramens
+
+=== resutoran-de
+titre: レストランで
+fr: Au restaurant
+genre: dialogue
+intro: Léa et Sakura dînent dans un petit restaurant près de la gare.
+
+{店員|てんいん}：いらっしゃいませ。{何名|なんめい}さまですか。 | Bienvenue. Vous êtes combien ?
+さくら：{二人|ふたり}です。 | Deux.
+{店員|てんいん}：こちらへどうぞ。 | Par ici, je vous prie.
+レア：メニューは{日本語|にほんご}だけですね。 | Le menu n'est qu'en japonais.
+レア：でも、{写真|しゃしん}がありますから、{大丈夫|だいじょうぶ}です。 | Mais il y a des photos, alors ça va.
+さくら：レアさん、{何|なに}にする？ | Léa, tu prends quoi ?
+レア：うーん、この{魚|さかな}の{定食|ていしょく}がいいです。 | Hmm… ce menu au poisson, je crois.
+さくら：じゃ、{私|わたし}はカレー。 | Alors moi, le curry.
+さくら：すみません、{魚|さかな}の{定食|ていしょく}とカレーをお{願|ねが}いします。 | Excusez-moi, un menu au poisson et un curry, s'il vous plaît.
+{店員|てんいん}：お{飲|の}み{物|もの}はいかがですか。 | Et comme boisson ?
+レア：{冷|つめ}たいお{茶|ちゃ}をください。 | Du thé froid, s'il vous plaît.
+
+さくら：おいしかったね。 | C'était bon, hein ?
+レア：はい、ごちそうさまでした。 | Oui, merci pour ce repas.
+さくら：{今日|きょう}は{私|わたし}が{払|はら}うよ。 | Aujourd'hui, c'est moi qui paie.
+レア：え、いいんですか。じゃ、{次|つぎ}は{私|わたし}が{払|はら}います。 | Quoi, vraiment ? Alors la prochaine fois, c'est moi.
+
+? Combien sont-elles ?
++ Deux
+- Trois
+- Quatre
+? Qu'a choisi Léa ?
+- Le curry
++ Le menu au poisson
+- Des crêpes
+? Qui paie aujourd'hui ?
+- Léa
++ Sakura
+- Chacune sa part
+
+=== eki-de
+titre: {駅|えき}で
+fr: À la gare
+genre: dialogue
+intro: Léa veut aller à Kamakura, au bord de la mer. Dans une grande gare, elle demande son chemin à un employé.
+
+レア：すみません。{鎌倉|かまくら}へ{行|い}きたいです。 | Excusez-moi. Je voudrais aller à Kamakura.
+{駅員|えきいん}：{鎌倉|かまくら}ですね。{横須賀線|よこすかせん}に{乗|の}ってください。 | Kamakura ? Prenez la ligne Yokosuka.
+レア：{何番線|なんばんせん}ですか。 | C'est quelle voie ?
+{駅員|えきいん}：{十二番線|じゅうにばんせん}です。あの{階段|かいだん}を{下|お}りてください。 | Voie douze. Descendez cet escalier-là.
+レア：{鎌倉|かまくら}まで{何分|なんぷん}ぐらいかかりますか。 | Il faut combien de minutes jusqu'à Kamakura ?
+{駅員|えきいん}：{一時間|いちじかん}ぐらいです。 | Environ une heure.
+レア：{切符|きっぷ}はどこで{買|か}いますか。 | Où est-ce que j'achète le billet ?
+{駅員|えきいん}：{交通|こうつう}カードがありますか。 | Vous avez une carte de transport ?
+レア：はい、あります。 | Oui, j'en ai une.
+{駅員|えきいん}：じゃ、{切符|きっぷ}は{要|い}りませんよ。そのカードで{大丈夫|だいじょうぶ}です。 | Alors pas besoin de billet. Cette carte suffit.
+レア：わかりました。ありがとうございました。 | D'accord. Merci beaucoup.
+{駅員|えきいん}：いってらっしゃい。 | Bon voyage !
+
+? Quelle ligne Léa doit-elle prendre ?
++ La ligne Yokosuka
+- La ligne Yamanote
+- Le shinkansen
+? Combien de temps faut-il pour Kamakura ?
+- Dix minutes
+- Une demi-heure
++ Environ une heure
+? Pourquoi Léa n'a-t-elle pas besoin de billet ?
+- Le train est gratuit
++ Elle a une carte de transport
+- L'employé lui en donne un
+
+=== haha-e-no-meeru
+titre: お{母|かあ}さんへのメール
+fr: Un mail à maman
+genre: lettre
+intro: Deux semaines après son arrivée, Léa écrit à sa mère. En japonais, pour s'entraîner.
+
+お{母|かあ}さん、{元気|げんき}ですか。 | Maman, comment vas-tu ?
+{私|わたし}は{元気|げんき}です。 | Moi, je vais bien.
+{東京|とうきょう}に{来|き}て、もう{二週間|にしゅうかん}です。 | Ça fait déjà deux semaines que je suis à Tokyo.
+{毎日|まいにち}、{学校|がっこう}で{日本語|にほんご}を{勉強|べんきょう}しています。 | Tous les jours, j'étudie le japonais à l'école.
+{漢字|かんじ}は{難|むずか}しいですが、おもしろいです。 | Les kanjis, c'est difficile, mais intéressant.
+{先生|せんせい}はとても{親切|しんせつ}です。 | Le professeur est très gentil.
+
+シェアハウスに{友|とも}だちができました。 | Je me suis fait une amie dans la maison.
+さくらさんという{大学生|だいがくせい}です。 | C'est une étudiante qui s'appelle Sakura.
+{先週|せんしゅう}、{一緒|いっしょ}に{浅草|あさくさ}へ{行|い}きました。 | La semaine dernière, nous sommes allées ensemble à Asakusa.
+{東京|とうきょう}は{大|おお}きくて、{少|すこ}しうるさいです。 | Tokyo est grand, et un peu bruyant.
+でも、{私|わたし}はこの{町|まち}が{好|す}きです。 | Mais j'aime cette ville.
+{食|た}べ{物|もの}もおいしいです。{心配|しんぱい}しないでください。 | La nourriture est bonne aussi. Ne t'inquiète pas.
+お{父|とう}さんによろしく。 | Embrasse papa pour moi.
+レアより | Léa
+
+? Depuis combien de temps Léa est-elle à Tokyo ?
+- Deux jours
++ Deux semaines
+- Deux mois
+? Comment Léa trouve-t-elle les kanjis ?
++ Difficiles, mais intéressants
+- Faciles
+- Ennuyeux
+? Que pense Léa de Tokyo ?
+- Elle n'aime pas cette ville
++ Elle l'aime, même si c'est un peu bruyant
+- C'est trop petit
+
+=== ame-no-hi
+titre: {雨|あめ}の{日|ひ}
+fr: Un jour de pluie
+genre: récit
+intro: Samedi, il pleut. Léa reste à la maison, et Mme Yamada l'invite à prendre le thé.
+
+{今日|きょう}は{土曜日|どようび}です。 | Aujourd'hui, c'est samedi.
+{朝|あさ}から{雨|あめ}が{降|ふ}っています。 | Il pleut depuis le matin.
+{寒|さむ}いですから、どこへも{行|い}きません。 | Comme il fait froid, je ne vais nulle part.
+{部屋|へや}で{本|ほん}を{読|よ}んだり、{音楽|おんがく}を{聞|き}いたりします。 | Dans ma chambre, je lis, j'écoute de la musique.
+
+{昼|ひる}ごろ、{山田|やまだ}さんが{来|き}ました。 | Vers midi, Mme Yamada est passée.
+「レアさん、お{茶|ちゃ}を{飲|の}みませんか。」 | « Léa, vous prendrez bien un thé ? »
+{山田|やまだ}さんの{部屋|へや}で、{温|あたた}かいお{茶|ちゃ}を{飲|の}みました。 | Dans la chambre de Mme Yamada, nous avons bu un thé chaud.
+{山田|やまだ}さんは{古|ふる}い{写真|しゃしん}を{見|み}せました。 | Mme Yamada m'a montré de vieilles photos.
+{若|わか}いころの{山田|やまだ}さんは、とてもきれいでした。 | Jeune, Mme Yamada était très belle.
+
+{夕方|ゆうがた}、{雨|あめ}がやみました。 | En fin d'après-midi, la pluie s'est arrêtée.
+{窓|まど}から{空|そら}を{見|み}ました。 | J'ai regardé le ciel par la fenêtre.
+{西|にし}の{空|そら}が{赤|あか}くて、きれいでした。 | Le ciel, à l'ouest, était rouge et beau.
+{雨|あめ}の{日|ひ}も、{悪|わる}くないです。 | Les jours de pluie, ce n'est pas mal non plus.
+
+? Pourquoi Léa ne sort-elle pas ?
+- Elle est malade
++ Il fait froid et il pleut
+- Elle a trop de devoirs
+? Que lui montre Mme Yamada ?
+- Son jardin
++ De vieilles photos
+- Un livre de cuisine
+? Quand la pluie s'arrête-t-elle ?
+- Le matin
+- À midi
++ En fin d'après-midi
+
+=== tanjoubi
+titre: さくらさんの{誕生日|たんじょうび}
+fr: L'anniversaire de Sakura
+genre: récit
+intro: C'est bientôt l'anniversaire de Sakura. Léa prépare une surprise avec les autres habitants de la maison.
+
+{来週|らいしゅう}の{金曜日|きんようび}は、さくらさんの{誕生日|たんじょうび}です。 | Vendredi prochain, c'est l'anniversaire de Sakura.
+さくらさんは{二十歳|はたち}になります。 | Sakura va avoir vingt ans.
+{私|わたし}は{何|なに}かプレゼントをあげたいです。 | Je voudrais lui offrir un cadeau.
+でも、{何|なに}がいいでしょうか。 | Mais qu'est-ce qui lui ferait plaisir ?
+{山田|やまだ}さんに{聞|き}きました。 | J'ai demandé à Mme Yamada.
+「さくらさんはケーキが{大好|だいす}きですよ。」 | « Sakura adore les gâteaux. »
+それで、みんなでケーキを{作|つく}りました。 | Alors, nous avons fait un gâteau tous ensemble.
+
+{金曜日|きんようび}の{夜|よる}、さくらさんが{帰|かえ}りました。 | Vendredi soir, Sakura est rentrée.
+{台所|だいどころ}は{暗|くら}かったです。 | La cuisine était sombre.
+さくらさんが{電気|でんき}をつけました。 | Sakura a allumé la lumière.
+「お{誕生日|たんじょうび}おめでとう！」 | « Joyeux anniversaire ! »
+さくらさんはびっくりしました。 | Sakura a été très surprise.
+そして、{少|すこ}し{泣|な}きました。 | Et elle a un peu pleuré.
+「みんな、ありがとう。{本当|ほんとう}にうれしい！」 | « Merci, tout le monde. Je suis vraiment heureuse ! »
+
+? Quel âge va avoir Sakura ?
+- Dix-huit ans
++ Vingt ans
+- Vingt-deux ans
+? Qu'aime beaucoup Sakura, selon Mme Yamada ?
++ Les gâteaux
+- Les fleurs
+- Les livres
+? Comment réagit Sakura ?
+- Elle se met en colère
+- Elle ne dit rien
++ Elle est surprise, et pleure un peu
+
+=== nihon-no-kisetsu
+titre: {日本|にほん}の{季節|きせつ}
+fr: Les saisons du Japon
+genre: dialogue
+intro: Léa demande à Sakura quelle saison elle préfère, et compare avec la France.
+
+レア：さくらさん、{日本|にほん}の{季節|きせつ}で、どれがいちばん{好|す}きですか。 | Sakura, quelle saison préfères-tu au Japon ?
+さくら：{春|はる}かな。{桜|さくら}がきれいだから。 | Le printemps, je crois. Parce que les cerisiers sont beaux.
+レア：さくらさんの{名前|なまえ}と{同|おな}じですね。 | Comme ton prénom !
+さくら：うん。でも、{私|わたし}の{誕生日|たんじょうび}は{秋|あき}だよ。 | Oui. Mais mon anniversaire, c'est en automne.
+レア：{日本|にほん}の{夏|なつ}はどうですか。 | Et l'été au Japon, c'est comment ?
+さくら：{暑|あつ}くて、{大変|たいへん}。{東京|とうきょう}の{夏|なつ}はパリより{暑|あつ}いよ。 | Il fait chaud, c'est dur. L'été à Tokyo est plus chaud qu'à Paris.
+レア：{冬|ふゆ}は？ | Et l'hiver ?
+さくら：{東京|とうきょう}はあまり{寒|さむ}くない。{雪|ゆき}もあまり{降|ふ}らないよ。 | À Tokyo, il ne fait pas très froid. Il ne neige pas beaucoup non plus.
+さくら：でも、{北海道|ほっかいどう}は{寒|さむ}くて、{雪|ゆき}がたくさん{降|ふ}る。 | Mais à Hokkaidō, il fait froid, et il neige beaucoup.
+レア：リヨンの{冬|ふゆ}も{寒|さむ}いです。 | L'hiver à Lyon est froid aussi.
+レア：{私|わたし}は{秋|あき}がいちばん{好|す}きです。{葉|は}が{赤|あか}や{黄色|きいろ}になりますから。 | Moi, c'est l'automne que je préfère. Parce que les feuilles des arbres deviennent rouges et jaunes.
+さくら：{日本|にほん}の{秋|あき}もきれいだよ。{来月|らいげつ}、{一緒|いっしょ}に{京都|きょうと}へ{行|い}かない？ | L'automne au Japon est beau aussi. Le mois prochain, on va à Kyoto ensemble ?
+レア：いいですね！ぜひ！ | Bonne idée ! Avec plaisir !
+
+? Quelle saison Sakura préfère-t-elle ?
++ Le printemps
+- L'été
+- L'automne
+? Comment est l'hiver à Tokyo, selon Sakura ?
+- Très froid, avec beaucoup de neige
++ Pas très froid, avec peu de neige
+- Chaud
+? Que propose Sakura ?
+- D'aller à Hokkaidō
++ D'aller à Kyoto le mois prochain
+- De rester à Tokyo

@@ -4,7 +4,8 @@ Une option du compte, eteinte par defaut (voir alertes_sortie dans
 comptes.py). A minuit, heure de Paris, on cherche les jeux convoites dont la
 date de sortie est le lendemain, et chaque personne qui a coche l'option
 recoit UN mail qui les liste tous -- trois jeux le meme jour ne valent pas
-trois mails.
+trois mails. Chaque jeu y vient avec sa jaquette, quand l'Archive l'a deja
+telechargee : on reconnait un jeu a sa boite avant de lire son nom.
 
 Pas de cron ni de timer systemd : un fil d'execution dans le serveur, qui
 dort jusqu'a minuit. Le site tourne dans un seul processus gunicorn (voir
@@ -13,14 +14,18 @@ note dans la table alerte_sortie : un redemarrage juste apres minuit relance
 l'envoi du jour sans rien envoyer deux fois.
 """
 
+import io
 import os
 import threading
 import time
 from datetime import datetime, timedelta, timezone
+from email.utils import make_msgid
 from html import escape
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import comptes
+from jaquettes import EXTENSION, cle_jaquette
 
 PARIS = ZoneInfo("Europe/Paris")
 PROJET = "jeux-videos"
@@ -33,6 +38,19 @@ SITE = os.environ.get("ABYSS_URL_PUBLIQUE", "https://jokrem.fr").strip().rstrip(
 # jour. Au-dela, un mail « sort demain » recu en plein apres-midi n'aurait
 # plus grand sens, et c'est le prochain minuit qui s'en charge.
 RATTRAPAGE_HEURES = 6
+
+# Les jaquettes telechargees par l'Archive (voir jaquettes.py). Le fil ne
+# passe pas par app.py, d'ou le chemin ecrit ici -- le meme qu'app.py donne
+# au blueprint des jaquettes.
+JAQUETTES = Path(__file__).resolve().parent / "static" / "archive" / "Cover"
+
+# Largeur d'une jaquette dans le mail, en pixels CSS : plus grande quand le
+# jeu est seul, une vignette quand ils sont plusieurs a se suivre. L'image
+# jointe en fait le double, pour les ecrans retina ; la hauteur suit le
+# format des boites d'IGDB (264x374).
+LARGEUR_SEULE = 120
+LARGEUR_LISTE = 72
+FORMAT = 374 / 264
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet",
@@ -47,14 +65,15 @@ def _date_fr(iso):
 
 
 def a_prevenir(jour_iso) -> dict:
-    """{utilisateur_id: (pseudo, email, [(jeu_id, nom), ...])} pour ce jour.
+    """{utilisateur_id: (pseudo, email, [(jeu_id, nom, id_igdb), ...])}
+    pour ce jour.
 
     Seulement les jeux encore en wishlist, dans le journal de quelqu'un qui
     a coche l'option et donne une adresse, et pas deja annonces pour cette
     date-la.
     """
     lignes = comptes.cx().execute(
-        "SELECT u.id AS uid, u.pseudo, u.email, j.id AS jeu_id, j.nom"
+        "SELECT u.id AS uid, u.pseudo, u.email, j.id AS jeu_id, j.nom, j.id_igdb"
         " FROM jeu j"
         " JOIN page p ON p.id = j.page_id"
         " JOIN utilisateur u ON u.id = p.utilisateur_id"
@@ -68,14 +87,62 @@ def a_prevenir(jour_iso) -> dict:
     parts = {}
     for l in lignes:
         parts.setdefault(l["uid"], (l["pseudo"], l["email"], []))[2].append(
-            (l["jeu_id"], l["nom"]))
+            (l["jeu_id"], l["nom"], l["id_igdb"]))
     return parts
 
 
+def _vignette(nom, id_igdb, largeur):
+    """La jaquette d'un jeu, en JPEG au double de `largeur`, ou None.
+
+    Du JPEG et non le .webp du disque : Outlook n'affiche pas le webp, et
+    un mail se lit dans la messagerie de chacun, pas dans un navigateur
+    qu'on aurait choisi. Recadree au format des boites, pour que les
+    vignettes d'une liste s'alignent. Pas de jaquette, Pillow absent ou
+    fichier illisible : None, et le mail part quand meme -- l'image est un
+    supplement, jamais une condition.
+    """
+    fichier = JAQUETTES / (cle_jaquette(nom, id_igdb) + EXTENSION)
+    if not fichier.is_file():
+        return None
+    try:
+        from PIL import Image, ImageOps
+        with Image.open(fichier) as im:
+            taille = (largeur * 2, round(largeur * 2 * FORMAT))
+            image = ImageOps.fit(im.convert("RGB"), taille, Image.LANCZOS)
+        sortie = io.BytesIO()
+        image.save(sortie, "JPEG", quality=85, optimize=True)
+        return sortie.getvalue()
+    except (ImportError, OSError, ValueError):
+        return None
+
+
+def _jeu_html(nom, cid, largeur):
+    """Une ligne de la liste : la jaquette a gauche, le nom a cote. Un
+    tableau plutot que des blocs flottants : c'est la seule mise en page
+    qu'Outlook respecte. Un jeu sans jaquette garde une case vide de la
+    meme taille, pour que les noms restent alignes ; largeur None quand
+    aucun n'en a, et la colonne disparait."""
+    nom_html = (f'<td style="padding:0 0 14px;vertical-align:middle;font-size:16px;line-height:1.4">'
+                f'<b>{escape(nom)}</b></td>')
+    if largeur is None:
+        return f"<tr>{nom_html}</tr>"
+    hauteur = round(largeur * FORMAT)
+    if cid:
+        image = (f'<img src="cid:{cid}" width="{largeur}" height="{hauteur}" alt="{escape(nom)}"'
+                 f' style="display:block;width:{largeur}px;height:{hauteur}px;border:0;'
+                 f'border-radius:6px;background:#e9edf1">')
+    else:
+        image = (f'<div style="width:{largeur}px;height:{hauteur}px;border-radius:6px;'
+                 f'background:#e9edf1"></div>')
+    return (f'<tr><td width="{largeur}" style="width:{largeur}px;padding:0 16px 14px 0;'
+            f'vertical-align:middle">{image}</td>{nom_html}</tr>')
+
+
 def _mail(pseudo, jeux, jour_iso):
-    """(sujet, texte, html) pour une personne et ses jeux du lendemain."""
+    """(sujet, texte, html, images) pour une personne et ses jeux du
+    lendemain. images : [(cid, octets JPEG)], voir comptes.envoie_mail."""
     quand = _date_fr(jour_iso)
-    noms = [nom for _, nom in jeux]
+    noms = [nom for _, nom, _ in jeux]
     journal = f"{SITE}/archive/{pseudo}"
     profil = f"{SITE}/abyss/profil"
     if len(noms) == 1:
@@ -95,14 +162,22 @@ def _mail(pseudo, jeux, jour_iso):
         "Abyss - jokrem.fr\n"
     )
 
-    liste = "".join(
-        f'<li style="margin:0 0 6px;font-size:15px"><b>{escape(nom)}</b></li>' for nom in noms)
+    largeur = LARGEUR_SEULE if len(jeux) == 1 else LARGEUR_LISTE
+    images, cids = [], []
+    for _, nom, id_igdb in jeux:
+        octets = _vignette(nom, id_igdb, largeur)
+        cid = make_msgid(domain="jokrem.fr")[1:-1] if octets else None
+        if octets:
+            images.append((cid, octets))
+        cids.append(cid)
+    liste = "".join(_jeu_html(nom, cid, largeur if images else None)
+                    for nom, cid in zip(noms, cids))
     html = f"""<!doctype html>
 <html lang="fr"><body style="margin:0;padding:24px;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;color:#1d2733">
   <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:10px;padding:28px">
     <p style="margin:0 0 16px;font-size:15px">Bonjour {escape(pseudo)},</p>
     <p style="margin:0 0 12px;font-size:15px;line-height:1.5">{escape(annonce)}</p>
-    <ul style="margin:0 0 22px;padding-left:20px">{liste}</ul>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:4px 0 12px">{liste}</table>
     <p style="margin:0 0 22px">
       <a href="{escape(journal)}" style="display:inline-block;background:#2e6f96;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-size:15px">Voir mon journal</a>
     </p>
@@ -111,7 +186,7 @@ def _mail(pseudo, jeux, jour_iso):
   </div>
   <p style="text-align:center;font-size:12px;color:#8a95a1;margin:16px 0 0">Abyss - jokrem.fr</p>
 </body></html>"""
-    return sujet, texte, html
+    return sujet, texte, html, images
 
 
 def envoie_alertes(jour_iso) -> int:
@@ -124,9 +199,9 @@ def envoie_alertes(jour_iso) -> int:
     """
     envoyes = 0
     for uid, (pseudo, email, jeux) in a_prevenir(jour_iso).items():
-        sujet, texte, html = _mail(pseudo, jeux, jour_iso)
+        sujet, texte, html, images = _mail(pseudo, jeux, jour_iso)
         try:
-            comptes.envoie_mail(email, sujet, texte, html)
+            comptes.envoie_mail(email, sujet, texte, html, images)
         except Exception as err:            # noqa: BLE001 - SMTP casse de mille facons
             print(f"alerte de sortie impossible pour {pseudo} : "
                   f"{type(err).__name__}: {err}", flush=True)
@@ -136,7 +211,7 @@ def envoie_alertes(jour_iso) -> int:
             c.executemany(
                 "INSERT OR IGNORE INTO alerte_sortie(utilisateur_id, jeu_id, sortie, envoye_le)"
                 " VALUES(?,?,?,?)",
-                [(uid, jeu_id, jour_iso, comptes.maintenant()) for jeu_id, _ in jeux])
+                [(uid, jeu_id, jour_iso, comptes.maintenant()) for jeu_id, _, _ in jeux])
         envoyes += 1
     return envoyes
 

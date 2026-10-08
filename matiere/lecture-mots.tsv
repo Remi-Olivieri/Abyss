@@ -1,0 +1,275 @@
+# Nihongo - le glossaire de la lecture.
+#
+# Les mots des textes (matiere/lecture-n5.txt a -n1.txt) que le vocabulaire
+# du JLPT n'a pas : les noms propres, et les mots hors des listes. Une ligne
+# par mot, champs separes par des tabulations :
+#
+#   graphie   lecture   sens, separes par « ; »   nature (facultative)
+#
+# La nature « expression » fait d'un groupe de mots un seul bloc
+# (ありがとうございます) ; « conjonction », un bloc en tete de phrase
+# seulement. La fabrication refuse une entree qui ne sert a aucun texte.
+レア	れあ	Léa	prénom
+フランス人	ふらんすじん	Français, Française	nom
+リヨン	りよん	Lyon	nom de lieu
+日本語	にほんご	le japonais (la langue)	nom
+東京	とうきょう	Tokyo	nom de lieu
+新宿	しんじゅく	Shinjuku (un quartier de Tokyo)	nom de lieu
+シェアハウス	しぇあはうす	maison partagée (en colocation)	nom
+山田	やまだ	Yamada	nom de famille
+さくら	さくら	Sakura	prénom
+うち	うち	maison, chez soi	nom
+要る	いる	avoir besoin de, falloir	verbe en -u
+へえ	へえ	tiens ! ah bon ? (surprise, intérêt)	interjection
+え	え	hein ? quoi ? (surprise)	interjection
+うーん	うーん	hmm… (on réfléchit)	interjection
+まだまだ	まだまだ	encore loin ; (par modestie) j'ai encore beaucoup à apprendre	adverbe
+クレープ	くれーぷ	crêpe	nom
+フランス	ふらんす	la France	nom de lieu
+浅草	あさくさ	Asakusa (un vieux quartier de Tokyo)	nom de lieu
+天ぷら	てんぷら	tempura (beignets de légumes, de crevettes)	nom
+鎌倉	かまくら	Kamakura (une ville au bord de la mer, près de Tokyo)	nom de lieu
+横須賀線	よこすかせん	la ligne Yokosuka (un train)	nom propre
+パリ	ぱり	Paris	nom de lieu
+北海道	ほっかいどう	Hokkaidō (l'île du nord du Japon)	nom de lieu
+京都	きょうと	Kyoto	nom de lieu
+温かい	あたたかい	chaud (une boisson, un plat), tiède	adjectif en い
+温める	あたためる	réchauffer, faire chauffer	verbe en -ru
+ごろ	ごろ	vers (une heure, un moment)	suffixe
+ありがとうございます	ありがとうございます	merci beaucoup	expression
+ありがとうございました	ありがとうございました	merci beaucoup (pour ce qui vient d'être fait)	expression
+いらっしゃいませ	いらっしゃいませ	bienvenue ! (dans un magasin, un restaurant)	expression
+お誕生日おめでとう	おたんじょうびおめでとう	joyeux anniversaire !	expression
+交通カード	こうつうかーど	carte de transport (rechargeable)	nom
+週末	しゅうまつ	week-end	nom
+さらさら	さらさら	(bruit léger) en bruissant, doucement	onomatopée
+雪だるま	ゆきだるま	bonhomme de neige	nom
+店長	てんちょう	gérant (d'un magasin, d'un café)	nom
+常連	じょうれん	habitué (un client fidèle)	nom
+カフェ	かふぇ	café (l'établissement)	nom
+ミモザ	みもざ	mimosa	nom
+もしもし	もしもし	allô ?	interjection
+お疲れさまです	おつかれさまです	bonjour, merci pour ton travail (entre collègues)	expression
+あのう	あのう	euh… (pour commencer poliment)	interjection
+がんばる	がんばる	faire de son mieux, tenir bon	verbe en -u
+大晦日	おおみそか	le 31 décembre, le réveillon	nom
+年越しそば	としこしそば	nouilles du passage à la nouvelle année	nom
+あけましておめでとうございます	あけましておめでとうございます	bonne année !	expression
+おせち	おせち	repas traditionnel du Nouvel An	nom
+お雑煮	おぞうに	soupe du Nouvel An aux galettes de riz	nom
+黒豆	くろまめ	haricots noirs sucrés (du Nouvel An)	nom
+まめ	まめ	assidu, travailleur (まめに : avec ardeur)	adjectif en な
+初詣	はつもうで	première visite de l'année au sanctuaire	nom
+お正月	おしょうがつ	le Nouvel An	nom
+母	はは	ma mère	nom
+父	ちち	mon père	nom
+駅員	えきいん	employé de gare	nom
+むかしむかし	むかしむかし	il était une fois	expression
+桃	もも	pêche (le fruit)	nom
+桃太郎	ももたろう	Momotarō (le garçon né d'une pêche)	prénom
+若者	わかもの	jeune homme, jeunes gens	nom
+たち	たち	(après une personne) et les autres, pluriel	suffixe
+鬼が島	おにがしま	l'île des ogres	nom de lieu
+きびだんご	きびだんご	boulettes de millet	nom
+雉	きじ	faisan	nom
+宝物	たからもの	trésor	nom
+アニメ	あにめ	dessin animé japonais, animé	nom
+字幕	じまく	sous-titres	nom
+スマホ	すまほ	smartphone	nom
+アプリ	あぷり	application (sur un téléphone)	nom
+ない	ない	ne pas y avoir, ne pas avoir	adjectif en い
+わあ	わあ	waouh !	interjection
+満開	まんかい	en pleine floraison	nom
+おにぎり	おにぎり	boulette de riz	nom
+縁起	えんぎ	présage (縁起がいい : de bon augure)	nom
+パン屋	ぱんや	boulangerie	nom
+聞き取る	ききとる	saisir à l'oreille, comprendre (ce qu'on entend)	verbe en -u
+お客さん	おきゃくさん	client	nom
+日本人	にほんじん	Japonais, Japonaise	nom
+失礼します	しつれいします	au revoir (en partant, en raccrochant) ; pardon de vous déranger	expression
+蕎麦	そば	soba (nouilles de sarrasin)	nom
+海辺	うみべ	bord de mer, rivage	nom
+浦島太郎	うらしまたろう	Urashima Tarō	nom propre
+太郎	たろう	Tarō	prénom
+亀	かめ	tortue	nom
+数日	すうじつ	quelques jours	nom
+竜宮城	りゅうぐうじょう	le palais du Dragon (au fond de la mer)	nom de lieu
+乙姫	おとひめ	Otohime (la princesse du palais du Dragon)	prénom
+玉手箱	たまてばこ	coffret précieux (qu'il ne faut pas ouvrir)	nom
+地上	ちじょう	sur terre, la surface	nom
+つい	つい	sans le vouloir, malgré soi	adverbe
+薪	まき	bois de chauffage	nom
+罠	わな	piège	nom
+鶴	つる	grue (l'oiseau)	nom
+迷う	まよう	se perdre ; hésiter	verbe en -u
+一晩	ひとばん	une nuit	nom
+のぞく	のぞく	jeter un coup d'œil, épier	verbe en -u
+笠	かさ	chapeau de paille (en forme de cône)	nom
+年の暮れ	としのくれ	la fin de l'année	nom
+帰り道	かえりみち	le chemin du retour	nom
+地蔵	じぞう	jizō (statue bouddhique qui protège les voyageurs et les enfants)	nom
+足音	あしおと	bruit de pas	nom
+銭湯	せんとう	bain public	nom
+富士山	ふじさん	le mont Fuji	nom de lieu
+温まる	あたたまる	se réchauffer	verbe en -u
+代	だい	génération, époque (d'une personne)	nom
+ラーメン	らーめん	ramen (nouilles chinoises en bouillon)	nom
+豚	ぶた	porc, cochon	nom
+顔	かお	visage	nom
+ぶり	ぶり	(après une durée) pour la première fois depuis…	suffixe
+自動販売機	じどうはんばいき	distributeur automatique	nom
+一軒分	いっけんぶん	l'équivalent d'une maison, d'un foyer	nom
+ボナペティ	ぼなぺてぃ	« bon appétit » (en français)	expression
+もと	もと	à l'origine, autrefois	nom
+和歌山	わかやま	Wakayama (un département au sud d'Osaka)	nom de lieu
+貴志	きし	Kishi (une petite gare)	nom de lieu
+鉄道会社	てつどうがいしゃ	compagnie de chemin de fer	nom
+駅長	えきちょう	chef de gare	nom
+日本中	にほんじゅう	dans tout le Japon	nom
+先生方	せんせいがた	les professeurs (poli)	nom
+あっという間	あっというま	en un clin d'œil, en un rien de temps	expression
+二度と	にどと	(avec une négation) plus jamais	expression
+タマ	たま	Tama (le nom de la chatte)	nom propre
+お世話になりました	おせわになりました	merci pour tout ce que vous avez fait pour moi	expression
+武蔵	むさし	Musashi (une ancienne province, autour de Tokyo)	nom de lieu
+茂作	もさく	Mosaku	prénom
+巳之吉	みのきち	Minokichi	prénom
+木こり	きこり	bûcheron	nom
+年老いる	としおいる	vieillir, prendre de l'âge	verbe en -ru
+逃げ込む	にげこむ	se réfugier, s'enfuir dans	verbe en -u
+かがみ込む	かがみこむ	se pencher, s'accroupir (au-dessus de)	verbe en -u
+吹きかける	ふきかける	souffler sur	verbe en -ru
+凍りつく	こおりつく	geler sur place, se figer	verbe en -u
+見つめる	みつめる	fixer du regard, contempler	verbe en -ru
+お前	おまえ	toi (familier, voire rude)	pronom
+翌年	よくねん	l'année suivante	nom
+働き者	はたらきもの	travailleur, bosseur	nom
+好く	すく	aimer, apprécier (好かれる : être aimé)	verbe en -u
+針仕事	はりしごと	couture (à l'aiguille)	nom
+横顔	よこがお	profil (du visage)	nom
+言い残す	いいのこす	dire en partant, laisser comme dernières paroles	verbe en -u
+空き家	あきや	maison vide, inhabitée	nom
+高齢化	こうれいか	vieillissement (de la population)	nom
+実家	じっか	maison familiale, chez ses parents	nom
+傷む	いたむ	s'abîmer, se dégrader	verbe en -u
+放題	ほうだい	(après un radical) à volonté, sans limite	suffixe
+住みつく	すみつく	s'installer (pour de bon)	verbe en -u
+貸し出す	かしだす	prêter, louer	verbe en -u
+空き家バンク	あきやばんく	« banque des maisons vides » (location à bas prix)	nom
+民家	みんか	maison particulière, maison traditionnelle	nom
+作り変える	つくりかえる	transformer, refaire	verbe en -ru
+生き返る	いきかえる	revivre, reprendre vie	verbe en -u
+テレワーク	てれわーく	télétravail	nom
+在宅	ざいたく	à domicile	nom
+使い分ける	つかいわける	employer selon le cas, alterner	verbe en -ru
+ワーケーション	わーけーしょん	« workation » (travail en lieu de vacances)	nom
+和食	わしょく	cuisine japonaise (traditionnelle)	nom
+ユネスコ	ゆねすこ	UNESCO	nom propre
+無形文化遺産	むけいぶんかいさん	patrimoine culturel immatériel	nom
+寿司	すし	sushi	nom
+食	しょく	alimentation, nourriture (dans les mots savants)	nom
+食材	しょくざい	ingrédient, produit (pour cuisiner)	nom
+筍	たけのこ	pousse de bambou	nom
+松茸	まつたけ	matsutake (un champignon d'automne très recherché)	nom
+移り変わる	うつりかわる	changer au fil du temps	verbe en -u
+盛り付け	もりつけ	présentation (d'un plat)	nom
+だし	だし	dashi (bouillon japonais : algue, bonite)	nom
+うまみ	うまみ	saveur, umami	nom
+離れ	ばなれ	(après un nom) désintérêt pour, abandon de	suffixe
+ら抜き言葉	らぬきことば	« mots sans ra » (見れる pour 見られる)	nom
+明治	めいじ	Meiji (l'ère 1868-1912)	nom propre
+取りつく	とりつく	s'emparer de, obséder (取りつかれる : être pris par)	verbe en -u
+人手不足	ひとでぶそく	manque de main-d'œuvre	nom
+ロボット	ろぼっと	robot	nom
+一人前	いちにんまえ	adulte accompli, professionnel à part entière	nom
+後継者	こうけいしゃ	successeur, relève	nom
+お雪	おゆき	O-Yuki	prénom
+こうした	こうした	ce genre de, de tels	déterminant
+感染症	かんせんしょう	maladie infectieuse	nom
+満員電車	まんいんでんしゃ	train bondé	nom
+現代人	げんだいじん	les gens d'aujourd'hui	nom
+一人旅	ひとりたび	voyage en solitaire	nom
+介護ロボット	かいごろぼっと	robot d'assistance (pour les soins)	nom
+車いす	くるまいす	fauteuil roulant	nom
+何度も	なんども	maintes fois, à plusieurs reprises	expression
+必ずしも	かならずしも	(avec une négation) pas forcément	expression
+どうか	どうか	je vous en prie ; d'une manière ou d'une autre	expression
+一途	いっと	(〜の一途をたどる) ne cesser de, aller toujours dans le même sens	nom
+昨年	さくねん	l'an dernier (écrit)	nom
+最少	さいしょう	le plus petit nombre, minimum	nom
+流出	りゅうしゅつ	fuite, exode	nom
+歯止め	はどめ	frein, coup d'arrêt	nom
+統廃合	とうはいごう	fusion et suppression (d'écoles, de services)	nom
+余儀なく	よぎなく	sans autre choix (〜を余儀なくされる : être contraint de)	expression
+自治体	じちたい	collectivité locale, municipalité	nom
+山間	さんかん	région montagneuse, au creux des montagnes	nom
+近年	きんねん	ces dernières années	nom
+移り住む	うつりすむ	s'installer (ailleurs), déménager	verbe en -u
+後押し	あとおし	soutien, coup de pouce	nom
+移住者	いじゅうしゃ	nouvel arrivant, personne qui s'installe	nom
+突きつける	つきつける	mettre sous le nez, poser (une question) brutalement	verbe en -ru
+空間	くうかん	espace	nom
+落語家	らくごか	conteur de rakugo (art comique du récit)	nom
+取り方	とりかた	la manière de prendre, de ménager	nom
+芸	げい	art, talent (d'un artiste)	nom
+庭園	ていえん	jardin (paysager)	nom
+余白	よはく	espace vide, marge	nom
+際立つ	きわだつ	ressortir, se distinguer	verbe en -u
+欠かせない	かかせない	indispensable	expression
+絶え間	たえま	interruption (絶え間なく : sans cesse)	nom
+流れ込む	ながれこむ	affluer, se déverser	verbe en -u
+人々	ひとびと	les gens	nom
+委ねる	ゆだねる	confier, s'en remettre à	verbe en -ru
+明示	めいじ	indication explicite	nom
+訳者	やくしゃ	traducteur	nom
+訳文	やくぶん	texte traduit, traduction	nom
+放つ	はなつ	lancer, émettre (une lumière)	verbe en -u
+生み出す	うみだす	créer, faire naître	verbe en -u
+見知る	みしる	connaître (de vue) ; 見知らぬ : inconnu	verbe en -u
+ケニア	けにあ	le Kenya	nom de lieu
+活動家	かつどうか	militant	nom
+感銘	かんめい	impression profonde, émotion	nom
+合言葉	あいことば	mot d'ordre, devise	nom
+勿体	もったい	air important, valeur propre (dans もったいない)	nom
+まま	まま	tel quel, en l'état (〜まま : sans changer)	nom
+一粒	ひとつぶ	un grain	nom
+天地	てんち	le ciel et la terre	nom
+米粒	こめつぶ	grain de riz	nom
+諭す	さとす	faire comprendre, raisonner (quelqu'un)	verbe en -u
+祖父母	そふぼ	grands-parents	nom
+ゆえ	ゆえ	raison, cause (〜ゆえに : à cause de, écrit)	nom
+買い替える	かいかえる	remplacer (en rachetant)	verbe en -ru
+同じく	おなじく	de même, pareillement	adverbe
+古めかしい	ふるめかしい	vieillot, désuet	adjectif en い
+青森	あおもり	Aomori (département du nord)	nom de lieu
+鹿児島	かごしま	Kagoshima (département du sud)	nom de lieu
+罰	ばつ	punition	nom
+消滅	しょうめつ	disparition, extinction	nom
+宿す	やどす	abriter, porter en soi	verbe en -u
+手渡す	てわたす	remettre en main propre, transmettre	verbe en -u
+西瓜	すいか	pastèque	nom
+頬張る	ほおばる	mordre à pleine bouche	verbe en -u
+蝉	せみ	cigale	nom
+苔むす	こけむす	se couvrir de mousse	verbe en -u
+取り壊す	とりこわす	démolir	verbe en -u
+跡地	あとち	terrain où il y avait autrefois (un bâtiment)	nom
+変哲	へんてつ	(何の変哲もない) ordinaire, sans rien de particulier	nom
+色褪せる	いろあせる	se faner, pâlir	verbe en -ru
+育て直す	そだてなおす	faire repousser, cultiver de nouveau	verbe en -u
+樹齢	じゅれい	âge (d'un arbre)	nom
+欠かす	かかす	manquer, omettre	verbe en -u
+見上げる	みあげる	lever les yeux vers	verbe en -ru
+切り倒す	きりたおす	abattre (un arbre)	verbe en -u
+持ち上がる	もちあがる	être soulevé ; (une question) surgir	verbe en -u
+駆けつける	かけつける	accourir	verbe en -ru
+奔走	ほんそう	démarches, efforts (pour obtenir quelque chose)	nom
+夫婦桜	めおとざくら	« le cerisier des époux »	nom
+AI	えーあい	IA, intelligence artificielle	nom
+専門家	せんもんか	spécialiste, expert	nom
+創作者	そうさくしゃ	créateur, créatrice	nom
+それら	それら	ceux-là, ces choses	pronom
+根強い	ねづよい	tenace, profondément enraciné	adjectif en い
+先人	せんじん	prédécesseurs, anciens	nom
+反論	はんろん	objection, réplique	nom
+看過	かんか	fermer les yeux sur, laisser passer	nom
+枚挙	まいきょ	(枚挙にいとまがない) innombrables	nom

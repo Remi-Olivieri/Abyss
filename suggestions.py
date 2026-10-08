@@ -50,20 +50,22 @@ SECTIONS = {
     # Pas encore de section dans le fichier : la premiere suggestion la cree
     # a la fin (voir ajoute_au_fichier), donc apres le quiz -- d'ou sa place.
     "chainz": "L'Atelier Chainz",
+    # meme chose : sa section nait avec sa premiere suggestion
+    "nihongo": "Nihongo",
 }
 
 # Les projets qu'on ne propose qu'a l'administration : un projet pas encore
 # ouvert ne doit pas se faire annoncer ici par la liste des suggestions
 # alors que sa tuile, elle, ne s'affiche pas.
 #
-# Vide aujourd'hui, et c'est voulu. Le quiz y figurait tant que ses jeux
-# n'etaient pas finis ; ils le sont, sa tuile est visible de tous et ses
-# routes repondent aux visiteurs (voir quiz.py). L'y laisser revenait a
-# refuser un rapport de bug sur la seule page ou l'on peut en trouver.
+# Le quiz y a figure tant que ses jeux n'etaient pas finis ; il en est
+# sorti le jour ou sa tuile est devenue visible de tous -- l'y laisser
+# revenait a refuser un rapport de bug sur la seule page ou l'on peut en
+# trouver. Nihongo y entre pour la meme raison a l'envers : il est en
+# chantier, sa tuile ne s'affiche que pour l'administration.
 #
-# Le mecanisme reste : le prochain projet en chantier s'ajoute ici, et
 # static/commun/suggestion.js porte la meme liste sous le nom `reserve`.
-RESERVEES = ()
+RESERVEES = ("nihongo",)
 
 GENRES = ("suggestion", "bug")
 

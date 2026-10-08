@@ -1,0 +1,276 @@
+# Nihongo - les textes a lire du N2. Le format est decrit en tete de
+# matiere/lecture-n5.txt.
+
+=== yuki-onna
+titre: {雪女|ゆきおんな}
+fr: La femme des neiges
+genre: conte
+intro: Un conte de la région de Musashi, que Lafcadio Hearn a fait connaître au monde entier. Une promesse, une tempête, un secret.
+
+{昔|むかし}、{武蔵|むさし}の{国|くに}のある{村|むら}に、{茂作|もさく}と{巳之吉|みのきち}という{二人|ふたり}の{木|き}こりが{住|す}んでいた。 | Autrefois, dans un village de la province de Musashi, vivaient deux bûcherons, Mosaku et Minokichi.
+{茂作|もさく}はすでに{年老|としお}いていたが、{巳之吉|みのきち}はまだ{十八|じゅうはち}の{若者|わかもの}だった。 | Mosaku était déjà vieux, tandis que Minokichi n'était qu'un jeune homme de dix-huit ans.
+ある{冬|ふゆ}の{日|ひ}、{二人|ふたり}は{山|やま}からの{帰|かえ}り{道|みち}で{激|はげ}しい{吹雪|ふぶき}に{遭|あ}い、{川|かわ}のそばの{小屋|こや}に{逃|に}げ{込|こ}んだ。 | Un jour d'hiver, en rentrant de la montagne, ils furent pris dans une violente tempête de neige et se réfugièrent dans une cabane au bord de la rivière.
+
+{夜中|よなか}、{巳之吉|みのきち}は{顔|かお}に{冷|つめ}たいものを{感|かん}じて{目|め}を{覚|さ}ました。 | Au milieu de la nuit, Minokichi se réveilla en sentant quelque chose de froid sur son visage.
+{見|み}ると、{白|しろ}い{着物|きもの}を{着|き}た{美|うつく}しい{女|おんな}が、{茂作|もさく}の{上|うえ}にかがみ{込|こ}んでいた。 | Il vit une femme d'une grande beauté, vêtue d'un kimono blanc, penchée au-dessus de Mosaku.
+{女|おんな}が{白|しろ}い{息|いき}を{吹|ふ}きかけたかと{思|おも}うと、{茂作|もさく}はたちまち{凍|こお}りついてしまった。 | À peine la femme eut-elle soufflé sur lui son haleine blanche que Mosaku fut gelé sur place. | ka-to-omou-to
+{女|おんな}は{巳之吉|みのきち}のほうを{向|む}き、しばらく{彼|かれ}を{見|み}つめていた。 | La femme se tourna vers Minokichi et le regarda longuement.
+「お{前|まえ}はまだ{若|わか}いから、{助|たす}けてやろう。だが、{今夜|こんや}のことを{誰|だれ}かに{話|はな}したら、その{時|とき}はお{前|まえ}の{命|いのち}をもらう。」 | « Tu es encore jeune, je vais t'épargner. Mais si tu parles de cette nuit à qui que ce soit, ce jour-là, je prendrai ta vie. »
+
+{翌年|よくねん}の{冬|ふゆ}、{巳之吉|みのきち}はお{雪|ゆき}という{娘|むすめ}と{出会|であ}い、やがて{二人|ふたり}は{夫婦|ふうふ}になった。 | L'hiver suivant, Minokichi rencontra une jeune fille nommée O-Yuki, et ils devinrent bientôt mari et femme.
+お{雪|ゆき}は{働|はたら}き{者|もの}であるばかりか、{誰|だれ}に{対|たい}しても{優|やさ}しく、{村|むら}の{人|ひと}たちにも{好|す}かれた。 | O-Yuki était non seulement travailleuse, mais douce avec tout le monde, et les gens du village l'aimaient. | bakari-ka
+{十人|じゅうにん}の{子|こ}どもが{生|う}まれても、お{雪|ゆき}は{不思議|ふしぎ}なことに{少|すこ}しも{年|とし}を{取|と}らなかった。 | Même après la naissance de dix enfants, chose étrange, O-Yuki ne vieillissait pas du tout. | koto-ni
+ある{冬|ふゆ}の{夜|よる}、{巳之吉|みのきち}は{針仕事|はりしごと}をする{妻|つま}の{横顔|よこがお}を{見|み}ているうちに、あの{夜|よる}のことを{話|はな}さずにはいられなくなった。 | Un soir d'hiver, en regardant le profil de sa femme qui cousait, Minokichi ne put s'empêcher de raconter cette nuit-là. | zu-ni-wa-irarenai,uchi-ni
+「お{前|まえ}を{見|み}ていると、{昔|むかし}{会|あ}った{雪|ゆき}のように{白|しろ}い{女|おんな}を{思|おも}い{出|だ}すんだ。」 | « Quand je te regarde, je repense à une femme blanche comme la neige que j'ai rencontrée autrefois. »
+
+{話|はなし}を{聞|き}き{終|お}えると、お{雪|ゆき}は{静|しず}かに{立|た}ち{上|あ}がった。 | Quand il eut fini son récit, O-Yuki se leva sans bruit.
+「それは{私|わたし}です。{話|はな}せば{命|いのち}をもらうと{言|い}ったはずです。」 | « C'était moi. Je t'avais dit que si tu en parlais, je prendrais ta vie. »
+「けれども、ここに{眠|ねむ}っている{子|こ}どもたちのことを{思|おも}うと、あなたを{殺|ころ}すわけにはいきません。」 | « Mais quand je pense aux enfants qui dorment ici, je ne peux pas te tuer. » | wake-ni-wa-ikanai
+「どうか{子|こ}どもたちを{大切|たいせつ}に{育|そだ}ててください。」 | « Je t'en prie, élève bien nos enfants. »
+そう{言|い}い{残|のこ}すと、お{雪|ゆき}は{白|しろ}い{霧|きり}となって{消|き}え、{二度|にど}と{戻|もど}らなかった。 | Sur ces mots, O-Yuki se changea en une brume blanche et disparut, pour ne jamais revenir.
+
+? Que se passe-t-il pour Mosaku dans la cabane ?
++ La femme des neiges le gèle de son souffle
+- Il s'enfuit dans la tempête
+- Il sauve Minokichi
+? Qu'a de mystérieux O-Yuki ?
+- Elle ne parle jamais
++ Elle ne vieillit pas, même après dix enfants
+- Elle disparaît chaque hiver
+? Pourquoi O-Yuki épargne-t-elle Minokichi à la fin ?
+- Elle a oublié sa promesse
++ À cause de leurs enfants
+- Parce qu'il s'excuse
+
+=== akiya
+titre: {増|ふ}え{続|つづ}ける{空|あ}き{家|や}
+fr: Toujours plus de maisons vides
+genre: article
+intro: Un article de société sur les maisons abandonnées, un problème qui touche tout le Japon.
+
+{日本|にほん}では、{住|す}む{人|ひと}のいない{家|いえ}、いわゆる「{空|あ}き{家|や}」が{増|ふ}え{続|つづ}けている。 | Au Japon, les logements que personne n'habite, les « akiya », ne cessent d'augmenter.
+{国|くに}の{調査|ちょうさ}によると、その{数|かず}は{全国|ぜんこく}で{約|やく}{九百万戸|きゅうひゃくまんこ}にのぼり、{住宅|じゅうたく}の{七軒|ななけん}に{一軒|いっけん}が{空|あ}き{家|や}だという。 | D'après une enquête nationale, leur nombre atteint environ neuf millions dans tout le pays : un logement sur sept est vide.
+{背景|はいけい}にあるのは、{人口|じんこう}の{減少|げんしょう}と{高齢化|こうれいか}だ。 | En toile de fond, il y a la baisse de la population et son vieillissement.
+{地方|ちほう}では、{若者|わかもの}が{仕事|しごと}を{求|もと}めて{都市|とし}へ{出|で}ていくのに{伴|ともな}って、{空|あ}き{家|や}は{増|ふ}える{一方|いっぽう}だ。 | En province, à mesure que les jeunes partent en ville chercher du travail, les maisons vides ne font qu'augmenter. | ippou-da
+
+{親|おや}が{亡|な}くなったあと、{実家|じっか}を{相続|そうぞく}したものの、{遠|とお}くに{住|す}んでいて{管理|かんり}できないという{人|ひと}も{少|すく}なくない。 | Nombreux sont ceux qui, après la mort de leurs parents, ont hérité de la maison familiale mais ne peuvent pas l'entretenir parce qu'ils vivent loin. | mono-no
+{手入|てい}れをされない{家|いえ}は{傷|いた}みが{早|はや}く、{放|ほう}っておくと{倒|たお}れるおそれがある。 | Une maison qu'on n'entretient pas se dégrade vite et, si on la laisse à l'abandon, elle risque de s'effondrer. | osore-ga-aru
+{加|くわ}えて、{庭|にわ}の{草|くさ}が{伸|の}び{放題|ほうだい}になったり、{動物|どうぶつ}が{住|す}みついたりすることもあり、{近所|きんじょ}の{住民|じゅうみん}にとっては{深刻|しんこく}な{問題|もんだい}だ。 | De plus, les herbes du jardin poussent à leur guise et des animaux s'y installent, ce qui est un grave problème pour les voisins.
+
+こうした{状況|じょうきょう}を{受|う}けて、{各地|かくち}で{新|あたら}しい{取|と}り{組|く}みが{始|はじ}まっている。 | Face à cette situation, de nouvelles initiatives voient le jour un peu partout.
+{空|あ}き{家|や}を{安|やす}く{貸|か}し{出|だ}す「{空|あ}き{家|や}バンク」もその{一|ひと}つだ。 | La « banque des maisons vides », qui loue ces logements à bas prix, en est un exemple.
+{古|ふる}い{民家|みんか}をカフェや{宿|やど}に{作|つく}り{変|か}える{若者|わかもの}も{増|ふ}えつつある。 | Les jeunes qui transforment de vieilles maisons en cafés ou en auberges sont de plus en plus nombreux. | tsutsu-aru
+{空|あ}き{家|や}をめぐる{問題|もんだい}は{簡単|かんたん}には{解決|かいけつ}しないだろうが、{町|まち}を{生|い}き{返|かえ}らせるきっかけにもなり{得|う}るのだ。 | Le problème des maisons vides ne se réglera sans doute pas facilement, mais il peut aussi être l'occasion de redonner vie aux villes. | eru
+
+? Quelle proportion des logements est vide au Japon ?
+- Un sur deux
++ Un sur sept
+- Un sur vingt
+? Pourquoi beaucoup d'héritiers n'entretiennent-ils pas la maison familiale ?
++ Ils vivent loin
+- Ils n'ont pas le droit
+- La maison a déjà été vendue
+? Quelle initiative l'article cite-t-il ?
+- La démolition de toutes les maisons vides
++ La « banque des maisons vides », qui les loue à bas prix
+- L'interdiction de quitter la campagne
+
+=== terewaaku
+titre: テレワークという{働|はたら}き{方|かた}
+fr: Le télétravail
+genre: article
+intro: Un article sur le travail à distance, qui a changé la vie de bureau au Japon en quelques années.
+
+{感染症|かんせんしょう}の{流行|りゅうこう}をきっかけに、{日本|にほん}でもテレワークが{一気|いっき}に{広|ひろ}まった。 | À la suite de l'épidémie, le télétravail s'est brusquement répandu au Japon aussi. | wo-kikkake-ni
+それまで、{日本|にほん}の{会社|かいしゃ}では、{毎日|まいにち}オフィスに{出|で}て、{顔|かお}を{合|あ}わせて{働|はたら}くのが{当|あ}たり{前|まえ}だった。 | Jusque-là, dans les entreprises japonaises, il allait de soi d'aller au bureau chaque jour et de travailler face à face.
+{満員電車|まんいんでんしゃ}での{長|なが}い{通勤|つうきん}に{苦|くる}しむ{人|ひと}も{多|おお}かった。 | Beaucoup souffraient de longs trajets dans des trains bondés.
+
+{在宅|ざいたく}で{働|はたら}くようになって、{通勤|つうきん}の{時間|じかん}が{減|へ}り、{家族|かぞく}と{過|す}ごす{時間|じかん}が{増|ふ}えたという{声|こえ}は{多|おお}い。 | Nombreux sont ceux qui disent qu'en travaillant chez eux, ils passent moins de temps dans les transports et plus de temps en famille.
+{仕事|しごと}の{内容|ないよう}に{応|おう}じて、{家|いえ}と{会社|かいしゃ}を{使|つか}い{分|わ}ける{人|ひと}もいる。 | Certains alternent entre la maison et le bureau selon la nature de leur travail.
+しかし、{誰|だれ}にとってもテレワークが{便利|べんり}だとは{限|かぎ}らない。 | Mais le télétravail n'est pas forcément pratique pour tout le monde. | to-wa-kagiranai
+{家|いえ}が{狭|せま}かったり、{小|ちい}さな{子|こ}どもがいたりすると、{仕事|しごと}に{集中|しゅうちゅう}するのは{難|むずか}しい。 | Quand le logement est petit, ou qu'il y a de jeunes enfants, il est difficile de se concentrer sur son travail.
+また、{同僚|どうりょう}と{気軽|きがる}に{話|はな}せないため、{孤独|こどく}を{感|かん}じるという{人|ひと}もいる。 | D'autres disent se sentir seuls, faute de pouvoir parler librement avec leurs collègues.
+
+{最近|さいきん}は、{再|ふたた}び{出社|しゅっしゃ}を{求|もと}める{会社|かいしゃ}も{増|ふ}えつつある。 | Ces derniers temps, de plus en plus d'entreprises demandent à nouveau à leurs employés de revenir au bureau. | tsutsu-aru
+{一方|いっぽう}で、{家|いえ}でも{会社|かいしゃ}でもない{場所|ばしょ}、たとえば{地方|ちほう}の{温泉地|おんせんち}などで{働|はたら}く「ワーケーション」に{注目|ちゅうもく}する{人|ひと}もいる。 | En revanche, d'autres s'intéressent à la « workation » : travailler ailleurs qu'à la maison ou au bureau, par exemple dans une ville thermale de province. | ippou-de
+どこで{働|はたら}くかよりも、どう{働|はたら}くかが{問|と}われる{時代|じだい}になったと{言|い}えるだろう。 | On peut dire que nous sommes entrés dans une époque où compte moins le lieu où l'on travaille que la manière dont on travaille.
+
+? Qu'est-ce qui a déclenché la diffusion du télétravail au Japon ?
++ L'épidémie
+- Une nouvelle loi
+- La hausse du prix des trains
+? Quel inconvénient l'article mentionne-t-il ?
+- Le salaire baisse
++ Certains se sentent seuls, sans leurs collègues
+- Les réunions sont plus longues
+? Qu'est-ce que la « workation » ?
+- Des vacances sans travail
+- Le retour obligatoire au bureau
++ Travailler dans un autre lieu, par exemple une ville thermale
+
+=== washoku
+titre: {和食|わしょく}の{心|こころ}
+fr: L'esprit de la cuisine japonaise
+genre: article
+intro: En 2013, la cuisine traditionnelle japonaise est entrée au patrimoine immatériel de l'UNESCO. Qu'est-ce qui a été reconnu, au juste ?
+
+{二千十三年|にせんじゅうさんねん}、「{和食|わしょく}」はユネスコの{無形文化遺産|むけいぶんかいさん}に{登録|とうろく}された。 | En 2013, le « washoku » a été inscrit au patrimoine culturel immatériel de l'UNESCO.
+{意外|いがい}なことに、{登録|とうろく}されたのは{寿司|すし}や{天|てん}ぷらといった{料理|りょうり}そのものではない。 | Chose surprenante, ce qui a été inscrit, ce ne sont pas les plats eux-mêmes, comme les sushis ou les tempuras. | koto-ni
+{自然|しぜん}を{大切|たいせつ}にする{日本人|にほんじん}の{食|しょく}の{習慣|しゅうかん}が、{一|ひと}つの{文化|ぶんか}として{認|みと}められたのである。 | Ce sont les habitudes alimentaires des Japonais, respectueuses de la nature, qui ont été reconnues comme une culture à part entière.
+
+{和食|わしょく}の{特徴|とくちょう}の{一|ひと}つは、{季節|きせつ}の{食材|しょくざい}を{生|い}かすことだ。 | L'une des particularités du washoku est de mettre en valeur les produits de saison.
+{春|はる}には{筍|たけのこ}、{秋|あき}には{松茸|まつたけ}というように、{料理|りょうり}は{季節|きせつ}とともに{移|うつ}り{変|か}わる。 | Pousses de bambou au printemps, champignons matsutake à l'automne : les plats changent au fil des saisons.
+{器|うつわ}や{盛|も}り{付|つ}けに{至|いた}るまで、{季節|きせつ}を{感|かん}じさせる{工夫|くふう}がされている。 | Jusqu'à la vaisselle et la présentation, tout est pensé pour faire sentir la saison.
+また、だしのうまみを{生|い}かすことで、{油|あぶら}をあまり{使|つか}わずに{済|す}む。 | De plus, en tirant parti du goût du bouillon dashi, on peut se passer de beaucoup de matière grasse.
+そのため、{和食|わしょく}は{健康|けんこう}にいい{食事|しょくじ}としても{知|し}られている。 | C'est pourquoi le washoku est aussi connu comme une alimentation bonne pour la santé.
+
+ところが、{肝心|かんじん}の{日本|にほん}では、{和食|わしょく}{離|ばな}れが{進|すす}んでいる。 | Or, au Japon même, on se détourne de plus en plus du washoku.
+{忙|いそが}しい{現代人|げんだいじん}にとって、だしから{料理|りょうり}を{作|つく}るのは{手間|てま}がかかりすぎるからだ。 | Car pour les gens d'aujourd'hui, très occupés, cuisiner à partir du bouillon prend trop de temps.
+{和食|わしょく}を{守|まも}るためには、{料理|りょうり}のみならず、{家族|かぞく}で{食卓|しょくたく}を{囲|かこ}む{時間|じかん}そのものを{大切|たいせつ}にする{必要|ひつよう}があるのかもしれない。 | Pour préserver le washoku, il faudrait peut-être prendre soin non seulement des plats, mais aussi du moment même où la famille se retrouve autour de la table. | nomi-narazu
+
+? Qu'est-ce que l'UNESCO a reconnu exactement ?
+- Les sushis et les tempuras
++ Les habitudes alimentaires des Japonais, liées à la nature
+- Les grands restaurants de Kyoto
+? Quelle est l'une des particularités du washoku ?
++ Mettre en valeur les produits de saison
+- Utiliser beaucoup d'huile
+- Servir tous les plats en même temps
+? Pourquoi le washoku recule-t-il au Japon ?
+- Il coûte trop cher
+- Les jeunes n'aiment pas le poisson
++ Cuisiner à partir du dashi prend trop de temps
+
+=== kotoba-no-midare
+titre: 「{言葉|ことば}の{乱|みだ}れ」は{本当|ほんとう}に{乱|みだ}れか
+fr: Une langue qui se « dégrade » ?
+genre: essai
+intro: Un essai sur les nouvelles façons de parler des jeunes, et sur ceux qui s'en inquiètent.
+
+「{最近|さいきん}の{若者|わかもの}の{日本語|にほんご}は{乱|みだ}れている」という{声|こえ}をよく{耳|みみ}にする。 | On entend souvent dire que « le japonais des jeunes d'aujourd'hui se dégrade ».
+たとえば、「{見|み}られる」を「{見|み}れる」と{言|い}う「ら{抜|ぬ}き{言葉|ことば}」は、その{代表的|だいひょうてき}な{例|れい}だ。 | Par exemple, les « mots sans ra », qui disent « mireru » au lieu de « mirareru », en sont un exemple typique.
+また、「{全然|ぜんぜん}いい」のように、{本来|ほんらい}は{否定|ひてい}の{言葉|ことば}と{使|つか}う「{全然|ぜんぜん}」を{肯定|こうてい}の{意味|いみ}で{使|つか}う{人|ひと}も{多|おお}い。 | Beaucoup emploient aussi « zenzen », qui va normalement avec une négation, dans un sens positif, comme dans « zenzen ii ».
+
+しかし、{言葉|ことば}が{変|か}わったからといって、{必|かなら}ずしもそれが{乱|みだ}れだとは{言|い}えない。 | Pourtant, ce n'est pas parce que la langue change que c'est forcément une dégradation. | kara-to-itte
+{言葉|ことば}は{生|い}き{物|もの}であり、{時代|じだい}とともに{変|か}わっていくのは{自然|しぜん}なことだ。 | La langue est un être vivant, et il est naturel qu'elle change avec les époques.
+{実|じつ}は、「{全然|ぜんぜん}」を{肯定|こうてい}の{意味|いみ}で{使|つか}う{例|れい}は、{明治時代|めいじじだい}の{小説|しょうせつ}にも{見|み}られる。 | En réalité, on trouve déjà « zenzen » au sens positif dans des romans de l'ère Meiji.
+つまり、「{正|ただ}しい{日本語|にほんご}」と{思|おも}われているものも、ある{時代|じだい}の{習慣|しゅうかん}にすぎないのだ。 | Autrement dit, ce qu'on croit être le « bon japonais » n'est que l'usage d'une certaine époque. | ni-suginai
+
+とはいえ、{言葉|ことば}の{変化|へんか}を{何|なん}でも{認|みと}めればいいというわけではない。 | Cela dit, il ne s'agit pas pour autant d'accepter n'importe quel changement. | to-wa-ie,wake-dewa-nai
+{就職|しゅうしょく}の{面接|めんせつ}や{改|あらた}まった{場|ば}では、{今|いま}でも{伝統的|でんとうてき}な{言葉遣|ことばづか}いが{求|もと}められる。 | Lors d'un entretien d'embauche ou dans une situation formelle, on attend encore aujourd'hui une façon de parler traditionnelle.
+{相手|あいて}や{場面|ばめん}に{応|おう}じて{言葉|ことば}を{使|つか}い{分|わ}けることこそ、{本当|ほんとう}の{言葉|ことば}の{力|ちから}なのではないだろうか。 | Savoir adapter ses mots selon l'interlocuteur et la situation, n'est-ce pas cela, la véritable maîtrise de la langue ? | koso
+
+? Qu'appelle-t-on les « mots sans ra » ?
++ Dire « mireru » au lieu de « mirareru »
+- Oublier les particules
+- Parler sans politesse
+? Que montre l'exemple des romans de l'ère Meiji ?
+- Que la langue ne change jamais
++ Que l'usage positif de « zenzen » n'est pas nouveau
+- Que les jeunes lisent peu
+? Quelle est, selon l'auteur, la vraie maîtrise de la langue ?
+- Parler toujours de façon traditionnelle
+- Inventer de nouveaux mots
++ Adapter ses mots à l'interlocuteur et à la situation
+
+=== hitori-tabi
+titre: {一人旅|ひとりたび}のすすめ
+fr: Éloge du voyage en solitaire
+genre: essai
+intro: Une voyageuse explique pourquoi elle aime partir seule, avec un petit sac et sans programme.
+
+{旅|たび}は{誰|だれ}かと{一緒|いっしょ}に{行|い}くに{限|かぎ}る、と{思|おも}っている{人|ひと}は{多|おお}いだろう。 | Beaucoup pensent sans doute que rien ne vaut un voyage à plusieurs. | ni-kagiru
+{私|わたし}も{以前|いぜん}はそう{考|かんが}えていた。 | Moi aussi, je le pensais autrefois.
+ところが、{仕事|しごと}の{出張|しゅっちょう}のついでに、{一日|いちにち}だけ{一人|ひとり}で{京都|きょうと}を{歩|ある}いたことがある。 | Mais un jour, profitant d'un déplacement professionnel, j'ai passé une seule journée à me promener seule dans Kyoto. | tsuide-ni
+それをきっかけに、{私|わたし}は{一人旅|ひとりたび}の{魅力|みりょく}に{取|と}りつかれてしまった。 | Depuis, je suis tombée sous le charme du voyage en solitaire. | wo-kikkake-ni
+
+{一人|ひとり}だからこそ、{気|き}が{向|む}いた{道|みち}に{入|はい}り、{好|す}きなだけ{同|おな}じ{場所|ばしょ}にいられる。 | C'est justement parce qu'on est seul qu'on peut prendre la rue qui nous tente et rester aussi longtemps qu'on veut au même endroit. | kara-koso
+{誰|だれ}かに{合|あ}わせる{必要|ひつよう}もなければ、{予定|よてい}を{立|た}てる{必要|ひつよう}もない。 | On n'a besoin ni de s'accorder à quelqu'un, ni de faire de programme.
+また、{一人|ひとり}でいると、{不思議|ふしぎ}と{土地|とち}の{人|ひと}に{声|こえ}をかけられることが{多|おお}い。 | Et puis, curieusement, quand on est seul, les gens du coin nous adressent souvent la parole.
+{小|ちい}さな{食堂|しょくどう}で{隣|となり}に{座|すわ}ったおばあさんが、{地元|じもと}の{人|ひと}しか{知|し}らない{神社|じんじゃ}を{教|おし}えてくれたこともある。 | Une fois, dans un petit restaurant, la vieille dame assise à côté de moi m'a indiqué un sanctuaire que seuls les gens du coin connaissent.
+
+もちろん、{不便|ふべん}なこともないわけではない。 | Bien sûr, ce n'est pas sans inconvénients. | wake-dewa-nai
+{食事|しょくじ}を{一人|ひとり}でするのは{少|すこ}し{寂|さび}しいし、{病気|びょうき}になったときは{心細|こころぼそ}い。 | Manger seul est un peu triste, et quand on tombe malade, on se sent démuni.
+それでも、{帰|かえ}りの{電車|でんしゃ}の{中|なか}で、{旅|たび}で{出会|であ}った{風景|ふうけい}や{人|ひと}を{思|おも}い{出|だ}すたびに、また{出|で}かけたくなるのだ。 | Et pourtant, dans le train du retour, chaque fois que je repense aux paysages et aux gens rencontrés en route, j'ai envie de repartir. | tabi-ni
+{一度|いちど}も{一人|ひとり}で{旅|たび}をしたことがない{人|ひと}こそ、ぜひ{一度|いちど}{試|ため}してみてほしい。 | Que ceux qui n'ont jamais voyagé seuls essaient, au moins une fois. | koso,te-hoshii
+
+? Comment l'autrice a-t-elle découvert le voyage en solitaire ?
++ En marchant seule une journée à Kyoto, lors d'un déplacement professionnel
+- Pendant un voyage de classe
+- Après une dispute avec une amie
+? Que se passe-t-il souvent quand on voyage seul, selon elle ?
+- On se perd
++ Les gens du coin nous adressent la parole
+- On dépense plus d'argent
+? Quel inconvénient reconnaît-elle ?
+- Les hôtels refusent les voyageurs seuls
++ Manger seul est un peu triste
+- On ne peut pas prendre le train
+
+=== kaigo-robotto
+titre: {介護|かいご}ロボットは{人|ひと}を{幸|しあわ}せにするか
+fr: Les robots d'assistance rendront-ils heureux ?
+genre: article
+intro: Le Japon vieillit, et les aides-soignants manquent. Des robots arrivent dans les maisons de retraite.
+
+{日本|にほん}は{世界|せかい}でも{例|れい}のない{速|はや}さで{高齢化|こうれいか}が{進|すす}んでいる。 | Le Japon vieillit à une vitesse sans précédent dans le monde.
+それに{伴|ともな}い、お{年寄|としよ}りの{世話|せわ}をする{介護|かいご}の{仕事|しごと}は、{深刻|しんこく}な{人手不足|ひとでぶそく}に{悩|なや}まされている。 | En conséquence, le métier d'aide-soignant, qui s'occupe des personnes âgées, souffre d'un grave manque de personnel.
+そこで{期待|きたい}されているのが、{介護|かいご}ロボットだ。 | C'est là qu'on attend beaucoup des robots d'assistance.
+
+{介護|かいご}ロボットといっても、その{種類|しゅるい}はさまざまである。 | Les robots d'assistance sont de toutes sortes.
+ベッドから{車|くるま}いすへの{移動|いどう}を{手伝|てつだ}うものに{限|かぎ}らず、{話|はな}し{相手|あいて}になるものまで{開発|かいはつ}されている。 | On en développe non seulement pour aider à passer du lit au fauteuil roulant, mais aussi pour tenir compagnie et faire la conversation. | ni-kagirazu
+{重|おも}い{物|もの}を{持|も}ち{上|あ}げる{作業|さぎょう}は、{職員|しょくいん}の{腰|こし}を{痛|いた}める{原因|げんいん}になりかねない。 | Soulever des charges lourdes risque d'abîmer le dos du personnel. | kanenai
+ロボットがその{負担|ふたん}を{減|へ}らしてくれれば、{職員|しょくいん}はお{年寄|としよ}りと{話|はな}す{時間|じかん}を{増|ふ}やすことができる。 | Si les robots allègent ce fardeau, le personnel pourra passer plus de temps à parler avec les personnes âgées.
+
+ただし、{導入|どうにゅう}にあたっては、いくつかの{課題|かだい}がある。 | Leur introduction pose toutefois plusieurs problèmes. | ni-atatte
+まず、{価格|かかく}が{高|たか}く、{小|ちい}さな{施設|しせつ}にはなかなか{手|て}が{出|だ}せない。 | D'abord, leur prix est élevé, et les petits établissements peuvent difficilement se les offrir.
+また、「{機械|きかい}に{世話|せわ}をされるのは{寂|さび}しい」と{感|かん}じるお{年寄|としよ}りもいる。 | Ensuite, certaines personnes âgées trouvent triste d'être prises en charge par une machine.
+ロボットはあくまでも{人|ひと}を{助|たす}ける{道具|どうぐ}にすぎない。 | Les robots ne sont, après tout, que des outils pour aider les humains. | ni-suginai
+{技術|ぎじゅつ}の{進歩|しんぽ}とともに、{人|ひと}にしかできないことは{何|なに}かを{考|かんが}えずにはいられない。 | À mesure que la technique progresse, on ne peut s'empêcher de se demander ce que seul un humain peut faire. | zu-ni-wa-irarenai
+
+? Pourquoi attend-on beaucoup des robots d'assistance ?
++ Il manque gravement de personnel dans les soins
+- Les personnes âgées les demandent
+- Ils sont moins chers que les humains
+? À quoi servent-ils, selon l'article ?
+- Seulement à nettoyer les chambres
++ À déplacer les personnes, et aussi à leur tenir compagnie
+- À remplacer les médecins
+? Quel problème l'article soulève-t-il ?
+- Les robots tombent souvent en panne
++ Leur prix est élevé pour les petits établissements
+- Ils sont interdits par la loi
+
+=== shokunin
+titre: {職人|しょくにん}に{聞|き}く
+fr: Paroles d'artisan
+genre: entretien
+intro: Un journaliste interroge un artisan de Kyoto qui fabrique des éventails depuis cinquante ans.
+
+――この{仕事|しごと}を{始|はじ}めたきっかけは{何|なん}ですか。 | — Qu'est-ce qui vous a amené à ce métier ?
+{父|ちち}が{扇子|せんす}の{職人|しょくにん}だったんです。{子|こ}どものころから、{父|ちち}の{手元|てもと}を{見|み}て{育|そだ}ちました。 | Mon père était artisan éventailliste. Depuis tout petit, j'ai grandi en regardant ses mains travailler.
+{自分|じぶん}もやると{決|き}めた{以上|いじょう}は、{一人前|いちにんまえ}になるまでやめないと{心|こころ}に{誓|ちか}いました。 | Une fois décidé à le faire moi aussi, je me suis juré de ne pas arrêter avant d'être un vrai professionnel. | ijou-wa
+――{一人前|いちにんまえ}になるまで、どのくらいかかりましたか。 | — Combien de temps vous a-t-il fallu pour cela ?
+{十年|じゅうねん}はかかりましたね。{骨|ほね}を{削|けず}る{作業|さぎょう}だけで{三年|さんねん}です。 | Au moins dix ans. Rien que pour tailler les baguettes, trois ans.
+{何度|なんど}も{失敗|しっぱい}を{重|かさ}ねてからでないと、{手|て}が{覚|おぼ}えてくれないんです。 | Tant qu'on n'a pas échoué encore et encore, la main ne retient pas. | te-kara-de-nai-to
+
+――{仕事|しごと}をする{上|うえ}で、いちばん{大切|たいせつ}にしていることは{何|なん}ですか。 | — Qu'est-ce qui compte le plus pour vous dans votre travail ? | ue-de
+{使|つか}う{人|ひと}のことを{考|かんが}えることでしょうか。 | Peut-être penser à ceux qui s'en serviront.
+{扇子|せんす}は{飾|かざ}るものではなく、{手|て}に{持|も}って{使|つか}うものですから。 | Un éventail n'est pas fait pour être exposé, mais pour être tenu en main et utilisé.
+{開|ひら}いたときの{音|おと}や{風|かぜ}の{感触|かんしょく}まで、{気|き}を{配|くば}らずにはいられません。 | Jusqu'au bruit qu'il fait en s'ouvrant et à la sensation de l'air, je ne peux m'empêcher d'y prêter attention. | zu-ni-wa-irarenai
+――{後継者|こうけいしゃ}の{問題|もんだい}についてはいかがですか。 | — Et la question de la relève ?
+{正直|しょうじき}に{言|い}って、{厳|きび}しいです。{若|わか}い{人|ひと}が{来|き}てくれても、{収入|しゅうにゅう}が{少|すく}ないので{続|つづ}けられない。 | Honnêtement, c'est difficile. Même quand des jeunes viennent, ils ne peuvent pas continuer, car on gagne peu.
+でも、{最近|さいきん}は{外国|がいこく}からの{注文|ちゅうもん}も{増|ふ}えてきました。{伝統|でんとう}は{守|まも}るだけでなく、{変|か}えていくものでもあるんですよ。 | Mais ces derniers temps, les commandes de l'étranger augmentent. La tradition, il ne suffit pas de la préserver : il faut aussi la faire évoluer. | dake-de-naku
+
+? Pourquoi l'artisan a-t-il choisi ce métier ?
++ Son père était artisan éventailliste
+- Il a vu une exposition
+- Un professeur le lui a conseillé
+? Combien de temps lui a-t-il fallu pour devenir un vrai professionnel ?
+- Trois ans
++ Au moins dix ans
+- Cinquante ans
+? Qu'est-ce qui compte le plus pour lui ?
+- Gagner beaucoup d'argent
+- Exposer ses éventails dans des musées
++ Penser à ceux qui s'en serviront

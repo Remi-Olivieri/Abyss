@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Abyss</title>
+<!-- le logo du site : voir static/commun/logo/ -->
+<link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
+<link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
@@ -27,7 +31,11 @@
   </div>
 
   <header class="entete">
-    <h1 class="titre">Abyss</h1>
+    <!-- le logo est décoratif : le titre à côté dit déjà « Abyss » -->
+    <div class="titre-ligne">
+      <img class="logo" src="/static/commun/logo/abyss-256.webp" alt="" width="256" height="256">
+      <h1 class="titre">Abyss</h1>
+    </div>
     <p class="sous-titre">Tous mes projets réunis au même endroit.</p>
   </header>
 
@@ -155,6 +163,8 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<!-- le battement de presence : voir static/commun/presence.js -->
+<script src="/static/commun/presence.js"></script>
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
      /api/moi - un defer arriverait peut-être trop tard. -->
@@ -219,6 +229,17 @@ const PROJETS = [
            visuel, pour qu'on la retrouve là où on la cherchait. */
         accent: "var(--plancton)",
         embleme: "question"
+    },
+    {
+        /* En chantier : la tuile ne s'affiche que pour l'administration
+           (voir visibles), et /api/nihongo répond 404 aux autres. */
+        id: "nihongo",
+        nom: "Nihongo",
+        texte: "Apprendre le japonais, un peu chaque jour.",
+        url: "/nihongo",
+        accent: "var(--corail)",
+        embleme: "torii",
+        admin: true
     }
 ];
 
@@ -236,7 +257,10 @@ const EMBLEMES = {
     <rect x="17" y="8" width="16" height="24" rx="2" transform="rotate(22 25 32)"/></svg>`,
   question: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
     <path d="M24 4 44 24 24 44 4 24z"/><path d="M19.5 19.5a4.5 4.5 0 1 1 5.6 4.4c-.9.3-1.3 1-1.3 1.9v1.4"/>
-    <circle cx="23.8" cy="33" r="1.3" fill="currentColor" stroke="none"/></svg>`
+    <circle cx="23.8" cy="33" r="1.3" fill="currentColor" stroke="none"/></svg>`,
+  torii: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 9.5c8 2.6 32 2.6 40 0l-1.6 5H5.6z"/><path d="M9 22h30"/>
+    <path d="M13.5 14.5V44M34.5 14.5V44M24 14.5V22"/></svg>`
 };
 
 const echappe = (s) => String(s).replace(/[&<>"']/g, (c) =>

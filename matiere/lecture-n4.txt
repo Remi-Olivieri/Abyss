@@ -1,0 +1,400 @@
+# Nihongo - les textes a lire du N4. Le format est decrit en tete de
+# matiere/lecture-n5.txt.
+
+=== kyouto-ryokou
+titre: {京都|きょうと}{旅行|りょこう}
+fr: Voyage à Kyoto
+genre: récit
+intro: En novembre, Léa et Sakura partent deux jours à Kyoto voir les feuilles d'automne.
+
+{十一月|じゅういちがつ}の{週末|しゅうまつ}、さくらさんと{京都|きょうと}へ{行|い}きました。 | Un week-end de novembre, je suis allée à Kyoto avec Sakura.
+{東京|とうきょう}から{新幹線|しんかんせん}で{二時間|にじかん}ぐらいかかりました。 | Depuis Tokyo, il a fallu environ deux heures en shinkansen.
+{京都|きょうと}は{古|ふる}いお{寺|てら}や{神社|じんじゃ}がたくさんある{町|まち}です。 | Kyoto est une ville où il y a beaucoup de vieux temples et de sanctuaires.
+{一日目|いちにちめ}は{有名|ゆうめい}なお{寺|てら}を{見|み}たり、{古|ふる}い{町|まち}を{歩|ある}いたりしました。 | Le premier jour, nous avons visité un temple célèbre, nous nous sommes promenées dans les vieilles rues.
+{山|やま}の{木|き}が{赤|あか}くなっていて、{本当|ほんとう}にきれいでした。 | Les arbres des collines étaient devenus rouges, c'était vraiment beau.
+
+{夜|よる}は{旅館|りょかん}に{泊|と}まりました。 | Le soir, nous avons dormi dans une auberge traditionnelle.
+{初|はじ}めて{着物|きもの}のような{服|ふく}を{着|き}てみました。 | Pour la première fois, j'ai essayé un vêtement qui ressemble à un kimono.
+{晩|ばん}ごはんは{小|ちい}さい{料理|りょうり}がたくさん{出|で}てきて、どれもおいしそうでした。 | Au dîner, on nous a servi beaucoup de petits plats, qui avaient tous l'air délicieux.
+{食|た}べ{方|かた}がわからなかったので、さくらさんに{教|おし}えてもらいました。 | Comme je ne savais pas comment les manger, Sakura m'a montré.
+
+{二日目|ふつかめ}は{朝|あさ}{早|はや}く{起|お}きて、{竹|たけ}の{林|はやし}へ{行|い}きました。 | Le deuxième jour, nous nous sommes levées tôt et sommes allées dans une forêt de bambous.
+まだ{人|ひと}が{少|すく}なくて、とても{静|しず}かでした。 | Il y avait encore peu de monde, c'était très calme.
+{風|かぜ}が{吹|ふ}くと、{竹|たけ}がさらさらと{鳴|な}ります。 | Quand le vent souffle, les bambous bruissent doucement.
+また{来|き}たいと{思|おも}います。{今度|こんど}は{春|はる}に{来|き}てみたいです。 | Je pense que j'aimerais revenir. La prochaine fois, je voudrais venir au printemps.
+
+? Comment sont-elles allées à Kyoto ?
+- En avion
++ En shinkansen
+- En voiture
+? Pourquoi Léa a-t-elle demandé de l'aide à Sakura au dîner ?
+- Elle n'aimait pas les plats
++ Elle ne savait pas comment les manger
+- Elle ne pouvait pas lire le menu
+? Pourquoi la forêt de bambous était-elle calme ?
++ Il y avait encore peu de monde, tôt le matin
+- Elle était fermée
+- Il pleuvait
+
+=== rea-no-nikki
+titre: レアの{日記|にっき}
+fr: Le journal de Léa
+genre: journal
+intro: Léa tient un journal en japonais. Dans un journal, on écrit au style neutre, sans です ni ます.
+
+{十二月|じゅうにがつ}{三日|みっか}、{水曜日|すいようび}、{晴|は}れ | Mercredi 3 décembre, beau temps.
+{今日|きょう}は{学校|がっこう}で{漢字|かんじ}のテストがあった。 | Aujourd'hui, il y avait un contrôle de kanjis à l'école.
+たくさん{勉強|べんきょう}したのに、{半分|はんぶん}しかできなかった。 | Alors que j'avais beaucoup révisé, je n'ai réussi que la moitié.
+{書|か}き{方|かた}を{忘|わす}れてしまった{漢字|かんじ}が{多|おお}かった。 | Il y avait beaucoup de kanjis dont j'avais oublié comment ils s'écrivent.
+{読|よ}むことはできるけど、{書|か}くのは{難|むずか}しい。 | Les lire, j'y arrive, mais les écrire, c'est difficile.
+{明日|あした}から{毎日|まいにち}{少|すこ}しずつ{練習|れんしゅう}しようと{思|おも}う。 | Je pense m'entraîner un peu chaque jour à partir de demain.
+
+{十二月|じゅうにがつ}{七日|なのか}、{日曜日|にちようび}、{雪|ゆき} | Dimanche 7 décembre, neige.
+{朝|あさ}{起|お}きたら、{外|そと}が{真|ま}っ{白|しろ}だった。 | Quand je me suis réveillée ce matin, dehors, tout était blanc.
+{東京|とうきょう}で{雪|ゆき}が{降|ふ}るのは{珍|めずら}しいらしい。 | Il paraît que c'est rare qu'il neige à Tokyo.
+さくらさんと{庭|にわ}で{雪|ゆき}だるまを{作|つく}った。 | J'ai fait un bonhomme de neige avec Sakura dans le jardin.
+{山田|やまだ}さんが{窓|まど}から{見|み}て、{笑|わら}っていた。 | Mme Yamada regardait par la fenêtre et riait.
+{夜|よる}は{三人|さんにん}で{鍋|なべ}を{食|た}べた。{体|からだ}が{温|あたた}かくなった。 | Le soir, nous avons mangé une fondue japonaise à trois. Ça m'a réchauffée.
+
+? Comment s'est passé le contrôle de kanjis ?
+- Très bien
++ Léa n'a réussi que la moitié
+- Il a été annulé
+? Que décide Léa ?
++ De s'entraîner un peu chaque jour
+- D'arrêter les kanjis
+- De prendre des cours particuliers
+? Qu'a-t-elle fait le dimanche ?
+- Elle est allée skier
++ Un bonhomme de neige avec Sakura
+- Elle est restée au lit
+
+=== byouin-de
+titre: {病院|びょういん}で
+fr: Chez le médecin
+genre: dialogue
+intro: Léa a de la fièvre depuis deux jours. Elle va voir un médecin près de la maison.
+
+{医者|いしゃ}：どうしましたか。 | Qu'est-ce qui vous arrive ?
+レア：{昨日|きのう}から{熱|ねつ}があるんです。それに、{喉|のど}も{痛|いた}いんです。 | J'ai de la fièvre depuis hier. Et puis, j'ai mal à la gorge.
+{医者|いしゃ}：{咳|せき}は{出|で}ますか。 | Vous toussez ?
+レア：はい、{夜|よる}になると、{咳|せき}がよく{出|で}ます。 | Oui, quand vient la nuit, je tousse beaucoup.
+{医者|いしゃ}：ちょっと{口|くち}を{開|あ}けてください。…{喉|のど}が{赤|あか}いですね。 | Ouvrez la bouche, s'il vous plaît… Votre gorge est rouge.
+{医者|いしゃ}：{風邪|かぜ}ですね。{心配|しんぱい}しなくてもいいですよ。 | C'est un rhume. Pas besoin de vous inquiéter.
+レア：よかった。{学校|がっこう}に{行|い}ってもいいですか。 | Ouf. Est-ce que je peux aller à l'école ?
+{医者|いしゃ}：{熱|ねつ}が{下|さ}がるまで、{休|やす}んだほうがいいですよ。 | Il vaudrait mieux vous reposer jusqu'à ce que la fièvre tombe.
+{医者|いしゃ}：お{風呂|ふろ}に{入|はい}ってはいけません。{水|みず}をたくさん{飲|の}んでください。 | Ne prenez pas de bain. Buvez beaucoup d'eau.
+{医者|いしゃ}：この{薬|くすり}を{一日|いちにち}{三回|さんかい}、ご{飯|はん}のあとに{飲|の}んでください。 | Prenez ce médicament trois fois par jour, après les repas.
+レア：わかりました。ありがとうございました。 | D'accord. Merci beaucoup.
+{医者|いしゃ}：お{大事|だいじ}に。 | Prenez soin de vous.
+
+? Qu'est-ce que Léa a ?
++ Un rhume
+- Une grippe grave
+- Une indigestion
+? Que lui dit le médecin pour l'école ?
+- Elle peut y aller tout de suite
++ Il vaudrait mieux se reposer jusqu'à ce que la fièvre tombe
+- Elle ne doit plus y aller du mois
+? Quand doit-elle prendre le médicament ?
+- Le matin seulement
+- Avant de dormir
++ Trois fois par jour, après les repas
+
+=== arubaito
+titre: アルバイト
+fr: Le petit boulot
+genre: récit
+intro: Pour payer son loyer, Léa trouve un travail à temps partiel dans un café.
+
+{来月|らいげつ}から、{駅|えき}の{近|ちか}くの{喫茶店|きっさてん}で{働|はたら}くことになりました。 | À partir du mois prochain, je vais travailler dans un café près de la gare.
+{留学生|りゅうがくせい}は{一週間|いっしゅうかん}に{二十八時間|にじゅうはちじかん}まで{働|はたら}くことができます。 | Les étudiants étrangers peuvent travailler jusqu'à vingt-huit heures par semaine.
+{私|わたし}は{週|しゅう}に{三回|さんかい}、{夕方|ゆうがた}{五時|ごじ}から{九時|くじ}まで{働|はたら}きます。 | Je travaillerai trois fois par semaine, de cinq heures à neuf heures du soir.
+
+{最初|さいしょ}の{日|ひ}、{店長|てんちょう}にいろいろなことを{教|おし}えてもらいました。 | Le premier jour, le gérant m'a appris toutes sortes de choses.
+お{客|きゃく}さんが{来|き}たら、すぐ「いらっしゃいませ」と{言|い}わなければなりません。 | Quand un client arrive, il faut tout de suite dire « irasshaimase ».
+{注文|ちゅうもん}を{聞|き}くときは、{丁寧|ていねい}な{言葉|ことば}を{使|つか}わなければなりません。 | Quand on prend une commande, il faut employer des mots polis.
+「ご{注文|ちゅうもん}はお{決|き}まりですか」は、とても{言|い}いにくいです。 | « Avez-vous choisi ? », c'est très difficile à dire.
+{店長|てんちょう}に「もっと{大|おお}きい{声|こえ}で{話|はな}すように」と{言|い}われました。 | Le gérant m'a dit de parler plus fort.
+
+{一週間|いっしゅうかん}{経|た}って、{少|すこ}しずつ{慣|な}れてきました。 | Au bout d'une semaine, je commence à m'y habituer peu à peu.
+{常連|じょうれん}のおじいさんが、いつも「{日本語|にほんご}が{上手|じょうず}になったね」と{言|い}ってくれます。 | Un vieux monsieur, un habitué, me dit toujours : « Ton japonais s'est amélioré ! »
+{仕事|しごと}は{大変|たいへん}ですが、{日本語|にほんご}の{練習|れんしゅう}にもなります。 | Le travail est dur, mais c'est aussi un entraînement pour mon japonais.
+
+? Combien d'heures par semaine un étudiant étranger peut-il travailler ?
+- Vingt heures
++ Vingt-huit heures
+- Quarante heures
+? Que lui a demandé le gérant ?
+- D'aller plus vite
++ De parler plus fort
+- De sourire davantage
+? Que lui dit souvent le vieux client ?
++ Que son japonais s'est amélioré
+- Que le café est trop cher
+- Qu'il veut un autre gâteau
+
+=== denwa
+titre: {電話|でんわ}
+fr: Au téléphone
+genre: dialogue
+intro: Le jour d'un examen, Léa ne peut pas venir travailler. Elle appelle le gérant du café.
+
+{店長|てんちょう}：はい、カフェ・ミモザです。 | Allô, café Mimosa.
+レア：もしもし、レアです。お{疲|つか}れさまです。 | Allô, c'est Léa. Bonjour.
+{店長|てんちょう}：あ、レアさん。どうしたの？ | Ah, Léa. Qu'est-ce qu'il y a ?
+レア：あのう、{来週|らいしゅう}の{木曜日|もくようび}のことなんですが…。 | Euh, c'est à propos de jeudi prochain…
+レア：その{日|ひ}は{学校|がっこう}で{大切|たいせつ}な{試験|しけん}があるんです。 | Ce jour-là, j'ai un examen important à l'école.
+レア：すみませんが、{休|やす}ませていただけませんか。 | Je suis désolée, mais pourriez-vous me laisser prendre ma journée ?
+{店長|てんちょう}：そうか。じゃあ、{金曜日|きんようび}に{来|き}てもらえる？ | Je vois. Alors, tu pourrais venir vendredi ?
+レア：はい、{金曜日|きんようび}なら{大丈夫|だいじょうぶ}です。 | Oui, vendredi, pas de problème.
+{店長|てんちょう}：わかった。{試験|しけん}、がんばってね。 | D'accord. Bon courage pour ton examen.
+レア：ありがとうございます。ご{迷惑|めいわく}をおかけして、すみません。 | Merci. Désolée pour le dérangement.
+{店長|てんちょう}：いいよ、いいよ。じゃ、また{金曜日|きんようび}に。 | Pas de souci. Alors, à vendredi.
+レア：はい、{失礼|しつれい}します。 | Oui, au revoir.
+
+? Pourquoi Léa ne peut-elle pas travailler jeudi ?
+- Elle est malade
++ Elle a un examen important
+- Elle part en voyage
+? Quel jour viendra-t-elle à la place ?
+- Mercredi
++ Vendredi
+- Samedi
+? Comment réagit le gérant ?
++ Il accepte et l'encourage
+- Il se fâche
+- Il lui demande de venir quand même
+
+=== oshougatsu
+titre: お{正月|しょうがつ}
+fr: Le Nouvel An
+genre: récit
+intro: Mme Yamada invite Léa à passer le Nouvel An dans sa famille, comme on le fait au Japon.
+
+{大晦日|おおみそか}の{夜|よる}、{山田|やまだ}さんの{家族|かぞく}と{年越|としこ}しそばを{食|た}べました。 | Le soir du réveillon, j'ai mangé les nouilles du passage à l'an avec la famille de Mme Yamada.
+{長|なが}い{蕎麦|そば}を{食|た}べると、{長|なが}く{生|い}きられると{言|い}われているそうです。 | Il paraît qu'on dit que manger de longues nouilles permet de vivre longtemps.
+{夜中|よなか}の{十二時|じゅうにじ}に、{近|ちか}くのお{寺|てら}の{鐘|かね}が{聞|き}こえてきました。 | À minuit, on a entendu la cloche du temple voisin.
+
+{一月|いちがつ}{一日|ついたち}の{朝|あさ}、みんなで「あけましておめでとうございます」と{言|い}いました。 | Le matin du 1er janvier, nous avons tous dit « Bonne année ».
+{山田|やまだ}さんがおせち{料理|りょうり}とお{雑煮|ぞうに}を{作|つく}ってくれました。 | Mme Yamada nous a préparé le repas du Nouvel An et une soupe aux galettes de riz.
+おせちの{料理|りょうり}には、それぞれ{意味|いみ}があるそうです。 | Il paraît que chaque plat du repas du Nouvel An a une signification.
+{黒豆|くろまめ}は「まめに{働|はたら}けるように」という{意味|いみ}だと{教|おし}えてもらいました。 | On m'a expliqué que les haricots noirs veulent dire « pour pouvoir travailler avec ardeur ».
+
+{午後|ごご}は{神社|じんじゃ}へ{初詣|はつもうで}に{行|い}きました。 | L'après-midi, nous sommes allés au sanctuaire pour la première visite de l'année.
+{神社|じんじゃ}の{前|まえ}には{長|なが}い{列|れつ}ができていました。 | Il y avait une longue file devant le sanctuaire.
+{私|わたし}は「{日本語|にほんご}がもっと{上手|じょうず}になりますように」とお{願|ねが}いしました。 | J'ai fait le vœu : « Que mon japonais progresse encore. »
+{日本|にほん}のお{正月|しょうがつ}は、{家族|かぞく}で{静|しず}かに{過|す}ごす{日|ひ}なのだと{思|おも}いました。 | Je me suis dit que le Nouvel An japonais est un moment qu'on passe calmement en famille.
+
+? Pourquoi mange-t-on de longues nouilles le soir du réveillon ?
+- Parce que c'est facile à préparer
++ On dit que cela permet de vivre longtemps
+- Pour fêter la fin de l'école
+? Que représentent les haricots noirs ?
++ Pouvoir travailler avec ardeur
+- La richesse
+- Une bonne santé
+? Quel vœu fait Léa au sanctuaire ?
+- Trouver un meilleur travail
+- Revoir sa famille
++ Progresser encore en japonais
+
+=== wasuremono
+titre: {忘|わす}れ{物|もの}
+fr: L'objet oublié
+genre: récit
+intro: Un matin de pluie, Léa oublie quelque chose dans le train.
+
+その{日|ひ}は{朝|あさ}から{雨|あめ}が{降|ふ}っていました。 | Ce jour-là, il pleuvait depuis le matin.
+{電車|でんしゃ}の{中|なか}で、{私|わたし}は{傘|かさ}を{棚|たな}の{上|うえ}に{置|お}いておきました。 | Dans le train, j'avais posé mon parapluie sur le porte-bagages.
+ところが、{駅|えき}で{降|お}りたとき、{傘|かさ}のことを{忘|わす}れてしまいました。 | Or, en descendant à la gare, je l'ai complètement oublié.
+{駅|えき}を{出|で}てから、{気|き}がつきました。{雨|あめ}はまだ{降|ふ}っているのに、{傘|かさ}がありません。 | Je m'en suis rendu compte en sortant de la gare. Il pleuvait encore, et je n'avais plus de parapluie.
+その{傘|かさ}は、{母|はは}がフランスで{買|か}ってくれた{大切|たいせつ}な{傘|かさ}でした。 | C'était un parapluie précieux, que ma mère m'avait acheté en France.
+
+すぐに{駅員|えきいん}さんに{話|はな}しました。 | J'en ai tout de suite parlé à un employé de la gare.
+{駅員|えきいん}さんは{電車|でんしゃ}の{番号|ばんごう}と{時間|じかん}を{聞|き}いて、{電話|でんわ}をかけてくれました。 | L'employé m'a demandé le numéro du train et l'heure, puis il a téléphoné.
+「{終点|しゅうてん}の{駅|えき}で{見|み}つかりましたよ。」 | « On l'a retrouvé au terminus. »
+{次|つぎ}の{日|ひ}、{終点|しゅうてん}の{駅|えき}まで{取|と}りに{行|い}きました。 | Le lendemain, je suis allée le chercher jusqu'au terminus.
+{日本|にほん}では、{忘|わす}れ{物|もの}がよく{見|み}つかると{言|い}われていますが、{本当|ほんとう}でした。 | On dit qu'au Japon, on retrouve souvent les objets oubliés : c'est vrai.
+それからは、{傘|かさ}を{手|て}に{持|も}って{乗|の}るようにしています。 | Depuis, je fais attention à garder mon parapluie à la main dans le train.
+
+? Où Léa avait-elle posé son parapluie ?
+- Sous le siège
++ Sur le porte-bagages
+- Contre la porte
+? Pourquoi ce parapluie était-il précieux ?
++ Sa mère le lui avait acheté en France
+- C'était un cadeau de Sakura
+- Il était très cher
+? Que fait Léa maintenant ?
+- Elle ne prend plus le train
+- Elle n'a plus de parapluie
++ Elle garde son parapluie à la main
+
+=== momotarou
+titre: {桃太郎|ももたろう}
+fr: Momotarō, le garçon né d'une pêche
+genre: conte
+intro: Le conte le plus connu du Japon. Tous les enfants le savent par cœur.
+
+むかしむかし、ある{所|ところ}に、おじいさんとおばあさんが{住|す}んでいました。 | Il était une fois, quelque part, un vieil homme et une vieille femme.
+おじいさんは{山|やま}へ{木|き}を{切|き}りに、おばあさんは{川|かわ}へ{洗濯|せんたく}に{行|い}きました。 | Le vieil homme alla couper du bois dans la montagne, et la vieille femme alla laver le linge à la rivière.
+おばあさんが{川|かわ}で{洗濯|せんたく}をしていると、{大|おお}きな{桃|もも}が{流|なが}れてきました。 | Pendant que la vieille femme lavait le linge, une énorme pêche arriva au fil de l'eau.
+おばあさんはその{桃|もも}を{家|いえ}に{持|も}って{帰|かえ}りました。 | La vieille femme rapporta la pêche à la maison.
+{二人|ふたり}が{桃|もも}を{切|き}ろうとすると、{中|なか}から{元気|げんき}な{男|おとこ}の{子|こ}が{生|う}まれました。 | Quand ils voulurent couper la pêche, un garçon plein de vie en sortit.
+{二人|ふたり}はその{子|こ}を{桃太郎|ももたろう}と{名|な}づけて、{大切|たいせつ}に{育|そだ}てました。 | Ils l'appelèrent Momotarō et l'élevèrent avec amour.
+
+{桃太郎|ももたろう}は{大|おお}きくなると、{強|つよ}い{若者|わかもの}になりました。 | En grandissant, Momotarō devint un jeune homme fort.
+そのころ、{鬼|おに}たちが{村|むら}の{人|ひと}を{困|こま}らせていました。 | À cette époque, des ogres tourmentaient les gens du village.
+「{僕|ぼく}が{鬼|おに}が{島|しま}へ{行|い}って、{鬼|おに}を{退治|たいじ}してきます。」 | « Je vais aller sur l'île des ogres et les vaincre. »
+おばあさんは{桃太郎|ももたろう}にきびだんごを{作|つく}ってあげました。 | La vieille femme lui prépara des boulettes de millet.
+{途中|とちゅう}で、{犬|いぬ}と{猿|さる}と{雉|きじ}に{会|あ}いました。 | En chemin, il rencontra un chien, un singe et un faisan.
+{桃太郎|ももたろう}がきびだんごをあげると、みんな{家来|けらい}になりました。 | Momotarō leur donna des boulettes, et tous devinrent ses compagnons.
+みんなで{力|ちから}を{合|あ}わせて{戦|たたか}い、とうとう{鬼|おに}に{勝|か}ちました。 | Ils combattirent ensemble et finirent par vaincre les ogres.
+{桃太郎|ももたろう}は{鬼|おに}の{宝物|たからもの}を{持|も}って{村|むら}に{帰|かえ}り、みんなで{幸|しあわ}せに{暮|く}らしました。 | Momotarō rentra au village avec le trésor des ogres, et ils vécurent tous heureux.
+
+? Où la vieille femme trouve-t-elle la pêche ?
+- Dans la montagne
++ À la rivière
+- Dans son jardin
+? Que donne Momotarō à ses compagnons ?
+- De l'argent
++ Des boulettes de millet
+- Des pêches
+? Quels animaux l'accompagnent ?
++ Un chien, un singe et un faisan
+- Un chat, un lapin et un ours
+- Un cheval, un chien et un renard
+
+=== nihongo-no-benkyou
+titre: {私|わたし}の{日本語|にほんご}の{勉強|べんきょう}
+fr: Comment j'apprends le japonais
+genre: essai
+intro: À l'école, le professeur a demandé à chacun d'écrire comment il étudie. Voici le texte de Léa.
+
+{私|わたし}が{日本語|にほんご}を{勉強|べんきょう}し{始|はじ}めたのは、{高校生|こうこうせい}のときでした。 | J'ai commencé à étudier le japonais quand j'étais lycéenne.
+{日本|にほん}のアニメが{好|す}きで、{字幕|じまく}なしで{見|み}たいと{思|おも}ったからです。 | Parce que j'aimais les animés japonais, et que je voulais les regarder sans sous-titres.
+{今|いま}は{東京|とうきょう}に{住|す}んで、{毎日|まいにち}{日本語|にほんご}を{使|つか}っています。 | Maintenant, j'habite à Tokyo et j'utilise le japonais tous les jours.
+
+{単語|たんご}を{覚|おぼ}えるために、{毎朝|まいあさ}{電車|でんしゃ}の{中|なか}でスマホのアプリを{使|つか}っています。 | Pour retenir le vocabulaire, j'utilise une application sur mon téléphone tous les matins dans le train.
+{忘|わす}れそうになったころに{復習|ふくしゅう}すれば、よく{覚|おぼ}えられます。 | Si on révise juste au moment où on allait oublier, on retient bien.
+それから、わからない{言葉|ことば}を{聞|き}いたら、すぐメモするようにしています。 | Et puis, quand j'entends un mot que je ne comprends pas, je fais en sorte de le noter tout de suite.
+{日本人|にほんじん}の{友|とも}だちとは、できるだけ{日本語|にほんご}で{話|はな}すようにしています。 | Avec mes amis japonais, je m'efforce de parler japonais autant que possible.
+
+{最初|さいしょ}は{店員|てんいん}さんの{言葉|ことば}がぜんぜんわかりませんでした。 | Au début, je ne comprenais rien de ce que disaient les vendeurs.
+でも、{今|いま}はだいたいわかるようになりました。 | Mais maintenant, je comprends à peu près tout.
+{次|つぎ}の{目標|もくひょう}は、{日本語|にほんご}の{小説|しょうせつ}を{一冊|いっさつ}{読|よ}むことです。 | Mon prochain objectif, c'est de lire un roman en japonais.
+{勉強|べんきょう}は{大変|たいへん}ですが、{毎日|まいにち}{少|すこ}しずつ{続|つづ}ければ、きっとできると{思|おも}います。 | C'est beaucoup de travail, mais je pense qu'en continuant un peu chaque jour, j'y arriverai sûrement.
+
+? Pourquoi Léa a-t-elle commencé le japonais ?
+- Pour son travail
++ Pour regarder des animés sans sous-titres
+- Parce que sa mère est japonaise
+? Quand révise-t-on le mieux, selon Léa ?
++ Juste au moment où l'on allait oublier
+- Le soir, avant de dormir
+- Une fois par mois
+? Quel est son prochain objectif ?
+- Passer un examen
+- Travailler au Japon
++ Lire un roman en japonais
+
+=== yamada-san-no-hanashi
+titre: {山田|やまだ}さんの{話|はなし}
+fr: Le récit de Mme Yamada
+genre: récit
+intro: Un soir, Mme Yamada raconte à Léa sa jeunesse dans un village de pêcheurs.
+
+{私|わたし}は{小|ちい}さいころ、{海|うみ}の{近|ちか}くの{村|むら}に{住|す}んでいました。 | Quand j'étais petite, j'habitais dans un village près de la mer.
+{父|ちち}は{漁師|りょうし}で、{毎朝|まいあさ}{暗|くら}いうちに{船|ふね}で{海|うみ}へ{出|で}かけていました。 | Mon père était pêcheur, et chaque matin il partait en mer en bateau, alors qu'il faisait encore nuit.
+{私|わたし}は{学校|がっこう}から{帰|かえ}ると、{母|はは}を{手伝|てつだ}いながら、{父|ちち}の{船|ふね}を{待|ま}っていました。 | En rentrant de l'école, j'aidais ma mère en attendant le bateau de mon père.
+
+{村|むら}には{店|みせ}が{一軒|いっけん}しかありませんでした。 | Il n'y avait qu'un seul magasin dans le village.
+テレビを{見|み}たことがない{人|ひと}もたくさんいました。 | Beaucoup de gens n'avaient jamais vu de télévision.
+でも、{夏|なつ}には{祭|まつ}りがあって、{村|むら}の{人|ひと}たちはみんな{踊|おど}りました。 | Mais l'été, il y avait une fête, et tous les gens du village dansaient.
+{十八歳|じゅうはっさい}のとき、{仕事|しごと}を{探|さが}すために{東京|とうきょう}に{出|で}てきました。 | À dix-huit ans, je suis venue à Tokyo pour chercher du travail.
+{初|はじ}めて{東京|とうきょう}を{見|み}たとき、{人|ひと}と{車|くるま}の{多|おお}さにびっくりしました。 | La première fois que j'ai vu Tokyo, j'ai été stupéfaite par le nombre de gens et de voitures.
+
+あれから{五十年|ごじゅうねん}になります。 | Cela fait cinquante ans depuis.
+{東京|とうきょう}はずいぶん{変|か}わりましたが、{今|いま}でもときどき{海|うみ}の{音|おと}を{思|おも}い{出|だ}します。 | Tokyo a beaucoup changé, mais aujourd'hui encore, je repense parfois au bruit de la mer.
+レアさんも、いつかリヨンの{町|まち}を{懐|なつ}かしく{思|おも}う{日|ひ}が{来|く}るでしょうね。 | Toi aussi, Léa, un jour viendra où tu penseras à Lyon avec nostalgie.
+
+? Que faisait le père de Mme Yamada ?
+- Il était agriculteur
++ Il était pêcheur
+- Il tenait le magasin du village
+? Pourquoi est-elle venue à Tokyo ?
++ Pour chercher du travail
+- Pour étudier
+- Pour se marier
+? Qu'est-ce qui l'a surprise à Tokyo ?
+- Le froid
+- La taille des maisons
++ Le nombre de gens et de voitures
+
+=== hanami
+titre: お{花見|はなみ}
+fr: Sous les cerisiers
+genre: dialogue
+intro: Fin mars, Léa, Sakura et Mme Yamada vont pique-niquer sous les cerisiers en fleurs.
+
+さくら：わあ、きれい！{今年|ことし}は{満開|まんかい}だね。 | Waouh, c'est beau ! Cette année, ils sont en pleine floraison.
+レア：{本当|ほんとう}にきれいですね。{写真|しゃしん}で{見|み}たより、ずっときれいです。 | C'est vraiment beau. Bien plus beau qu'en photo.
+{山田|やまだ}：{桜|さくら}は{一週間|いっしゅうかん}ぐらいしか{咲|さ}かないのよ。 | Les cerisiers ne fleurissent qu'environ une semaine, tu sais.
+レア：そんなに{短|みじか}いんですか。 | Si peu de temps ?
+{山田|やまだ}：ええ。だから、{日本人|にほんじん}は{桜|さくら}が{好|す}きなのかもしれないわね。 | Oui. C'est peut-être pour ça que les Japonais aiment tant les cerisiers.
+さくら：{天気予報|てんきよほう}によると、{明日|あした}は{雨|あめ}が{降|ふ}るそうだよ。 | D'après la météo, il paraît qu'il va pleuvoir demain.
+さくら：{雨|あめ}が{降|ふ}ったら、{花|はな}はすぐ{散|ち}ってしまう。 | S'il pleut, les fleurs vont vite tomber.
+レア：じゃあ、{今日|きょう}{来|き}てよかったですね。 | Alors on a bien fait de venir aujourd'hui.
+{山田|やまだ}：さあ、お{弁当|べんとう}を{食|た}べましょう。{朝|あさ}から{作|つく}ったのよ。 | Allez, mangeons le bentō. Je l'ai préparé depuis ce matin.
+さくら：おにぎり、おいしそう！いただきます！ | Les boulettes de riz ont l'air délicieuses ! Bon appétit !
+レア：あ、{花|はな}びらがお{茶|ちゃ}の{中|なか}に{落|お}ちました。 | Oh, un pétale est tombé dans mon thé.
+{山田|やまだ}：それは{縁起|えんぎ}がいいわね。きっといい{一年|いちねん}になるわよ。 | C'est de bon augure. Ce sera sûrement une bonne année.
+
+? Combien de temps fleurissent les cerisiers, selon Mme Yamada ?
+- Un jour
++ Environ une semaine
+- Un mois
+? Que dit la météo pour demain ?
++ Il va pleuvoir
+- Il va faire très chaud
+- Il va neiger
+? Qu'est-ce qui tombe dans le thé de Léa ?
+- Une feuille
+- Une boulette de riz
++ Un pétale de cerisier
+
+=== sakura-no-tegami
+titre: さくらからの{手紙|てがみ}
+fr: La lettre de Sakura
+genre: lettre
+intro: Au printemps, Sakura part étudier un an en France. Quelques semaines plus tard, elle écrit à Léa.
+
+レアへ | Chère Léa,
+{元気|げんき}？フランスに{来|き}て、もう{一か月|いっかげつ}{経|た}ちました。 | Comment vas-tu ? Ça fait déjà un mois que je suis en France.
+{今|いま}、リヨンの{大学|だいがく}で{経済|けいざい}を{勉強|べんきょう}しています。 | En ce moment, j'étudie l'économie à l'université de Lyon.
+レアが{教|おし}えてくれたパン{屋|や}に、{毎朝|まいあさ}{行|い}っているよ。 | Je vais tous les matins à la boulangerie que tu m'as indiquée.
+
+{正直|しょうじき}に{言|い}うと、{最初|さいしょ}の{一週間|いっしゅうかん}はとても{大変|たいへん}だった。 | Pour être honnête, la première semaine a été très difficile.
+フランス{語|ご}が{速|はや}すぎて、{何|なに}も{聞|き}き{取|と}れなかったの。 | Le français allait trop vite, je ne comprenais rien.
+そのとき、{東京|とうきょう}に{来|き}たばかりのレアのことを{思|おも}い{出|だ}した。 | À ce moment-là, j'ai repensé à toi quand tu venais d'arriver à Tokyo.
+レアもきっと{同|おな}じ{気持|きも}ちだったんだね。 | Toi aussi, tu as sûrement ressenti la même chose.
+
+{夏休|なつやす}みには、レアの{家族|かぞく}に{会|あ}いに{行|い}くつもり。 | Pendant les vacances d'été, j'ai l'intention d'aller voir ta famille.
+お{母|かあ}さんが{料理|りょうり}を{教|おし}えてくれることになっているんだ。 | C'est prévu : ta mère va m'apprendre à cuisiner.
+{来年|らいねん}、{日本|にほん}に{帰|かえ}ったら、{今度|こんど}は{私|わたし}がクレープを{作|つく}ってあげるね。 | L'année prochaine, quand je rentrerai au Japon, ce sera moi qui te ferai des crêpes.
+{山田|やまだ}さんによろしく。 | Le bonjour à Mme Yamada.
+さくらより | Sakura
+
+? Où Sakura étudie-t-elle ?
+- À Paris
++ À Lyon
+- À Tokyo
+? Comment s'est passée sa première semaine ?
++ Très difficile : le français allait trop vite
+- Très facile
+- Elle était malade
+? Que va faire la mère de Léa pendant l'été ?
+- Venir au Japon
++ Apprendre la cuisine à Sakura
+- Chercher un appartement

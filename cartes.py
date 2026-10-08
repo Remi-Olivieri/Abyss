@@ -994,7 +994,8 @@ def analyse(code="", force=False):
 def listes_par_type():
     """Les cartes sorties de chaque type de TYPES, par ordre de parution.
 
-    Rend ([{cle, label, cartes, hors_tcg, a_venir, lots, en_anglais}], souci).
+    Rend ([{cle, label, cartes, anglais, hors_tcg, a_venir, lots, en_anglais}],
+    souci).
 
     L'ordre est celui du classeur : date de sortie TCG, puis numero dans la
     serie (voir _ordre). Deux series parues le meme jour ne s'entremelent
@@ -1018,6 +1019,10 @@ def listes_par_type():
     Le nom est celui que la mise a jour ecrirait (voir analyse). Une carte
     que personne ne nomme en francais garde son nom anglais, et compte dans
     `en_anglais` -- « Super Robolady », que le classeur range ainsi.
+
+    `anglais` donne les memes cartes, dans le meme ordre, sous leur nom
+    anglais : Cardmarket ne connait pas tous les noms francais, et la page
+    passe de l'un a l'autre sans rien redemander.
     """
     en, konami, souci = catalogues()
     if souci:
@@ -1028,7 +1033,7 @@ def listes_par_type():
     aujourdhui = _date.today().isoformat()
     type_du_cadre = {cadre: cle for cle, (_label, cadres) in TYPES.items()
                      for cadre in cadres}
-    listes = {cle: {"cle": cle, "label": label, "cartes": [],
+    listes = {cle: {"cle": cle, "label": label, "cartes": [], "anglais": [],
                     "hors_tcg": 0, "a_venir": 0, "lots": 0, "en_anglais": 0}
               for cle, (label, _cadres) in TYPES.items()}
     places = {cle: [] for cle in TYPES}
@@ -1058,10 +1063,12 @@ def listes_par_type():
             or carte.get("name") or cid
         if not du_konami and _meme_nom(nom, carte.get("name")):
             liste["en_anglais"] += 1
-        places[cle].append(((date, serie is None, serie or "", numero, nom), nom))
+        places[cle].append(((date, serie is None, serie or "", numero, nom), nom,
+                            carte.get("name") or nom))
     for cle, cartes in places.items():
         cartes.sort(key=lambda c: c[0])
-        listes[cle]["cartes"] = [nom for _place, nom in cartes]
+        listes[cle]["cartes"] = [nom for _place, nom, _en in cartes]
+        listes[cle]["anglais"] = [en for _place, _nom, en in cartes]
     return list(listes.values()), None
 
 
@@ -1464,7 +1471,8 @@ def voir_types():
 
     Les six listes d'un coup, et non une par clic : c'est un seul passage
     sur le catalogue, et la page passe ensuite d'un type a l'autre sans
-    rien redemander. Deux mille cinq cents noms, une centaine de Ko.
+    rien redemander. Deux mille cinq cents noms, en francais et en anglais :
+    deux cents Ko.
     """
     listes, souci = listes_par_type()
     if souci:

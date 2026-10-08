@@ -11,6 +11,7 @@
   --algue:#3FD9A4;
   --meduse:#E0559B;
   --plancton:#5B9BF5;
+  --corail:#F07A5A;       /* Nihongo : le vermillon, vu du fond */
 
   --rouge:#E86A6A;
 
@@ -325,6 +326,21 @@ input,textarea{
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
+}
+/* Le logo, devant le titre. Sa hauteur suit celle du titre (même clamp, un
+   peu plus grand) : sur téléphone comme sur écran large, la méduse garde la
+   taille d'une lettre et demie. Elle flotte doucement, comme il se doit -
+   et ne bouge plus quand on a demandé moins d'animations (voir plus bas). */
+.titre-ligne{display:flex;align-items:center;gap:clamp(10px,2.4vw,22px)}
+.logo{
+  flex:none;
+  width:clamp(58px,13vw,124px);height:auto;
+  filter:drop-shadow(0 0 22px rgba(124,108,255,.38));
+  animation:flotte 7s ease-in-out infinite;
+}
+@keyframes flotte{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-5px)}
 }
 .sous-titre{
   margin:14px 0 0;
@@ -745,4 +761,6 @@ input,textarea{
   *{transition-duration:.01ms !important;animation-duration:.01ms !important}
   .carte:hover,.carte:focus-visible{transform:none}
   .carte::after{display:none}
+  /* une boucle infinie ramenée à 0,01 ms tremblerait : on l'arrête */
+  .logo{animation:none}
 }

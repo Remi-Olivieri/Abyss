@@ -99,7 +99,7 @@ FENETRE_INSCRIPTIONS = timedelta(hours=24)
 
 # Les identifiants de projets masquables. Ils doivent correspondre aux `id`
 # du tableau PROJETS dans abyss/accueil.html.
-PROJETS = ("jeux-videos", "collection", "chainz", "quiz")
+PROJETS = ("jeux-videos", "collection", "chainz", "quiz", "nihongo")
 
 # 3 a 20 caracteres, ni tiret ni souligne aux extremites : le pseudo finira
 # dans une URL (/jeux-videos/jokrem), autant qu'il reste lisible.
@@ -110,7 +110,7 @@ MOTIF_PSEUDO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{1,18}[A-Za-z0-9]$")
 RESERVES = {
     "abyss", "admin", "api", "archive", "cartes", "collection", "compte",
     "connexion", "cover", "deconnexion", "feed", "inscription", "index",
-    "jaquettes", "jeux-videos", "login", "moi", "profil", "quiz",
+    "jaquettes", "jeux-videos", "login", "moi", "nihongo", "profil", "quiz",
     "reinitialiser", "social", "static", "templates", "www", "yugiquiz",
 }
 
@@ -148,7 +148,7 @@ class Refus(Exception):
         self.code, self.message, self.statut = code, message, statut
 
 
-def envoie_mail(destinataire, sujet, corps, html=None) -> None:
+def envoie_mail(destinataire, sujet, corps, html=None, images=None) -> None:
     """Un mail texte brut, ou son contenu sur la console si aucun serveur
     SMTP n'est configure.
 
@@ -156,13 +156,21 @@ def envoie_mail(destinataire, sujet, corps, html=None) -> None:
     brancher un vrai serveur de mail pour tester la reinitialisation. En
     ligne, ABYSS_SMTP_HOTE (et les reglages qui vont avec) font partir un
     vrai message.
+
+    images : [(cid, octets JPEG), ...], que la version HTML appelle par
+    <img src="cid:...">. Elles voyagent dans le mail plutot que par une
+    adresse sur le site : une image distante est bloquee par defaut dans
+    bien des messageries (« afficher les images ? »), une image jointe
+    s'affiche d'emblee. Sans version HTML, personne ne les appelle et elles
+    ne partent pas.
     """
     if not SMTP_HOTE:
         # flush=True : sous gunicorn ou une sortie redirigee, la sortie
         # standard est bufferisee par bloc et n'apparaitrait sinon jamais
         # a temps pour suivre le lien pendant que le jeton est valide
+        jointes = f"\n({len(images)} image(s) jointe(s))" if html and images else ""
         print(f"\n---- mail (SMTP non configure) pour {destinataire} ----\n"
-              f"Sujet : {sujet}\n\n{corps}\n---- fin du mail ----\n", flush=True)
+              f"Sujet : {sujet}\n\n{corps}{jointes}\n---- fin du mail ----\n", flush=True)
         return
     msg = EmailMessage()
     msg["Subject"] = sujet
@@ -181,6 +189,13 @@ def envoie_mail(destinataire, sujet, corps, html=None) -> None:
     # bouton dans un message mis en forme.
     if html:
         msg.add_alternative(html, subtype="html")
+        # rattachees a la partie HTML (multipart/related), pas au mail
+        # entier : c'est ce qui les fait s'afficher dans le texte au lieu
+        # de s'empiler en pieces jointes sous la signature
+        for cid, octets in images or ():
+            msg.get_payload()[1].add_related(
+                octets, maintype="image", subtype="jpeg", cid=f"<{cid}>",
+                disposition="inline")
     with smtplib.SMTP(SMTP_HOTE, SMTP_PORT, timeout=10) as s:
         s.starttls()
         if SMTP_UTILISATEUR:
@@ -593,6 +608,131 @@ COULEUR = """
 ALTER TABLE utilisateur ADD COLUMN couleur TEXT;
 """
 
+# Migration 23 : qui est la, ou, et ce qu'il fait. Voir monitoring.py.
+#
+# `presence` : une ligne par visiteur, reecrite a chaque signe de vie -- une
+# page chargee, un appel a l'API, le battement de static/commun/presence.js.
+# Un compte connecte y garde la meme ligne d'un jour a l'autre (« compte:12 ») ;
+# un visiteur anonyme y est son empreinte du jour, comme dans `visite`, et
+# rien de plus. L'appareil est deduit de l'agent (« Telephone · Android ·
+# Firefox ») : l'agent lui-meme n'est jamais ecrit.
+#
+# `activite` : les gestes des comptes connectes -- un jeu ajoute, un
+# commentaire, une connexion. Le pseudo y est recopie au moment du geste :
+# un compte supprime laisse son nom dans l'historique le temps que celui-ci
+# s'efface (voir monitoring.JOURS_ACTIVITE), au lieu d'une ligne sans auteur.
+# Les visiteurs anonymes n'y ecrivent rien.
+PRESENCE = """
+CREATE TABLE presence(
+  cle            TEXT PRIMARY KEY,
+  utilisateur_id INTEGER REFERENCES utilisateur(id) ON DELETE CASCADE,
+  appareil       TEXT,
+  arrive_le      TEXT NOT NULL,
+  vu_le          TEXT NOT NULL,
+  parti_le       TEXT,
+  adresse        TEXT,
+  action         TEXT,
+  action_le      TEXT
+);
+CREATE INDEX idx_presence_vu ON presence(vu_le);
+
+CREATE TABLE activite(
+  id             INTEGER PRIMARY KEY,
+  quand          TEXT NOT NULL,
+  utilisateur_id INTEGER REFERENCES utilisateur(id) ON DELETE SET NULL,
+  pseudo         TEXT NOT NULL,
+  appareil       TEXT,
+  genre          TEXT NOT NULL,
+  action         TEXT NOT NULL
+);
+CREATE INDEX idx_activite_quand ON activite(quand);
+
+CREATE INDEX idx_visite_utilisateur ON visite(utilisateur_id, jour);
+"""
+
+# Migration 24 : la visite d'un navigateur, et celle d'un robot. Voir
+# monitoring.confirme.
+#
+# Un robot qui se dit navigateur charge /abyss comme tout le monde, et son
+# agent ne le trahit pas. Ce qu'il ne fait presque jamais, c'est executer la
+# page : le battement de static/commun/presence.js est donc la preuve qu'un
+# navigateur est derriere. `humain` vaut 1 une fois cette preuve arrivee (ou
+# d'emblee pour un compte connecte), 0 tant qu'elle manque, et NULL pour les
+# visites notees avant cette migration -- celles-la, on ne le saura jamais.
+VISITE_HUMAINE = """
+ALTER TABLE visite ADD COLUMN humain INTEGER;
+"""
+
+# Migration 25 : Nihongo, le japonais. Voir nihongo.py.
+#
+# `nihongo_carte` : une ligne par chose apprise et par facon de la
+# travailler (« kana:あ:lire », « kana:あ:ecrire »). La stabilite et la
+# difficulte sont les deux nombres de FSRS ; l'echeance est un horodatage
+# UTC comme les autres, comparable tel quel.
+#
+# `nihongo_jour` : ce qui a ete fait chaque jour d'apprentissage (qui
+# bascule a 4 h, heure de Paris). C'est d'elle que viennent la serie de
+# jours d'affilee et l'historique.
+NIHONGO = """
+CREATE TABLE nihongo_carte(
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  cle            TEXT NOT NULL,
+  stabilite      REAL NOT NULL,
+  difficulte     REAL NOT NULL,
+  echeance       TEXT NOT NULL,
+  vue_le         TEXT NOT NULL,
+  revisions      INTEGER NOT NULL DEFAULT 0,
+  oublis         INTEGER NOT NULL DEFAULT 0,
+  cree_le        TEXT NOT NULL,
+  PRIMARY KEY (utilisateur_id, cle)
+);
+CREATE INDEX idx_nihongo_echeance ON nihongo_carte(utilisateur_id, echeance);
+
+CREATE TABLE nihongo_jour(
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  jour           TEXT NOT NULL,
+  revisions      INTEGER NOT NULL DEFAULT 0,
+  justes         INTEGER NOT NULL DEFAULT 0,
+  nouvelles      INTEGER NOT NULL DEFAULT 0,
+  secondes       INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (utilisateur_id, jour)
+);
+"""
+
+# Migration 26 : la lecture de Nihongo. Voir « La lecture » dans nihongo.py.
+#
+# `nihongo_lecture` : les textes lus, une ligne par texte et par personne --
+# la premiere et la derniere lecture, combien de fois, et ce qu'on en a
+# compris la derniere fois (1 : peu, 2 : l'essentiel, 3 : tout). Le texte
+# est designe par son nom, celui de matiere/lecture-n*.txt.
+#
+# `nihongo_demande` : les mots qu'on a demande a apprendre en lisant (« mot:
+# 食べる・たべる ») ; la seance les fait decouvrir avant les autres. La
+# demande s'efface quand le mot a sa premiere carte.
+#
+# `nihongo_jour.lectures` : les textes lus ce jour-la. Un jour de lecture
+# sans revision compte aussi dans la serie.
+NIHONGO_LECTURE = """
+CREATE TABLE nihongo_lecture(
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  texte          TEXT NOT NULL,
+  premiere_le    TEXT NOT NULL,
+  lu_le          TEXT NOT NULL,
+  fois           INTEGER NOT NULL DEFAULT 1,
+  compris        INTEGER NOT NULL,
+  PRIMARY KEY (utilisateur_id, texte)
+);
+
+CREATE TABLE nihongo_demande(
+  utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id) ON DELETE CASCADE,
+  mot            TEXT NOT NULL,
+  demande_le     TEXT NOT NULL,
+  PRIMARY KEY (utilisateur_id, mot)
+);
+
+ALTER TABLE nihongo_jour ADD COLUMN lectures INTEGER NOT NULL DEFAULT 0;
+"""
+
 # Les couleurs qu'on peut choisir, 5 x 5, rangees par teinte : du jaune au
 # rouge, du rose au violet, du bleu au vert, puis quelques douces et les
 # neutres. Des couleurs franches et bien distinctes -- une premiere palette
@@ -616,7 +756,8 @@ MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
               SUGGESTIONS, BANNIERE, ONGLET_DEFAUT, PRIORITE,
               SUGGESTIONS_VUES, MONITORING, QUIZ_SOURCE, THEMES_JEU,
               CLASSEUR, SOCIAL, DISCUSSION, FIL, SPOILER, FIL_VU,
-              ALERTES_SORTIE, COULEUR]
+              ALERTES_SORTIE, COULEUR, PRESENCE, VISITE_HUMAINE,
+              NIHONGO, NIHONGO_LECTURE]
 
 _local = threading.local()
 

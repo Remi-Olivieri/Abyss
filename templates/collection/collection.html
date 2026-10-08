@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Classeur Yu-Gi-Oh</title>
+<!-- le logo du site : voir static/commun/logo/ -->
+<link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
+<link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Eczar:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -181,6 +185,8 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- le battement de presence : voir static/commun/presence.js -->
+<script src="/static/commun/presence.js"></script>
 <!-- Les gestes du doigt, partagés avec l'Archive Jeux Vidéos : ici le
      balayage tourne les pages du classeur et passe d'une carte à l'autre.
      Voir la section « gestes du doigt » plus bas. -->
@@ -296,7 +302,7 @@ function optionsRarete(card, tout){
     + (d ? '<option value="' + AUTRES + '">Autre rareté…</option>' : '');
 }
 
-let DATA = { types: [], images: '/static/yugioh/Cards/', vignettes: '/api/collection/vignette/' };
+let DATA = { types: [], images: '/static/yugioh/Cards/', vignettes: '/collection/vignette/' };
 let MODE = 'offline';
 const S = { t:0, c:0, spread:0, sel:null, hit:null, pose:null, zoom:false, zt:0, zc:0 };
 
@@ -474,10 +480,21 @@ function imgHTML(card){
 /* L'artwork peut manquer sur le disque alors que l'index le donnait : sans
    ce filet, `.slot.art .nm` garderait le nom caché derrière une image qui
    n'arrivera pas, et la pochette resterait vide. Les événements load/error
-   ne remontent pas : on écoute en capture. */
+   ne remontent pas : on écoute en capture.
+   Un échec n'est pas forcément définitif - un serveur qui redémarre, une
+   connexion qui flanche : un second essai une seconde plus tard, avant de
+   rendre la pochette à son nom. Sans lui, l'image ne revenait qu'en tournant
+   la page et en revenant. Si la double-page a été redessinée entre-temps,
+   draw() a retiré data-art et l'essai n'a plus lieu d'être. */
 document.addEventListener('error', e => {
   const im = e.target;
   if (!im || im.tagName !== 'IMG' || !im.dataset || !im.dataset.art) return;
+  if (!im.dataset.essai){
+    im.dataset.essai = '1';
+    const src = im.getAttribute('src');
+    setTimeout(() => { if (im.isConnected && im.dataset.art) im.src = src; }, 1000);
+    return;
+  }
   const p = im.parentNode;
   im.remove();
   if (p) p.classList.remove('art');
@@ -494,7 +511,7 @@ function applyData(d, frais){
       .filter(c => c && Array.isArray(c.cards));
   });
   DATA.images = DATA.images || '/static/yugioh/Cards/';
-  DATA.vignettes = DATA.vignettes || '/api/collection/vignette/';
+  DATA.vignettes = DATA.vignettes || '/collection/vignette/';
   CAN_WRITE = DATA.write === true;
   S.t = Math.max(0, Math.min(S.t, DATA.types.length - 1));
   S.c = Math.max(0, Math.min(S.c, T().classeurs.length - 1));
@@ -2083,7 +2100,7 @@ function ouvrirStock(){
   if (!MOI.admin){ toast("Le stock est réservé à l'administration.", true); return; }
   ST = { jeton: 0, code: '', file: [], fi: 0, gardees: [], groupes: [], gi: 0, vues: 0,
          compte: { images: 0, passees: 0, ignorees: 0 }, echecs: [], types: null, ti: 0,
-         noire: [] };
+         langue: 'fr', noire: [] };
   stockSeries();
 }
 
@@ -2163,8 +2180,10 @@ async function stockSeries(){
    repasser sur un autre.
 
    Rien ne s'écrit ici. Le texte se copie tel quel : « Type - N cartes »,
-   puis une carte par ligne. Les six listes arrivent d'un coup, et passer
-   d'un type à l'autre ne redemande rien au serveur. */
+   puis une carte par ligne. Les six listes arrivent d'un coup, chacune en
+   français et en anglais - Cardmarket ne connaît pas tous les noms
+   français -, et passer d'un type ou d'une langue à l'autre ne redemande
+   rien au serveur. */
 async function stockTypes(){
   const jeton = ++ST.jeton;
   if (!ST.types || !ST.types.length){
@@ -2184,9 +2203,12 @@ async function stockTypes(){
   stockDessineType();
 }
 
+/* les noms anglais, si on les a demandés et que le serveur les a donnés */
+const nomsDuType = t => ST.langue === 'en' && Array.isArray(t.anglais) ? t.anglais : t.cartes;
+
 function texteDuType(t){
   const n = t.cartes.length;
-  return t.label + ' - ' + n + ' carte' + stockPluriel(n) + '\n\n' + t.cartes.join('\n');
+  return t.label + ' - ' + n + ' carte' + stockPluriel(n) + '\n\n' + nomsDuType(t).join('\n');
 }
 
 function stockDessineType(){
@@ -2203,9 +2225,14 @@ function stockDessineType(){
   /* Ce qui n'est pas dans la liste, et ce qui y est sous un autre nom : dit
      sous le texte plutôt que dedans, pour que la copie reste propre. */
   const pluriel = (n, un, plusieurs) => '<b>' + n + '</b> ' + (n > 1 ? plusieurs : un);
+  const langues = [['fr', 'Français'], ['en', 'Anglais']].map(l =>
+    '<button type="button" class="exp-btn' + (l[0] === ST.langue ? ' on' : '') + '" data-langue="'
+    + l[0] + '" aria-pressed="' + (l[0] === ST.langue) + '">' + l[1] + '</button>').join('');
   const notes = [
-    t.en_anglais && pluriel(t.en_anglais, 'carte sans nom français, listée sous son nom anglais.',
-                            'cartes sans nom français, listées sous leur nom anglais.'),
+    /* en anglais, toutes le sont : la note ne dirait plus rien */
+    ST.langue === 'fr' && t.en_anglais
+      && pluriel(t.en_anglais, 'carte sans nom français, listée sous son nom anglais.',
+                 'cartes sans nom français, listées sous leur nom anglais.'),
     t.hors_tcg && pluriel(t.hors_tcg, 'carte jamais sortie en TCG (OCG seulement) écartée.',
                           'cartes jamais sorties en TCG (OCG seulement) écartées.'),
     t.lots && pluriel(t.lots, 'carte de lot de tournoi écartée.',
@@ -2219,6 +2246,10 @@ function stockDessineType(){
     +   '<span class="exp-note">par date de sortie</span></div>'
     +   '<div class="exp-format exp-quel" role="group" aria-label="Type de carte">' + boutons + '</div>'
     + '</div>'
+    + '<div class="exp-section"><div class="exp-tete"><span class="exp-titre">Noms</span>'
+    +   '<span class="exp-note">l\'anglais pour Cardmarket</span></div>'
+    +   '<div class="exp-format" role="group" aria-label="Langue des noms">' + langues + '</div>'
+    + '</div>'
     + '<textarea class="cm-texte st-texte" id="stTexte" readonly spellcheck="false"'
     +   ' aria-label="Liste des cartes ' + esc(t.label) + '"></textarea>'
     + (notes.length ? '<p class="st-info st-notes">' + notes.join('<br>') + '</p>' : '')
@@ -2228,6 +2259,9 @@ function stockDessineType(){
   el('stTexte').value = texteDuType(t);
   el('sheetbox').querySelectorAll('[data-ti]').forEach(b => {
     b.onclick = () => { ST.ti = +b.dataset.ti; stockDessineType(); };
+  });
+  el('sheetbox').querySelectorAll('[data-langue]').forEach(b => {
+    b.onclick = () => { ST.langue = b.dataset.langue; stockDessineType(); };
   });
   el('stFermer').onclick = fermerModale;
   el('stCopier').onclick = async () => {

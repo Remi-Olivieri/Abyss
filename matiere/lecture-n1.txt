@@ -1,0 +1,271 @@
+# Nihongo - les textes a lire du N1. Le format est decrit en tete de
+# matiere/lecture-n5.txt.
+
+=== shoushika-to-chihou
+titre: {少子化|しょうしか}と{地方|ちほう}の{行方|ゆくえ}
+fr: La baisse des naissances et l'avenir des régions
+genre: article
+intro: Un éditorial sur les villages qui se vident, et sur ceux qui tentent d'inverser la tendance.
+
+{日本|にほん}の{出生数|しゅっしょうすう}は{減少|げんしょう}の{一途|いっと}をたどり、{昨年|さくねん}はついに{過去|かこ}{最少|さいしょう}を{記録|きろく}した。 | Le nombre de naissances au Japon ne cesse de baisser, et a atteint l'an dernier son plus bas niveau historique.
+とりわけ{深刻|しんこく}なのが{地方|ちほう}である。 | La situation est particulièrement grave en province.
+{若者|わかもの}の{流出|りゅうしゅつ}に{歯止|はど}めがかからず、{学校|がっこう}の{統廃合|とうはいごう}を{余儀|よぎ}なくされる{自治体|じちたい}も{少|すく}なくない。 | Faute de pouvoir enrayer le départ des jeunes, nombre de municipalités se voient contraintes de fusionner ou de fermer leurs écoles. | wo-yoginaku-sareru
+ある{山間|さんかん}の{村|むら}に{至|いた}っては、この{十年|じゅうねん}で{生|う}まれた{子|こ}どもは{三人|さんにん}しかいないという。 | Quant à un certain village de montagne, seuls trois enfants y seraient nés en dix ans. | ni-itatte-wa
+
+しかし、{悲観|ひかん}ばかりしていても{始|はじ}まらない。 | Mais se contenter d'être pessimiste ne mène à rien.
+{近年|きんねん}、{地方|ちほう}ならではの{暮|く}らしに{魅力|みりょく}を{感|かん}じ、{都市|とし}から{移|うつ}り{住|す}む{若|わか}い{家族|かぞく}が{増|ふ}えている。 | Ces dernières années, de jeunes familles, séduites par une vie qu'on ne trouve qu'en province, quittent la ville pour s'y installer. | naradewa
+{豊|ゆた}かな{自然|しぜん}の{中|なか}で{子|こ}どもを{育|そだ}てたいという{思|おも}いが、その{背中|せなか}を{押|お}しているのだ。 | C'est le désir d'élever leurs enfants au milieu d'une nature généreuse qui les pousse à franchir le pas.
+こうした{動|うご}きを{後押|あとお}しすべく、{住宅|じゅうたく}や{仕事|しごと}を{用意|ようい}して{移住者|いじゅうしゃ}を{迎|むか}える{自治体|じちたい}も{現|あらわ}れた。 | Pour encourager ce mouvement, certaines municipalités accueillent les nouveaux arrivants en leur préparant logement et travail. | beku
+{移住者|いじゅうしゃ}が{開|ひら}いた{店|みせ}が{話題|わだい}を{呼|よ}び、{観光客|かんこうきゃく}が{訪|おとず}れるようになった{町|まち}もある。 | Dans certaines villes, les boutiques ouvertes par ces nouveaux venus ont fait parler d'elles et attirent désormais des touristes.
+
+もっとも、{移住|いじゅう}さえ{進|すす}めば{問題|もんだい}が{解決|かいけつ}するわけではない。 | Certes, il ne suffit pas que les installations se multiplient pour que le problème soit réglé. | sae-ba
+{医療|いりょう}や{交通|こうつう}といった{生活|せいかつ}の{基盤|きばん}が{失|うしな}われれば、{住民|じゅうみん}は{去|さ}らざるを{得|え}ない。 | Si les bases de la vie quotidienne, comme la santé ou les transports, disparaissent, les habitants n'ont d'autre choix que de partir. | zaru-wo-enai
+{人口|じんこう}が{減|へ}ることを{前提|ぜんてい}に、いかに{地域|ちいき}を{支|ささ}えていくか。 | Comment soutenir les territoires en partant du principe que la population va diminuer ?
+その{問|と}いは、{地方|ちほう}のみならず、やがて{都市|とし}にも{突|つ}きつけられることになるだろう。 | Cette question finira sans doute par se poser non seulement aux régions, mais aussi aux villes.
+
+? Quelle situation l'éditorial décrit-il dans un village de montagne ?
++ Seuls trois enfants y sont nés en dix ans
+- Toutes les écoles y ont rouvert
+- La population y a doublé
+? Pourquoi de jeunes familles s'installent-elles en province ?
+- Les salaires y sont plus élevés
++ Elles veulent élever leurs enfants dans la nature
+- Elles y sont obligées par la loi
+? Selon l'auteur, qu'est-ce qui pousserait les habitants à partir malgré tout ?
+- L'arrivée des touristes
++ La disparition des services comme la santé et les transports
+- Le prix des maisons
+
+=== ma-no-bunka
+titre: 「{間|ま}」という{文化|ぶんか}
+fr: Le « ma », un art de l'intervalle
+genre: essai
+intro: Un essai sur un mot japonais difficile à traduire : l'intervalle, le silence, l'espace entre les choses.
+
+{日本語|にほんご}には、{他|た}の{言語|げんご}に{訳|やく}しがたい{言葉|ことば}がいくつもある。 | Le japonais compte plusieurs mots difficiles à traduire dans d'autres langues. | gatai
+「{間|ま}」もその{一|ひと}つであろう。 | Le « ma » en fait sans doute partie.
+{辞書|じしょ}を{引|ひ}けば、「{物|もの}と{物|もの}との{間|あいだ}の{空間|くうかん}」あるいは「{時間|じかん}の{途切|とぎ}れ」とある。 | Le dictionnaire le définit comme « l'espace entre deux choses » ou « une interruption dans le temps ».
+だが、{日本人|にほんじん}が{日常|にちじょう}{口|くち}にする「{間|ま}」は、そのような{定義|ていぎ}には{収|おさ}まりきらない。 | Mais le « ma » dont parlent les Japonais au quotidien déborde largement de telles définitions. | kiru
+
+{落語家|らくごか}ともなれば、{話|はなし}の{中身|なかみ}にもまして「{間|ま}」の{取|と}り{方|かた}が{芸|げい}の{良|よ}し{悪|あ}しを{決|き}めるという。 | Chez un conteur de rakugo, dit-on, la façon de ménager les silences compte plus encore que le contenu de l'histoire pour juger de son art. | to-mo-nareba,ni-mo-mashite
+{一瞬|いっしゅん}の{沈黙|ちんもく}があるからこそ、{次|つぎ}の{言葉|ことば}が{生|い}きるのだ。 | C'est précisément grâce à un instant de silence que le mot suivant prend vie. | kara-koso
+{庭園|ていえん}や{生|い}け{花|ばな}においても、{何|なに}も{置|お}かない{空間|くうかん}は{決|けっ}して{無駄|むだ}ではない。 | Dans les jardins comme dans l'art floral, l'espace où l'on ne pose rien n'est jamais perdu.
+むしろ、{余白|よはく}をもって{全体|ぜんたい}の{美|うつく}しさを{際立|きわだ}たせているのである。 | Au contraire, c'est par le vide que l'on fait ressortir la beauté de l'ensemble. | wo-motte
+
+{人|ひと}との{関係|かんけい}においても、「{間|ま}」は{欠|か}かせない。 | Dans les relations humaines aussi, le « ma » est indispensable.
+{相手|あいて}の{気持|きも}ちを{察|さっ}し、あえて{言葉|ことば}を{挟|はさ}まない{沈黙|ちんもく}は、{時|とき}に{千|せん}の{言葉|ことば}にも{勝|まさ}る。 | Le silence par lequel on devine les sentiments de l'autre, en s'abstenant délibérément de parler, vaut parfois mieux que mille mots.
+「{間|ま}が{悪|わる}い」「{間|ま}が{抜|ぬ}ける」といった{表現|ひょうげん}が{多|おお}いのも、{日本人|にほんじん}がいかにこの{感覚|かんかく}を{重|おも}んじてきたかを{物語|ものがた}っている。 | La profusion d'expressions comme « ma ga warui » ou « ma ga nukeru » montre bien à quel point les Japonais ont accordé de l'importance à cette sensibilité.
+{絶|た}え{間|ま}なく{情報|じょうほう}が{流|なが}れ{込|こ}む{現代|げんだい}にあって、{私|わたし}たちはこの「{間|ま}」をこそ{取|と}り{戻|もど}すべきなのかもしれない。 | À notre époque où les informations affluent sans interruption, c'est peut-être justement ce « ma » que nous devrions retrouver. | beki
+
+? Comment le dictionnaire définit-il le « ma » ?
++ L'espace entre deux choses, ou une interruption dans le temps
+- Une façon polie de parler
+- Le moment où l'on mange
+? Qu'est-ce qui compte le plus chez un conteur de rakugo, selon l'essai ?
+- La longueur de ses histoires
++ La façon de ménager les silences
+- Le prix de ses spectacles
+? Que suggère l'auteur pour notre époque ?
+- Parler davantage
+- Consommer plus d'informations
++ Retrouver le « ma »
+
+=== honyaku
+titre: {翻訳|ほんやく}という{営|いとな}み
+fr: L'art de traduire
+genre: essai
+intro: Une traductrice réfléchit à ce qui se perd, et à ce qui se gagne, quand un texte change de langue.
+
+{翻訳|ほんやく}とは、{一|ひと}つの{言語|げんご}で{書|か}かれたものを{別|べつ}の{言語|げんご}に{移|うつ}す{作業|さぎょう}である。 | Traduire, c'est faire passer dans une langue ce qui a été écrit dans une autre.
+そう{言|い}ってしまえば{簡単|かんたん}だが、{実際|じっさい}にやってみると、{一文|いちぶん}{訳|やく}すのにも{何時間|なんじかん}もかかることがある。 | Dit ainsi, cela semble simple, mais en pratique, il arrive qu'une seule phrase demande des heures.
+{言葉|ことば}は{単|たん}なる{記号|きごう}ではなく、それを{話|はな}す{人々|ひとびと}の{歴史|れきし}や{習慣|しゅうかん}を{背負|せお}っているからだ。 | Car les mots ne sont pas de simples signes : ils portent l'histoire et les coutumes de ceux qui les parlent.
+
+たとえば、{日本語|にほんご}の{小説|しょうせつ}では、{主語|しゅご}が{省略|しょうりゃく}されることが{珍|めずら}しくない。 | Par exemple, dans un roman japonais, il n'est pas rare que le sujet soit omis.
+{誰|だれ}が{話|はな}しているのかを{読者|どくしゃ}に{委|ゆだ}ねる{曖昧|あいまい}さこそが、{作品|さくひん}の{味|あじ}わいとなっている{場合|ばあい}もある。 | Il arrive que ce soit justement l'ambiguïté, qui laisse au lecteur le soin de deviner qui parle, qui fasse la saveur de l'œuvre. | koso
+ところが、フランス{語|ご}に{訳|やく}すとなると、{主語|しゅご}を{明示|めいじ}しないわけにはいかない。 | Mais dès qu'il s'agit de traduire en français, on ne peut pas se dispenser d'expliciter le sujet. | wake-ni-wa-ikanai
+{訳者|やくしゃ}はそのたびに、{原文|げんぶん}の{響|ひび}きを{損|そこ}なうまいと{頭|あたま}を{悩|なや}ませる。 | Chaque fois, le traducteur se creuse la tête pour ne pas trahir la résonance du texte original. | mai
+
+{完璧|かんぺき}な{翻訳|ほんやく}など{存在|そんざい}しないことは、{言|い}うまでもない。 | Il va sans dire qu'une traduction parfaite n'existe pas. | made-mo-nai
+それでも、{優|すぐ}れた{訳文|やくぶん}は、{原作|げんさく}とは{別|べつ}の{輝|かがや}きを{放|はな}たずにはおかない。 | Pourtant, une belle traduction ne manque jamais de briller d'un éclat différent de celui de l'original. | zu-ni-wa-okanai
+{翻訳|ほんやく}は{失|うしな}われるものを{嘆|なげ}く{仕事|しごと}であると{同時|どうじ}に、{新|あら}たな{読者|どくしゃ}との{出会|であ}いを{生|う}み{出|だ}す{仕事|しごと}でもあるのだ。 | La traduction est à la fois un métier où l'on pleure ce qui se perd, et un métier qui fait naître la rencontre avec de nouveaux lecteurs.
+{一冊|いっさつ}の{本|ほん}が{海|うみ}を{越|こ}え、{見知|みし}らぬ{誰|だれ}かの{心|こころ}を{動|うご}かす。その{橋渡|はしわた}しができることを、{私|わたし}は{誇|ほこ}りに{思|おも}っている。 | Un livre traverse la mer et touche le cœur d'un inconnu. Être le pont qui rend cela possible, j'en suis fière.
+
+? Pourquoi traduire une seule phrase peut-il prendre des heures ?
++ Les mots portent l'histoire et les coutumes de ceux qui les parlent
+- Les dictionnaires sont incomplets
+- Les phrases japonaises sont très longues
+? Quelle difficulté pose le japonais quand on traduit en français ?
+- Il n'a pas de verbes
++ Le sujet est souvent omis, alors qu'il faut l'expliciter en français
+- Les phrases n'ont pas de fin
+? Que ressent l'autrice à propos de son métier ?
+- De la lassitude
+- De la honte
++ De la fierté
+
+=== mottainai
+titre: 「もったいない」の{思想|しそう}
+fr: La pensée du « mottainai »
+genre: essai
+intro: Un mot de tous les jours, devenu un symbole dans le monde entier. Que dit-il vraiment ?
+
+「もったいない」という{言葉|ことば}が{世界|せかい}に{知|し}られるようになって{久|ひさ}しい。 | Cela fait longtemps que le mot « mottainai » est connu dans le monde entier.
+ケニア{出身|しゅっしん}の{環境|かんきょう}{活動家|かつどうか}がこの{言葉|ことば}に{感銘|かんめい}を{受|う}け、{環境保護|かんきょうほご}の{合言葉|あいことば}として{広|ひろ}めたことはよく{知|し}られている。 | On sait qu'une militante écologiste kényane, frappée par ce mot, en a fait un mot d'ordre de la protection de l'environnement.
+しかし、この{言葉|ことば}は{単|たん}に「{無駄|むだ}を{出|だ}すな」という{教|おし}えにとどまるものではない。 | Mais ce mot ne se limite pas à la simple consigne « ne gaspille pas ».
+
+もともと「{勿体|もったい}」とは、{物|もの}が{本来|ほんらい}{備|そな}えている{姿|すがた}や{価値|かち}を{指|さ}す{言葉|ことば}であった。 | À l'origine, « mottai » désignait l'aspect et la valeur qu'une chose possède en propre.
+それが「ない」とは、{物|もの}の{価値|かち}が{生|い}かされないまま{失|うしな}われることへの{嘆|なげ}きにほかならない。 | Dire qu'il « n'y en a pas », ce n'est rien d'autre que se désoler qu'une chose perde sa valeur sans avoir servi. | ni-hokanaranai
+{一粒|ひとつぶ}の{米|こめ}にも、それを{育|そだ}てた{人|ひと}の{手間|てま}と、{天地|てんち}の{恵|めぐ}みが{込|こ}められている。 | Même dans un seul grain de riz, il y a le travail de celui qui l'a cultivé, et les bienfaits du ciel et de la terre.
+{米|こめ}{粒|つぶ}を{残|のこ}すべからずと{子|こ}どもを{諭|さと}した{祖父母|そふぼ}の{世代|せだい}は、そのことを{肌|はだ}で{知|し}っていたのだろう。 | La génération des grands-parents, qui apprenait aux enfants qu'on ne doit pas laisser un seul grain de riz, le savait sans doute dans sa chair. | bekarazu
+
+{物|もの}があふれる{現代|げんだい}にあって、{私|わたし}たちは{安|やす}さゆえに{物|もの}を{買|か}い、{古|ふる}くなれば{捨|す}てることに{慣|な}れきってしまった。 | À notre époque où les objets abondent, nous nous sommes complètement habitués à acheter parce que c'est bon marché, et à jeter dès que c'est vieux. | yue-ni,kiru
+{修理|しゅうり}するより{買|か}い{替|か}えたほうが{安|やす}いとあっては、{直|なお}して{使|つか}う{人|ひと}が{減|へ}るのも{無理|むり}はない。 | Quand remplacer coûte moins cher que réparer, il n'est pas étonnant que de moins en moins de gens réparent. | to-atte
+だが、{物|もの}を{大切|たいせつ}にする{心|こころ}は、{人|ひと}や{時間|じかん}を{大切|たいせつ}にする{心|こころ}と{根|ね}を{同|おな}じくしているのではないか。 | Mais le soin que l'on porte aux choses ne partage-t-il pas la même racine que le soin que l'on porte aux gens et au temps ?
+「もったいない」は、{古|ふる}めかしい{言葉|ことば}どころか、これからの{時代|じだい}を{生|い}きる{知恵|ちえ}なのである。 | Loin d'être un mot désuet, « mottainai » est une sagesse pour vivre l'époque qui vient. | dokoroka,meku
+
+? Qui a fait connaître le mot dans le monde ?
++ Une militante écologiste kényane
+- Un chef cuisinier japonais
+- Un professeur de Kyoto
+? Que désignait le mot « mottai » à l'origine ?
+- Le gaspillage
++ L'aspect et la valeur propres d'une chose
+- Un grain de riz
+? Comment l'auteur voit-il ce mot pour l'avenir ?
+- Comme un mot qui va disparaître
++ Comme une sagesse pour l'époque qui vient
+- Comme une simple règle de cuisine
+
+=== hougen
+titre: {方言|ほうげん}のゆくえ
+fr: Que deviennent les dialectes ?
+genre: article
+intro: Un article sur les parlers régionaux du Japon, longtemps méprisés, aujourd'hui menacés, et parfois redevenus à la mode.
+
+{日本|にほん}は{小|ちい}さな{国|くに}だと{言|い}われるが、{言葉|ことば}の{多様|たよう}さにおいては、{決|けっ}して{小|ちい}さくない。 | On dit que le Japon est un petit pays, mais pour la diversité des langues, il n'a rien de petit. | ni-oite
+{青森|あおもり}と{鹿児島|かごしま}の{お年寄|としよ}りが{方言|ほうげん}で{話|はな}せば、{互|たが}いにほとんど{理解|りかい}できないと{言|い}われるほどだ。 | On dit même que si deux personnes âgées d'Aomori et de Kagoshima parlaient chacune leur dialecte, elles ne se comprendraient presque pas. | hodo-kurai
+
+{明治以降|めいじいこう}、{国|くに}は{標準語|ひょうじゅんご}の{普及|ふきゅう}を{進|すす}め、{学校|がっこう}では{方言|ほうげん}を{話|はな}した{子|こ}どもが{罰|ばつ}を{受|う}けることさえあった。 | Après Meiji, l'État a promu la diffusion de la langue standard, et à l'école, il arrivait même que les enfants qui parlaient leur dialecte soient punis. | sae
+{方言|ほうげん}は「{田舎|いなか}くさい」「{恥|は}ずかしい」ものとされ、{都会|とかい}に{出|で}た{若者|わかもの}は{故郷|こきょう}の{言葉|ことば}を{隠|かく}すきらいがあった。 | Les dialectes passaient pour « campagnards » et « honteux », et les jeunes partis en ville avaient tendance à cacher la langue de leur pays natal. | kirai-ga-aru
+テレビの{普及|ふきゅう}を{皮切|かわき}りに、{全国|ぜんこく}どこでも{同|おな}じ{言葉|ことば}が{聞|き}かれるようになった。 | À commencer par la diffusion de la télévision, on s'est mis à entendre la même langue partout dans le pays. | wo-kawakiri-ni
+{今|いま}では、{消滅|しょうめつ}の{危機|きき}にあると{指摘|してき}される{方言|ほうげん}も{少|すく}なくない。 | Aujourd'hui, nombre de dialectes sont signalés comme menacés de disparition.
+
+ところが{近年|きんねん}、{方言|ほうげん}をめぐる{空気|くうき}に{変化|へんか}が{見|み}られる。 | Or, ces dernières années, l'atmosphère autour des dialectes a changé. | wo-megutte
+ドラマや{漫画|まんが}の{登場人物|とうじょうじんぶつ}が{方言|ほうげん}を{話|はな}すと、それが{温|あたた}かく{魅力|みりょく}{的|てき}だと{受|う}け{止|と}められるようになったのだ。 | Quand les personnages de séries ou de mangas parlent un dialecte, on le perçoit désormais comme chaleureux et charmant.
+{若者|わかもの}の{間|あいだ}では、{方言|ほうげん}をわざと{混|ま}ぜて{話|はな}すことが{一種|いっしゅ}の{流行|りゅうこう}にさえなっている。 | Chez les jeunes, mêler exprès du dialecte à sa façon de parler est même devenu une sorte de mode.
+とはいえ、{言葉|ことば}は{使|つか}われてこそ{生|い}き{続|つづ}けるものだ。 | Cela dit, une langue ne survit qu'à condition d'être parlée.
+{地域|ちいき}の{記憶|きおく}を{宿|やど}す{方言|ほうげん}を、{次|つぎ}の{世代|せだい}にどう{手渡|てわた}していくか。{残|のこ}された{時間|じかん}は{多|おお}くない。 | Comment transmettre à la génération suivante ces dialectes où vit la mémoire des lieux ? Il ne reste plus beaucoup de temps.
+
+? Que pourrait-il arriver entre des personnes âgées d'Aomori et de Kagoshima ?
++ Elles ne se comprendraient presque pas
+- Elles parleraient la même langue
+- Elles parleraient anglais
+? Qu'arrivait-il parfois aux enfants qui parlaient leur dialecte à l'école ?
+- On les félicitait
++ On les punissait
+- On les envoyait à la télévision
+? Comment perçoit-on les dialectes dans les séries et les mangas aujourd'hui ?
+- Comme ridicules
+- Comme difficiles à comprendre
++ Comme chaleureux et charmants
+
+=== kioku-no-niwa
+titre: {記憶|きおく}という{名|な}の{庭|にわ}
+fr: Un jardin nommé mémoire
+genre: essai
+intro: Un texte plus littéraire. L'auteur se souvient de la maison de sa grand-mère, et de ce que la mémoire garde.
+
+{祖母|そぼ}の{家|いえ}には、{小|ちい}さな{庭|にわ}があった。 | Chez ma grand-mère, il y avait un petit jardin.
+{夏|なつ}ともなれば、{縁側|えんがわ}に{腰|こし}を{下|お}ろし、{西瓜|すいか}を{頬張|ほおば}りながら{蝉|せみ}の{声|こえ}を{聞|き}いたものだ。 | L'été venu, je m'asseyais sur la véranda et j'écoutais les cigales en dévorant de la pastèque. | to-mo-nareba,ta-mono-da
+{雨|あめ}の{日|ひ}には、{苔|こけ}むした{石|いし}が{濡|ぬ}れて、{夢|ゆめ}のごとき{光|ひかり}を{放|はな}っていた。 | Les jours de pluie, les pierres couvertes de mousse, mouillées, brillaient d'une lumière comme sortie d'un rêve. | gotoki
+
+{祖母|そぼ}が{亡|な}くなり、{家|いえ}が{取|と}り{壊|こわ}されてから、もう{二十年|にじゅうねん}になる。 | Cela fait déjà vingt ans que ma grand-mère est morte et que la maison a été démolie.
+{跡地|あとち}には{今|いま}、{何|なん}の{変哲|へんてつ}もないマンションが{建|た}っている。 | À sa place se dresse aujourd'hui un immeuble sans le moindre charme.
+それでも、{目|め}を{閉|と}じれば、あの{庭|にわ}は{少|すこ}しも{色褪|いろあ}せることなく{浮|う}かんでくる。 | Et pourtant, quand je ferme les yeux, ce jardin m'apparaît sans avoir pâli le moins du monde.
+{不思議|ふしぎ}なことに、{記憶|きおく}の{中|なか}の{庭|にわ}は、{実際|じっさい}よりもずっと{広|ひろ}く、{光|ひかり}に{満|み}ちている。 | Chose étrange, le jardin de ma mémoire est bien plus vaste et plus lumineux qu'il ne l'était vraiment. | koto-ni
+
+{記憶|きおく}とは、{過去|かこ}をそのまま{保存|ほぞん}する{箱|はこ}ではない。 | La mémoire n'est pas une boîte qui conserve le passé tel quel.
+むしろ、{私|わたし}たちが{生|い}きる{中|なか}で、{繰|く}り{返|かえ}し{手入|てい}れをし、{育|そだ}て{直|なお}していく{庭|にわ}のようなものではないだろうか。 | C'est plutôt une sorte de jardin, que nous entretenons et faisons pousser encore et encore tout au long de notre vie.
+{秋|あき}めいた{風|かぜ}が{吹|ふ}くたびに、{私|わたし}は{祖母|そぼ}の{声|こえ}を{思|おも}い{出|だ}す。 | Chaque fois que souffle un vent qui sent l'automne, je repense à la voix de ma grand-mère. | meku,tabi-ni
+「{大事|だいじ}なものは、{目|め}に{見|み}えないところにあるんだよ。」 | « Les choses importantes se trouvent là où les yeux ne voient pas. »
+あの{言葉|ことば}の{意味|いみ}を、{私|わたし}は{今|いま}も{問|と}い{続|つづ}けてやまない。 | Le sens de ces mots, je ne cesse aujourd'hui encore de m'interroger dessus. | te-yamanai
+
+? Qu'y a-t-il aujourd'hui à la place de la maison de la grand-mère ?
++ Un immeuble sans charme
+- Un nouveau jardin
+- Un temple
+? Comment est le jardin dans la mémoire de l'auteur ?
+- Plus petit et plus sombre qu'en réalité
++ Plus vaste et plus lumineux qu'en réalité
+- Exactement comme en réalité
+? À quoi l'auteur compare-t-il la mémoire ?
+- À une boîte fermée
++ À un jardin qu'on entretient
+- À un livre qu'on relit
+
+=== rounin-to-sakura
+titre: {老人|ろうじん}と{桜|さくら}
+fr: Le vieil homme et le cerisier
+genre: récit
+intro: Une courte nouvelle. Chaque printemps, un vieil homme veille sur un cerisier qu'on veut abattre.
+
+{村|むら}の{外|はず}れに、{樹齢|じゅれい}{三百年|さんびゃくねん}とも{言|い}われる{一本|いっぽん}の{桜|さくら}がある。 | À la sortie du village se dresse un cerisier qu'on dit âgé de trois cents ans.
+{毎年|まいとし}{春|はる}が{来|く}るや{否|いな}や、{一人|ひとり}の{老人|ろうじん}がその{木|き}の{下|した}に{姿|すがた}を{現|あらわ}した。 | Chaque année, dès que le printemps arrivait, un vieil homme apparaissait au pied de cet arbre. | ya-ina-ya
+{老人|ろうじん}は{一日|いちにち}たりとも{欠|か}かさず、{朝|あさ}から{晩|ばん}まで{黙|だま}って{花|はな}を{見上|みあ}げていた。 | Sans manquer un seul jour, du matin au soir, il levait les yeux vers les fleurs en silence. | tari-tomo
+
+ある{年|とし}、{道路|どうろ}を{広|ひろ}げるため、{桜|さくら}を{切|き}り{倒|たお}すという{話|はなし}が{持|も}ち{上|あ}がった。 | Une année, on parla d'abattre le cerisier pour élargir la route.
+{知|し}らせを{聞|き}くなり、{老人|ろうじん}は{役場|やくば}へと{駆|か}けつけた。 | Dès qu'il apprit la nouvelle, le vieil homme accourut à la mairie. | nari
+「あの{桜|さくら}は、{戦争|せんそう}で{死|し}んだ{妻|つま}と{最後|さいご}に{花見|はなみ}をした{木|き}なのです。」 | « Ce cerisier, c'est l'arbre sous lequel j'ai fait mon dernier hanami avec ma femme, morte à la guerre. »
+{老人|ろうじん}の{声|こえ}は{震|ふる}え、{今|いま}にも{泣|な}かんばかりであった。 | Sa voix tremblait, il semblait sur le point d'éclater en sanglots. | n-bakari
+その{姿|すがた}に{心|こころ}を{打|う}たれた{若|わか}い{職員|しょくいん}は、{計画|けいかく}を{見直|みなお}すべく{奔走|ほんそう}した。 | Ému par cette scène, un jeune employé se démena pour faire revoir le projet. | beku
+
+{翌年|よくねん}の{春|はる}、{道|みち}は{桜|さくら}を{避|さ}けるように{緩|ゆる}やかに{曲|ま}がって{造|つく}られていた。 | Au printemps suivant, la route avait été tracée en une courbe douce qui contournait le cerisier.
+しかし、{満開|まんかい}の{木|き}の{下|した}に、もう{老人|ろうじん}の{姿|すがた}はなかった。 | Mais sous l'arbre en pleine floraison, le vieil homme n'était plus là.
+{花|はな}びらが{風|かぜ}に{舞|ま}うのを、{若|わか}い{職員|しょくいん}はいつまでも{見上|みあ}げていた。 | Le jeune employé resta longtemps à regarder les pétales danser dans le vent.
+{今|いま}、その{桜|さくら}は「{夫婦桜|めおとざくら}」と{呼|よ}ばれ、{村|むら}の{人々|ひとびと}に{愛|あい}されている。 | Aujourd'hui, ce cerisier s'appelle « le cerisier des époux », et les gens du village le chérissent.
+
+? Pourquoi voulait-on abattre le cerisier ?
++ Pour élargir la route
+- Parce qu'il était malade
+- Pour construire une école
+? Que représentait ce cerisier pour le vieil homme ?
+- L'arbre planté par son père
++ L'arbre du dernier hanami avec sa femme
+- Le lieu de son mariage
+? Que s'est-il passé au printemps suivant ?
+- Le cerisier avait été abattu
++ La route contournait l'arbre, mais le vieil homme n'était plus là
+- Le vieil homme a planté un autre arbre
+
+=== ai-to-sousaku
+titre: {AI|えーあい}は{創作者|そうさくしゃ}たり{得|う}るか
+fr: L'IA peut-elle être une créatrice ?
+genre: article
+intro: Un éditorial sur les intelligences artificielles qui écrivent, dessinent et composent, et sur ce que cela change pour la création.
+
+{文章|ぶんしょう}を{書|か}き、{絵|え}を{描|か}き、{曲|きょく}まで{作|つく}る{人工知能|じんこうちのう}が、{驚|おどろ}くべき{速|はや}さで{進歩|しんぽ}している。 | Les intelligences artificielles qui écrivent des textes, dessinent, et composent même de la musique progressent à une vitesse stupéfiante.
+{人間|にんげん}が{何日|なんにち}もかけて{仕上|しあ}げる{作品|さくひん}を、{AI|えーあい}はものの{数秒|すうびょう}で{生|う}み{出|だ}す。 | Une œuvre qu'un humain met des jours à achever, l'IA la produit en quelques secondes à peine.
+その{完成度|かんせいど}の{高|たか}さには、{専門家|せんもんか}といえども{驚|おどろ}きを{禁|きん}じ{得|え}ない。 | Même les spécialistes ne peuvent cacher leur étonnement devant la qualité du résultat. | to-iedomo,wo-kinjienai
+
+だが、{果|は}たして{AI|えーあい}は{創作者|そうさくしゃ}たり{得|う}るのだろうか。 | Mais l'IA peut-elle vraiment être une créatrice ? | taru,eru
+{AI|えーあい}は{膨大|ぼうだい}な{過去|かこ}の{作品|さくひん}を{学習|がくしゅう}し、それらを{組|く}み{合|あ}わせているにすぎない、という{批判|ひはん}は{根強|ねづよ}い。 | La critique selon laquelle l'IA ne fait qu'apprendre d'innombrables œuvres passées et les recombiner reste tenace. | ni-suginai
+{他方|たほう}、{人間|にんげん}の{創作|そうさく}もまた、{先人|せんじん}の{作品|さくひん}から{学|まな}ぶことなしには{成|な}り{立|た}たない、と{反論|はんろん}する{声|こえ}もある。 | D'autres rétorquent que la création humaine, elle aussi, ne saurait exister sans apprendre des œuvres de ses prédécesseurs. | nashi-ni
+{問題|もんだい}は、{技術|ぎじゅつ}の{是非|ぜひ}よりも、むしろそれを{使|つか}う{私|わたし}たちの{側|がわ}にあるのかもしれない。 | Le problème, plus que le bien-fondé de la technique, se trouve peut-être plutôt de notre côté, chez ceux qui l'utilisent.
+
+{他人|たにん}の{作品|さくひん}を{無断|むだん}で{学習|がくしゅう}させた{結果|けっか}、{作者|さくしゃ}の{権利|けんり}が{侵|おか}されるとあっては、{看過|かんか}するわけにはいかない。 | Si l'on fait apprendre à une IA les œuvres d'autrui sans autorisation, et que les droits des auteurs s'en trouvent bafoués, on ne peut fermer les yeux. | to-atte,wake-ni-wa-ikanai
+{一方|いっぽう}で、{絵|え}を{描|か}くことに{苦手|にがて}{意識|いしき}を{持|も}っていた{人|ひと}が、{AI|えーあい}を{道具|どうぐ}として{表現|ひょうげん}の{喜|よろこ}びを{知|し}ったという{例|れい}も{枚挙|まいきょ}にいとまがない。 | D'un autre côté, les exemples de gens qui se croyaient incapables de dessiner et qui ont découvert la joie de s'exprimer grâce à l'IA sont innombrables.
+{創作|そうさく}とは、{結局|けっきょく}のところ、{何|なに}かを{伝|つた}えたいという{人|ひと}の{思|おも}いから{始|はじ}まるものだ。 | La création, au fond, commence par le désir de quelqu'un de transmettre quelque chose.
+その{思|おも}いがある{限|かぎ}り、どんな{道具|どうぐ}を{使|つか}おうと、{作品|さくひん}は{人|ひと}の{心|こころ}に{届|とど}くに{足|た}るものとなるだろう。 | Tant que ce désir existe, quel que soit l'outil employé, l'œuvre sera sans doute digne de toucher le cœur des gens. | kagiri,ni-taru
+
+? Qu'est-ce qui étonne même les spécialistes ?
++ La qualité de ce que produit l'IA
+- Le prix des machines
+- La lenteur de l'IA
+? Quelle critique est souvent faite à l'IA ?
+- Elle refuse de travailler
++ Elle ne ferait que recombiner des œuvres passées
+- Elle ne sait pas écrire
+? Selon l'éditorial, par quoi commence toute création ?
+- Par la technique
+- Par l'argent
++ Par le désir de transmettre quelque chose

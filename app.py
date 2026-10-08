@@ -12,11 +12,13 @@ from flask_socketio import SocketIO
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import alertes
+import apercu
 import cartes
 import collection
 import comptes
 import journal
 import monitoring
+import nihongo
 import quiz
 import sauvegarde
 import social
@@ -39,6 +41,7 @@ QUIZ = "quiz/quiz.html"
 FEED = "archive/feed.html"
 REINITIALISER = "abyss/reinitialiser.html"
 CHAINZ = "chainz/chainz.html"
+NIHONGO = "nihongo/nihongo.html"
 # La cle qui signe les cookies de session Flask. Elle ne sert qu'au pseudo
 # d'invite du Yu-Gi-Quiz : les comptes Abyss, eux, ont leur propre cookie et
 # leur table de sessions (voir comptes.COOKIE). Gardee dans donnees/, qui
@@ -57,7 +60,8 @@ DOSSIERS = (STATIQUE, TEMPLATES)
 # navigateur les garder en cache (sinon chaque affichage retelecharge tout,
 # et un defilement rapide sature les connexions HTTP disponibles)
 EXTENSIONS_CACHABLES = {".jpg", ".jpeg", ".png", ".webp", ".gif",
-                        ".svg", ".ico", ".woff2", ".woff"}
+                        ".svg", ".ico", ".woff2", ".woff",
+                        ".mp3"}   # les sons de Nihongo, meme regle que les images
 # 24 h : assez pour qu'un defilement rapide ne retelecharge rien, assez court
 # pour qu'une jaquette remplacee sous le meme nom finisse par reapparaitre.
 # Monte a 31536000 (un an) le jour ou les images ne bougent plus du tout.
@@ -169,6 +173,9 @@ app.register_blueprint(collection.branche(
     # les raretes sous lesquelles chaque carte est parue : le panneau du
     # classeur ne propose que celles-la (voir cartes.py, qui l'ecrit)
     fichier_raretes=STATIQUE / "yugioh" / "cartes-rarity.json"))
+# les vignettes des pochettes, hors de /api/ et de sa limite de debit (voir
+# collection.URL_VIGNETTES)
+app.register_blueprint(collection.blueprint_vignettes)
 # Le stock lui-meme -- les noms, les artworks, les vues -- tenu a jour depuis
 # ygoprodeck quand une serie parait. Un seul dossier lui suffit : tout ce
 # qu'il ecrit vit dans static/yugioh/. Reserve a l'administration, voir
@@ -186,14 +193,32 @@ app.register_blueprint(social.blueprint_social)
 social.branche_temps_reel(socketio)
 app.register_blueprint(blueprint_monitoring)
 app.register_blueprint(quiz.branche(STATIQUE / "archive" / "Cover"))
+# Les apercus de lien : les balises Open Graph glissees dans chaque page (voir
+# envoie), et la mosaique de jaquettes d'un journal partage.
+app.register_blueprint(apercu.branche(STATIQUE / "archive" / "Cover"))
 # Deux blueprints, les pages et leur API : voir yugiquiz.branche.
 for bp in yugiquiz.branche(socketio):
     app.register_blueprint(bp)
+# Le japonais : les revisions de chacun, en base ; la matiere (kanas,
+# traces), en fichiers sous static/nihongo/. Reserve a l'administration tant
+# qu'il est en chantier, voir nihongo.reserve.
+app.register_blueprint(nihongo.branche(STATIQUE / "nihongo"))
+
+
+@app.before_request
+def regarde_le_geste():
+    """Ce qu'un geste va effacer, lu avant lui. Voir monitoring.avant.
+
+    Un jeu supprime n'a plus de nom une fois la route passee, et une
+    deconnexion n'a plus de compte : le monitoring les note donc ici, pour
+    pouvoir dire ensuite « a retire Hades de son journal ».
+    """
+    monitoring.avant(request)
 
 
 @app.after_request
 def note_la_visite(r):
-    """Compte la visite, si c'en est une. Voir monitoring.note.
+    """Compte la visite, la presence et le geste. Voir monitoring.note.
 
     Apres la reponse et non avant : on ne note que ce qui a reellement ete
     servi. Une redirection, une erreur ou un fichier statique n'ont rien a
@@ -287,9 +312,12 @@ def envoie(chemin):
 
         if cible.is_file():
             if cible.suffix.lower() == ".html":
-                # une page : jamais gardee, et ses scripts cites avec leur ?v=
-                reponse = Response(versionne(cible.read_text(encoding="utf-8")),
-                                   mimetype="text/html")
+                # une page : jamais gardee, ses scripts cites avec leur ?v=, et
+                # ce qu'une messagerie montre quand on colle son adresse
+                html = apercu.glisse(versionne(cible.read_text(encoding="utf-8")),
+                                     request.url_rule.rule if request.url_rule else "",
+                                     request.view_args)
+                reponse = Response(html, mimetype="text/html")
                 reponse.headers["Cache-Control"] = "no-store, max-age=0"
                 return reponse
             reponse = send_from_directory(dossier, cible.relative_to(dossier).as_posix())
@@ -339,6 +367,15 @@ def racine():
 @app.route("/Abyss.html")
 def ancien_abyss():
     return redirect("/abyss", code=301)
+
+# Le navigateur demande /favicon.ico de lui-meme, sans qu'aucune page ne le
+# cite : pour un JSON ou une image ouverts seuls dans un onglet, et chez
+# certains robots d'apercu. Les pages, elles, citent leurs icones (voir
+# static/commun/logo/). Servi et non redirige : une redirection par onglet
+# ouvert pour une icone de 16 pixels, c'est un aller-retour de trop.
+@app.route("/favicon.ico")
+def favicon():
+    return envoie("static/commun/logo/favicon.ico")
 
 @app.route("/abyss")
 def accueil():
@@ -407,11 +444,14 @@ def archive_de(pseudo):
     journal, meme chez qui n'a pas de compte -- c'est tout l'interet d'un
     lien qu'on partage.
 
-    Rien n'est verifie ici, et `pseudo` n'est meme pas regarde. Un journal
-    prive ou un pseudo inconnu, c'est /api/journal/<pseudo> qui le dit, et
-    la page sait l'afficher. Repondre 404 depuis ici demanderait de relire
-    la base a chaque chargement de page, et surtout confirmerait au passage
-    quels comptes existent, un essai a la fois.
+    Rien n'est verifie ici. Un journal prive ou un pseudo inconnu, c'est
+    /api/journal/<pseudo> qui le dit, et la page sait l'afficher. Repondre
+    404 depuis ici confirmerait au passage quels comptes existent, un essai
+    a la fois.
+
+    Le pseudo n'est lu que par l'apercu de lien (voir apercu.py), qui
+    decrit un journal public et donne a tout le reste -- prive ou inconnu --
+    le meme apercu generique.
     """
     return envoie(JEUX_VIDEOS)
 
@@ -427,6 +467,15 @@ def page_quiz():
 @app.route("/chainz", strict_slashes=False)
 def page_chainz():
     return envoie(CHAINZ)
+
+# Nihongo : une page pour toutes ses rubriques (/nihongo/kana,
+# /nihongo/progres...), qui lit l'adresse et affiche la bonne. Servie a tout
+# le monde, comme le monitoring : c'est /api/nihongo qui repond 404 a qui
+# n'est pas admin, et la page affiche alors sa porte close.
+@app.route("/nihongo", strict_slashes=False)
+@app.route("/nihongo/<rubrique>", strict_slashes=False)
+def page_nihongo(rubrique=None):
+    return envoie(NIHONGO)
 
 @app.route("/collection-yugioh.html")
 def ancienne_collection():
@@ -444,7 +493,8 @@ def collection_de(pseudo):
     pseudo dans l'adresse et ouvre le bon classeur. Rien n'est verifie ici --
     un classeur prive ou un pseudo inconnu, c'est /api/collection/<pseudo>
     qui le dit, et repondre 404 depuis ici confirmerait au passage quels
-    comptes existent, un essai a la fois.
+    comptes existent, un essai a la fois. L'apercu de lien suit la meme
+    regle (voir apercu.py).
     """
     return envoie(COLLECTION)
 
@@ -466,6 +516,7 @@ def introuvable(err):
 
     page = f"""<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
 <title>Abyss - 404</title>
+<link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
 <style>
   body{{margin:0;min-height:100vh;display:grid;place-items:center;text-align:center;
        background:linear-gradient(180deg,#0B1524,#060C15 38%,#03060B);

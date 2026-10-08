@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mini-Jeux / Quiz</title>
+<!-- le logo du site : voir static/commun/logo/ -->
+<link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
+<link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
 <!-- Cinzel, Cinzel Decorative et Raleway, servies par Abyss : ce sont les
      polices du Yu-Gi-Quiz, et cette page porte désormais le même dessin.
      Elles sont déjà sur le disque (voir static/commun/polices/polices.css,
@@ -81,6 +85,8 @@
 <!-- Le formulaire de suggestion, ouvert sur place plutôt que sur le hub :
      voir static/commun/suggestion.js. Chargé avant le script de la page, qui le
      branche une fois la session connue - un defer arriverait après lui. -->
+<!-- le battement de presence : voir static/commun/presence.js -->
+<script src="/static/commun/presence.js"></script>
 <!-- Les zones de texte grandissent en écrivant plutôt que de porter une
      poignée à tirer : une taille de départ, la hauteur du texte ensuite,
      et le défilement dans le champ passé un plafond. Voir

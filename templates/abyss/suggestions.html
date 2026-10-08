@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Suggestions - Abyss</title>
+<!-- le logo du site : voir static/commun/logo/ -->
+<link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
+<link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
@@ -325,6 +329,8 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<!-- le battement de presence : voir static/commun/presence.js -->
+<script src="/static/commun/presence.js"></script>
 <!-- le bouton de compte : un seul dessin pour toutes les pages d'Abyss.
      Chargé avant le script de la page, qui l'appelle dès la réponse de
      /api/moi - un defer arriverait peut-être trop tard. -->

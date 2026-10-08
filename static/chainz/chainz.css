@@ -137,6 +137,7 @@ body.en-haut .top{background:transparent;border-bottom-color:transparent}
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
 .sous-titre{margin:14px 0 0;max-width:52ch;color:var(--brume)}
+.entete-boutons{display:flex;gap:10px;flex-wrap:wrap}
 
 .bouton{
   font-size:14px;color:var(--os);
@@ -144,7 +145,7 @@ body.en-haut .top{background:transparent;border-bottom-color:transparent}
   padding:9px 16px;border-radius:999px;
   border:1px solid rgba(150,195,220,.18);
   background:linear-gradient(170deg,rgba(20,36,55,.92),rgba(9,17,28,.92));
-  cursor:pointer;
+  cursor:pointer;text-decoration:none;
   transition:border-color .25s ease,box-shadow .25s ease,transform .2s ease;
 }
 .bouton:hover,.bouton:focus-visible{

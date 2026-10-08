@@ -1,0 +1,364 @@
+# Nihongo - les textes a lire du N3. Le format est decrit en tete de
+# matiere/lecture-n5.txt.
+
+=== urashima-tarou
+titre: {浦島太郎|うらしまたろう}
+fr: Urashima Tarō
+genre: conte
+intro: Un jeune pêcheur sauve une tortue, et visite le palais du dieu de la mer. Un conte sur le temps qui passe.
+
+むかしむかし、ある{海辺|うみべ}の{村|むら}に、{浦島太郎|うらしまたろう}という{若|わか}い{漁師|りょうし}が{住|す}んでいました。 | Il était une fois, dans un village au bord de la mer, un jeune pêcheur appelé Urashima Tarō.
+ある{日|ひ}、{浜|はま}を{歩|ある}いていると、{子|こ}どもたちが{小|ちい}さな{亀|かめ}をいじめていました。 | Un jour, en marchant sur la plage, il vit des enfants qui maltraitaient une petite tortue.
+「かわいそうじゃないか。{放|はな}してやりなさい。」 | « Vous n'avez pas pitié ? Laissez-la partir. »
+{太郎|たろう}は{子|こ}どもたちにお{金|かね}をあげて、{亀|かめ}を{海|うみ}に{返|かえ}してやりました。 | Tarō donna un peu d'argent aux enfants et rendit la tortue à la mer.
+
+{数日|すうじつ}{後|ご}、{太郎|たろう}が{船|ふね}で{釣|つ}りをしていると、{大|おお}きな{亀|かめ}が{現|あらわ}れました。 | Quelques jours plus tard, alors que Tarō pêchait sur son bateau, une grande tortue apparut.
+「この{間|あいだ}は{助|たす}けていただいて、ありがとうございました。お{礼|れい}に{竜宮城|りゅうぐうじょう}へご{案内|あんない}します。」 | « Merci de m'avoir sauvée l'autre jour. Pour vous remercier, je vais vous conduire au palais du Dragon. » | o-go
+{太郎|たろう}は{亀|かめ}の{背中|せなか}に{乗|の}って、{海|うみ}の{底|そこ}へ{下|お}りていきました。 | Tarō monta sur le dos de la tortue et descendit au fond de la mer.
+{竜宮城|りゅうぐうじょう}では、{美|うつく}しい{乙姫|おとひめ}さまが{太郎|たろう}を{迎|むか}えてくれました。 | Au palais du Dragon, la belle princesse Otohime l'accueillit.
+{毎日|まいにち}おいしい{料理|りょうり}を{食|た}べ、{魚|さかな}たちの{踊|おど}りを{見|み}て、{太郎|たろう}は{時間|じかん}が{経|た}つのも{忘|わす}れてしまいました。 | Chaque jour, il mangeait des plats délicieux, regardait danser les poissons, et en oublia le temps qui passait.
+
+しばらくして、{太郎|たろう}は{村|むら}に{残|のこ}してきた{母|はは}のことが{心配|しんぱい}になりました。 | Au bout d'un moment, Tarō s'inquiéta de la mère qu'il avait laissée au village.
+{帰|かえ}ると{言|い}う{太郎|たろう}に、{乙姫|おとひめ}さまは{美|うつく}しい{箱|はこ}を{渡|わた}しました。 | Quand Tarō annonça qu'il rentrait, la princesse lui remit une belle boîte.
+「この{玉手箱|たまてばこ}は、{決|けっ}して{開|あ}けてはいけません。」 | « Ce coffret, vous ne devez jamais l'ouvrir. »
+ところが、{村|むら}に{戻|もど}ってみると、{知|し}っている{人|ひと}は{一人|ひとり}もいませんでした。 | Mais une fois revenu au village, il n'y trouva plus personne qu'il connaissait.
+{竜宮城|りゅうぐうじょう}での{数日|すうじつ}は、{地上|ちじょう}の{三百年|さんびゃくねん}だったのです。 | Les quelques jours passés au palais du Dragon avaient duré trois cents ans sur terre.
+{困|こま}った{太郎|たろう}は、つい{箱|はこ}を{開|あ}けてしまいました。 | Désemparé, Tarō ouvrit la boîte sans pouvoir s'en empêcher.
+すると、{白|しろ}い{煙|けむり}が{出|で}てきて、{太郎|たろう}はあっという{間|ま}におじいさんになってしまいました。 | Alors une fumée blanche s'en échappa, et en un instant Tarō devint un vieillard.
+
+? Pourquoi la tortue emmène-t-elle Tarō au palais ?
++ Pour le remercier de l'avoir sauvée
+- Pour le punir
+- Parce qu'il s'est perdu en mer
+? Que découvre Tarō en rentrant au village ?
+- Sa mère l'attend
++ Trois cents ans ont passé
+- Le village a été détruit par la mer
+? Que se passe-t-il quand il ouvre la boîte ?
+- Il trouve un trésor
+- Il retourne au palais
++ Il devient un vieillard
+
+=== tsuru-no-ongaeshi
+titre: {鶴|つる}の{恩返|おんがえ}し
+fr: La grue reconnaissante
+genre: conte
+intro: Un vieil homme pauvre libère une grue prise au piège. Un soir de neige, une jeune fille frappe à sa porte.
+
+{昔|むかし}、{雪|ゆき}の{多|おお}い{山|やま}の{村|むら}に、{貧|まず}しいおじいさんとおばあさんが{住|す}んでいました。 | Autrefois, dans un village de montagne où il neigeait beaucoup, vivaient un vieil homme et une vieille femme très pauvres.
+ある{冬|ふゆ}の{日|ひ}、おじいさんは{町|まち}へ{薪|まき}を{売|う}りに{行|い}く{途中|とちゅう}で、{罠|わな}にかかった{一羽|いちわ}の{鶴|つる}を{見|み}つけました。 | Un jour d'hiver, en allant vendre du bois en ville, le vieil homme trouva une grue prise dans un piège.
+かわいそうに{思|おも}ったおじいさんは、{罠|わな}をはずして{鶴|つる}を{逃|に}がしてやりました。 | Pris de pitié, il ouvrit le piège et laissa la grue s'envoler.
+
+その{夜|よる}、{雪|ゆき}の{中|なか}を、{一人|ひとり}の{娘|むすめ}が{家|いえ}を{訪|たず}ねてきました。 | Ce soir-là, une jeune fille vint frapper à leur porte, dans la neige.
+「{道|みち}に{迷|まよ}ってしまいました。{一晩|ひとばん}{泊|と}めていただけませんか。」 | « Je me suis perdue. Pourriez-vous m'héberger pour la nuit ? »
+{娘|むすめ}はとてもよく{働|はたら}くので、{二人|ふたり}は{自分|じぶん}たちの{娘|むすめ}のようにかわいがりました。 | La jeune fille travaillait si bien que les deux vieux la chérirent comme leur propre fille. | you-ni-comme
+ある{日|ひ}、{娘|むすめ}は「{布|ぬの}を{織|お}りますから、{決|けっ}して{部屋|へや}の{中|なか}をのぞかないでください」と{言|い}いました。 | Un jour, la jeune fille dit : « Je vais tisser une étoffe. Surtout, ne regardez jamais dans la pièce. »
+{娘|むすめ}が{織|お}った{布|ぬの}はとても{美|うつく}しく、{町|まち}で{高|たか}い{値段|ねだん}で{売|う}れました。 | L'étoffe qu'elle avait tissée était magnifique et se vendit très cher en ville.
+けれども、{布|ぬの}を{織|お}るたびに、{娘|むすめ}はやせていきました。 | Mais chaque fois qu'elle tissait, la jeune fille maigrissait. | tabi-ni
+
+おばあさんは{心配|しんぱい}でたまらなくなり、とうとう{部屋|へや}をのぞいてしまいました。 | La vieille femme, morte d'inquiétude, finit par jeter un coup d'œil dans la pièce. | te-tamaranai
+すると、そこにいたのは{娘|むすめ}ではなく、{一羽|いちわ}の{鶴|つる}でした。 | Et là, ce n'était pas une jeune fille, mais une grue.
+{鶴|つる}は{自分|じぶん}の{羽|はね}を{抜|ぬ}いて、{布|ぬの}を{織|お}っていたのです。 | La grue s'arrachait ses propres plumes pour tisser l'étoffe.
+「{私|わたし}はあの{日|ひ}{助|たす}けていただいた{鶴|つる}です。{姿|すがた}を{見|み}られたからには、もうここにはいられません。」 | « Je suis la grue que vous avez sauvée ce jour-là. Maintenant que vous avez vu ma vraie forme, je ne peux plus rester ici. »
+そう{言|い}うと、{鶴|つる}は{空|そら}へ{飛|と}んでいき、{二度|にど}と{戻|もど}ってきませんでした。 | Sur ces mots, la grue s'envola dans le ciel, et ne revint jamais.
+
+? Comment le vieil homme rencontre-t-il la grue ?
++ Elle est prise dans un piège et il la libère
+- Elle entre chez lui pour se réchauffer
+- Il la trouve blessée dans la neige
+? Que demande la jeune fille ?
+- De l'argent pour son travail
++ Qu'on ne regarde jamais dans la pièce quand elle tisse
+- Qu'on l'emmène en ville
+? Pourquoi la grue s'en va-t-elle ?
+- Elle a fini son étoffe
+- Elle a eu peur de l'hiver
++ On a vu sa vraie forme
+
+=== kasa-jizou
+titre: かさじぞう
+fr: Les chapeaux des jizō
+genre: conte
+intro: Un vieil homme qui n'a presque rien offre ses chapeaux de paille à des statues sous la neige. Un conte de la veille du Nouvel An.
+
+{昔|むかし}、ある{村|むら}に、とても{貧|まず}しいおじいさんとおばあさんがいました。 | Autrefois, dans un village, vivaient un vieil homme et une vieille femme très pauvres.
+もうすぐお{正月|しょうがつ}なのに、{家|いえ}にはお{餅|もち}を{買|か}うお{金|かね}もありません。 | Le Nouvel An approchait, et pourtant ils n'avaient même pas de quoi acheter des galettes de riz.
+そこで、おじいさんは{笠|かさ}を{五|いつ}つ{作|つく}って、{町|まち}へ{売|う}りに{行|い}きました。 | Alors le vieil homme fabriqua cinq chapeaux de paille et partit les vendre en ville.
+しかし、{年|とし}の{暮|く}れの{町|まち}はみんな{忙|いそが}しそうで、{笠|かさ}は{一|ひと}つも{売|う}れませんでした。 | Mais en ville, en cette fin d'année, tout le monde semblait pressé, et il ne vendit pas un seul chapeau.
+
+{帰|かえ}り{道|みち}、{雪|ゆき}が{激|はげ}しく{降|ふ}ってきました。 | Sur le chemin du retour, la neige se mit à tomber à gros flocons.
+{道|みち}のそばに、{六|むっ}つのお{地蔵|じぞう}さまが{並|なら}んで{立|た}っていました。 | Au bord du chemin se tenaient six statues de jizō, alignées.
+お{地蔵|じぞう}さまの{頭|あたま}には、{雪|ゆき}が{積|つ}もっていました。 | La neige s'était amassée sur leurs têtes.
+「{寒|さむ}いでしょう。せめてこれをかぶってください。」 | « Vous devez avoir froid. Mettez au moins ceci. »
+おじいさんは{売|う}れなかった{笠|かさ}をお{地蔵|じぞう}さまにかぶせてあげました。 | Le vieil homme posa les chapeaux invendus sur les têtes des jizō.
+でも、{笠|かさ}は{五|いつ}つしかありません。 | Mais il n'avait que cinq chapeaux.
+そこで、{最後|さいご}のお{地蔵|じぞう}さまには、{自分|じぶん}の{手|て}ぬぐいをかぶせてあげました。 | Alors, au dernier jizō, il donna son propre bandeau de tissu.
+
+{家|いえ}に{帰|かえ}って{話|はな}すと、おばあさんは「いいことをしましたね」とにっこり{笑|わら}いました。 | De retour chez lui, quand il raconta l'histoire, la vieille femme sourit : « Tu as bien fait. »
+その{夜|よる}{遅|おそ}く、{外|そと}から{重|おも}い{足音|あしおと}が{聞|き}こえてきました。 | Tard dans la nuit, on entendit des pas lourds dehors.
+{戸|と}を{開|あ}けてみると、{家|いえ}の{前|まえ}にお{米|こめ}やお{餅|もち}や{野菜|やさい}が{山|やま}のように{積|つ}んでありました。 | En ouvrant la porte, ils trouvèrent devant la maison du riz, des galettes et des légumes entassés comme une montagne. | you-ni-comme,te-aru
+{遠|とお}くの{雪|ゆき}の{中|なか}を、{笠|かさ}をかぶったお{地蔵|じぞう}さまたちが{帰|かえ}っていくのが{見|み}えました。 | Au loin, dans la neige, ils virent les jizō coiffés de leurs chapeaux qui s'en retournaient.
+おかげで、{二人|ふたり}はいいお{正月|しょうがつ}を{迎|むか}えることができました。 | Grâce à eux, le vieux couple put fêter un beau Nouvel An. | okage-de
+
+? Pourquoi le vieil homme va-t-il en ville ?
++ Pour vendre des chapeaux de paille
+- Pour acheter du riz
+- Pour voir un médecin
+? Combien y a-t-il de statues ?
+- Cinq
++ Six
+- Sept
+? Que trouvent-ils devant leur porte ?
+- Les chapeaux, rendus
++ Du riz, des galettes et des légumes
+- Six nouvelles statues
+
+=== sentou
+titre: {初|はじ}めての{銭湯|せんとう}
+fr: Mon premier bain public
+genre: journal
+intro: Sur son blog, Léa raconte sa première visite dans un sentō, un bain public de quartier.
+
+{今日|きょう}、{初|はじ}めて{銭湯|せんとう}に{行|い}ってきました。 | Aujourd'hui, je suis allée pour la première fois dans un bain public.
+{銭湯|せんとう}というのは、{町|まち}の{人|ひと}たちが{使|つか}う{大|おお}きなお{風呂|ふろ}のことです。 | Un sentō, c'est un grand bain que partagent les gens du quartier. | to-iu-no-wa
+{昔|むかし}は{家|いえ}にお{風呂|ふろ}がない{人|ひと}が{多|おお}かったので、どの{町|まち}にもあったそうです。 | Autrefois, beaucoup de gens n'avaient pas de bain chez eux, alors il paraît qu'il y en avait dans chaque quartier.
+{山田|やまだ}さんに{誘|さそ}われて、{二人|ふたり}で{出|で}かけました。 | Mme Yamada m'a invitée, et nous y sommes allées toutes les deux.
+
+{正直|しょうじき}に{言|い}うと、{最初|さいしょ}は{少|すこ}し{恥|は}ずかしかったです。 | Pour être honnête, au début, j'étais un peu gênée.
+{知|し}らない{人|ひと}の{前|まえ}で{服|ふく}を{脱|ぬ}ぐなんて、フランスではあまりないことですから。 | Se déshabiller devant des inconnus, ce n'est pas très courant en France. | nante
+でも、だれも{他|ほか}の{人|ひと}のことを{見|み}ていないので、すぐに{気|き}にならなくなりました。 | Mais personne ne regarde les autres, alors très vite, ça ne m'a plus gênée.
+{銭湯|せんとう}には、いくつか{大切|たいせつ}なルールがあります。 | Au sentō, il y a quelques règles importantes.
+まず、お{湯|ゆ}に{入|はい}る{前|まえ}に、{必|かなら}ず{体|からだ}を{洗|あら}わなければなりません。 | D'abord, avant d'entrer dans l'eau, il faut absolument se laver.
+タオルをお{湯|ゆ}の{中|なか}に{入|い}れてはいけません。 | Il ne faut pas mettre sa serviette dans l'eau.
+{長|なが}い{髪|かみ}は、お{湯|ゆ}につかないように{結|むす}んでおきます。 | On attache les cheveux longs pour qu'ils ne touchent pas l'eau.
+
+お{湯|ゆ}は{思|おも}ったより{熱|あつ}くて、{最初|さいしょ}は{足|あし}しか{入|い}れられませんでした。 | L'eau était plus chaude que je ne pensais, et au début je n'ai pu y mettre que les pieds.
+{壁|かべ}には{大|おお}きな{富士山|ふじさん}の{絵|え}が{描|か}いてありました。 | Sur le mur, il y avait un grand tableau du mont Fuji.
+{山田|やまだ}さんによると、{銭湯|せんとう}の{壁|かべ}には{富士山|ふじさん}の{絵|え}が{多|おお}いのだそうです。 | D'après Mme Yamada, il y a souvent un mont Fuji peint sur les murs des sentō.
+お{風呂|ふろ}から{出|で}たあと、{二人|ふたり}で{冷|つめ}たい{牛乳|ぎゅうにゅう}を{飲|の}みました。 | Après le bain, nous avons bu du lait froid toutes les deux.
+これも{銭湯|せんとう}の{楽|たの}しみの{一|ひと}つだそうです。 | Il paraît que ça aussi, c'est un des plaisirs du sentō.
+{体|からだ}も{心|こころ}もすっかり{温|あたた}まって、また{来|き}たくなりました。 | J'étais réchauffée de corps et d'esprit, et j'ai déjà envie d'y retourner.
+
+? Pourquoi y avait-il autrefois un sentō dans chaque quartier ?
++ Beaucoup de gens n'avaient pas de bain chez eux
+- C'était obligatoire
+- L'eau chaude était gratuite
+? Que faut-il faire avant d'entrer dans l'eau ?
+- Mettre sa serviette dans l'eau
++ Se laver le corps
+- Boire du lait
+? Qu'y avait-il sur le mur ?
+- Une carte du quartier
+- Les règles du bain
++ Un tableau du mont Fuji
+
+=== ramen-ya
+titre: ラーメン{屋|や}の{主人|しゅじん}に{聞|き}く
+fr: Entretien avec un patron de ramen
+genre: entretien
+intro: Pour un exposé à l'école, Léa interroge le patron d'un petit restaurant de ramen de son quartier.
+
+レア：このお{店|みせ}を{始|はじ}めて、どのくらいになりますか。 | Ça fait combien de temps que vous avez ouvert ce restaurant ?
+{主人|しゅじん}：もう{三十年|さんじゅうねん}になりますね。{父|ちち}の{代|だい}から{数|かぞ}えると、{六十年|ろくじゅうねん}です。 | Ça fait déjà trente ans. Si on compte depuis mon père, soixante ans.
+レア：ラーメンの{味|あじ}は、お{父|とう}さんのころと{同|おな}じですか。 | Le goût des ramens est le même qu'à l'époque de votre père ?
+{主人|しゅじん}：{基本|きほん}は{同|おな}じです。でも、{時代|じだい}によって、お{客|きゃく}さんの{好|この}みも{変|か}わりますから、{少|すこ}しずつ{変|か}えてきました。 | La base est la même. Mais les goûts des clients changent selon les époques, alors je l'ai modifié petit à petit. | ni-yotte
+レア：スープについて{教|おし}えていただけますか。 | Pourriez-vous me parler du bouillon ? | ni-tsuite
+{主人|しゅじん}：{豚|ぶた}の{骨|ほね}と{野菜|やさい}を、{十二時間|じゅうにじかん}{煮|に}ます。{毎朝|まいあさ}{五時|ごじ}に{起|お}きて{作|つく}るんですよ。 | Je fais cuire des os de porc et des légumes pendant douze heures. Je me lève tous les matins à cinq heures pour le préparer.
+レア：{大変|たいへん}ですね。 | C'est dur !
+{主人|しゅじん}：{大変|たいへん}ですけど、{煮|に}れば{煮|に}るほど、スープはおいしくなるんです。 | C'est dur, mais plus on le fait cuire, meilleur devient le bouillon. | ba-hodo
+レア：このお{店|みせ}にとって、いちばん{大切|たいせつ}なことは{何|なん}ですか。 | Pour ce restaurant, qu'est-ce qui compte le plus ? | ni-totte
+{主人|しゅじん}：お{客|きゃく}さんの{顔|かお}を{覚|おぼ}えることかな。 | Peut-être retenir le visage des clients.
+{主人|しゅじん}：{毎日|まいにち}{来|く}る{人|ひと}もいれば、{十年|じゅうねん}ぶりに{来|く}る{人|ひと}もいる。 | Il y a des gens qui viennent tous les jours, et d'autres qui reviennent après dix ans. | mo-ba-mo
+{主人|しゅじん}：「{久|ひさ}しぶりですね」と{言|い}うと、みんなうれしそうな{顔|かお}をするんです。 | Quand je leur dis « Ça fait longtemps ! », ils ont tous l'air contents.
+レア：{最後|さいご}に、{外国人|がいこくじん}のお{客|きゃく}さんについてはどう{思|おも}いますか。 | Pour finir, que pensez-vous des clients étrangers ? | ni-tsuite
+{主人|しゅじん}：{最近|さいきん}は{本当|ほんとう}に{増|ふ}えましたね。{言葉|ことば}が{通|つう}じなくても、「おいしい」という{顔|かお}は{同|おな}じですよ。 | Il y en a vraiment de plus en plus. Même quand on ne se comprend pas, la tête de quelqu'un qui trouve ça bon, c'est la même partout.
+
+? Depuis combien de temps le restaurant existe-t-il, en comptant le père ?
+- Trente ans
++ Soixante ans
+- Douze ans
+? Pourquoi le goût a-t-il un peu changé ?
++ Les goûts des clients changent avec les époques
+- Les ingrédients ont changé de prix
+- Le patron n'aimait pas la recette de son père
+? Qu'est-ce qui compte le plus pour le patron ?
+- Ouvrir tôt le matin
+- Avoir beaucoup de clients étrangers
++ Retenir le visage des clients
+
+=== jidou-hanbaiki
+titre: {自動販売機|じどうはんばいき}の{国|くに}
+fr: Le pays des distributeurs
+genre: article
+intro: Un court article sur les distributeurs automatiques, qu'on trouve partout au Japon.
+
+{日本|にほん}に{来|き}た{外国人|がいこくじん}が{驚|おどろ}くことの{一|ひと}つに、{自動販売機|じどうはんばいき}の{多|おお}さがある。 | Parmi les choses qui étonnent les étrangers qui viennent au Japon, il y a le nombre de distributeurs automatiques.
+{駅|えき}のホームにも、{山|やま}の{上|うえ}にも、{田|た}んぼの{真|ま}ん{中|なか}にも{立|た}っている。 | On en trouve sur les quais de gare, au sommet des montagnes, et même au milieu des rizières.
+ある{調査|ちょうさ}によると、{日本|にほん}には{約|やく}{四百万台|よんひゃくまんだい}の{自動販売機|じどうはんばいき}があるという。 | Selon une étude, il y aurait environ quatre millions de distributeurs au Japon. | ni-yoru-to
+{人口|じんこう}に{比|くら}べると、{世界|せかい}でもとても{多|おお}い{数字|すうじ}だ。 | Rapporté à la population, c'est un chiffre très élevé, même à l'échelle du monde. | ni-kurabete
+
+なぜこれほど{多|おお}いのだろうか。 | Pourquoi y en a-t-il autant ?
+{理由|りゆう}の{一|ひと}つは、{日本|にほん}が{安全|あんぜん}な{国|くに}だということだ。 | L'une des raisons, c'est que le Japon est un pays sûr.
+{外|そと}に{機械|きかい}を{置|お}いても、{壊|こわ}されたり{盗|ぬす}まれたりすることが{少|すく}ない。 | Même si on laisse une machine dehors, elle est rarement cassée ou volée.
+また、{人|ひと}を{雇|やと}うより、{機械|きかい}のほうが{安|やす}く{済|す}むという{理由|りゆう}もある。 | Il y a aussi le fait qu'une machine coûte moins cher qu'un employé.
+
+{売|う}られているのは{飲|の}み{物|もの}だけではない。 | On n'y vend pas que des boissons.
+アイスクリーム、ラーメン、{花|はな}、{傘|かさ}まで{買|か}えるのだ。 | On peut acheter des glaces, des ramens, des fleurs, et même des parapluies.
+{冬|ふゆ}には、{同|おな}じ{機械|きかい}で{温|あたた}かい{飲|の}み{物|もの}と{冷|つめ}たい{飲|の}み{物|もの}が{両方|りょうほう}{売|う}られている。 | En hiver, la même machine vend à la fois des boissons chaudes et des boissons froides.
+ただし、{便利|べんり}だからといって、いいことばかりではない。 | Cela dit, ce n'est pas parce que c'est pratique que tout est positif. | kara-to-itte
+{一台|いちだい}の{自動販売機|じどうはんばいき}は、{一年|いちねん}に{家庭|かてい}{一軒分|いっけんぶん}ぐらいの{電気|でんき}を{使|つか}うと{言|い}われている。 | On dit qu'un distributeur consomme en un an à peu près autant d'électricité qu'un foyer.
+{最近|さいきん}は、{電気|でんき}をあまり{使|つか}わない{新|あたら}しい{機械|きかい}も{増|ふ}えてきた。 | Ces derniers temps, de nouvelles machines qui consomment peu d'électricité se multiplient.
+
+? Combien de distributeurs y aurait-il au Japon ?
+- Quatre cent mille
++ Environ quatre millions
+- Quarante millions
+? Quelle est l'une des raisons de leur nombre ?
++ Le Japon est un pays sûr
+- Les Japonais n'aiment pas les magasins
+- L'électricité y est gratuite
+? Quel problème l'article mentionne-t-il ?
+- Les machines sont souvent volées
++ Elles consomment beaucoup d'électricité
+- On ne peut y acheter que des boissons
+
+=== itadakimasu
+titre: 「いただきます」の{意味|いみ}
+fr: Ce que veut dire « itadakimasu »
+genre: essai
+intro: Léa se demande ce qu'on dit vraiment, avant chaque repas, quand on joint les mains.
+
+{日本|にほん}では、{食事|しょくじ}の{前|まえ}に{手|て}を{合|あ}わせて「いただきます」と{言|い}う。 | Au Japon, avant le repas, on joint les mains et on dit « itadakimasu ».
+フランス{語|ご}の「ボナペティ」と{同|おな}じだと{思|おも}っていたが、{少|すこ}し{違|ちが}うようだ。 | Je pensais que c'était la même chose que « bon appétit » en français, mais il semble que ce soit un peu différent. | you-da
+「ボナペティ」は、{一緒|いっしょ}に{食|た}べる{人|ひと}に{対|たい}して{言|い}う{言葉|ことば}だ。 | « Bon appétit », c'est quelque chose qu'on dit à ceux avec qui on mange. | ni-taishite
+それに{対|たい}して、「いただきます」は、{一人|ひとり}で{食|た}べるときにも{言|い}う。 | « Itadakimasu », en revanche, on le dit même quand on mange seul. | ni-taishite
+
+では、だれに{向|む}かって{言|い}っているのだろうか。 | Mais alors, à qui s'adresse-t-on ?
+「いただく」は「もらう」の{丁寧|ていねい}な{言|い}い{方|かた}だ。 | « Itadaku » est la manière polie de dire « recevoir ». | kenjougo
+つまり、{何|なに}かをもらうことに{感謝|かんしゃ}しているわけだ。 | Autrement dit, on remercie pour quelque chose qu'on reçoit. | wake-da
+{山田|やまだ}さんに{聞|き}いてみると、こう{教|おし}えてくれた。 | Quand j'ai interrogé Mme Yamada, voici ce qu'elle m'a expliqué.
+「{料理|りょうり}を{作|つく}ってくれた{人|ひと}や、{野菜|やさい}を{育|そだ}てた{人|ひと}だけでなく、{食|た}べ{物|もの}になった{命|いのち}にも、ありがとうと{言|い}うのよ。」 | « On dit merci non seulement à ceux qui ont préparé le repas ou cultivé les légumes, mais aussi aux vies devenues notre nourriture. » | dake-de-naku
+{魚|さかな}も{野菜|やさい}も、もとは{生|い}きていたものだ。 | Le poisson comme les légumes étaient vivants, à l'origine.
+その{命|いのち}をいただいて、{私|わたし}たちは{生|い}きている。 | C'est en recevant ces vies que nous vivons.
+
+そう{考|かんが}えると、{食|た}べ{物|もの}を{残|のこ}すのは、もったいないと{感|かん}じる。 | Vu sous cet angle, laisser de la nourriture dans son assiette, c'est du gaspillage.
+{今|いま}では、{私|わたし}も{一人|ひとり}で{食|た}べるときに、{小|ちい}さな{声|こえ}で「いただきます」と{言|い}うようになった。 | Maintenant, moi aussi, quand je mange seule, je dis « itadakimasu » à voix basse.
+フランスに{帰|かえ}っても、この{習慣|しゅうかん}は{続|つづ}けたいと{思|おも}う。 | Même rentrée en France, je voudrais garder cette habitude.
+
+? Quelle différence Léa voit-elle avec « bon appétit » ?
++ On dit « itadakimasu » même quand on mange seul
+- « Itadakimasu » ne se dit qu'au restaurant
+- Il n'y a aucune différence
+? Que veut dire le verbe « itadaku » ?
+- Manger beaucoup
++ Recevoir, de façon polie
+- Préparer un repas
+? À qui dit-on merci, selon Mme Yamada ?
+- Seulement au cuisinier
+- Seulement aux invités
++ Aussi aux vies devenues notre nourriture
+
+=== neko-no-ekichou
+titre: {猫|ねこ}の{駅長|えきちょう}
+fr: La chatte cheffe de gare
+genre: récit
+intro: Une histoire vraie, à Wakayama : comment une chatte a sauvé une petite ligne de train.
+
+{和歌山県|わかやまけん}に、{貴志|きし}という{小|ちい}さな{駅|えき}がある。 | Dans le département de Wakayama, il y a une petite gare appelée Kishi.
+{二千年代|にせんねんだい}の{初|はじ}め、この{駅|えき}を{通|とお}る{電車|でんしゃ}は、{乗|の}る{人|ひと}が{少|すく}なくて、なくなりそうになっていた。 | Au début des années 2000, la ligne qui passe par cette gare avait si peu de voyageurs qu'elle était sur le point de disparaître. | sou-ni-naru
+{駅|えき}の{近|ちか}くには、{一匹|いっぴき}の{猫|ねこ}が{住|す}んでいた。{名前|なまえ}はタマといった。 | Près de la gare vivait une chatte. Elle s'appelait Tama.
+{駅|えき}を{使|つか}う{人|ひと}たちは、タマに{会|あ}うのを{楽|たの}しみにしていた。 | Les gens qui prenaient le train se réjouissaient de la croiser.
+
+{二千七年|にせんななねん}、{鉄道会社|てつどうがいしゃ}の{社長|しゃちょう}は、タマを{駅長|えきちょう}にすることにした。 | En 2007, le président de la compagnie ferroviaire décida de nommer Tama cheffe de gare. | koto-ni-suru
+タマは{小|ちい}さな{帽子|ぼうし}をかぶって、{駅|えき}の{入|い}り{口|ぐち}に{座|すわ}るのが{仕事|しごと}になった。 | Son travail consistait désormais à s'asseoir à l'entrée de la gare, coiffée d'une petite casquette.
+このニュースはテレビや{新聞|しんぶん}で{紹介|しょうかい}され、タマはあっという{間|ま}に{有名|ゆうめい}になった。 | La nouvelle fut présentée à la télévision et dans les journaux, et Tama devint célèbre en un rien de temps.
+タマに{会|あ}うために、{日本中|にほんじゅう}から、そして{外国|がいこく}からも{観光客|かんこうきゃく}が{来|く}るようになった。 | Des touristes se mirent à venir de tout le Japon, et même de l'étranger, pour la voir. | you-ni-naru
+タマのおかげで、{電車|でんしゃ}に{乗|の}る{人|ひと}は{大|おお}きく{増|ふ}えたという。 | Grâce à Tama, le nombre de voyageurs aurait fortement augmenté. | okage-de
+
+タマは{二千十五年|にせんじゅうごねん}に{亡|な}くなったが、{今|いま}もその{仕事|しごと}は{次|つぎ}の{猫|ねこ}に{受|う}け{継|つ}がれている。 | Tama est morte en 2015, mais aujourd'hui encore, un autre chat a repris son travail.
+{一匹|いっぴき}の{猫|ねこ}が{町|まち}を{元気|げんき}にするなんて、だれが{想像|そうぞう}しただろうか。 | Qui aurait imaginé qu'une chatte redonnerait vie à toute une ville ? | nante
+
+? Pourquoi la ligne risquait-elle de disparaître ?
++ Il y avait trop peu de voyageurs
+- La gare était trop vieille
+- Les chats gênaient les trains
+? Quel était le travail de Tama ?
+- Vendre les billets
++ S'asseoir à l'entrée de la gare, coiffée d'une casquette
+- Chasser les souris des trains
+? Qu'a provoqué la célébrité de Tama ?
+- La fermeture de la gare
++ Une forte hausse du nombre de voyageurs
+- Un nouveau film
+
+=== rea-no-supiichi
+titre: {卒業式|そつぎょうしき}のスピーチ
+fr: Le discours de fin d'études
+genre: essai
+intro: À la fin de son année, Léa est choisie pour faire un discours devant toute l'école de langue.
+
+{先生方|せんせいがた}、そしてクラスのみなさん、{一年間|いちねんかん}、{本当|ほんとう}にありがとうございました。 | Chers professeurs, chers camarades, merci vraiment pour cette année.
+{一年前|いちねんまえ}、{私|わたし}は「すみません」と「ありがとう」しか{言|い}えませんでした。 | Il y a un an, je ne savais dire que « pardon » et « merci ».
+{駅|えき}で{切符|きっぷ}を{買|か}うことさえ、{一人|ひとり}ではできませんでした。 | Je n'arrivais même pas à acheter un billet de train toute seule. | sae
+{初|はじ}めてのテストの{日|ひ}は、{緊張|きんちょう}して、{名前|なまえ}を{書|か}くのを{忘|わす}れたほどです。 | Le jour du premier contrôle, j'étais si nerveuse que j'ai oublié d'écrire mon nom. | hodo-kurai
+
+この{学校|がっこう}で、{私|わたし}はたくさんのことを{学|まな}びました。 | Dans cette école, j'ai appris beaucoup de choses.
+{言葉|ことば}だけではありません。{言葉|ことば}の{後|うし}ろにある{考|かんが}え{方|かた}もです。 | Pas seulement la langue. Aussi la façon de penser qu'il y a derrière les mots.
+たとえば、「すみません」には「ごめんなさい」だけでなく、「ありがとう」の{気持|きも}ちもあることを{知|し}りました。 | Par exemple, j'ai appris que « sumimasen » ne veut pas seulement dire « pardon », mais exprime aussi la gratitude. | dake-de-naku
+{間違|まちが}えるたびに、{先生方|せんせいがた}は{笑|わら}わずに、もう{一度|いちど}{説明|せつめい}してくださいました。 | Chaque fois que je me trompais, les professeurs, sans rire, m'expliquaient encore une fois. | tabi-ni,zu-ni
+クラスのみなさんとは、{国|くに}も{言葉|ことば}も{違|ちが}うのに、{日本語|にほんご}で{友|とも}だちになれました。 | Avec vous, mes camarades, alors que nous n'avons ni le même pays ni la même langue, nous sommes devenus amis en japonais.
+
+{私|わたし}はこれからフランスに{帰|かえ}りますが、{日本語|にほんご}の{勉強|べんきょう}はやめません。 | Je vais maintenant rentrer en France, mais je n'arrêterai pas d'étudier le japonais.
+いつか{日本|にほん}の{本|ほん}をフランス{語|ご}に{翻訳|ほんやく}する{仕事|しごと}がしたいと{思|おも}っています。 | J'aimerais un jour faire le métier de traductrice, du japonais vers le français.
+みなさんも、それぞれの{夢|ゆめ}に{向|む}かって、がんばってください。 | Vous aussi, poursuivez chacun vos rêves.
+また{会|あ}える{日|ひ}を{楽|たの}しみにしています。 | J'ai hâte du jour où nous nous reverrons.
+
+? Que ne pouvait pas faire Léa il y a un an ?
++ Acheter un billet de train toute seule
+- Écrire son prénom en lettres latines
+- Comprendre l'anglais
+? Qu'a-t-elle découvert sur « sumimasen » ?
+- Que ce mot est impoli
++ Qu'il exprime aussi la gratitude
+- Qu'on ne l'utilise qu'au travail
+? Quel métier Léa voudrait-elle faire ?
+- Professeure de japonais
+- Guide touristique
++ Traductrice, du japonais vers le français
+
+=== yamada-san-e-no-tegami
+titre: {山田|やまだ}さんへの{手紙|てがみ}
+fr: Une lettre à Mme Yamada
+genre: lettre
+intro: La veille de son départ, Léa laisse une lettre sur la table de la cuisine. Elle l'écrit avec des formules de politesse.
+
+{山田|やまだ}{様|さま} | Chère Madame Yamada,
+{急|きゅう}に{寒|さむ}くなってまいりましたが、お{元気|げんき}でいらっしゃいますか。 | Il s'est brusquement mis à faire froid ; comment allez-vous ? | sonkeigo
+この{一年|いちねん}、{本当|ほんとう}にお{世話|せわ}になりました。 | Merci pour tout ce que vous avez fait pour moi cette année.
+{日本|にほん}に{来|き}たばかりのころ、{私|わたし}は{何|なに}もわからず、{毎日|まいにち}{不安|ふあん}でした。 | Quand je venais d'arriver au Japon, je ne comprenais rien, et j'étais inquiète tous les jours. | bakari
+そんな{私|わたし}に、{山田|やまだ}さんはいつも{優|やさ}しく{声|こえ}をかけてくださいました。 | Vous m'avez toujours adressé des mots gentils, à moi qui étais comme ça. | sonkeigo
+
+{雨|あめ}の{日|ひ}に{飲|の}んだお{茶|ちゃ}の{味|あじ}を、{今|いま}でもよく{覚|おぼ}えています。 | Je me souviens encore très bien du goût du thé que nous avons bu un jour de pluie.
+お{正月|しょうがつ}にご{家族|かぞく}と{過|す}ごした{時間|じかん}は、{一生|いっしょう}{忘|わす}れません。 | Je n'oublierai jamais le Nouvel An passé avec votre famille.
+{銭湯|せんとう}のあとで{飲|の}んだ{牛乳|ぎゅうにゅう}も、とてもおいしかったです。 | Le lait que nous avons bu après le sentō était délicieux, lui aussi.
+{山田|やまだ}さんのおかげで、{東京|とうきょう}は{私|わたし}の「もう{一|ひと}つの{家|いえ}」になりました。 | Grâce à vous, Tokyo est devenue ma « deuxième maison ». | okage-de
+
+{明日|あした}の{朝|あさ}、{私|わたし}はフランスへ{帰|かえ}ります。 | Demain matin, je rentre en France.
+でも、これでさようならではありません。 | Mais ce n'est pas un adieu.
+{必|かなら}ずまた{日本|にほん}に{来|き}ますので、そのときはまた{一緒|いっしょ}に{銭湯|せんとう}に{行|い}きましょう。 | Je reviendrai au Japon sans faute ; ce jour-là, retournons ensemble au sentō.
+どうぞお{体|からだ}を{大切|たいせつ}になさってください。 | Prenez bien soin de vous, je vous en prie. | sonkeigo
+{心|こころ}から{感謝|かんしゃ}をこめて。 | Avec toute ma gratitude.
+レア | Léa
+
+? Comment Léa se sentait-elle en arrivant au Japon ?
++ Inquiète, elle ne comprenait rien
+- Très à l'aise
+- Déçue
+? Qu'est devenue Tokyo pour Léa, grâce à Mme Yamada ?
+- Une ville trop grande
++ Sa « deuxième maison »
+- Une ville qu'elle veut oublier
+? Que propose Léa pour son retour ?
+- De visiter Lyon ensemble
+- De rouvrir la maison partagée
++ De retourner ensemble au sentō

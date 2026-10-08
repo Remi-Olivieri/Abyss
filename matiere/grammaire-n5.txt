@@ -1,0 +1,1376 @@
+# La grammaire du JLPT N5, écrite pour Nihongo : une fiche par point, dans
+# l'ordre où les apprendre - chaque point ne s'appuie, autant que possible,
+# que sur ceux qui le précèdent.
+#
+# Le format (le même pour grammaire-n4.txt) :
+#
+#   === Le titre d'un chapitre
+#   Ce qu'il contient, en une phrase ou deux, avant son premier point.
+#
+#   ## nom-du-point                  minuscules, chiffres, tirets : c'est la
+#                                    clé de la carte, gram:nom-du-point:completer.
+#                                    Ne pas renommer un point déjà appris.
+#   titre: 〜は〜です                 le motif, tel que la page l'affiche ; une
+#                                    précision en fin, entre parenthèses, pour
+#                                    deux motifs pareils : 〜で (le moyen)
+#   sens: A est B                    ce qu'il veut dire, en quelques mots
+#   forme: Nom + は + Nom + です      sa construction (autant de lignes que
+#                                    de formes)
+#   voir: ka, mo                     d'autres points à relire (facultatif)
+#
+#   Un paragraphe d'explication, sur une ou plusieurs lignes ; une ligne vide
+#   le termine. **gras**, et des furigana sur chaque kanji : {学生|がくせい}.
+#   * une ligne de liste
+#   | un | tableau | la première ligne donne les titres des colonnes
+#   > une remarque mise en valeur : un piège, une exception
+#
+#   - {私|わたし}[は]{学生|がくせい}です。 | Je suis étudiant.
+#
+# Les exemples : la phrase, « | », sa traduction. Entre crochets, ce qu'il
+# faut retrouver (un seul trou par phrase) : [は/が] accepte les deux ;
+# [{食|た}べます<{食|た}べる>] demande 食べます et montre 食べる dans le
+# trou. Une réponse se tape en kanas : pas de kanji sans furigana dedans.
+# Cinq exemples par point, trois au moins : chaque révision en prend un
+# autre. La page dit chaque phrase d'une voix fabriquée (nihongo.py voix).
+#
+# Tout kanji, partout, porte ses furigana : la fabrication (nihongo.py
+# matiere) refuse le fichier sinon, en donnant la ligne fautive.
+
+=== Les bases de la phrase
+Dire ce qu'est une chose, ou ce qu'elle n'est pas, et en faire une question. Montrer du doigt, demander qui, quoi, combien.
+
+## desu
+titre: 〜は〜です
+sens: A est B
+forme: Nom + は + Nom + です
+
+La phrase la plus simple du japonais : on pose un thème avec **は**, puis on dit ce qu'il est, et **です** termine la phrase poliment. {私|わたし}は{学生|がくせい}です : « moi, (je suis) étudiant ».
+* は marque le **thème**, ce dont on parle. Il se prononce **wa**, même s'il s'écrit avec le kana は (ha).
+* です joue le rôle du verbe « être », à la forme polie. Il ne change ni avec la personne ni avec le nombre : je suis, vous êtes, ils sont… c'est toujours です.
+* Pas d'article ni de pluriel : {学生|がくせい} veut dire « un étudiant », « l'étudiant » ou « des étudiants », selon le contexte.
+> Le thème s'omet dès qu'il est évident : {学生|がくせい}です suffit pour dire « je suis étudiant ».
+
+- {私|わたし}は{学生|がくせい}[です]。 | Je suis étudiant.
+- {田中|たなか}さん[は]{先生|せんせい}です。 | M. Tanaka est professeur.
+- {山田|やまだ}さんは{医者|いしゃ}[です]。 | Mme Yamada est médecin.
+- {今日|きょう}[は]{日曜日|にちようび}です。 | Aujourd'hui, c'est dimanche.
+- {私|わたし}[は]フランス{人|じん}です。 | Je suis français.
+- {兄|あに}は{会社員|かいしゃいん}[です]。 | Mon grand frère est employé de bureau.
+
+## ja-arimasen
+titre: 〜じゃありません
+sens: A n'est pas B
+forme: Nom + は + Nom + じゃありません
+forme: Nom + は + Nom + ではありません
+voir: desu
+
+La négation de です. **じゃありません** est la forme courante à l'oral ; **ではありません** dit la même chose, en plus soigné (à l'écrit, dans un discours). On entend aussi **じゃないです**, plus détendu.
+> じゃ est la contraction de では - le は de では se prononce donc lui aussi « wa ».
+
+- {私|わたし}は{先生|せんせい}[じゃありません/ではありません/じゃないです]。 | Je ne suis pas professeur.
+- {田中|たなか}さんは{学生|がくせい}[じゃありません/ではありません/じゃないです]。 | M. Tanaka n'est pas étudiant.
+- {今日|きょう}は{休|やす}み[じゃありません/ではありません/じゃないです]。 | Aujourd'hui, ce n'est pas un jour de congé.
+- {山田|やまだ}さんは{日本人|にほんじん}[じゃありません/ではありません/じゃないです]。 | Mme Yamada n'est pas japonaise.
+- {兄|あに}は{医者|いしゃ}[じゃありません/ではありません/じゃないです]。 | Mon grand frère n'est pas médecin.
+
+## ka
+titre: 〜か
+sens: la question
+forme: Phrase polie + か
+voir: desu
+
+Pour poser une question, on ajoute **か** à la fin de la phrase, sans rien changer d'autre : ni inversion, ni « est-ce que ». La voix monte sur か, comme en français. À l'écrit, le point final suffit : か fait déjà office de point d'interrogation.
+
+Pour répondre, はい (oui) ou いいえ (non), puis la phrase :
+* はい、そうです : oui, c'est ça.
+* いいえ、ちがいます : non (ce n'est pas ça).
+
+- {田中|たなか}さんは{学生|がくせい}です[か]。 | M. Tanaka est-il étudiant ?
+- {山田|やまだ}さんは{日本人|にほんじん}です[か]。 | Mme Yamada est-elle japonaise ?
+- {明日|あした}は{休|やす}みです[か]。 | Demain, c'est un jour de congé ?
+- {先生|せんせい}は{日本人|にほんじん}じゃありません[か]。 | Le professeur n'est-il pas japonais ?
+- {今日|きょう}は{月曜日|げつようび}です[か]。 | Aujourd'hui, on est lundi ?
+
+## kore-sore-are
+titre: これ・それ・あれ・どれ
+sens: ceci, cela, ça là-bas, lequel
+forme: これ / それ / あれ + は + Nom + です
+forme: どれ + が + 〜ですか
+
+Les pronoms démonstratifs. Le japonais distingue trois distances, selon qui parle et qui écoute :
+| mot | ce qu'il désigne
+| これ | ce qui est près de moi (qui parle)
+| それ | ce qui est près de vous (qui écoute)
+| あれ | ce qui est loin de nous deux
+| どれ | lequel ? (parmi trois choses ou plus)
+Ces quatre mots reviennent sans cesse sous d'autres formes - この, ここ, こちら… - toujours avec ce même découpage : こ (près de moi), そ (près de vous), あ (loin), ど (la question).
+> どれ est une question : il se construit avec が et non は (どれがあなたのですか, lequel est à vous ?). C'est le cas de tous les mots interrogatifs en position de sujet.
+
+- [これ]は{本|ほん}です。 | Ceci est un livre.
+- [それ]は{何|なん}ですか。 | Qu'est-ce que c'est, ça (près de vous) ?
+- [あれ]は{学校|がっこう}です。 | Là-bas, c'est une école.
+- [どれ]が{田中|たなか}さんの{傘|かさ}ですか。 | Lequel est le parapluie de M. Tanaka ?
+- [これ]はペンじゃありません。 | Ceci n'est pas un stylo.
+
+## no
+titre: 〜の〜
+sens: le B de A
+forme: Nom A + の + Nom B
+
+**の** relie deux noms : le premier précise le second. L'ordre est l'inverse du français : {私|わたし}の{本|ほん}, « mon livre » (le livre de moi) ; {日本|にほん}の{車|くるま}, « une voiture japonaise ».
+* l'appartenance : {先生|せんせい}の{傘|かさ}, le parapluie du professeur ;
+* l'origine, la provenance : フランスのワイン, du vin français ;
+* le domaine : {日本語|にほんご}の{先生|せんせい}, un professeur de japonais ;
+* le lieu : {東京|とうきょう}の{大学|だいがく}, une université de Tokyo.
+> Pas de possessifs à part : « mon » se dit {私|わたし}の, « votre » あなたの. Et の peut rester seul quand le nom est évident : それは{私|わたし}のです, c'est le mien.
+
+- これは{私|わたし}[の]{本|ほん}です。 | C'est mon livre.
+- {田中|たなか}さんは{日本語|にほんご}[の]{先生|せんせい}です。 | M. Tanaka est professeur de japonais.
+- それは{先生|せんせい}[の]{傘|かさ}ですか。 | C'est le parapluie du professeur ?
+- {私|わたし}[の]{父|ちち}は{医者|いしゃ}です。 | Mon père est médecin.
+- これはフランス[の]ワインです。 | C'est un vin français.
+- {山田|やまだ}さんは{東京|とうきょう}{大学|だいがく}[の]{学生|がくせい}です。 | Mme Yamada est étudiante à l'université de Tokyo.
+
+## mo
+titre: 〜も
+sens: aussi ; non plus
+forme: Nom + も (à la place de は)
+voir: desu
+
+**も** veut dire « aussi ». Il prend la place de は (ou de が, ou de を) : on ne dit jamais はも.
+* {私|わたし}は{学生|がくせい}です。{田中|たなか}さん**も**{学生|がくせい}です : je suis étudiant ; M. Tanaka aussi est étudiant.
+Dans une phrase négative, も veut dire « non plus » :
+* {私|わたし}**も**{先生|せんせい}じゃありません : moi non plus, je ne suis pas professeur.
+
+- {田中|たなか}さんは{学生|がくせい}です。{山田|やまだ}さん[も]{学生|がくせい}です。 | M. Tanaka est étudiant. Mme Yamada aussi est étudiante.
+- {私|わたし}[も]フランス{人|じん}です。 | Moi aussi, je suis français.
+- {今日|きょう}は{休|やす}みです。{明日|あした}[も]{休|やす}みです。 | Aujourd'hui, c'est congé. Demain aussi.
+- これは{私|わたし}の{傘|かさ}です。それ[も]{私|わたし}のです。 | Ce parapluie-ci est à moi. Celui-là aussi.
+- {兄|あに}は{医者|いしゃ}じゃありません。{父|ちち}[も]{医者|いしゃ}じゃありません。 | Mon grand frère n'est pas médecin. Mon père non plus.
+
+## kono-sono-ano
+titre: この・その・あの・どの
+sens: ce…-ci, ce…-là, ce… là-bas, quel…
+forme: この / その / あの / どの + Nom
+voir: kore-sore-are
+
+Les mêmes distances que これ・それ・あれ, mais devant un nom : **この**{本|ほん}, ce livre-ci ; **その**{本|ほん}, ce livre-là (près de vous) ; **あの**{本|ほん}, ce livre là-bas ; **どの**{本|ほん}, quel livre ?
+
+> この, その, あの ne s'emploient jamais seuls : « celui-ci » se dit これ. Et à l'inverse, これ ne se met jamais devant un nom.
+
+- [この]{本|ほん}は{私|わたし}のです。 | Ce livre-ci est à moi.
+- [その]{傘|かさ}は{田中|たなか}さんのですか。 | Ce parapluie (près de vous) est-il à M. Tanaka ?
+- [あの]{人|ひと}はだれですか。 | Qui est cette personne, là-bas ?
+- [どの]{人|ひと}が{先生|せんせい}ですか。 | Laquelle de ces personnes est le professeur ?
+- [この]カメラは{日本|にほん}のです。 | Cet appareil photo est japonais.
+
+## koko-soko-asoko
+titre: ここ・そこ・あそこ・どこ
+sens: ici, là, là-bas, où
+forme: ここ / そこ / あそこ + は + Lieu + です
+forme: Chose + は + どこですか
+voir: kore-sore-are
+
+Toujours le même découpage, pour les lieux : **ここ** (ici, près de moi), **そこ** (là, près de vous), **あそこ** (là-bas, loin de nous deux), **どこ** (où ?).
+
+Pour demander où se trouve quelque chose : トイレは**どこ**ですか, où sont les toilettes ?
+
+> Plus poli : こちら・そちら・あちら・どちら, qu'on entend dans les magasins et les gares - お{手洗|てあら}いは**こちら**です, les toilettes sont par ici. どちら veut aussi dire « lequel des deux ».
+
+- [ここ]は{教室|きょうしつ}です。 | Ici, c'est la salle de classe.
+- トイレは[どこ]ですか。 | Où sont les toilettes ?
+- [あそこ]は{駅|えき}です。 | Là-bas, c'est la gare.
+- {田中|たなか}さんの{会社|かいしゃ}は[どこ]ですか。 | Où est l'entreprise de M. Tanaka ?
+- [そこ]は{私|わたし}の{席|せき}です。 | Là (où vous êtes), c'est ma place.
+
+## interrogatifs
+titre: {何|なに}・だれ・いつ・いくら
+sens: quoi, qui, quand, combien
+forme: … + は + Mot interrogatif + ですか
+voir: ka
+
+Les mots interrogatifs prennent simplement la place de la réponse : la phrase garde son ordre, et finit par か.
+| mot | sens | exemple
+| {何|なに}・{何|なん} | quoi | これは{何|なん}ですか
+| だれ | qui | あの{人|ひと}はだれですか
+| いつ | quand | {休|やす}みはいつですか
+| いくら | combien (prix) | このかばんはいくらですか
+| どこ | où | {駅|えき}はどこですか
+| どう | comment | {日本|にほん}はどうですか
+
+> {何|なに} se lit **なん** devant です, の ou un compteur ({何時|なんじ}, quelle heure), et **なに** ailleurs ({何|なに}を). Plus poli que だれ : どなた.
+
+- これは[{何|なん}]ですか。 | Qu'est-ce que c'est ?
+- あの{女|おんな}の{人|ひと}は[だれ]ですか。 | Qui est cette femme ?
+- {夏休|なつやす}みは[いつ]ですか。 | Quand sont les vacances d'été ?
+- このかばんは[いくら]ですか。 | Combien coûte ce sac ?
+- {日本|にほん}の{生活|せいかつ}は[どう]ですか。 | Comment est la vie au Japon ?
+- {今|いま}、[{何時|なんじ}]ですか。 | Quelle heure est-il ?
+
+## deshita
+titre: 〜でした
+sens: A était B
+forme: Nom + でした
+forme: Nom + じゃありませんでした
+voir: desu, ja-arimasen
+
+Le passé de です est **でした** : {昨日|きのう}は{休|やす}みでした, hier, c'était un jour de congé. Le passé négatif ajoute でした à la négation : **じゃありませんでした** (ou ではありませんでした, じゃなかったです).
+| | présent | passé
+| affirmatif | です | でした
+| négatif | じゃありません | じゃありませんでした
+
+> Le japonais n'a que deux temps : le passé, et le non-passé, qui sert aussi pour le futur.
+
+- {昨日|きのう}は{日曜日|にちようび}[でした]。 | Hier, c'était dimanche.
+- {先週|せんしゅう}は{休|やす}み[でした]。 | La semaine dernière, c'était congé.
+- {父|ちち}は{先生|せんせい}[でした]。 | Mon père était professeur.
+- {昨日|きのう}は{雨|あめ}[じゃありませんでした/ではありませんでした/じゃなかったです]。 | Hier, il n'a pas plu.
+- {試験|しけん}は{昨日|きのう}[でした]か。 | L'examen, c'était hier ?
+
+## ne-yo
+titre: 〜ね・〜よ
+sens: n'est-ce pas ; je vous le dis
+forme: Phrase + ね
+forme: Phrase + よ
+
+Deux petites particules de fin de phrase, qui disent ce que l'on attend de l'autre :
+* **ね** cherche l'accord : on pense que l'autre sait ou ressent la même chose. いい{天気|てんき}です**ね**, il fait beau, n'est-ce pas ?
+* **よ** apporte une information que l'autre n'a pas, ou insiste : あれは{駅|えき}です**よ**, c'est la gare, là-bas (je vous le signale).
+* **よね** mêle les deux : on vérifie une chose dont on est presque sûr.
+
+> Un よ de trop sonne vite autoritaire ; des ね réguliers rendent la conversation chaleureuse.
+
+- いい{天気|てんき}です[ね]。 | Il fait beau, n'est-ce pas ?
+- この{店|みせ}は{安|やす}いです[よ]。 | Ce magasin n'est pas cher, vous savez.
+- {明日|あした}は{休|やす}みです[よ]。 | Demain, c'est congé, je vous signale.
+- {田中|たなか}さんは{先生|せんせい}です[よね]。 | M. Tanaka est bien professeur, n'est-ce pas ?
+- {日本語|にほんご}は{難|むずか}しいです[ね]。 | Le japonais, c'est difficile, hein.
+
+=== Les verbes polis
+Le verbe en 〜ます : au présent, au passé, à la négation. Puis les particules qui disent quoi, où, quand et avec qui.
+
+## masu
+titre: 〜ます
+sens: le verbe poli (présent et futur)
+forme: Verbe (radical) + ます
+
+Le verbe japonais se place **à la fin** de la phrase, et ne change ni avec la personne ni avec le nombre. **ます** en fait la forme polie, celle de toute conversation avec un inconnu ou un collègue : {私|わたし}は{毎日|まいにち}コーヒーを{飲|の}みます, je bois du café tous les jours.
+
+Ce présent sert aussi pour le futur : {明日|あした}{行|い}きます, j'irai demain. Le contexte suffit.
+
+Pour former ます, il faut savoir à quelle famille appartient le verbe :
+| famille | dictionnaire | forme en ます
+| en -ru (ichidan) | {食|た}べる, {見|み}る | {食|た}べます, {見|み}ます
+| en -u (godan) | {飲|の}む, {書|か}く, {買|か}う | {飲|の}みます, {書|か}きます, {買|か}います
+| irréguliers | する, {来|く}る | します, {来|き}ます
+* en -ru : on enlève る ;
+* en -u : le dernier son passe en « i » (む → み, く → き, う → い) ;
+* する et {来|く}る sont les deux seuls vrais irréguliers.
+
+> Les verbes en -ru finissent tous par -iru ou -eru, mais certains verbes en -iru et -eru sont en -u : {帰|かえ}る, {入|はい}る, {知|し}る… La fiche de chaque mot, dans le vocabulaire, donne sa famille.
+
+- {毎朝|まいあさ}パンを[{食|た}べます<{食|た}べる>]。 | Je mange du pain tous les matins.
+- {明日|あした}、{京都|きょうと}へ[{行|い}きます<{行|い}く>]。 | Demain, je vais à Kyoto.
+- {毎晩|まいばん}テレビを[{見|み}ます<{見|み}る>]。 | Je regarde la télévision tous les soirs.
+- {田中|たなか}さんは{毎日|まいにち}{日本語|にほんご}を[{勉強|べんきょう}します<{勉強|べんきょう}する>]。 | M. Tanaka étudie le japonais tous les jours.
+- {私|わたし}はよく{手紙|てがみ}を[{書|か}きます<{書|か}く>]。 | J'écris souvent des lettres.
+- {友|とも}だちが[{来|き}ます<{来|く}る>]。 | Un ami vient.
+
+## masen
+titre: 〜ません
+sens: ne… pas (verbe poli)
+forme: Verbe (radical) + ません
+voir: masu
+
+La négation polie : ます devient **ません**. {私|わたし}はお{酒|さけ}を{飲|の}み**ません**, je ne bois pas d'alcool.
+
+Comme ます, ません vaut pour le présent et le futur : {明日|あした}は{来|き}ません, il ne viendra pas demain.
+
+- {私|わたし}は{肉|にく}を[{食|た}べません<{食|た}べる>]。 | Je ne mange pas de viande.
+- {日曜日|にちようび}は{会社|かいしゃ}へ[{行|い}きません<{行|い}く>]。 | Le dimanche, je ne vais pas au bureau.
+- {田中|たなか}さんはお{酒|さけ}を[{飲|の}みません<{飲|の}む>]。 | M. Tanaka ne boit pas d'alcool.
+- {山田|やまだ}さんは{明日|あした}[{来|き}ません<{来|く}る>]。 | Mme Yamada ne viendra pas demain.
+- {私|わたし}はテレビを[{見|み}ません<{見|み}る>]。 | Je ne regarde pas la télévision.
+
+## mashita
+titre: 〜ました・〜ませんでした
+sens: le passé (verbe poli)
+forme: Verbe (radical) + ました
+forme: Verbe (radical) + ませんでした
+voir: masu, masen
+
+Le passé poli : ます devient **ました**, et ません devient **ませんでした**.
+| | non-passé | passé
+| affirmatif | {行|い}きます | {行|い}きました
+| négatif | {行|い}きません | {行|い}きませんでした
+
+Ce passé couvre à la fois le passé composé et l'imparfait français : {昨日|きのう}{映画|えいが}を{見|み}ました, hier, j'ai vu un film.
+
+- {昨日|きのう}、{映画|えいが}を[{見|み}ました<{見|み}る>]。 | Hier, j'ai vu un film.
+- {週末|しゅうまつ}は{東京|とうきょう}へ[{行|い}きました<{行|い}く>]。 | Ce week-end, je suis allé à Tokyo.
+- {今朝|けさ}はパンを[{食|た}べませんでした<{食|た}べる>]。 | Ce matin, je n'ai pas mangé de pain.
+- {昨日|きのう}の{夜|よる}、{友|とも}だちに{電話|でんわ}を[しました<する>]。 | Hier soir, j'ai téléphoné à un ami.
+- {田中|たなか}さんはパーティーに[{来|き}ませんでした<{来|く}る>]。 | M. Tanaka n'est pas venu à la fête.
+
+## wo
+titre: 〜を
+sens: le complément d'objet
+forme: Nom + を + Verbe
+
+**を** marque ce sur quoi porte l'action, le complément d'objet direct : パン**を**{食|た}べます, je mange du pain. Il se place juste après ce nom ; le verbe, lui, reste à la fin.
+
+L'ordre habituel d'une phrase : qui (は) - quand - où - quoi (を) - le verbe. {私|わたし}は{毎朝|まいあさ}コーヒー**を**{飲|の}みます.
+
+> を se prononce « o », exactement comme お ; au clavier, on le tape « wo ». Il ne sert qu'à cette particule.
+
+- {毎朝|まいあさ}コーヒー[を]{飲|の}みます。 | Je bois du café tous les matins.
+- {昨日|きのう}、{本|ほん}[を]{買|か}いました。 | Hier, j'ai acheté un livre.
+- よく{音楽|おんがく}[を]{聞|き}きます。 | J'écoute souvent de la musique.
+- {毎日|まいにち}{日本語|にほんご}[を]{勉強|べんきょう}します。 | J'étudie le japonais tous les jours.
+- {母|はは}に{手紙|てがみ}[を]{書|か}きました。 | J'ai écrit une lettre à ma mère.
+
+## ni-temps
+titre: 〜に (le moment)
+sens: à (une heure, une date)
+forme: Heure, date + に + Verbe
+
+**に** situe une action à un moment précis : {七時|しちじ}**に**{起|お}きます, je me lève à sept heures ; {日曜日|にちようび}**に**, {四月|しがつ}**に**.
+
+> Pas de に avec les moments relatifs à aujourd'hui : {今日|きょう}, {明日|あした}, {毎日|まいにち}, {来週|らいしゅう}, {今|いま}… se mettent seuls. Avec les jours de la semaine, に est facultatif.
+
+- {毎朝|まいあさ}{七時|しちじ}[に]{起|お}きます。 | Je me lève à sept heures tous les matins.
+- {授業|じゅぎょう}は{九時|くじ}[に]{始|はじ}まります。 | Le cours commence à neuf heures.
+- {夜|よる}{十一時|じゅういちじ}[に]{寝|ね}ます。 | Je me couche à onze heures du soir.
+- {四月|しがつ}[に]{日本|にほん}へ{行|い}きます。 | En avril, je vais au Japon.
+- {日曜日|にちようび}[に]{友|とも}だちに{会|あ}います。 | Dimanche, je vois un ami.
+
+## he-ni
+titre: 〜へ・〜に (la destination)
+sens: à, vers (là où l'on va)
+forme: Lieu + へ / に + {行|い}く・{来|く}る・{帰|かえ}る
+
+Avec les verbes de déplacement - {行|い}く (aller), {来|く}る (venir), {帰|かえ}る (rentrer) -, le lieu où l'on va prend **へ** ou **に** : {学校|がっこう}**へ**{行|い}きます, je vais à l'école.
+
+へ insiste sur la direction, に sur le point d'arrivée ; dans la plupart des phrases, les deux se valent.
+
+> へ se prononce « e » ; au clavier, on le tape « he ».
+
+- {明日|あした}、{銀行|ぎんこう}[へ/に]{行|い}きます。 | Demain, je vais à la banque.
+- {何時|なんじ}に{家|うち}[へ/に]{帰|かえ}りますか。 | À quelle heure rentrez-vous à la maison ?
+- {去年|きょねん}、{日本|にほん}[へ/に]{来|き}ました。 | Je suis venu au Japon l'année dernière.
+- {週末|しゅうまつ}は{海|うみ}[へ/に]{行|い}きました。 | Ce week-end, je suis allé à la mer.
+- {毎日|まいにち}{会社|かいしゃ}[へ/に]{行|い}きます。 | Je vais au bureau tous les jours.
+
+## de-lieu
+titre: 〜で (le lieu de l'action)
+sens: à, dans (là où l'action se passe)
+forme: Lieu + で + Verbe d'action
+
+**で** marque le lieu où se déroule une action : {図書館|としょかん}**で**{勉強|べんきょう}します, j'étudie à la bibliothèque.
+
+> Ne pas confondre avec に : に dit où l'on va (ou, plus loin, où l'on se trouve) ; で, où l'on fait quelque chose. {公園|こうえん}**に**{行|い}きます, je vais au parc ; {公園|こうえん}**で**{遊|あそ}びます, je joue au parc.
+
+- {図書館|としょかん}[で]{勉強|べんきょう}します。 | J'étudie à la bibliothèque.
+- {駅|えき}の{前|まえ}[で]{友|とも}だちを{待|ま}ちました。 | J'ai attendu un ami devant la gare.
+- {日曜日|にちようび}、{公園|こうえん}[で]テニスをしました。 | Dimanche, j'ai joué au tennis au parc.
+- どこ[で]{昼|ひる}ごはんを{食|た}べますか。 | Où déjeunez-vous ?
+- デパート[で]{靴|くつ}を{買|か}いました。 | J'ai acheté des chaussures au grand magasin.
+
+## de-moyen
+titre: 〜で (le moyen)
+sens: en, avec, par (un moyen, un outil, une langue)
+forme: Moyen + で + Verbe
+voir: de-lieu
+
+Le même **で** dit aussi avec quoi l'on fait quelque chose :
+* le moyen de transport : バス**で**{行|い}きます, j'y vais en bus ;
+* l'outil : はし**で**{食|た}べます, je mange avec des baguettes ;
+* la langue : {日本語|にほんご}**で**{話|はな}します, je parle en japonais.
+
+> « À pied » se dit {歩|ある}いて, sans で : {駅|えき}まで{歩|ある}いて{行|い}きます.
+
+- {毎日|まいにち}{電車|でんしゃ}[で]{学校|がっこう}へ{行|い}きます。 | Je vais à l'école en train tous les jours.
+- はし[で]ごはんを{食|た}べます。 | Je mange le riz avec des baguettes.
+- {日本語|にほんご}[で]{手紙|てがみ}を{書|か}きました。 | J'ai écrit une lettre en japonais.
+- ボールペン[で]{名前|なまえ}を{書|か}きます。 | J'écris mon nom au stylo-bille.
+- {東京|とうきょう}から{大阪|おおさか}まで{新幹線|しんかんせん}[で]{行|い}きました。 | Je suis allé de Tokyo à Osaka en shinkansen.
+
+## to-avec
+titre: 〜と (avec quelqu'un)
+sens: avec (quelqu'un)
+forme: Personne + と + Verbe
+
+**と** après une personne : celle avec qui l'on fait l'action. {友|とも}だち**と**{映画|えいが}を{見|み}ました, j'ai vu un film avec un ami.
+
+> Tout seul se dit {一人|ひとり}で, avec で : {一人|ひとり}で{旅行|りょこう}します, je voyage seul.
+
+- {友|とも}だち[と]{映画|えいが}を{見|み}ました。 | J'ai vu un film avec un ami.
+- {家族|かぞく}[と]{旅行|りょこう}をします。 | Je fais un voyage avec ma famille.
+- だれ[と]{話|はな}しましたか。 | Avec qui avez-vous parlé ?
+- {週末|しゅうまつ}は{母|はは}[と]{買|か}い{物|もの}をしました。 | Ce week-end, j'ai fait les courses avec ma mère.
+- {田中|たなか}さんは{山田|やまだ}さん[と]{結婚|けっこん}しました。 | M. Tanaka s'est marié avec Mme Yamada.
+
+## to-ya
+titre: 〜と〜・〜や〜など
+sens: A et B ; A, B, etc.
+forme: Nom + と + Nom
+forme: Nom + や + Nom + (など)
+
+Pour énumérer des noms : **と** donne une liste complète (A et B, c'est tout) ; **や** une liste d'exemples (A, B, entre autres), souvent close par **など**, « etc. ».
+* りんご**と**バナナを{買|か}いました : j'ai acheté des pommes et des bananes (rien d'autre).
+* りんご**や**バナナ**など**を{買|か}いました : j'ai acheté des pommes, des bananes, etc.
+
+> と et や ne relient que des noms - jamais des verbes ni des phrases.
+
+- パン[と]{牛乳|ぎゅうにゅう}を{買|か}いました。 | J'ai acheté du pain et du lait.
+- {机|つくえ}の{上|うえ}に{本|ほん}[や]ノートなどがあります。 | Sur le bureau, il y a des livres, des cahiers, etc.
+- {私|わたし}[と]{妹|いもうと}は{学生|がくせい}です。 | Ma petite sœur et moi sommes étudiants.
+- {京都|きょうと}[や]{奈良|なら}などへ{行|い}きました。 | Je suis allé à Kyoto, à Nara, entre autres.
+- {日曜日|にちようび}[と]{月曜日|げつようび}は{休|やす}みです。 | Le dimanche et le lundi sont des jours de congé.
+
+## kara-made
+titre: 〜から〜まで
+sens: de… à…, depuis… jusqu'à…
+forme: Début + から + Fin + まで
+
+**から** marque le point de départ, **まで** le point d'arrivée - dans le temps comme dans l'espace.
+* {九時|くじ}**から**{五時|ごじ}**まで**{働|はたら}きます : je travaille de neuf heures à cinq heures ;
+* {東京|とうきょう}**から**{大阪|おおさか}**まで** : de Tokyo à Osaka.
+
+Chacun s'emploie aussi seul : {駅|えき}**まで**{歩|ある}きます, je marche jusqu'à la gare ; フランス**から**{来|き}ました, je viens de France.
+
+- {銀行|ぎんこう}は{九時|くじ}[から]{三時|さんじ}までです。 | La banque est ouverte de neuf heures à trois heures.
+- {月曜日|げつようび}から{金曜日|きんようび}[まで]{働|はたら}きます。 | Je travaille du lundi au vendredi.
+- {私|わたし}はフランス[から]{来|き}ました。 | Je viens de France.
+- {駅|えき}[まで]{歩|ある}きました。 | J'ai marché jusqu'à la gare.
+- {夏休|なつやす}みはいつ[から]ですか。 | À partir de quand sont les vacances d'été ?
+
+## ni-iku
+titre: 〜に{行|い}く
+sens: aller faire quelque chose
+forme: Verbe (radical) + に + {行|い}く・{来|く}る・{帰|かえ}る
+forme: Nom d'action + に + {行|い}く
+
+Pour dire dans quel but on se déplace : le radical du verbe (la forme en ます sans ます), puis **に**, puis le verbe de déplacement. {映画|えいが}を{見|み}**に**{行|い}きます, je vais voir un film.
+
+Avec un nom d'action, le nom suffit : {買|か}い{物|もの}**に**{行|い}きます, je vais faire les courses ; {旅行|りょこう}**に**{行|い}きます, je pars en voyage.
+
+- デパートへ{靴|くつ}を[{買|か}いに<{買|か}う>]{行|い}きます。 | Je vais au grand magasin acheter des chaussures.
+- {友|とも}だちが{遊|あそ}び[に]{来|き}ました。 | Un ami est venu me voir.
+- {昼|ひる}ごはんを[{食|た}べに<{食|た}べる>]{帰|かえ}ります。 | Je rentre déjeuner.
+- {図書館|としょかん}へ{本|ほん}を[{借|か}りに<{借|か}りる>]{行|い}きました。 | Je suis allé à la bibliothèque emprunter des livres.
+- {週末|しゅうまつ}、{海|うみ}へ[{泳|およ}ぎに<{泳|およ}ぐ>]{行|い}きます。 | Ce week-end, je vais nager à la mer.
+- {明日|あした}、{買|か}い{物|もの}[に]{行|い}きます。 | Demain, je vais faire les courses.
+
+## masenka
+titre: 〜ませんか
+sens: et si on… ? (invitation)
+forme: Verbe (radical) + ませんか
+
+Une question négative, « ne voulez-vous pas… ? », est la façon polie d'inviter : {一緒|いっしょ}に{映画|えいが}を{見|み}**ませんか**, et si on allait voir un film ensemble ?
+
+La forme négative laisse à l'autre la liberté de refuser : c'est plus délicat qu'une question affirmative. Pour accepter : いいですね ; pour refuser poliment : すみません、ちょっと…
+
+- {一緒|いっしょ}に{映画|えいが}を[{見|み}ませんか<{見|み}る>]。 | Et si on allait voir un film ensemble ?
+- {週末|しゅうまつ}、テニスを[しませんか<する>]。 | Ça vous dirait de jouer au tennis ce week-end ?
+- {昼|ひる}ごはんを{食|た}べに[{行|い}きませんか<{行|い}く>]。 | On va déjeuner ?
+- {少|すこ}し[{休|やす}みませんか<{休|やす}む>]。 | Si on faisait une petite pause ?
+- お{茶|ちゃ}を[{飲|の}みませんか<{飲|の}む>]。 | Vous prendrez bien un thé ?
+
+## mashou
+titre: 〜ましょう・〜ましょうか
+sens: faisons… ; voulez-vous que je… ?
+forme: Verbe (radical) + ましょう
+forme: Verbe (radical) + ましょうか
+voir: masenka
+
+**ましょう** propose de faire quelque chose ensemble, avec entrain : {行|い}き**ましょう**, allons-y ! C'est aussi la réponse naturelle à une invitation en ませんか : ええ、{行|い}きましょう.
+
+**ましょうか** a deux emplois :
+* proposer ensemble, en demandant l'avis de l'autre : {何|なに}を{食|た}べ**ましょうか**, qu'est-ce qu'on mange ?
+* offrir son aide : {窓|まど}を{開|あ}け**ましょうか**, voulez-vous que j'ouvre la fenêtre ?
+
+- そろそろ[{帰|かえ}りましょう<{帰|かえ}る>]。 | Il est temps de rentrer.
+- {一緒|いっしょ}に[{勉強|べんきょう}しましょう<{勉強|べんきょう}する>]。 | Étudions ensemble !
+- {荷物|にもつ}を[{持|も}ちましょうか<{持|も}つ>]。 | Voulez-vous que je porte vos bagages ?
+- どこで[{会|あ}いましょうか<{会|あ}う>]。 | Où est-ce qu'on se retrouve ?
+- {駅|えき}まで[{歩|ある}きましょう<{歩|ある}く>]。 | Marchons jusqu'à la gare.
+
+## ni-personne
+titre: 〜に (à quelqu'un)
+sens: à (la personne vers qui va l'action)
+forme: Personne + に + Verbe
+
+**に** marque aussi la personne vers qui va l'action, comme « à » en français : {母|はは}**に**{手紙|てがみ}を{書|か}きます, j'écris une lettre à ma mère ; {友|とも}だち**に**{電話|でんわ}をかけます, je téléphone à un ami.
+
+Quelques verbes prennent に là où le français met un complément direct : {先生|せんせい}**に**{会|あ}います, je vois le professeur ; {先生|せんせい}**に**{聞|き}きます, je demande au professeur.
+
+- {姉|あね}[に]{手紙|てがみ}を{書|か}きました。 | J'ai écrit une lettre à ma grande sœur.
+- {友|とも}だち[に]{電話|でんわ}をかけます。 | Je téléphone à un ami.
+- {駅|えき}で{先生|せんせい}[に]{会|あ}いました。 | J'ai croisé le professeur à la gare.
+- {田中|たなか}さん[に]{本|ほん}を{貸|か}しました。 | J'ai prêté un livre à M. Tanaka.
+- {先生|せんせい}[に]{質問|しつもん}しました。 | J'ai posé une question au professeur.
+
+=== Il y a, et les adjectifs
+Dire où sont les choses et les gens, et les décrire. Puis aimer, savoir faire, vouloir, comparer.
+
+## aru-iru
+titre: 〜があります・〜がいます
+sens: il y a ; avoir
+forme: Chose + が + あります
+forme: Être vivant + が + います
+
+Le japonais a deux verbes pour « il y a » : **あります** pour les choses et les plantes, **います** pour ce qui bouge de soi-même, les personnes et les animaux. Ce qui existe prend **が**.
+* お{金|かね}**が**あります : il y a de l'argent ;
+* {猫|ねこ}**が**います : il y a un chat.
+
+あります dit aussi ce qu'on a : {車|くるま}があります, j'ai une voiture ; {時間|じかん}がありません, je n'ai pas le temps. Et います, la famille qu'on a : {兄|あに}がいます, j'ai un grand frère.
+
+> Les négations : ありません, いません.
+
+- {公園|こうえん}に{犬|いぬ}が[います]。 | Il y a un chien dans le parc.
+- {冷蔵庫|れいぞうこ}に{牛乳|ぎゅうにゅう}が[あります]。 | Il y a du lait dans le frigo.
+- {私|わたし}は{兄弟|きょうだい}が[いません]。 | Je n'ai ni frère ni sœur.
+- {今日|きょう}は{時間|じかん}が[ありません]。 | Aujourd'hui, je n'ai pas le temps.
+- {教室|きょうしつ}に{学生|がくせい}が{三人|さんにん}[います]。 | Il y a trois étudiants dans la salle.
+- {明日|あした}、テストが[あります]。 | Demain, il y a un examen.
+
+## ni-aru
+titre: 〜に〜があります・〜は〜にあります
+sens: où se trouve quelque chose
+forme: Lieu + に + Chose + が + あります
+forme: Chose + は + Lieu + に + あります
+voir: aru-iru, de-lieu
+
+Le lieu où quelque chose se trouve prend **に**. Deux tournures, selon ce qu'on sait déjà :
+* {部屋|へや}**に**テレビが**あります** : dans la chambre, il y a une télévision (on découvre la télévision) ;
+* テレビ**は**{部屋|へや}**に**あります : la télévision est dans la chambre (on parle de la télévision, et on dit où elle est).
+
+La seconde se raccourcit souvent avec です : トイレは{二階|にかい}です, les toilettes sont à l'étage.
+
+> に pour le lieu où l'on est, で pour celui où l'on agit : {部屋|へや}**に**います, mais {部屋|へや}**で**{寝|ね}ます.
+
+- {駅|えき}の{近|ちか}く[に]{銀行|ぎんこう}があります。 | Il y a une banque près de la gare.
+- {田中|たなか}さんは{今|いま}{会議室|かいぎしつ}[に]います。 | M. Tanaka est en salle de réunion en ce moment.
+- {私|わたし}のかばんはどこ[に]ありますか。 | Où est mon sac ?
+- {庭|にわ}[に]{木|き}があります。 | Il y a un arbre dans le jardin.
+- {父|ちち}は{今|いま}{大阪|おおさか}[に]います。 | Mon père est à Osaka en ce moment.
+
+## position
+titre: 〜の{上|うえ}・{下|した}・{中|なか}・{前|まえ}…
+sens: sur, sous, dans, devant…
+forme: Nom + の + {上|うえ} / {下|した} / {中|なか} / {前|まえ}… + に / で
+voir: ni-aru
+
+Les positions sont des noms, reliés à leur repère par **の**, puis suivis de に (où l'on est) ou de で (où l'on agit) : {机|つくえ}**の{上|うえ}に**, sur le bureau - mot à mot, « au-dessus du bureau ».
+| mot | sens
+| {上|うえ} | sur, au-dessus
+| {下|した} | sous, en dessous
+| {中|なか} | dans, à l'intérieur
+| {外|そと} | dehors
+| {前|まえ} | devant
+| {後|うし}ろ | derrière
+| {隣|となり} | à côté (juste à côté)
+| {近|ちか}く | près de
+| {右|みぎ}・{左|ひだり} | à droite, à gauche
+
+- {机|つくえ}の[{上|うえ}]に{本|ほん}があります。 | Il y a un livre sur le bureau.
+- {猫|ねこ}はベッドの[{下|した}]にいます。 | Le chat est sous le lit.
+- かばんの[{中|なか}]に{何|なに}がありますか。 | Qu'y a-t-il dans le sac ?
+- {銀行|ぎんこう}は{郵便局|ゆうびんきょく}の[{隣|となり}]です。 | La banque est à côté de la poste.
+- {学校|がっこう}の[{前|まえ}]に{本屋|ほんや}があります。 | Il y a une librairie devant l'école.
+- {家|いえ}の[{後|うし}ろ]に{山|やま}があります。 | Il y a une montagne derrière la maison.
+
+## adj-i
+titre: 〜い (les adjectifs en い)
+sens: les adjectifs en い
+forme: Adjectif en い + Nom
+forme: Nom + は + Adjectif en い + です
+
+Les adjectifs japonais se rangent en deux familles. Ceux de la première finissent par **い** : {大|おお}きい (grand), {高|たか}い (haut, cher), おいしい (bon), {新|あたら}しい (nouveau).
+
+Ils se placent tels quels devant le nom - {高|たか}い{山|やま}, une haute montagne - ou en fin de phrase, suivis de です : この{山|やま}は{高|たか}いです.
+
+> L'adjectif japonais se conjugue comme un verbe (négation, passé) : c'est son い final qui change, comme le montrent les fiches suivantes.
+
+- {富士山|ふじさん}は[{高|たか}い]{山|やま}です。 | Le mont Fuji est une haute montagne.
+- このラーメンは[おいしい]です。 | Ces ramen sont délicieux.
+- {今日|きょう}は[{暑|あつ}い]ですね。 | Il fait chaud aujourd'hui, hein.
+- [{新|あたら}しい]{車|くるま}を{買|か}いました。 | J'ai acheté une nouvelle voiture.
+- この{部屋|へや}は[{広|ひろ}い]です。 | Cette pièce est spacieuse.
+
+## adj-na
+titre: 〜な (les adjectifs en な)
+sens: les adjectifs en な
+forme: Adjectif en な + な + Nom
+forme: Nom + は + Adjectif en な + です
+voir: adj-i
+
+La seconde famille d'adjectifs se comporte plutôt comme des noms : {静|しず}か (calme), {元気|げんき} (en forme), {有名|ゆうめい} (célèbre), {親切|しんせつ} (gentil), きれい (beau, propre).
+
+Devant un nom, ils prennent **な** : {静|しず}か**な**{町|まち}, une ville calme. En fin de phrase, ils se construisent comme un nom, avec です et sans な : この{町|まち}は{静|しず}かです.
+
+> きれい, {嫌|きら}い, {有名|ゆうめい} finissent par い, et sont pourtant des adjectifs en な : きれい**な**{花|はな}. La fiche de chaque mot, dans le vocabulaire, donne sa famille.
+
+- {京都|きょうと}は{静|しず}か[な]{町|まち}です。 | Kyoto est une ville calme.
+- きれい[な]{花|はな}ですね。 | Ce sont de jolies fleurs, n'est-ce pas ?
+- {田中|たなか}さんは{親切|しんせつ}[な]{人|ひと}です。 | M. Tanaka est quelqu'un de gentil.
+- ここは{有名|ゆうめい}[な]レストランです。 | C'est un restaurant célèbre.
+- {大切|たいせつ}[な]{話|はなし}があります。 | J'ai quelque chose d'important à vous dire.
+- {夜|よる}の{公園|こうえん}は[{静|しず}か]です。 | Le parc, la nuit, est calme.
+
+## adj-neg
+titre: 〜くないです・〜じゃありません
+sens: la négation des adjectifs
+forme: Adjectif en い : い → くないです
+forme: Adjectif en な : + じゃありません
+voir: adj-i, adj-na
+
+Un adjectif en い se met à la négation en changeant son い final en **くない** : {高|たか}い → {高|たか}**くない**です, ce n'est pas cher. くありません se dit aussi, un peu plus soutenu.
+
+Un adjectif en な fait comme un nom : {静|しず}か**じゃありません** (ou じゃないです, ではありません).
+
+> L'exception à retenir : いい (bon, bien) se conjugue à partir de son ancienne forme よい. よくないです, ce n'est pas bien.
+
+- この{店|みせ}は[{高|たか}くない<{高|たか}い>]です。 | Ce magasin n'est pas cher.
+- {今日|きょう}は[{寒|さむ}くない<{寒|さむ}い>]です。 | Il ne fait pas froid aujourd'hui.
+- この{映画|えいが}は[{面白|おもしろ}くない<{面白|おもしろ}い>]です。 | Ce film n'est pas intéressant.
+- {今日|きょう}は{天気|てんき}が[よくない<いい>]です。 | Il ne fait pas beau aujourd'hui.
+- この{町|まち}は{静|しず}か[じゃありません/ではありません/じゃないです]。 | Cette ville n'est pas calme.
+- {私|わたし}は{肉|にく}が{好|す}き[じゃありません/ではありません/じゃないです]。 | Je n'aime pas la viande.
+
+## adj-passe
+titre: 〜かったです・〜でした
+sens: le passé des adjectifs
+forme: Adjectif en い : い → かったです
+forme: Adjectif en な : + でした
+voir: adj-neg, deshita
+
+Au passé, l'adjectif en い change son い en **かった** : {楽|たの}しい → {楽|たの}し**かった**です, c'était agréable. Au passé négatif, くない devient **くなかった** : {楽|たの}しくなかったです.
+
+Un adjectif en な prend **でした**, comme un nom : {静|しず}か**でした** ; au négatif, じゃありませんでした.
+| | présent | passé
+| {楽|たの}しい | {楽|たの}しいです | {楽|たの}しかったです
+| (négatif) | {楽|たの}しくないです | {楽|たの}しくなかったです
+| {静|しず}か | {静|しず}かです | {静|しず}かでした
+| (négatif) | {静|しず}かじゃありません | {静|しず}かじゃありませんでした
+
+> Jamais 「{楽|たの}しいでした」 : です ne porte pas le passé d'un adjectif en い. Et いい devient よかった.
+
+- {旅行|りょこう}は[{楽|たの}しかった<{楽|たの}しい>]です。 | Le voyage était agréable.
+- {昨日|きのう}は[{寒|さむ}かった<{寒|さむ}い>]ですね。 | Il faisait froid hier, hein.
+- テストは[{難|むずか}しくなかった<{難|むずか}しい>]です。 | L'examen n'était pas difficile.
+- {週末|しゅうまつ}は{天気|てんき}が[よかった<いい>]です。 | Il a fait beau ce week-end.
+- {昔|むかし}、この{町|まち}は{静|しず}か[でした]。 | Autrefois, cette ville était calme.
+- パーティーはにぎやか[でした]。 | La fête était animée.
+
+## adj-te
+titre: 〜くて・〜で
+sens: et (relier des adjectifs)
+forme: Adjectif en い : い → くて
+forme: Adjectif en な, Nom : + で
+voir: adj-i, adj-na
+
+Pour enchaîner deux qualités, pas de と : le premier adjectif prend une forme de liaison. Son い devient **くて** : {安|やす}**くて**おいしい, bon marché et bon. Un adjectif en な, ou un nom, prend **で** : きれい**で**{静|しず}か, beau et calme.
+
+Cette forme donne parfois la cause : {高|たか}くて{買|か}えません, c'est trop cher, je ne peux pas l'acheter.
+
+> いい devient よくて.
+
+- この{店|みせ}は[{安|やす}くて<{安|やす}い>]おいしいです。 | Ce restaurant est bon marché et bon.
+- {私|わたし}の{部屋|へや}は[{広|ひろ}くて<{広|ひろ}い>]{明|あか}るいです。 | Ma chambre est grande et claire.
+- {京都|きょうと}はきれい[で]{静|しず}かな{町|まち}です。 | Kyoto est une ville belle et calme.
+- {山田|やまだ}さんは{親切|しんせつ}[で]{面白|おもしろ}い{人|ひと}です。 | Mme Yamada est une personne gentille et amusante.
+- {兄|あに}は{医者|いしゃ}[で]、{弟|おとうと}は{学生|がくせい}です。 | Mon grand frère est médecin, et mon petit frère étudiant.
+
+## adverbes
+titre: 〜く・〜に (les adverbes)
+sens: d'une certaine manière (-ment)
+forme: Adjectif en い : い → く + Verbe
+forme: Adjectif en な : + に + Verbe
+
+Un adjectif devient adverbe : son い se change en **く**, et un adjectif en な prend **に**. {早|はや}い (tôt, rapide) → {早|はや}**く**{起|お}きます, je me lève tôt ; {静|しず}か → {静|しず}か**に**{話|はな}します, je parle doucement.
+
+> On retrouve la même forme devant なる, devenir : {寒|さむ}くなる, きれいになる (voir plus loin).
+
+- {毎朝|まいあさ}[{早|はや}く<{早|はや}い>]{起|お}きます。 | Je me lève tôt tous les matins.
+- {図書館|としょかん}で{静|しず}か[に]{本|ほん}を{読|よ}みました。 | J'ai lu tranquillement à la bibliothèque.
+- {字|じ}を[{大|おお}きく<{大|おお}きい>]{書|か}きました。 | J'ai écrit les caractères en grand.
+- {昨日|きのう}は[{遅|おそ}く<{遅|おそ}い>]{寝|ね}ました。 | Hier, je me suis couché tard.
+- {部屋|へや}をきれい[に]{掃除|そうじ}しました。 | J'ai bien nettoyé la chambre.
+
+## ga-suki
+titre: 〜が{好|す}き・〜が{上手|じょうず}
+sens: aimer ; être doué pour
+forme: Nom + が + {好|す}き / {嫌|きら}い / {上手|じょうず} / {下手|へた} + です
+
+Aimer, détester, être doué, être mauvais : en japonais, ce sont des adjectifs en な, et ce qui est aimé prend **が**, pas を. {私|わたし}は{猫|ねこ}**が**{好|す}きです, j'aime les chats - mot à mot, « pour moi, les chats sont aimés ».
+* {好|す}き : aimer ; {大好|だいす}き : adorer ;
+* {嫌|きら}い : ne pas aimer, détester ;
+* {上手|じょうず} : doué ; {下手|へた} : mauvais (pour).
+
+> On ne se dit pas soi-même {上手|じょうず} : par modestie, on dit {得意|とくい} (être fort en). Et {上手|じょうず}ですね est un compliment très courant, offert au moindre mot de japonais.
+
+- {私|わたし}は{寿司|すし}[が]{好|す}きです。 | J'aime les sushis.
+- {田中|たなか}さんは{歌|うた}[が]{上手|じょうず}です。 | M. Tanaka chante bien.
+- {妹|いもうと}は{野菜|やさい}[が]{嫌|きら}いです。 | Ma petite sœur n'aime pas les légumes.
+- どんな{音楽|おんがく}[が]{好|す}きですか。 | Quel genre de musique aimez-vous ?
+- {私|わたし}は{料理|りょうり}[が]{下手|へた}です。 | Je cuisine mal.
+
+## ga-dekiru
+titre: 〜がわかる・〜ができる
+sens: comprendre ; savoir faire
+forme: Nom + が + わかります
+forme: Nom + が + できます
+voir: ga-suki
+
+D'autres verbes prennent が pour leur objet, parce qu'ils décrivent un état plutôt qu'une action :
+* **わかる**, comprendre, savoir : {日本語|にほんご}**が**わかります, je comprends le japonais ;
+* **できる**, savoir faire, pouvoir : テニス**が**できます, je sais jouer au tennis ;
+* **ある**, au sens d'avoir : {時間|じかん}**が**あります.
+
+> できる veut aussi dire « être prêt, être fait » : ごはんができました, le repas est prêt.
+
+- {私|わたし}は{英語|えいご}[が]わかります。 | Je comprends l'anglais.
+- {田中|たなか}さんはピアノ[が]できます。 | M. Tanaka sait jouer du piano.
+- この{漢字|かんじ}[が]わかりません。 | Je ne comprends pas ce kanji.
+- {山田|やまだ}さんは{中国語|ちゅうごくご}[が]できますか。 | Mme Yamada parle-t-elle chinois ?
+- {車|くるま}の{運転|うんてん}[が]できません。 | Je ne sais pas conduire.
+
+## ga-sujet
+titre: 〜が (le sujet qu'on désigne)
+sens: c'est… qui ; un sujet nouveau
+forme: Nom + が + Verbe / Adjectif
+forme: Mot interrogatif + が + …
+voir: desu
+
+は présente le thème, ce dont on parle ; **が** désigne le sujet, et met l'accent dessus. {田中|たなか}さん**は**{来|き}ました : M. Tanaka, lui, est venu. {田中|たなか}さん**が**{来|き}ました : c'est M. Tanaka qui est venu - ou simplement, M. Tanaka est arrivé (une nouvelle).
+
+が s'impose :
+* après un mot interrogatif sujet, et dans la réponse : だれ**が**{来|き}ましたか - {山田|やまだ}さん**が**{来|き}ました ;
+* pour une nouvelle, ce qu'on voit arriver : あ、バス**が**{来|き}ました ;
+* dans une proposition qui décrit un nom : {私|わたし}**が**{作|つく}った{料理|りょうり}, le plat que j'ai préparé.
+
+> Une question en は reçoit une réponse en は ; une question en が, une réponse en が.
+
+- だれ[が]{来|き}ましたか。 | Qui est venu ?
+- {山田|やまだ}さん[が]{来|き}ました。 | C'est Mme Yamada qui est venue.
+- どれ[が]あなたのかばんですか。 | Lequel est votre sac ?
+- あ、バス[が]{来|き}ました。 | Ah, voilà le bus.
+- この{店|みせ}は{何|なに}[が]おいしいですか。 | Qu'est-ce qui est bon, dans ce restaurant ?
+- {急|きゅう}に{雨|あめ}[が]{降|ふ}りました。 | Il s'est soudain mis à pleuvoir.
+
+## hoshii
+titre: 〜がほしい
+sens: vouloir (une chose)
+forme: Nom + が + ほしいです
+
+**ほしい** est un adjectif en い, « désiré ». Ce que l'on veut prend が : {新|あたら}しいパソコン**が**ほしいです, je veux un nouvel ordinateur.
+
+Il se conjugue comme tout adjectif en い : ほしくないです (je n'en veux pas), ほしかったです (je voulais).
+
+> ほしい ne parle que de soi, ou de l'autre dans une question : on ne dit pas directement ce que veut un tiers.
+
+- {新|あたら}しい{靴|くつ}[が]ほしいです。 | Je veux de nouvelles chaussures.
+- {誕生日|たんじょうび}に{何|なに}が[ほしい]ですか。 | Que voulez-vous pour votre anniversaire ?
+- {今|いま}は{何|なに}も[ほしくない<ほしい>]です。 | Pour l'instant, je ne veux rien.
+- {子|こ}どもの{時|とき}、{犬|いぬ}が[ほしかった<ほしい>]です。 | Enfant, je voulais un chien.
+- {大|おお}きい{家|いえ}[が]ほしいです。 | Je veux une grande maison.
+
+## tai
+titre: 〜たい
+sens: vouloir (faire)
+forme: Verbe (radical) + たいです
+voir: hoshii
+
+Pour vouloir faire quelque chose : **たい** après le radical du verbe (la forme en ます sans ます). {行|い}きます → {行|い}き**たい**です, je veux y aller.
+
+たい se conjugue comme un adjectif en い : {行|い}きたくないです (je ne veux pas y aller), {行|い}きたかったです (je voulais y aller).
+
+L'objet peut prendre を ou が : {水|みず}**を**{飲|の}みたい, {水|みず}**が**{飲|の}みたい - が souligne l'envie.
+
+> Comme ほしい, たい ne parle que de soi, ou de l'autre dans une question : {何|なに}が{食|た}べたいですか, qu'aimeriez-vous manger ?
+
+- {日本|にほん}へ[{行|い}きたい<{行|い}く>]です。 | Je veux aller au Japon.
+- {冷|つめ}たい{水|みず}が[{飲|の}みたい<{飲|の}む>]です。 | J'ai envie de boire de l'eau fraîche.
+- {今日|きょう}は{何|なに}も[したくない<する>]です。 | Aujourd'hui, je n'ai envie de rien faire.
+- {昼|ひる}ごはんに{何|なに}が[{食|た}べたい<{食|た}べる>]ですか。 | Que voulez-vous manger à midi ?
+- {子|こ}どもの{時|とき}、{先生|せんせい}に[なりたかった<なる>]です。 | Enfant, je voulais devenir enseignant.
+
+## amari-zenzen
+titre: あまり〜ない・ぜんぜん〜ない
+sens: pas très ; pas du tout
+forme: あまり + forme négative
+forme: ぜんぜん + forme négative
+
+Deux adverbes qui ne vivent qu'avec une négation :
+* **あまり**… ない : pas très, pas beaucoup. この{映画|えいが}は**あまり**{面白|おもしろ}くないです, ce film n'est pas très intéressant ;
+* **ぜんぜん**… ない : pas du tout. {日本語|にほんご}が**ぜんぜん**わかりません, je ne comprends pas du tout le japonais.
+
+Pour la fréquence : いつも (toujours), よく (souvent), ときどき (parfois), あまり〜ない (pas souvent), ぜんぜん〜ない (jamais).
+
+- この{本|ほん}は[あまり]{面白|おもしろ}くないです。 | Ce livre n'est pas très intéressant.
+- お{酒|さけ}は[ぜんぜん]{飲|の}みません。 | Je ne bois pas du tout d'alcool.
+- {今日|きょう}は[あまり]{寒|さむ}くないですね。 | Il ne fait pas très froid aujourd'hui.
+- テレビは[ぜんぜん]{見|み}ません。 | Je ne regarde jamais la télévision.
+- {昨日|きのう}は[あまり]{寝|ね}ませんでした。 | Je n'ai pas beaucoup dormi hier.
+
+## yori
+titre: 〜より・〜のほうが
+sens: plus… que (comparer)
+forme: A + は + B + より + Adjectif
+forme: B + より + A + のほうが + Adjectif
+forme: A + と + B + と、どちらが + Adjectif + ですか
+
+Le japonais n'a pas de mot pour « plus » : il dit « par rapport à B ». **より** marque ce à quoi l'on compare : {東京|とうきょう}は{大阪|おおさか}**より**{大|おお}きいです, Tokyo est plus grande qu'Osaka.
+
+Pour mettre l'accent sur le gagnant, **のほうが** : {大阪|おおさか}より{東京|とうきょう}**のほうが**{大|おお}きいです, c'est Tokyo la plus grande.
+
+Pour demander lequel des deux : コーヒーと{紅茶|こうちゃ}と、**どちら**が{好|す}きですか, entre le café et le thé, lequel préférez-vous ? - {紅茶|こうちゃ}のほうが{好|す}きです.
+
+- {電車|でんしゃ}はバス[より]{速|はや}いです。 | Le train est plus rapide que le bus.
+- {夏|なつ}より{冬|ふゆ}の[ほう]が{好|す}きです。 | Je préfère l'hiver à l'été.
+- {肉|にく}と{魚|さかな}と、[どちら]が{好|す}きですか。 | Entre la viande et le poisson, que préférez-vous ?
+- {今日|きょう}は{昨日|きのう}[より]{暑|あつ}いです。 | Aujourd'hui, il fait plus chaud qu'hier.
+- {兄|あに}は{私|わたし}[より]{三|さん}センチ{高|たか}いです。 | Mon grand frère mesure trois centimètres de plus que moi.
+
+## ichiban
+titre: 〜でいちばん
+sens: le plus… (superlatif)
+forme: Groupe + で + いちばん + Adjectif
+forme: Groupe + の{中|なか}で + {何|なに}・だれ・どこ + が + いちばん…
+voir: yori
+
+**いちばん** (« numéro un ») devant un adjectif fait le superlatif ; le groupe dans lequel on compare prend **で** : {日本|にほん}**で**いちばん{高|たか}い{山|やま}, la plus haute montagne du Japon.
+
+Pour demander : くだものの{中|なか}**で**、{何|なに}が**いちばん**{好|す}きですか, parmi les fruits, lequel préférez-vous ?
+
+> いちばん s'écrit aussi {一番|いちばん}.
+
+- {富士山|ふじさん}は{日本|にほん}[で]いちばん{高|たか}い{山|やま}です。 | Le mont Fuji est la plus haute montagne du Japon.
+- {家族|かぞく}の{中|なか}で、{父|ちち}が[いちばん]{背|せ}が{高|たか}いです。 | Dans la famille, c'est mon père le plus grand.
+- {一年|いちねん}で[いつ]がいちばん{好|す}きですか。 | Quel moment de l'année préférez-vous ?
+- クラス[で]だれがいちばん{歌|うた}が{上手|じょうず}ですか。 | Qui chante le mieux de la classe ?
+- スポーツの{中|なか}で、サッカーが[いちばん]{好|す}きです。 | Parmi les sports, c'est le football que je préfère.
+
+## naru
+titre: 〜になる・〜くなる
+sens: devenir
+forme: Nom, Adjectif en な + に + なる
+forme: Adjectif en い : い → く + なる
+voir: adverbes
+
+**なる**, devenir, se construit comme les adverbes : un nom ou un adjectif en な prend **に**, un adjectif en い change son い en **く**.
+* {医者|いしゃ}**に**なりたいです : je veux devenir médecin ;
+* {部屋|へや}がきれい**に**なりました : la chambre est devenue propre ;
+* {寒|さむ}**く**なりました : il s'est mis à faire froid.
+
+> なる s'emploie souvent là où le français dit simplement « être » ou « avoir » : {春|はる}になりました, c'est le printemps ; {二十歳|はたち}になります, je vais avoir vingt ans.
+
+- {将来|しょうらい}、{先生|せんせい}[に]なりたいです。 | Plus tard, je veux devenir enseignant.
+- {最近|さいきん}、[{暖|あたた}かく<{暖|あたた}かい>]なりましたね。 | Il fait plus doux ces temps-ci, hein.
+- {日本語|にほんご}が{上手|じょうず}[に]なりましたね。 | Votre japonais s'est bien amélioré !
+- もう{夜|よる}[に]なりました。 | La nuit est déjà tombée.
+- {子|こ}どもが[{大|おお}きく<{大|おお}きい>]なりました。 | Les enfants ont grandi.
+
+=== Relier, compter, nuancer
+Donner une raison, opposer deux idées, dire « seulement » ou « environ », et compter les choses.
+
+## kara-raison
+titre: 〜から (parce que)
+sens: parce que, comme
+forme: Cause + から、Conséquence
+forme: Phrase + から + です
+voir: kara-made
+
+**から** après une phrase donne la raison ; il se place à la fin de la cause. {暑|あつ}いです**から**、{窓|まど}を{開|あ}けます, comme il fait chaud, j'ouvre la fenêtre. L'ordre est donc celui du raisonnement : la cause d'abord, la conséquence ensuite.
+
+Pour répondre à どうして (pourquoi) : どうして{行|い}きませんか。{忙|いそが}しいです**から**, parce que je suis occupé.
+
+> Devant から, la forme polie (です, ます) et la forme neutre (だ, la forme du dictionnaire) se disent toutes deux ; la politesse de la phrase se joue à la fin.
+
+- {時間|じかん}がありません[から]、タクシーで{行|い}きます。 | Comme je n'ai pas le temps, j'y vais en taxi.
+- {明日|あした}は{休|やす}みです[から]、{遅|おそ}くまで{寝|ね}ます。 | Demain c'est congé, alors je vais dormir tard.
+- どうして{食|た}べませんか。おなかがいっぱいです[から]。 | Pourquoi ne mangez-vous pas ? - Parce que je n'ai plus faim.
+- {寒|さむ}いです[から]、コートを{着|き}ます。 | Il fait froid, alors je mets un manteau.
+- この{店|みせ}は{安|やす}いです[から]、いつも{人|ひと}が{多|おお}いです。 | Ce magasin n'est pas cher, alors il y a toujours du monde.
+
+## ga-mais
+titre: 〜が・〜けど
+sens: mais
+forme: Phrase + が、Phrase
+forme: Phrase + けど、Phrase
+voir: ga-sujet
+
+**が** à la fin d'une première phrase veut dire « mais » : この{店|みせ}は{高|たか}いです**が**、おいしいです, ce restaurant est cher, mais bon. À l'oral, on dit plutôt **けど**, plus familier.
+
+Ce が sert aussi à adoucir une entrée en matière, sans opposition : すみません**が**、{駅|えき}はどこですか, excusez-moi, où est la gare ?
+
+> Ne pas confondre avec le が du sujet : celui-ci suit un nom, l'autre une phrase entière. En tête de phrase, « mais » se dit でも (à l'oral) ou しかし (à l'écrit).
+
+- {日本語|にほんご}は{難|むずか}しいです[が/けど]、{面白|おもしろ}いです。 | Le japonais est difficile, mais intéressant.
+- {行|い}きたいです[が/けど]、{時間|じかん}がありません。 | J'aimerais y aller, mais je n'ai pas le temps.
+- すみません[が/けど]、{今|いま}{何時|なんじ}ですか。 | Excusez-moi, quelle heure est-il ?
+- この{部屋|へや}は{狭|せま}いです[が/けど]、{明|あか}るいです。 | Cette chambre est petite, mais lumineuse.
+- {田中|たなか}さんを{待|ま}ちました[が/けど]、{来|き}ませんでした。 | J'ai attendu M. Tanaka, mais il n'est pas venu.
+
+## nanika-nanimo
+titre: {何|なに}か・{何|なに}も〜ない
+sens: quelque chose ; rien
+forme: Mot interrogatif + か
+forme: Mot interrogatif + も + forme négative
+voir: interrogatifs
+
+Un mot interrogatif suivi de **か** devient indéfini : {何|なに}か (quelque chose), だれか (quelqu'un), どこか (quelque part), いつか (un jour).
+
+Suivi de **も** et d'une négation, il devient « rien, personne, nulle part » : {何|なに}**も**{食|た}べませんでした, je n'ai rien mangé ; だれ**も**いません, il n'y a personne ; どこ**へも**{行|い}きません, je ne vais nulle part.
+
+> を et が disparaissent en général devant か et も : {何|なに}か{飲|の}みますか, {何|なに}も{見|み}ません.
+
+- [{何|なに}か]{飲|の}みますか。 | Voulez-vous boire quelque chose ?
+- {教室|きょうしつ}に[だれも]いません。 | Il n'y a personne dans la salle.
+- {冷蔵庫|れいぞうこ}に[{何|なに}も]ありません。 | Il n'y a rien dans le frigo.
+- [だれか]{来|き}ましたか。 | Quelqu'un est venu ?
+- {週末|しゅうまつ}は[どこへも/どこにも]{行|い}きませんでした。 | Ce week-end, je ne suis allé nulle part.
+- [いつか]{日本|にほん}に{住|す}みたいです。 | J'aimerais vivre au Japon un jour.
+
+## dake
+titre: 〜だけ
+sens: seulement, juste
+forme: Nom, Quantité + だけ
+
+**だけ** suit ce qu'il limite : {水|みず}**だけ**{飲|の}みました, je n'ai bu que de l'eau ; {一人|ひとり}**だけ**{来|き}ました, une seule personne est venue.
+
+Avec une particule, だけ se place en général avant elle : {田中|たなか}さん**だけ**に{話|はな}しました, je n'en ai parlé qu'à M. Tanaka. が et を peuvent disparaître.
+
+> だけ est neutre : « seulement, juste ». Pour un « ne… que » qui regrette le manque, il y a しか〜ない (N4).
+
+- {朝|あさ}はコーヒー[だけ]{飲|の}みます。 | Le matin, je ne bois que du café.
+- {日本語|にほんご}は{少|すこ}し[だけ]わかります。 | Je comprends juste un peu le japonais.
+- クラスで{女|おんな}の{人|ひと}は{私|わたし}[だけ]です。 | Dans la classe, je suis la seule femme.
+- {一日|いちにち}[だけ]{休|やす}みました。 | Je n'ai pris qu'un jour de repos.
+- これ[だけ]ください。 | Juste ceci, s'il vous plaît.
+
+## gurai-goro
+titre: 〜ぐらい・〜ごろ
+sens: environ ; vers (un moment)
+forme: Quantité, durée + ぐらい / くらい
+forme: Heure, date + ごろ
+
+Pour une approximation : **ぐらい** (ou くらい) après une durée, une quantité, un prix - {一時間|いちじかん}**ぐらい**, environ une heure ; **ごろ** après un moment précis - {三時|さんじ}**ごろ**, vers trois heures.
+
+Pour demander : どのぐらい (combien de temps, à peu près), いくらぐらい (combien, environ).
+
+> ごろ remplace le に du moment, ou s'y ajoute : {三時|さんじ}ごろ{来|き}ます, {三時|さんじ}ごろに{来|き}ます.
+
+- {駅|えき}まで{十分|じっぷん}[ぐらい/くらい]かかります。 | Il faut environ dix minutes jusqu'à la gare.
+- {毎晩|まいばん}{十一時|じゅういちじ}[ごろ]{寝|ね}ます。 | Je me couche vers onze heures tous les soirs.
+- {日本|にほん}にどの[ぐらい/くらい]いましたか。 | Combien de temps êtes-vous resté au Japon ?
+- {来月|らいげつ}の{十日|とおか}[ごろ]{帰|かえ}ります。 | Je rentre vers le dix du mois prochain.
+- このかばんは{一万円|いちまんえん}[ぐらい/くらい]でした。 | Ce sac coûtait environ dix mille yens.
+
+## compteurs
+titre: {一|ひと}つ・{一人|ひとり}・{一枚|いちまい}…
+sens: compter les choses
+forme: Nom + を / が + Nombre et compteur + Verbe
+
+En japonais, on ne compte pas les choses directement : le nombre prend un **compteur**, qui dépend de la forme de ce qu'on compte. Et il se place en général après la chose comptée, sans particule : りんごを{三|みっ}つ{買|か}いました, j'ai acheté trois pommes.
+| compteur | pour | 1, 2, 3
+| 〜つ | les choses en général (jusqu'à 10) | {一|ひと}つ, {二|ふた}つ, {三|みっ}つ
+| 〜{人|にん} | les personnes | {一人|ひとり}, {二人|ふたり}, {三人|さんにん}
+| 〜{枚|まい} | les choses plates (feuilles, timbres, chemises) | {一枚|いちまい}, {二枚|にまい}, {三枚|さんまい}
+| 〜{本|ほん} | les choses longues (stylos, bouteilles) | {一本|いっぽん}, {二本|にほん}, {三本|さんぼん}
+| 〜{冊|さつ} | les livres, les cahiers | {一冊|いっさつ}, {二冊|にさつ}, {三冊|さんさつ}
+| 〜{匹|ひき} | les petits animaux | {一匹|いっぴき}, {二匹|にひき}, {三匹|さんびき}
+| 〜{台|だい} | les machines, les véhicules | {一台|いちだい}, {二台|にだい}, {三台|さんだい}
+
+Pour demander combien : いくつ (avec つ), {何人|なんにん}, {何枚|なんまい}, {何本|なんぼん}…
+
+> Certains sons changent avec le nombre - いっぽん, さんぼん - et ひとり, ふたり sont irréguliers : ils s'apprennent comme des mots.
+
+- りんごを[{三|みっ}つ]ください。 | Trois pommes, s'il vous plaît.
+- {教室|きょうしつ}に{学生|がくせい}が[{五人|ごにん}]います。 | Il y a cinq étudiants dans la salle.
+- {切手|きって}を[{二枚|にまい}]{買|か}いました。 | J'ai acheté deux timbres.
+- ビールを[{一本|いっぽん}]{飲|の}みました。 | J'ai bu une bouteille de bière.
+- {家族|かぞく}は[{何人|なんにん}]ですか。 | Combien êtes-vous dans votre famille ?
+- {家|いえ}に{猫|ねこ}が[{二匹|にひき}]います。 | J'ai deux chats à la maison.
+
+=== La forme en て
+Une forme du verbe qui sert à tout : demander, dire ce qui se fait en ce moment, permettre, interdire, enchaîner.
+
+## te-kudasai
+titre: 〜てください
+sens: veuillez…, s'il vous plaît (demande)
+forme: Verbe (forme en て) + ください
+
+La **forme en て** est la plus utile de toute la conjugaison : elle relie, elle demande, elle dit ce qui est en cours… Voici comment elle se forme :
+| famille | dictionnaire | forme en て
+| en -ru | {食|た}べる, {見|み}る | {食|た}べて, {見|み}て
+| -u, -tsu, -ru | {会|あ}う, {待|ま}つ, {帰|かえ}る | {会|あ}って, {待|ま}って, {帰|かえ}って
+| -mu, -bu, -nu | {飲|の}む, {遊|あそ}ぶ, {死|し}ぬ | {飲|の}んで, {遊|あそ}んで, {死|し}んで
+| -ku | {書|か}く | {書|か}いて
+| -gu | {泳|およ}ぐ | {泳|およ}いで
+| -su | {話|はな}す | {話|はな}して
+| irréguliers | する, {来|く}る, {行|い}く | して, {来|き}て, {行|い}って
+
+Le premier emploi : **〜てください**, « veuillez… », une demande polie mais directe. ここに{名前|なまえ}を{書|か}い**てください**, écrivez votre nom ici, s'il vous plaît.
+
+> {行|い}く est l'unique exception des verbes en -ku : {行|い}って, et non 「{行|い}いて」.
+
+- ここに{名前|なまえ}を[{書|か}いて<{書|か}く>]ください。 | Écrivez votre nom ici, s'il vous plaît.
+- ちょっと[{待|ま}って<{待|ま}つ>]ください。 | Attendez un instant, s'il vous plaît.
+- もう{一度|いちど}[{言|い}って<{言|い}う>]ください。 | Répétez, s'il vous plaît.
+- この{薬|くすり}を[{飲|の}んで<{飲|の}む>]ください。 | Prenez ce médicament.
+- {窓|まど}を[{開|あ}けて<{開|あ}ける>]ください。 | Ouvrez la fenêtre, s'il vous plaît.
+- {明日|あした}、{九時|くじ}に[{来|き}て<{来|く}る>]ください。 | Venez demain à neuf heures, s'il vous plaît.
+
+## te-iru
+titre: 〜ている (en train de)
+sens: être en train de ; faire en ce moment de sa vie
+forme: Verbe (forme en て) + います
+voir: te-kudasai
+
+**ている** (poli : ています) décrit une action qui dure : {今|いま}、{雨|あめ}が{降|ふ}っ**ています**, il pleut en ce moment ; {田中|たなか}さんは{電話|でんわ}をし**ています**, M. Tanaka est au téléphone.
+
+Elle dit aussi une habitude, ce qu'on fait à cette période de sa vie : {毎朝|まいあさ}ジョギングをし**ています**, je fais du jogging tous les matins ; {銀行|ぎんこう}で{働|はたら}い**ています**, je travaille dans une banque.
+
+> À l'oral, le い tombe souvent : {食|た}べてる, {見|み}てる.
+
+- {今|いま}、{雨|あめ}が[{降|ふ}って<{降|ふ}る>]います。 | Il pleut en ce moment.
+- {子|こ}どもたちが{公園|こうえん}で[{遊|あそ}んで<{遊|あそ}ぶ>]います。 | Les enfants jouent au parc.
+- {田中|たなか}さんは{今|いま}{何|なに}を[して<する>]いますか。 | Que fait M. Tanaka en ce moment ?
+- {姉|あね}は{銀行|ぎんこう}で[{働|はたら}いて<{働|はたら}く>]います。 | Ma grande sœur travaille dans une banque.
+- {毎晩|まいばん}{日本語|にほんご}を[{勉強|べんきょう}して<{勉強|べんきょう}する>]います。 | J'étudie le japonais tous les soirs.
+
+## te-iru-etat
+titre: 〜ている (l'état)
+sens: le résultat qui dure
+forme: Verbe de changement (forme en て) + います
+voir: te-iru
+
+Avec un verbe qui décrit un changement - se marier, partir, s'ouvrir, apprendre -, ている ne dit pas que l'action est en cours, mais que son **résultat** dure : {結婚|けっこん}し**ています**, je suis marié (et non « je suis en train de me marier »).
+* {知|し}っています : je sais, je connais ;
+* {住|す}んでいます : j'habite ;
+* {持|も}っています : j'ai, je possède ;
+* {窓|まど}が{開|あ}いています : la fenêtre est ouverte.
+
+> La négation de {知|し}っています est {知|し}りません, et non 「{知|し}っていません」 : une exception à retenir.
+
+- {姉|あね}は[{結婚|けっこん}して<{結婚|けっこん}する>]います。 | Ma grande sœur est mariée.
+- {大阪|おおさか}に[{住|す}んで<{住|す}む>]います。 | J'habite à Osaka.
+- {田中|たなか}さんの{電話番号|でんわばんごう}を[{知|し}って<{知|し}る>]いますか。 | Vous connaissez le numéro de téléphone de M. Tanaka ?
+- {車|くるま}を[{持|も}って<{持|も}つ>]いますか。 | Avez-vous une voiture ?
+- {窓|まど}が[{開|あ}いて<{開|あ}く>]います。 | La fenêtre est ouverte.
+- {父|ちち}は{眼鏡|めがね}を[かけて<かける>]います。 | Mon père porte des lunettes.
+
+## mou-mada
+titre: もう・まだ
+sens: déjà ; encore, pas encore
+forme: もう + Verbe au passé
+forme: まだ + Verbe (forme en て) + いません
+voir: te-iru-etat
+
+**もう**, déjà : もう{食|た}べました, j'ai déjà mangé. **まだ**, encore : まだ{七時|しちじ}です, il n'est encore que sept heures.
+
+Pour « pas encore », まだ et ていません : まだ{食|た}べていません, je n'ai pas encore mangé - le repas n'a toujours pas eu lieu. En réponse, simplement : いいえ、**まだ**です, non, pas encore.
+
+> Avec une négation, もう veut dire « plus » : もう{痛|いた}くないです, ça ne fait plus mal.
+
+- もう{昼|ひる}ごはんを{食|た}べましたか。いいえ、[まだ]です。 | Vous avez déjà déjeuné ? - Non, pas encore.
+- [もう]{十二時|じゅうにじ}ですよ。 | Il est déjà midi !
+- {宿題|しゅくだい}は[まだ]{終|お}わっていません。 | Je n'ai pas encore fini mes devoirs.
+- {電車|でんしゃ}は[もう]{出|で}ました。 | Le train est déjà parti.
+- [まだ]{時間|じかん}がありますよ。 | Il reste encore du temps, vous savez.
+
+## te-mo-ii
+titre: 〜てもいいです
+sens: avoir le droit de (permission)
+forme: Verbe (forme en て) + も + いいです
+forme: Verbe (forme en て) + も + いいですか
+
+**〜てもいい** : « même si on fait…, c'est bien » - c'est-à-dire, on peut. ここで{写真|しゃしん}を{撮|と}っ**てもいいですか**, puis-je prendre des photos ici ? - ええ、いいですよ.
+
+Pour refuser poliment : すみません、ちょっと…, ou nettement, avec la forme de la fiche suivante, 〜てはいけません.
+
+- ここに[{座|すわ}って<{座|すわ}る>]もいいですか。 | Puis-je m'asseoir ici ?
+- {窓|まど}を{開|あ}け[ても]いいですか。 | Puis-je ouvrir la fenêtre ?
+- {鉛筆|えんぴつ}で{書|か}いても[いい]ですよ。 | Vous pouvez écrire au crayon.
+- この{本|ほん}を[{借|か}りて<{借|か}りる>]もいいですか。 | Puis-je emprunter ce livre ?
+- もう[{帰|かえ}って<{帰|かえ}る>]もいいですよ。 | Vous pouvez rentrer maintenant.
+
+## te-wa-ikenai
+titre: 〜てはいけません
+sens: il est interdit de
+forme: Verbe (forme en て) + は + いけません
+voir: te-mo-ii
+
+**〜てはいけない** : « si on fait…, ça ne va pas » - c'est interdit. ここでたばこを{吸|す}っ**てはいけません**, il est interdit de fumer ici.
+
+C'est une interdiction nette, celle d'un règlement ou d'un parent ; à un inconnu, on demande plutôt avec 〜ないでください (voir plus loin).
+
+> À l'oral, ては se contracte en ちゃ : {吸|す}っちゃだめ, pas le droit de fumer.
+
+- ここで{写真|しゃしん}を[{撮|と}って<{撮|と}る>]はいけません。 | Il est interdit de prendre des photos ici.
+- {授業中|じゅぎょうちゅう}に{話|はな}して[は]いけません。 | Il ne faut pas bavarder pendant le cours.
+- {図書館|としょかん}で{食|た}べては[いけません]。 | Il est interdit de manger à la bibliothèque.
+- {子|こ}どもはお{酒|さけ}を[{飲|の}んで<{飲|の}む>]はいけません。 | Les enfants ne doivent pas boire d'alcool.
+- この{川|かわ}で[{泳|およ}いで<{泳|およ}ぐ>]はいけません。 | Il est interdit de nager dans cette rivière.
+
+## te-kara
+titre: 〜てから
+sens: après avoir…, puis
+forme: Verbe (forme en て) + から、Verbe
+voir: te-kudasai
+
+**〜てから** fixe l'ordre de deux actions : la première d'abord, la seconde ensuite. {宿題|しゅくだい}をし**てから**、テレビを{見|み}ます, je regarderai la télévision après avoir fait mes devoirs.
+
+Le temps et la politesse se marquent à la fin, sur le second verbe.
+
+> から après une phrase polie veut dire « parce que » ({暑|あつ}いですから) ; après une forme en て, « après ».
+
+- {手|て}を[{洗|あら}って<{洗|あら}う>]から{食|た}べてください。 | Lavez-vous les mains avant de manger.
+- {仕事|しごと}が[{終|お}わって<{終|お}わる>]から、{飲|の}みに{行|い}きましょう。 | Allons boire un verre après le travail.
+- {日本|にほん}に[{来|き}て<{来|く}る>]から、{日本語|にほんご}の{勉強|べんきょう}を{始|はじ}めました。 | C'est après être arrivé au Japon que j'ai commencé le japonais.
+- {毎朝|まいあさ}、シャワーを[{浴|あ}びて<{浴|あ}びる>]から{朝|あさ}ごはんを{食|た}べます。 | Tous les matins, je prends une douche, puis mon petit déjeuner.
+- {電話|でんわ}をして[から]{行|い}きます。 | Je passe un coup de fil, puis j'y vais.
+
+## te-enchaine
+titre: 〜て、〜 (enchaîner)
+sens: et (puis) : relier des actions
+forme: Verbe (forme en て)、Verbe…
+voir: te-kudasai
+
+La forme en て relie des actions qui se suivent, comme « et » : {朝|あさ}{起|お}き**て**、{顔|かお}を{洗|あら}っ**て**、{学校|がっこう}へ{行|い}きます, le matin, je me lève, je me lave le visage et je vais à l'école.
+
+Seul le dernier verbe porte le temps et la politesse : {昨日|きのう}は{本|ほん}を{読|よ}ん**で**、{寝|ね}**ました**.
+
+Elle dit aussi la manière, ou la cause : {歩|ある}いて{行|い}きます, j'y vais à pied ; {風邪|かぜ}をひいて{休|やす}みました, j'ai attrapé un rhume, alors je suis resté chez moi.
+
+- {昨日|きのう}は{友|とも}だちに[{会|あ}って<{会|あ}う>]、{映画|えいが}を{見|み}ました。 | Hier, j'ai retrouvé un ami et nous avons vu un film.
+- {毎朝|まいあさ}{六時|ろくじ}に[{起|お}きて<{起|お}きる>]、{散歩|さんぽ}をします。 | Tous les matins, je me lève à six heures et je vais me promener.
+- {駅|えき}まで[{歩|ある}いて<{歩|ある}く>]{行|い}きました。 | Je suis allé à la gare à pied.
+- デパートへ[{行|い}って<{行|い}く>]、{靴|くつ}を{買|か}いました。 | Je suis allé au grand magasin et j'ai acheté des chaussures.
+- {風邪|かぜ}を[ひいて<ひく>]、{学校|がっこう}を{休|やす}みました。 | J'ai attrapé un rhume, alors j'ai manqué l'école.
+
+=== Les formes neutres
+Le style de tous les jours, celui qu'on parle entre proches, et les tournures qui se construisent dessus.
+
+## neutre
+titre: {食|た}べる・だ (le style neutre)
+sens: la forme du dictionnaire, entre proches
+forme: Verbe : forme du dictionnaire ({食|た}べます → {食|た}べる)
+forme: Nom, Adjectif en な + だ
+voir: masu
+
+Jusqu'ici, tout était poli (です, ます). Entre amis, en famille, dans un journal intime ou un roman, on emploie le **style neutre** : le verbe à la forme du dictionnaire, et **だ** à la place de です.
+| poli | neutre
+| {食|た}べます | {食|た}べる
+| {行|い}きます | {行|い}く
+| します・{来|き}ます | する・{来|く}る
+| {学生|がくせい}です | {学生|がくせい}だ
+| {高|たか}いです | {高|たか}い
+* un adjectif en い perd simplement です : {高|たか}い ;
+* à l'oral, だ tombe souvent devant une question : {学生|がくせい}？ {元気|げんき}？
+
+> Le style neutre n'est pas seulement familier : c'est lui qui sert à l'intérieur des phrases - devant から, とき, こと, ou devant un nom. Il faut donc le connaître même pour parler poliment.
+
+- {明日|あした}、{東京|とうきょう}へ[{行|い}く<{行|い}きます>]。 | Demain, je vais à Tokyo.
+- {毎朝|まいあさ}、{何|なに}を[{食|た}べる<{食|た}べます>]？ | Tu manges quoi, le matin ?
+- {今日|きょう}は{日曜日|にちようび}[だ]。 | Aujourd'hui, c'est dimanche.
+- {週末|しゅうまつ}はテニスを[する<します>]。 | Le week-end, je joue au tennis.
+- {田中|たなか}さんも[{来|く}る<{来|き}ます>]よ。 | M. Tanaka vient aussi, tu sais.
+
+## nai
+titre: 〜ない (la négation neutre)
+sens: ne… pas (style neutre)
+forme: Verbe en -ru : る → ない
+forme: Verbe en -u : dernier son en « a » + ない
+voir: neutre
+
+La négation du style neutre, la **forme en ない** :
+| famille | dictionnaire | forme en ない
+| en -ru | {食|た}べる | {食|た}べない
+| en -u | {書|か}く, {飲|の}む, {待|ま}つ | {書|か}かない, {飲|の}まない, {待|ま}たない
+| en -u, finissant par う | {買|か}う | {買|か}わない
+| irréguliers | する, {来|く}る | しない, {来|こ}ない
+* les verbes en -u passent leur dernier son en « a » ; ceux en う donnent わ, et non あ ;
+* ある n'a pas de forme en ない régulière : sa négation est simplement **ない**.
+
+ない se conjugue ensuite comme un adjectif en い : {食|た}べなかった, je n'ai pas mangé.
+
+- {今日|きょう}は{学校|がっこう}に[{行|い}かない<{行|い}く>]。 | Aujourd'hui, je ne vais pas à l'école.
+- {私|わたし}は{魚|さかな}を[{食|た}べない<{食|た}べる>]。 | Je ne mange pas de poisson.
+- {今|いま}は{時間|じかん}が[ない<ある>]。 | Là, je n'ai pas le temps.
+- {田中|たなか}さんはお{酒|さけ}を[{飲|の}まない<{飲|の}む>]よ。 | M. Tanaka ne boit pas d'alcool, tu sais.
+- {明日|あした}は[{来|こ}ない<{来|く}る>]の？ | Tu ne viens pas demain ?
+- {今日|きょう}は{何|なに}も[{買|か}わない<{買|か}う>]。 | Aujourd'hui, je n'achète rien.
+
+## ta
+titre: 〜た (le passé neutre)
+sens: le passé (style neutre)
+forme: Verbe : comme la forme en て, avec た / だ
+forme: Verbe en ない : ない → なかった
+voir: te-kudasai, nai
+
+Le passé du style neutre, la **forme en た**, se fabrique exactement comme la forme en て, en changeant て en た et で en だ : {食|た}べて → {食|た}べ**た** ; {飲|の}んで → {飲|の}ん**だ** ; {行|い}って → {行|い}っ**た**.
+
+Le passé négatif part de la forme en ない : ない devient **なかった**. {食|た}べなかった, je n'ai pas mangé.
+| | non-passé | passé
+| affirmatif | {書|か}く | {書|か}いた
+| négatif | {書|か}かない | {書|か}かなかった
+
+> Pour un nom ou un adjectif en な, le passé de だ est **だった** : {雨|あめ}だった, il pleuvait.
+
+- {昨日|きのう}、{新|あたら}しい{靴|くつ}を[{買|か}った<{買|か}う>]。 | Hier, j'ai acheté de nouvelles chaussures.
+- {今朝|けさ}は{何|なに}も[{食|た}べなかった<{食|た}べる>]。 | Ce matin, je n'ai rien mangé.
+- {週末|しゅうまつ}、{友|とも}だちと{映画|えいが}を[{見|み}た<{見|み}る>]。 | Ce week-end, j'ai vu un film avec un ami.
+- {昨日|きのう}は{雨|あめ}[だった]。 | Hier, il pleuvait.
+- {田中|たなか}さんにメールを[{書|か}いた<{書|か}く>]。 | J'ai écrit un mail à M. Tanaka.
+- パーティーには[{行|い}かなかった<{行|い}く>]。 | Je ne suis pas allé à la fête.
+
+## naide-kudasai
+titre: 〜ないでください
+sens: ne… pas, s'il vous plaît
+forme: Verbe (forme en ない) + でください
+voir: nai, te-wa-ikenai
+
+Pour demander de ne pas faire quelque chose : la forme en ない suivie de **でください**. ここに{車|くるま}を{止|と}め**ないでください**, ne vous garez pas ici, s'il vous plaît.
+
+C'est la demande polie, plus douce que l'interdiction en 〜てはいけません.
+
+- ここで{写真|しゃしん}を[{撮|と}らないで<{撮|と}る>]ください。 | Ne prenez pas de photos ici, s'il vous plaît.
+- {心配|しんぱい}[しないで<する>]ください。 | Ne vous inquiétez pas.
+- {授業|じゅぎょう}に[{遅|おく}れないで<{遅|おく}れる>]ください。 | Ne soyez pas en retard au cours, s'il vous plaît.
+- この{部屋|へや}に[{入|はい}らないで<{入|はい}る>]ください。 | N'entrez pas dans cette pièce, s'il vous plaît.
+- {傘|かさ}を{忘|わす}れ[ないで]ください。 | N'oubliez pas votre parapluie.
+
+## ta-koto-ga-aru
+titre: 〜たことがある
+sens: avoir déjà fait (l'expérience)
+forme: Verbe (forme en た) + ことがあります
+voir: ta
+
+Pour parler d'une expérience, d'une chose faite au moins une fois dans sa vie : la forme en た, puis **ことがある**, « il y a le fait d'avoir… ». {富士山|ふじさん}に{登|のぼ}った**ことがあります**, j'ai déjà fait l'ascension du mont Fuji.
+* ことがありません : je ne l'ai jamais fait ;
+* {日本|にほん}へ{行|い}ったことがありますか : êtes-vous déjà allé au Japon ?
+
+> Pour un fait précis et récent (hier, la semaine dernière), on dit simplement ました : ことがある est réservé à l'expérience.
+
+- {日本|にほん}へ[{行|い}った<{行|い}く>]ことがありますか。 | Êtes-vous déjà allé au Japon ?
+- {納豆|なっとう}を[{食|た}べた<{食|た}べる>]ことがあります。 | J'ai déjà mangé du nattô.
+- {一度|いちど}も{着物|きもの}を{着|き}たことが[ありません]。 | Je n'ai jamais porté de kimono.
+- {有名|ゆうめい}な{人|ひと}に[{会|あ}った<{会|あ}う>]ことがありますか。 | Avez-vous déjà rencontré quelqu'un de célèbre ?
+- {子|こ}どもの{時|とき}、{北海道|ほっかいどう}に{住|す}んだ[こと]があります。 | Enfant, j'ai vécu à Hokkaidô.
+
+## tari
+titre: 〜たり〜たりする
+sens: faire, entre autres, A et B
+forme: Verbe (forme en た) + り、Verbe (forme en た) + り + する
+voir: ta, to-ya
+
+Pour citer quelques actions parmi d'autres, sans ordre ni liste complète : chaque verbe à la forme en た, plus **り**, et する à la fin. {週末|しゅうまつ}は{本|ほん}を{読|よ}ん**だり**、{映画|えいが}を{見|み}**たり**します, le week-end, je lis, je regarde des films…
+
+Le temps se marque sur する : 〜たりしました.
+
+> C'est, pour les verbes, ce que や… など est pour les noms.
+
+- {休|やす}みの{日|ひ}は{掃除|そうじ}を[したり<する>]、{買|か}い{物|もの}をしたりします。 | Les jours de congé, je fais le ménage, les courses…
+- {日曜日|にちようび}は{音楽|おんがく}を[{聞|き}いたり<{聞|き}く>]、{散歩|さんぽ}をしたりしました。 | Dimanche, j'ai écouté de la musique, je me suis promené…
+- パーティーで{歌|うた}を{歌|うた}ったり、[{踊|おど}ったり<{踊|おど}る>]しました。 | À la fête, on a chanté, dansé…
+- {夏休|なつやす}みは{海|うみ}で[{泳|およ}いだり<{泳|およ}ぐ>]、{山|やま}に{登|のぼ}ったりしたいです。 | Pendant les vacances d'été, je veux nager à la mer, marcher en montagne…
+- {京都|きょうと}で{写真|しゃしん}を[{撮|と}ったり<{撮|と}る>]、お{寺|てら}を{見|み}たりしました。 | À Kyoto, j'ai pris des photos, visité des temples…
+
+## mae-ni
+titre: 〜{前|まえ}に
+sens: avant de ; avant
+forme: Verbe (forme du dictionnaire) + {前|まえ}に
+forme: Nom + の + {前|まえ}に
+voir: neutre
+
+**{前|まえ}に**, « avant », suit la forme du dictionnaire - jamais le passé, même quand tout s'est passé hier : {寝|ね}る{前|まえ}に{歯|は}を{磨|みが}きます, je me brosse les dents avant de dormir.
+
+Après un nom, avec の : {食事|しょくじ}**の{前|まえ}に**, avant le repas. Après une durée, sans の : {三年|さんねん}{前|まえ}に, il y a trois ans.
+
+- {寝|ね}る[{前|まえ}に]{本|ほん}を{読|よ}みます。 | Je lis avant de dormir.
+- [{食|た}べる<{食|た}べます>]{前|まえ}に{手|て}を{洗|あら}います。 | Je me lave les mains avant de manger.
+- {日本|にほん}へ[{行|い}く<{行|い}きました>]{前|まえ}に、{日本語|にほんご}を{勉強|べんきょう}しました。 | Avant d'aller au Japon, j'ai étudié le japonais.
+- {食事|しょくじ}[の]{前|まえ}にこの{薬|くすり}を{飲|の}んでください。 | Prenez ce médicament avant le repas.
+- {三年|さんねん}[{前|まえ}]に{結婚|けっこん}しました。 | Je me suis marié il y a trois ans.
+
+## ta-ato-de
+titre: 〜たあとで
+sens: après avoir…
+forme: Verbe (forme en た) + あとで
+forme: Nom + の + あとで
+voir: ta, te-kara, mae-ni
+
+**あとで**, « après », suit la forme en **た** - même pour l'avenir : {仕事|しごと}が{終|お}わった**あとで**、{飲|の}みに{行|い}きます, après le travail, je vais boire un verre.
+
+Après un nom : {授業|じゅぎょう}**のあとで**, après le cours.
+
+> 〜てから insiste sur l'ordre (d'abord ceci, puis cela) ; 〜たあとで, sur le moment qui suit.
+
+- {宿題|しゅくだい}を[した<する>]あとで、ゲームをします。 | Après avoir fait mes devoirs, je joue aux jeux vidéo.
+- {映画|えいが}を[{見|み}た<{見|み}る>]あとで、{食事|しょくじ}をしました。 | Après le film, nous avons dîné.
+- {授業|じゅぎょう}[の]あとで、{先生|せんせい}と{話|はな}しました。 | Après le cours, j'ai parlé avec le professeur.
+- {食|た}べた[あとで]、すぐ{寝|ね}てはいけません。 | Il ne faut pas se coucher juste après avoir mangé.
+- {大学|だいがく}を{卒業|そつぎょう}した[あとで]、{何|なに}をしますか。 | Que ferez-vous après l'université ?
+
+## deshou
+titre: 〜でしょう
+sens: sans doute ; n'est-ce pas ?
+forme: Verbe, Adjectif en い (forme neutre) + でしょう
+forme: Nom, Adjectif en な + でしょう
+
+**でしょう** exprime une supposition : {明日|あした}は{雨|あめ}が{降|ふ}る**でしょう**, il pleuvra sans doute demain - la phrase des bulletins météo.
+
+Il se place après la forme neutre d'un verbe ou d'un adjectif en い, et directement après un nom ou un adjectif en な, sans だ.
+
+Avec une intonation montante, でしょう？ cherche l'approbation : {大変|たいへん}だった**でしょう**？, ça a dû être dur, non ?
+
+> En style neutre : **だろう**. Moins affirmatif encore : かもしれません, peut-être (N4).
+
+- {明日|あした}は{晴|は}れる[でしょう]。 | Il fera sans doute beau demain.
+- {田中|たなか}さんはもうすぐ[{来|く}る<{来|き}ます>]でしょう。 | M. Tanaka va sans doute bientôt arriver.
+- この{問題|もんだい}は{難|むずか}しい[でしょう]。 | Ce problème doit être difficile.
+- {山田|やまだ}さんは{明日|あした}{休|やす}み[でしょう]。 | Mme Yamada sera sans doute absente demain.
+- {疲|つか}れた[でしょう]？ | Vous devez être fatigué, non ?
+
+## no-pronom
+titre: 〜の (celui, celle)
+sens: celui…, celle… (le nom sous-entendu)
+forme: Adjectif + の
+forme: Adjectif en な + なの
+voir: no
+
+Quand le nom est évident, **の** le remplace après un adjectif : {赤|あか}い**の**をください, le rouge, s'il vous plaît ; もっと{安|やす}い**の**はありますか, vous en avez un moins cher ?
+
+Après un nom, le の de la possession suffit : これは{私|わたし}**の**です, c'est le mien.
+
+> Après un adjectif en な, il faut な : きれい**なの**, le joli.
+
+- {赤|あか}い[の]をください。 | Le rouge, s'il vous plaît.
+- もっと{安|やす}い[の]はありませんか。 | Vous n'en avez pas un moins cher ?
+- このかばんは{田中|たなか}さん[の]です。 | Ce sac est à M. Tanaka.
+- {大|おお}きいのと{小|ちい}さい[の]と、どちらがいいですか。 | Le grand ou le petit, lequel voulez-vous ?
+- もっと{静|しず}か[なの]がいいです。 | J'en voudrais un plus calme.
+
+## toki
+titre: 〜とき
+sens: quand, lorsque
+forme: Verbe, Adjectif en い (forme neutre) + とき
+forme: Nom + の + とき
+forme: Adjectif en な + な + とき
+voir: neutre
+
+**とき**, « le moment », se construit comme un nom : ce qui le précède le décrit. {暇|ひま}な**とき**、{本|ほん}を{読|よ}みます, quand j'ai du temps libre, je lis ; {子|こ}ども**のとき**, quand j'étais enfant.
+
+Devant とき, un verbe est à la forme neutre, et son temps compte :
+* {日本|にほん}へ{行|い}く**とき**、{空港|くうこう}でお{土産|みやげ}を{買|か}いました : en partant au Japon (avant d'y être), j'ai acheté des cadeaux à l'aéroport ;
+* {日本|にほん}へ{行|い}った**とき**、お{土産|みやげ}を{買|か}いました : quand je suis allé au Japon (une fois là-bas), j'ai acheté des cadeaux.
+
+- {子|こ}ども[の]とき、{犬|いぬ}を{飼|か}っていました。 | Quand j'étais enfant, j'avais un chien.
+- {暇|ひま}[な]とき、{何|なに}をしますか。 | Que faites-vous quand vous avez du temps libre ?
+- {寒|さむ}い[とき]は、{温|あたた}かいお{茶|ちゃ}を{飲|の}みます。 | Quand il fait froid, je bois du thé chaud.
+- {道|みち}がわからない[とき]、{人|ひと}に{聞|き}きます。 | Quand je ne connais pas le chemin, je demande.
+- {京都|きょうと}へ[{行|い}った<{行|い}く>]とき、{金閣寺|きんかくじ}を{見|み}ました。 | Quand je suis allé à Kyoto, j'ai vu le Kinkaku-ji.

@@ -124,7 +124,14 @@ URL_CARTES = "/static/yugioh/Cards/"
 VIGNETTES = ".min"         # sous-dossier du fonds ; le point le range a part
 VIGNETTE_LARGEUR = 320
 VIGNETTE_QUALITE = 80
-URL_VIGNETTES = "/api/collection/vignette/"
+# Hors de /api/, et c'est voulu : Nginx y limite le debit (120 requetes par
+# minute, 40 d'avance) pour proteger IGDB et le disque. Une double-page
+# demande dix-huit vignettes d'un coup ; trois pages tournees epuisaient la
+# reserve, et les pochettes suivantes recevaient un 503 -- elles restaient
+# sans image jusqu'a ce qu'on tourne la page et qu'on revienne. Une vignette
+# ne coute rien de ce que la limite protege : elle se fabrique une fois, a
+# partir d'un fichier deja sur le disque.
+URL_VIGNETTES = "/collection/vignette/"
 # Un nom de fichier vient du navigateur : on n'accepte que ce qui ressemble a
 # un artwork, sans separateur ni point-point, avant meme de toucher au disque.
 NOM_FICHIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}\.[A-Za-z0-9]{1,5}$")
@@ -751,7 +758,11 @@ def lire(pseudo):
     return reponse(contenu(page, u))
 
 
-@blueprint_collection.get("/vignette/<fichier>")
+# Les vignettes ont leur propre blueprint, hors de /api/ : voir URL_VIGNETTES.
+blueprint_vignettes = Blueprint("vignettes", __name__, url_prefix="/collection/vignette")
+
+
+@blueprint_vignettes.get("/<fichier>")
 def voir_vignette(fichier):
     """L'artwork reduit a la taille d'une pochette.
 

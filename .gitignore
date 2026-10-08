@@ -6,6 +6,8 @@ static/archive/Cover/
 static/Avatars/
 static/Bannieres/
 static/chainz/art/
+# Les sons de Nihongo : fabriques par VOICEVOX (nihongo.py voix), ~120 Mo par voix.
+static/nihongo/voix/
 recuperation/
 
 # La base et sa cle : jamais versionnees, jamais servies.

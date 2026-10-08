@@ -39,8 +39,8 @@
   /* Les projets, dans l'ordre de changements.txt (voir SECTIONS dans
      suggestions.py). `reserve` reprend RESERVEES du meme fichier : un projet
      pas encore ouvert n'a pas a se faire nommer ici alors que sa tuile ne
-     s'affiche pas. Aucun ne l'est aujourd'hui -- le quiz l'a ete tant que
-     ses jeux n'etaient pas finis, et le laisser reserve interdisait de
+     s'affiche pas : Nihongo, en chantier. Le quiz l'a ete tant que ses
+     jeux n'etaient pas finis, et le laisser reserve ensuite interdisait de
      signaler un bug sur la seule page ou l'on pouvait en voir.
 
      Le serveur refuse de son cote : les deux listes doivent dire la meme
@@ -51,6 +51,7 @@
     { cle: "collection", nom: "Collection Yu-Gi-Oh!" },
     { cle: "quiz", nom: "Mini-Jeux / Quiz" },
     { cle: "chainz", nom: "L'Atelier Chainz" },
+    { cle: "nihongo", nom: "Nihongo", reserve: true },
   ];
 
   const echappe = (s) => String(s === null || s === undefined ? "" : s)

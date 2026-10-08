@@ -1,0 +1,1223 @@
+# La grammaire du JLPT N1, écrite pour Nihongo. Elle suit grammaire-n2.txt
+# et en reprend le format (voir la tête de grammaire-n5.txt). Ce sont pour
+# la plupart des tournures de l'écrit soutenu : on apprend surtout à les
+# reconnaître.
+
+=== Dès que, depuis que, jusqu'à
+À peine… que, une fois que, à compter de, au terme de : le temps dans la langue écrite.
+
+## ya-ina-ya
+titre: 〜や{否|いな}や
+sens: à peine… que, dès que
+forme: Verbe (forme du dictionnaire) + や{否|いな}や
+forme: aussi, plus court : Verbe + や
+voir: ka-to-omou-to, totan
+
+**や{否|いな}や**, « est-ce oui ou non » : la seconde chose arrive avant même qu'on sache si la première est vraiment faite. ベルが{鳴|な}る**や{否|いな}や**、{生徒|せいと}たちは{教室|きょうしつ}を{飛|と}び{出|だ}した, à peine la cloche avait-elle sonné que les élèves se sont rués hors de la classe.
+
+Très écrit, presque littéraire ; on dit aussi simplement **や**. La seconde partie est un constat au passé.
+
+- {彼|かれ}は{家|いえ}に{帰|かえ}る[や{否|いな}や/や]、ベッドに{倒|たお}れ{込|こ}んだ。 | À peine rentré, il s'est effondré sur son lit.
+- {幕|まく}が{上|あ}がる[や{否|いな}や/や]、{会場|かいじょう}から{拍手|はくしゅ}が{起|お}こった。 | Le rideau s'était à peine levé que la salle a éclaté en applaudissements.
+- {新商品|しんしょうひん}は{発売|はつばい}される[や{否|いな}や/や]、{売|う}り{切|き}れた。 | Le nouveau produit a été épuisé dès sa mise en vente.
+- {子|こ}どもは{母親|ははおや}の{顔|かお}を{見|み}る[や/や{否|いな}や]、{泣|な}き{出|だ}した。 | Dès qu'il a vu le visage de sa mère, l'enfant s'est mis à pleurer.
+
+## ga-hayai-ka
+titre: 〜が{早|はや}いか
+sens: aussitôt que, à peine… que
+forme: Verbe (forme du dictionnaire / en た) + が{早|はや}いか
+voir: ya-ina-ya
+
+**が{早|はや}いか**, « lequel est le plus rapide » : les deux actions se suivent si vite qu'on ne sait laquelle est venue d'abord. Souvent pour un geste vif, presque comique. {彼|かれ}は{席|せき}に{着|つ}く**が{早|はや}いか**、{食|た}べ{始|はじ}めた, il s'était à peine assis qu'il commençait à manger.
+
+- {電車|でんしゃ}のドアが{開|ひら}く[が{早|はや}いか]、{乗客|じょうきゃく}がどっと{降|お}りてきた。 | Les portes du train s'étaient à peine ouvertes que les voyageurs se sont déversés sur le quai.
+- {息子|むすこ}は{家|いえ}に{帰|かえ}る[が{早|はや}いか]、ゲームを{始|はじ}めた。 | Mon fils était à peine rentré qu'il se mettait à jouer aux jeux vidéo.
+- {犬|いぬ}は{餌|えさ}を{見|み}る[が{早|はや}いか]、{飛|と}びついた。 | Le chien a bondi sur sa pâtée à l'instant même où il l'a vue.
+- {彼女|かのじょ}は{給料|きゅうりょう}をもらう[が{早|はや}いか]、{全部|ぜんぶ}{使|つか}ってしまう。 | Elle dépense tout son salaire aussitôt qu'elle le touche.
+
+## nari
+titre: 〜なり
+sens: dès que (et aussitôt)
+forme: Verbe (forme du dictionnaire) + なり
+voir: ya-ina-ya
+
+**なり** : aussitôt après une action, une autre suit, souvent inattendue. Le sujet est le même pour les deux, et c'est une autre personne que soi. {彼|かれ}は{部屋|へや}に{入|はい}る**なり**、{窓|まど}を{開|あ}けた, à peine entré dans la pièce, il a ouvert la fenêtre.
+
+> Ne pas confondre avec 〜なり〜なり, « soit… soit ».
+
+- {父|ちち}は{手紙|てがみ}を{読|よ}む[なり]、{黙|だま}って{部屋|へや}を{出|で}ていった。 | À peine la lettre lue, mon père a quitté la pièce sans un mot.
+- {彼女|かのじょ}は{私|わたし}の{顔|かお}を{見|み}る[なり]、{笑|わら}い{出|だ}した。 | Dès qu'elle m'a vu, elle a éclaté de rire.
+- {彼|かれ}は{家|いえ}に{着|つ}く[なり]、{寝|ね}てしまった。 | À peine arrivé chez lui, il s'est endormi.
+- {部長|ぶちょう}は{会議室|かいぎしつ}に{入|はい}ってくる[なり]、{大声|おおごえ}で{怒鳴|どな}った。 | Le chef de service est entré dans la salle et s'est aussitôt mis à crier.
+
+## sobakara
+titre: 〜そばから
+sens: aussitôt… (et c'est à refaire)
+forme: Verbe (forme du dictionnaire / en た) + そばから
+
+**そばから**, « juste à côté » : à peine fait, et c'est déjà défait, et ainsi de suite - une répétition décourageante. {片付|かたづ}ける**そばから**、{子|こ}どもが{散|ち}らかす, à peine j'ai rangé que les enfants remettent du désordre.
+
+- {覚|おぼ}えた[そばから]{忘|わす}れてしまう。 | J'oublie tout aussitôt que je l'ai appris.
+- {雪|ゆき}をかいた[そばから]、また{積|つ}もっていく。 | À peine ai-je déblayé la neige qu'elle s'entasse à nouveau.
+- {給料|きゅうりょう}が{入|はい}る[そばから]、{使|つか}ってしまう。 | Je dépense mon salaire au fur et à mesure qu'il arrive.
+- {注意|ちゅうい}した[そばから]、{同|おな}じ{間違|まちが}いをする。 | À peine l'ai-je repris qu'il refait la même erreur.
+
+## te-kara-to-iu-mono
+titre: 〜てからというもの
+sens: depuis que (et tout a changé)
+forme: Verbe (forme en て) + からというもの
+voir: te-irai
+
+**てからというもの** : un événement a tout changé, et depuis, la nouvelle situation dure. {子|こ}どもが{生|う}まれ**てからというもの**、{生活|せいかつ}がすっかり{変|か}わった, depuis la naissance de mon enfant, ma vie a complètement changé.
+
+Plus fort et plus émotif que 〜て{以来|いらい} (N3) : on souligne le bouleversement.
+
+- {彼女|かのじょ}に{出会|であ}って[からというもの]、{彼|かれ}は{明|あか}るくなった。 | Depuis qu'il l'a rencontrée, il est devenu plus gai.
+- {犬|いぬ}を{飼|か}い{始|はじ}めて[からというもの]、{毎朝|まいあさ}{散歩|さんぽ}している。 | Depuis que j'ai un chien, je me promène tous les matins.
+- {日本|にほん}に{来|き}て[からというもの]、{国|くに}の{料理|りょうり}が{恋|こい}しくてたまらない。 | Depuis que je suis au Japon, la cuisine de mon pays me manque terriblement.
+- {父|ちち}が{亡|な}くなって[からというもの]、{母|はは}はすっかり{元気|げんき}をなくした。 | Depuis la mort de mon père, ma mère a perdu tout son entrain.
+
+## wo-kagiri-ni
+titre: 〜を{限|かぎ}りに
+sens: à compter de (et plus jamais) ; à pleine voix
+forme: Nom (un moment) + を{限|かぎ}りに
+
+**を{限|かぎ}りに**, « en prenant pour limite » : ce moment marque la fin de quelque chose. {今日|きょう}**を{限|かぎ}りに**たばこをやめる, à partir d'aujourd'hui, j'arrête de fumer pour de bon.
+
+Avec {声|こえ} : {声|こえ}**を{限|かぎ}りに**{叫|さけ}ぶ, crier à pleins poumons.
+
+- {今月|こんげつ}[を{限|かぎ}りに]、この{店|みせ}は{閉店|へいてん}いたします。 | Ce magasin fermera définitivement à la fin du mois.
+- {今日|きょう}[を{限|かぎ}りに]、お{酒|さけ}はやめる。 | À partir d'aujourd'hui, j'arrête l'alcool.
+- {彼|かれ}は{今季|こんき}[を{限|かぎ}りに]{引退|いんたい}することを{発表|はっぴょう}した。 | Il a annoncé qu'il prendrait sa retraite à la fin de la saison.
+- {子|こ}どもたちは{声|こえ}[を{限|かぎ}りに]{応援|おうえん}した。 | Les enfants ont encouragé à pleins poumons.
+
+## wo-motte
+titre: 〜をもって
+sens: par, avec (le moyen) ; à compter de (la date)
+forme: Nom + をもって
+forme: 〜をもちまして (très poli)
+
+**をもって** est un で très formel.
+
+Le moyen : {書面|しょめん}**をもって**{通知|つうち}する, notifier par écrit.
+
+La date, la fin : {本日|ほんじつ}**をもって**{受付|うけつけ}を{終了|しゅうりょう}します, les inscriptions sont closes à compter d'aujourd'hui. En très poli, **をもちまして** : これ**をもちまして**、{本日|ほんじつ}の{会|かい}を{終|お}わります, sur ces mots, la séance est levée.
+
+- {試験|しけん}の{結果|けっか}は、{書面|しょめん}[をもって]お{知|し}らせします。 | Les résultats de l'examen vous seront communiqués par écrit.
+- {本日|ほんじつ}[をもって]、{受付|うけつけ}を{締|し}め{切|き}ります。 | Les inscriptions sont closes à compter d'aujourd'hui.
+- これ[をもちまして]、{本日|ほんじつ}の{講演|こうえん}を{終|お}わらせていただきます。 | Sur ces mots, la conférence d'aujourd'hui prend fin.
+- {彼|かれ}は{誠意|せいい}[をもって]{対応|たいおう}した。 | Il a traité l'affaire avec sincérité.
+
+## ni-sakidatte
+titre: 〜に{先立|さきだ}って
+sens: avant, préalablement à
+forme: Nom / Verbe (forme du dictionnaire) + に{先立|さきだ}って・に{先立|さきだ}ち
+forme: Nom + に{先立|さきだ}つ + Nom
+
+**に{先立|さきだ}って**, « en précédant » : une étape préparatoire, avant un événement important. {試合|しあい}**に{先立|さきだ}って**、{開会式|かいかいしき}が{行|おこな}われた, la cérémonie d'ouverture a eu lieu avant le match.
+
+Plus formel que 〜{前|まえ}に.
+
+- {工事|こうじ}[に{先立|さきだ}って/に{先立|さきだ}ち]、{住民|じゅうみん}{説明会|せつめいかい}が{開|ひら}かれた。 | Une réunion d'information a été organisée pour les habitants avant le début des travaux.
+- {映画|えいが}の{公開|こうかい}[に{先立|さきだ}ち/に{先立|さきだ}って]、{試写会|ししゃかい}が{行|おこな}われた。 | Une avant-première a eu lieu avant la sortie du film.
+- {出発|しゅっぱつ}[に{先立|さきだ}って/に{先立|さきだ}ち]、{注意事項|ちゅういじこう}を{説明|せつめい}します。 | Avant le départ, je vais vous expliquer les consignes.
+- {新製品|しんせいひん}の{発売|はつばい}[に{先立|さきだ}って/に{先立|さきだ}ち]、{記者会見|きしゃかいけん}が{開|ひら}かれた。 | Une conférence de presse s'est tenue avant le lancement du nouveau produit.
+
+## wo-kawakiri-ni
+titre: 〜を{皮切|かわき}りに
+sens: à commencer par, en partant de (et ensuite)
+forme: Nom + を{皮切|かわき}りに(して)
+voir: wo-hajime
+
+**を{皮切|かわき}りに** : un premier événement en déclenche toute une série. {東京|とうきょう}**を{皮切|かわき}りに**、{全国|ぜんこく}でコンサートを{行|おこな}う, donner des concerts dans tout le pays, en commençant par Tokyo.
+
+> をはじめ (N3) cite le premier d'une liste ; を{皮切|かわき}りに lance une suite d'événements dans le temps.
+
+- {大阪|おおさか}[を{皮切|かわき}りに]、{全国|ぜんこく}ツアーが{始|はじ}まった。 | La tournée nationale a commencé par Osaka.
+- {彼|かれ}の{発言|はつげん}[を{皮切|かわき}りに]、{次々|つぎつぎ}と{反対意見|はんたいいけん}が{出|で}た。 | Sa déclaration a ouvert le bal : les objections ont fusé l'une après l'autre.
+- この{店|みせ}は{駅前|えきまえ}の{一号店|いちごうてん}[を{皮切|かわき}りに]、{十店|じゅってん}まで{増|ふ}えた。 | Partie d'une première boutique devant la gare, l'enseigne compte aujourd'hui dix magasins.
+- {春|はる}の{展示会|てんじかい}[を{皮切|かわき}りに]、{新|あたら}しいブランドを{展開|てんかい}する。 | Nous lancerons la nouvelle marque, en commençant par le salon de printemps.
+
+## wo-hete
+titre: 〜を{経|へ}て
+sens: après être passé par, au terme de
+forme: Nom + を{経|へ}て
+voir: sue-ni
+
+**を{経|へ}て**, de {経|へ}る « passer par » : une étape, une période, un processus qu'on a traversé. {十年|じゅうねん}の{修業|しゅぎょう}**を{経|へ}て**、{一人前|いちにんまえ}の{職人|しょくにん}になった, au terme de dix ans d'apprentissage, il est devenu un artisan accompli.
+
+Aussi pour un trajet : ソウル**を{経|へ}て**パリへ{行|い}く, aller à Paris via Séoul.
+
+- {長|なが}い{議論|ぎろん}[を{経|へ}て]、ようやく{結論|けつろん}が{出|で}た。 | Au terme d'un long débat, on est enfin arrivé à une conclusion.
+- {彼女|かのじょ}は{厳|きび}しい{訓練|くんれん}[を{経|へ}て]、{宇宙飛行士|うちゅうひこうし}になった。 | Après un entraînement rigoureux, elle est devenue astronaute.
+- この{法案|ほうあん}は{国会|こっかい}の{審議|しんぎ}[を{経|へ}て]、{成立|せいりつ}した。 | Ce projet de loi a été adopté après examen par le Parlement.
+- {飛行機|ひこうき}は{上海|シャンハイ}[を{経|へ}て]、{東京|とうきょう}に{到着|とうちゃく}した。 | L'avion est arrivé à Tokyo via Shanghai.
+
+## tara-saigo
+titre: 〜たら{最後|さいご}
+sens: une fois que… (c'en est fini)
+forme: Verbe (forme en た) + ら{最後|さいご}
+forme: Verbe (forme en た) + が{最後|さいご} (écrit)
+
+**たら{最後|さいご}** : dès que cela arrive, on ne peut plus revenir en arrière, et la suite est inévitable - souvent fâcheuse. {彼|かれ}は{話|はな}し{始|はじ}め**たら{最後|さいご}**、{止|と}まらない, une fois qu'il commence à parler, plus moyen de l'arrêter.
+
+À l'écrit, **が{最後|さいご}** : {一度|いちど}{嘘|うそ}をついた**が{最後|さいご}**、{信用|しんよう}は{戻|もど}らない.
+
+- {父|ちち}は{寝|ね}たら[{最後|さいご}]、{朝|あさ}まで{何|なに}があっても{起|お}きない。 | Une fois endormi, mon père ne se réveille plus jusqu'au matin, quoi qu'il arrive.
+- この{本|ほん}は{読|よ}み{始|はじ}めたら[{最後|さいご}]、やめられない。 | Une fois qu'on a commencé ce livre, impossible de s'arrêter.
+- {彼女|かのじょ}は{一度|いちど}{怒|おこ}った[が{最後|さいご}]、なかなか{許|ゆる}してくれない。 | Une fois fâchée, elle ne pardonne pas facilement.
+- {一度|いちど}{信用|しんよう}を{失|うしな}ったら[{最後|さいご}]、{取|と}り{戻|もど}すのは{難|むずか}しい。 | Une fois la confiance perdue, il est difficile de la regagner.
+
+## ni-itaru-made
+titre: 〜に{至|いた}るまで
+sens: jusqu'à (même), y compris
+forme: Nom + に{至|いた}るまで
+voir: kara-made
+
+**に{至|いた}るまで**, de {至|いた}る « arriver à » : l'étendue va jusqu'à un point extrême, souvent inattendu. {食事|しょくじ}から{服装|ふくそう}**に{至|いた}るまで**、{母|はは}が{決|き}める, des repas jusqu'aux vêtements, c'est ma mère qui décide de tout.
+
+- {子|こ}どもからお{年寄|としよ}り[に{至|いた}るまで]、{誰|だれ}もが{楽|たの}しめる。 | Des enfants jusqu'aux personnes âgées, tout le monde peut en profiter.
+- {彼|かれ}は{家具|かぐ}から{食器|しょっき}[に{至|いた}るまで]、すべて{自分|じぶん}で{作|つく}った。 | Des meubles jusqu'à la vaisselle, il a tout fabriqué lui-même.
+- この{事件|じけん}は、{今日|こんにち}[に{至|いた}るまで]{解決|かいけつ}していない。 | Cette affaire n'est toujours pas résolue à ce jour.
+- {頭|あたま}のてっぺんから{足|あし}の{先|さき}[に{至|いた}るまで]、ずぶ{濡|ぬ}れになった。 | J'étais trempé de la tête aux pieds.
+
+=== Le cadre, la référence
+À l'occasion de, en tenant compte de, au mépris de, nul autre que : les liens de l'écrit soutenu.
+
+## wo-keiki-ni
+titre: 〜を{契機|けいき}に
+sens: à l'occasion de, à la faveur de (écrit)
+forme: Nom + を{契機|けいき}に(して)・を{契機|けいき}として
+voir: wo-kikkake-ni
+
+**を{契機|けいき}に** est la きっかけ (N2) des textes formels : un événement qui marque un tournant. {就職|しゅうしょく}**を{契機|けいき}に**、{一人暮|ひとりぐ}らしを{始|はじ}めた, j'ai commencé à vivre seul à l'occasion de mon premier emploi.
+
+Le changement qui suit est souvent important : une décision, une réforme, une nouvelle vie.
+
+- {震災|しんさい}[を{契機|けいき}に/をきっかけに]、{防災|ぼうさい}への{意識|いしき}が{高|たか}まった。 | La catastrophe a fait prendre conscience de l'importance de la prévention.
+- {留学|りゅうがく}[を{契機|けいき}として]、{国際|こくさい}{問題|もんだい}に{関心|かんしん}を{持|も}つようになった。 | Mes études à l'étranger m'ont amené à m'intéresser aux questions internationales.
+- {定年|ていねん}[を{契機|けいき}に/をきっかけに]、{田舎|いなか}へ{移|うつ}り{住|す}んだ。 | À l'occasion de ma retraite, je suis allé m'installer à la campagne.
+- この{事件|じけん}[を{契機|けいき}に/をきっかけに]、{法律|ほうりつ}が{改正|かいせい}された。 | Cette affaire a été l'occasion d'une réforme de la loi.
+
+## ni-sokushite
+titre: 〜に{即|そく}して
+sens: conformément à (la réalité, les faits)
+forme: Nom + に{即|そく}して
+forme: Nom + に{即|そく}した + Nom
+voir: ni-sotte, ni-motozuite
+
+**に{即|そく}して**, de {即|そく}する « coller à » : on se règle exactement sur une réalité, des faits, une situation concrète. {現実|げんじつ}**に{即|そく}して**{考|かんが}える, réfléchir en partant de la réalité.
+
+- {事実|じじつ}[に{即|そく}して]{報道|ほうどう}するべきだ。 | Il faut rendre compte des faits tels qu'ils sont.
+- {法律|ほうりつ}[に{即|そく}して]{処理|しょり}します。 | Nous traiterons l'affaire conformément à la loi.
+- {時代|じだい}[に{即|そく}した]{教育|きょういく}が{求|もと}められている。 | On demande une éducation adaptée à son époque.
+- {地域|ちいき}の{実情|じつじょう}[に{即|そく}して]、{計画|けいかく}を{立|た}てる。 | On établit le plan en fonction de la situation réelle de la région.
+
+## wo-fumaete
+titre: 〜を{踏|ふ}まえて
+sens: en tenant compte de, sur la base de
+forme: Nom + を{踏|ふ}まえて・を{踏|ふ}まえ
+
+**を{踏|ふ}まえて**, de {踏|ふ}まえる « prendre appui du pied » : on s'appuie sur des données, une expérience, un résultat, pour aller plus loin. {前回|ぜんかい}の{反省|はんせい}**を{踏|ふ}まえて**、{計画|けいかく}を{立|た}て{直|なお}す, revoir le projet en tenant compte des leçons de la dernière fois.
+
+Très courant dans la langue du travail et des rapports.
+
+- {調査|ちょうさ}の{結果|けっか}[を{踏|ふ}まえて/を{踏|ふ}まえ]、{対策|たいさく}を{考|かんが}えます。 | Nous réfléchirons aux mesures à prendre en tenant compte des résultats de l'enquête.
+- {皆|みな}さんのご{意見|いけん}[を{踏|ふ}まえ/を{踏|ふ}まえて]、{内容|ないよう}を{修正|しゅうせい}しました。 | Nous avons modifié le contenu en tenant compte de vos avis.
+- {過去|かこ}の{失敗|しっぱい}[を{踏|ふ}まえて/を{踏|ふ}まえ]、{新|あたら}しい{方法|ほうほう}を{試|ため}す。 | Forts des échecs passés, nous essayons une nouvelle méthode.
+- {現状|げんじょう}[を{踏|ふ}まえて]{議論|ぎろん}しましょう。 | Discutons en partant de la situation actuelle.
+
+## ni-terashite
+titre: 〜に{照|て}らして
+sens: à la lumière de, au regard de
+forme: Nom + に{照|て}らして・に{照|て}らし
+
+**に{照|て}らして**, de {照|て}らす « éclairer » : on compare une chose à une norme - une loi, une règle, la morale, l'expérience - pour la juger. {法律|ほうりつ}**に{照|て}らして**{判断|はんだん}する, juger au regard de la loi.
+
+- {規則|きそく}[に{照|て}らして]、{彼|かれ}の{行為|こうい}は{問題|もんだい}がある。 | Au regard du règlement, son acte pose problème.
+- {常識|じょうしき}[に{照|て}らして]{考|かんが}えれば、すぐにわかることだ。 | Avec un peu de bon sens, on le comprend tout de suite.
+- {過去|かこ}の{例|れい}[に{照|て}らして]、{今回|こんかい}の{処分|しょぶん}は{重|おも}すぎる。 | Au vu des précédents, la sanction de cette fois est trop lourde.
+- {自分|じぶん}の{経験|けいけん}[に{照|て}らして]、アドバイスをした。 | J'ai donné des conseils à la lumière de ma propre expérience.
+
+## wo-yoso-ni
+titre: 〜をよそに
+sens: au mépris de, indifférent à
+forme: Nom + をよそに
+voir: mo-kamawazu
+
+**をよそに**, de よそ « ailleurs » : on traite comme étranger à soi ce qui devrait préoccuper - l'inquiétude des autres, une critique, un danger. {親|おや}の{心配|しんぱい}**をよそに**、{息子|むすこ}は{一人|ひとり}で{旅|たび}に{出|で}た, indifférent à l'inquiétude de ses parents, le fils est parti seul en voyage.
+
+> も{構|かま}わず (N2) : sans égard pour une gêne. をよそに : sans égard pour ce que ressentent ou disent les autres.
+
+- {周囲|しゅうい}の{反対|はんたい}[をよそに]、{彼|かれ}は{会社|かいしゃ}を{辞|や}めた。 | Malgré l'opposition de son entourage, il a quitté son entreprise.
+- {住民|じゅうみん}の{不安|ふあん}[をよそに]、{工事|こうじ}は{進|すす}められた。 | Les travaux ont avancé sans tenir compte de l'inquiétude des habitants.
+- {試験|しけん}が{近|ちか}いの[をよそに]、{弟|おとうと}は{毎日|まいにち}{遊|あそ}んでいる。 | Indifférent à l'approche des examens, mon petit frère s'amuse tous les jours.
+- {世間|せけん}の{批判|ひはん}[をよそに]、{値上|ねあ}げが{決|き}まった。 | La hausse des prix a été décidée sans égard pour les critiques.
+
+## wo-monotomo-sezu
+titre: 〜をものともせず
+sens: sans se laisser arrêter par, en bravant
+forme: Nom + をものともせず(に)
+voir: wo-yoso-ni
+
+**をものともせず** : un obstacle sérieux - blessure, danger, mauvais temps - ne fait pas reculer. On admire le courage. {彼|かれ}は{怪我|けが}**をものともせず**、{最後|さいご}まで{走|はし}った, il a couru jusqu'au bout, bravant sa blessure.
+
+> をよそに, c'est l'indifférence, souvent blâmée ; をものともせず, le courage, toujours salué.
+
+- {選手|せんしゅ}たちは{激|はげ}しい{雨|あめ}[をものともせず]、{試合|しあい}を{続|つづ}けた。 | Les joueurs ont continué le match en bravant une pluie battante.
+- {彼女|かのじょ}は{病気|びょうき}[をものともせず]、{研究|けんきゅう}を{続|つづ}けた。 | Elle a poursuivi ses recherches sans se laisser arrêter par la maladie.
+- {救助隊|きゅうじょたい}は{危険|きけん}[をものともせず]、{被災地|ひさいち}に{入|はい}った。 | Les secouristes sont entrés dans la zone sinistrée, bravant le danger.
+- {彼|かれ}は{周|まわ}りの{批判|ひはん}[をものともせず]、{自分|じぶん}の{道|みち}を{進|すす}んだ。 | Il a suivi sa voie sans se laisser arrêter par les critiques.
+
+## to-aimatte
+titre: 〜と{相|あい}まって
+sens: combiné à, conjugué avec
+forme: Nom + と{相|あい}まって
+forme: Nom + も{相|あい}まって
+
+**と{相|あい}まって** : deux facteurs s'ajoutent et se renforcent, pour un effet plus fort. {美|うつく}しい{景色|けしき}が{音楽|おんがく}**と{相|あい}まって**、{感動的|かんどうてき}な{映画|えいが}になった, les beaux paysages, conjugués à la musique, en ont fait un film émouvant.
+
+- {彼|かれ}の{才能|さいのう}は{努力|どりょく}[と{相|あい}まって]、{大|おお}きく{花開|はなひら}いた。 | Son talent, conjugué à ses efforts, s'est pleinement épanoui.
+- {連休|れんきゅう}と{好天|こうてん}が[{相|あい}まって]、{観光地|かんこうち}は{大勢|おおぜい}の{人|ひと}で{賑|にぎ}わった。 | Entre le pont et le beau temps, les sites touristiques étaient bondés.
+- {円安|えんやす}[も{相|あい}まって]、{外国人観光客|がいこくじんかんこうきゃく}が{増|ふ}えている。 | La faiblesse du yen aidant, les touristes étrangers sont de plus en plus nombreux.
+- {豊|ゆた}かな{自然|しぜん}が{温泉|おんせん}[と{相|あい}まって]、この{町|まち}の{魅力|みりょく}となっている。 | La nature généreuse, alliée aux sources chaudes, fait le charme de cette ville.
+
+## ni-kakawaru
+titre: 〜にかかわる
+sens: qui touche à, qui met en jeu (quelque chose de grave)
+forme: Nom + にかかわる
+voir: ni-kanshite
+
+**にかかわる**, de {関|かか}わる « concerner » : une chose touche à quelque chose de vital ou d'important - la vie, l'honneur, l'avenir. {命|いのち}**にかかわる**{病気|びょうき}, une maladie qui met la vie en danger ; {会社|かいしゃ}の{信用|しんよう}**にかかわる**{問題|もんだい}, un problème qui met en jeu la réputation de l'entreprise.
+
+- {命|いのち}[にかかわる]{怪我|けが}ではないので、{安心|あんしん}してください。 | Sa blessure ne met pas sa vie en danger, rassurez-vous.
+- これは{会社|かいしゃ}の{将来|しょうらい}[にかかわる]{重要|じゅうよう}な{問題|もんだい}だ。 | C'est une question cruciale pour l'avenir de l'entreprise.
+- そんなことをしたら、{店|みせ}の{信用|しんよう}[にかかわる]。 | Une chose pareille nuirait à la réputation du magasin.
+- {人|ひと}の{一生|いっしょう}[にかかわる]{決定|けってい}だから、{慎重|しんちょう}に{考|かんが}えたい。 | C'est une décision qui engage toute une vie, je veux y réfléchir prudemment.
+
+## ikan
+titre: 〜いかんで・〜いかんによらず
+sens: selon ; quel que soit
+forme: Nom + (の)いかんで・いかんによって・いかんだ
+forme: Nom + (の)いかんによらず・いかんにかかわらず
+
+**いかん**, « comment, en quel état » : tout dépend de ce facteur. {結果|けっか}**いかんで**、{次|つぎ}の{計画|けいかく}を{決|き}める, selon le résultat, nous déciderons de la suite.
+
+Avec la négation, **いかんによらず** : quel que soit. {理由|りゆう}の**いかんによらず**、{返金|へんきん}はできません, quel qu'en soit le motif, aucun remboursement n'est possible.
+
+C'est le {次第|しだい} et le にかかわらず (N2) des textes très formels.
+
+- {試験|しけん}の{結果|けっか}[いかんで]、{進級|しんきゅう}できるかどうかが{決|き}まる。 | C'est le résultat de l'examen qui décidera du passage dans la classe supérieure.
+- {理由|りゆう}の[いかんによらず/いかんにかかわらず]、{遅刻|ちこく}は{認|みと}めない。 | Quel qu'en soit le motif, aucun retard ne sera toléré.
+- {成功|せいこう}するかどうかは、{準備|じゅんび}[いかんだ]。 | Le succès dépend de la préparation.
+- {天候|てんこう}の[いかんによっては]、{中止|ちゅうし}することもあります。 | Selon le temps, il se peut que l'événement soit annulé.
+
+## wo-oite
+titre: 〜をおいて
+sens: à part, nul autre que
+forme: Nom + をおいて + (ほかに)〜ない
+
+**をおいて**, de {置|お}く « laisser » : en mettant celui-là à part, il n'y a personne d'autre. On désigne le seul possible, le meilleur. この{仕事|しごと}ができるのは、{彼|かれ}**をおいてほかにいない**, pour ce travail, il n'y a que lui.
+
+- {次|つぎ}のリーダーは、{彼女|かのじょ}[をおいて]ほかにいない。 | Pour être la prochaine dirigeante, il n'y a qu'elle.
+- {伝統|でんとう}{工芸|こうげい}を{学|まな}ぶなら、{京都|きょうと}[をおいて]ほかにない。 | Pour apprendre l'artisanat traditionnel, rien ne vaut Kyôto.
+- {今|いま}[をおいて]、チャンスはない。 | C'est maintenant ou jamais.
+- この{問題|もんだい}を{解決|かいけつ}できるのは、{山田先生|やまだせんせい}[をおいて]{誰|だれ}もいない。 | Personne d'autre que le professeur Yamada ne peut résoudre ce problème.
+
+## ni-itatte-wa
+titre: 〜に{至|いた}っては
+sens: quant à (le cas le plus extrême)
+forme: Nom + に{至|いた}っては
+voir: ni-itaru-made
+
+**に{至|いた}っては** : on décrit une situation, et on arrive au cas le plus extrême. クラスの{半分|はんぶん}が{宿題|しゅくだい}を{忘|わす}れ、{田中|たなか}**に{至|いた}っては**{教科書|きょうかしょ}も{持|も}ってこなかった, la moitié de la classe avait oublié ses devoirs ; quant à Tanaka, il n'avait même pas son manuel.
+
+Souvent un jugement sévère.
+
+- {家族|かぞく}は{誰|だれ}も{料理|りょうり}をしない。{父|ちち}[に{至|いた}っては]、お{湯|ゆ}も{沸|わ}かせない。 | Personne ne cuisine dans ma famille. Quant à mon père, il ne sait même pas faire bouillir de l'eau.
+- {最近|さいきん}の{若者|わかもの}は{新聞|しんぶん}を{読|よ}まない。{弟|おとうと}[に{至|いた}っては]、テレビのニュースも{見|み}ない。 | Les jeunes d'aujourd'hui ne lisent pas les journaux. Quant à mon petit frère, il ne regarde même pas les infos à la télé.
+- {社員|しゃいん}の{多|おお}くが{反対|はんたい}し、{部長|ぶちょう}[に{至|いた}っては]{辞表|じひょう}まで{出|だ}した。 | Beaucoup d'employés s'y sont opposés ; le chef de service est même allé jusqu'à démissionner.
+- {誰|だれ}も{準備|じゅんび}ができていない。{山田|やまだ}さん[に{至|いた}っては]、{会議|かいぎ}があることさえ{知|し}らなかった。 | Personne n'est prêt. Quant à M. Yamada, il ne savait même pas qu'il y avait une réunion.
+
+## ni-mo-mashite
+titre: 〜にもまして
+sens: plus encore que
+forme: Nom + にもまして
+forme: Interrogatif + にもまして : plus que tout
+
+**にもまして**, de {増|ま}す « augmenter » : par rapport à quelque chose de déjà remarquable, c'est encore plus. {去年|きょねん}**にもまして**、{今年|ことし}の{夏|なつ}は{暑|あつ}い, l'été est encore plus chaud que l'an dernier, qui l'était déjà.
+
+Avec un interrogatif : {何|なに}**にもまして**{健康|けんこう}が{大切|たいせつ}だ, la santé compte plus que tout.
+
+- {以前|いぜん}[にもまして]、{仕事|しごと}が{忙|いそが}しくなった。 | Le travail est devenu encore plus chargé qu'avant.
+- {何|なに}[にもまして]、{家族|かぞく}が{大切|たいせつ}だ。 | Plus que tout, c'est la famille qui compte.
+- {彼女|かのじょ}は{前回|ぜんかい}[にもまして]すばらしい{演奏|えんそう}をした。 | Elle a joué encore mieux que la dernière fois.
+- {試験|しけん}の{結果|けっか}が{心配|しんぱい}だが、それ[にもまして]{面接|めんせつ}が{不安|ふあん}だ。 | Les résultats de l'examen m'inquiètent, mais l'entretien m'angoisse plus encore.
+
+=== Même, ne serait-ce que
+Même, rien que, pas un seul, sans parler de, aller jusqu'à : pousser une idée à l'extrême.
+
+## sura
+titre: 〜すら
+sens: même
+forme: Nom + すら
+forme: Nom + ですら (le sujet)
+voir: sae
+
+**すら** est le さえ (N3) de l'écrit : « même », pour un cas extrême qui fait imaginer le reste. {専門家|せんもんか}で**すら**わからない, même les spécialistes ne savent pas.
+
+Presque toujours dans une phrase négative ou dépréciative.
+
+- {忙|いそが}しくて、{寝|ね}る{時間|じかん}[すら/さえ]ない。 | Je suis si occupé que je n'ai même pas le temps de dormir.
+- この{問題|もんだい}は{先生|せんせい}で[すら/さえ]{解|と}けなかった。 | Même le professeur n'a pas pu résoudre ce problème.
+- {彼|かれ}は{自分|じぶん}の{家族|かぞく}に[すら/さえ]{何|なに}も{言|い}わずに{出|で}ていった。 | Il est parti sans rien dire, même à sa propre famille.
+- {疲|つか}れて、{声|こえ}を{出|だ}すこと[すら/さえ]できなかった。 | J'étais si épuisé que je ne pouvais même pas parler.
+
+## dani
+titre: 〜だに
+sens: rien que (à…) ; pas même
+forme: Verbe (forme du dictionnaire) + だに
+forme: Nom + だに + négation : pas même
+
+**だに**, très littéraire, a deux emplois figés.
+
+Avec {考|かんが}える, {想像|そうぞう}する, {聞|き}く : rien qu'à… {考|かんが}える**だに**{恐|おそ}ろしい, rien que d'y penser, c'est effrayant.
+
+Avec un nom et une négation, « pas même » : {夢|ゆめ}に**だに**{思|おも}わなかった, je n'en aurais même pas rêvé ; {微動|びどう}**だに**しない, ne pas bouger d'un pouce.
+
+- {大地震|だいじしん}のことは、{考|かんが}える[だに]{恐|おそ}ろしい。 | Rien que de penser à un grand séisme, ça fait peur.
+- {自分|じぶん}が{優勝|ゆうしょう}するなんて、{夢|ゆめ}に[だに]{思|おも}わなかった。 | Je n'aurais même jamais rêvé de remporter le titre.
+- {兵士|へいし}は{微動|びどう}[だに]しなかった。 | Le soldat n'a pas bougé d'un pouce.
+- あの{事故|じこ}の{話|はなし}は、{聞|き}く[だに]{胸|むね}が{痛|いた}む。 | Rien qu'à entendre parler de cet accident, j'ai le cœur serré.
+
+## tari-tomo
+titre: 〜たりとも
+sens: ne serait-ce qu'un (pas un seul)
+forme: {一|いち} + compteur + たりとも + négation
+
+**たりとも** : avec « un » et une négation, pas un seul, pas même le plus petit. {一円|いちえん}**たりとも**{無駄|むだ}にしない, ne pas gaspiller un seul yen ; {一瞬|いっしゅん}**たりとも**{油断|ゆだん}できない, on ne peut pas relâcher son attention un seul instant.
+
+- {一日|いちにち}[たりとも]{練習|れんしゅう}を{休|やす}んだことがない。 | Je n'ai jamais manqué un seul jour d'entraînement.
+- {試験|しけん}まで、{一分|いっぷん}[たりとも]{無駄|むだ}にできない。 | Jusqu'à l'examen, je ne peux pas perdre une seule minute.
+- {約束|やくそく}の{時間|じかん}に{一秒|いちびょう}[たりとも]{遅|おく}れてはいけない。 | On ne doit pas avoir une seule seconde de retard au rendez-vous.
+- {敵|てき}を{一人|ひとり}[たりとも]{通|とお}すな。 | Ne laissez passer aucun ennemi, pas un seul.
+
+## wa-oroka
+titre: 〜はおろか
+sens: sans parler de, à plus forte raison
+forme: Nom + はおろか + 〜も・さえ・まで
+voir: dokoroka, wa-mochiron
+
+**はおろか**, de {愚|おろ}か « absurde » : il serait absurde de parler du premier, puisque même le second, plus facile, n'y est pas. {漢字|かんじ}**はおろか**、ひらがな**も**{読|よ}めない, il ne sait pas lire les hiraganas, alors les kanjis…
+
+La phrase est presque toujours négative, ou décrit une situation extrême.
+
+- {彼|かれ}は{海外旅行|かいがいりょこう}[はおろか]、{国内|こくない}{旅行|りょこう}もしたことがない。 | Il n'a jamais voyagé, même dans son propre pays, alors à l'étranger…
+- {怪我|けが}で、{走|はし}ること[はおろか]、{歩|ある}くこともできない。 | Avec ma blessure, je ne peux même pas marcher, alors courir…
+- この{村|むら}には{病院|びょういん}[はおろか]、{薬局|やっきょく}さえない。 | Dans ce village, il n'y a même pas de pharmacie, sans parler d'un hôpital.
+- {忙|いそが}しくて、{休日|きゅうじつ}[はおろか]、{寝|ね}る{時間|じかん}もない。 | Je suis si occupé que je n'ai même pas le temps de dormir, alors des jours de repos…
+
+## mo-sarukoto-nagara
+titre: 〜もさることながら
+sens: … certes, mais plus encore
+forme: Nom + もさることながら
+voir: wa-mochiron
+
+**もさることながら** : on reconnaît la valeur du premier élément, puis on met en avant le second, plus important encore. この{店|みせ}は{味|あじ}**もさることながら**、サービスがすばらしい, la cuisine est bonne, certes, mais c'est surtout le service qui est remarquable.
+
+> はもちろん (N2) : le premier va de soi. もさることながら : le premier compte, mais le second compte plus.
+
+- この{映画|えいが}は{物語|ものがたり}[もさることながら]、{映像|えいぞう}の{美|うつく}しさが{素晴|すば}らしい。 | Le scénario de ce film est bon, mais c'est surtout la beauté des images qui frappe.
+- {彼|かれ}は{能力|のうりょく}[もさることながら]、{人柄|ひとがら}が{評価|ひょうか}されている。 | On apprécie ses compétences, mais plus encore sa personnalité.
+- {試験|しけん}の{点数|てんすう}[もさることながら]、{学|まな}ぶ{姿勢|しせい}が{大切|たいせつ}だ。 | Les notes comptent, mais l'attitude face à l'apprentissage compte plus encore.
+- {値段|ねだん}[もさることながら]、{安全性|あんぜんせい}を{重視|じゅうし}して{選|えら}んだ。 | Le prix comptait, mais nous avons surtout choisi en fonction de la sécurité.
+
+## made-shite
+titre: 〜までして
+sens: aller jusqu'à (faire), au point de
+forme: Nom + までして
+forme: Verbe (forme en て) + まで
+
+**までして** : on va jusqu'à un moyen extrême, souvent critiquable, pour obtenir quelque chose. {借金|しゃっきん}**までして**{車|くるま}を{買|か}う, aller jusqu'à s'endetter pour acheter une voiture.
+
+Avec une forme en て : {嘘|うそ}をついて**まで**{休|やす}みたくない, je ne veux pas aller jusqu'à mentir pour prendre congé.
+
+- {徹夜|てつや}[までして]{準備|じゅんび}したのに、{発表|はっぴょう}は{中止|ちゅうし}になった。 | J'ai été jusqu'à passer une nuit blanche à préparer, et la présentation a été annulée.
+- {借金|しゃっきん}[までして]、{旅行|りょこう}に{行|い}く{必要|ひつよう}はない。 | Il n'est pas nécessaire de s'endetter pour partir en voyage.
+- {人|ひと}を{騙|だま}して[まで]、お{金|かね}を{手|て}に{入|い}れたいとは{思|おも}わない。 | Je ne veux pas gagner de l'argent au point de tromper les gens.
+- {親|おや}に{嘘|うそ}をついて[まで]、{彼|かれ}に{会|あ}いに{行|い}った。 | Je suis allée le voir, au point de mentir à mes parents.
+
+## to-iwazu
+titre: 〜といわず〜といわず
+sens: aussi bien… que, partout, sans distinction
+forme: Nom + といわず + Nom + といわず
+
+**〜といわず〜といわず**, « sans dire A ni B » : on cite deux exemples, et on veut dire « tout, partout ». {顔|かお}**といわず**{手|て}**といわず**、{泥|どろ}だらけだ, le visage, les mains, il est couvert de boue de partout.
+
+- {昼|ひる}といわず{夜|よる}[といわず]、{工事|こうじ}の{音|おと}がうるさい。 | Jour et nuit, le bruit des travaux est assourdissant.
+- {彼|かれ}は{平日|へいじつ}といわず{休日|きゅうじつ}[といわず]、{働|はたら}いている。 | Semaine ou week-end, il travaille sans arrêt.
+- {部屋|へや}は{床|ゆか}といわず{机|つくえ}[といわず]、{本|ほん}で{埋|う}まっていた。 | Le sol, le bureau, toute la pièce était envahie de livres.
+- {子|こ}どもは{服|ふく}といわず{靴|くつ}[といわず]、{砂|すな}だらけになった。 | Vêtements, chaussures, l'enfant était couvert de sable de partout.
+
+## nari-nari
+titre: 〜なり〜なり
+sens: soit… soit, ou bien… ou bien
+forme: Nom / Verbe (forme du dictionnaire) + なり + … + なり
+voir: nari, to-ya
+
+**〜なり〜なり** propose des solutions au choix, pour une action à faire. {電話|でんわ}**なり**メール**なり**で{連絡|れんらく}してください, prévenez-moi, par téléphone ou par mail, peu importe.
+
+On s'adresse à quelqu'un d'égal ou d'inférieur : on ne l'emploie ni envers un supérieur, ni pour le passé.
+
+- わからないことがあれば、{先生|せんせい}に{聞|き}くなり{辞書|じしょ}で{調|しら}べる[なり]しなさい。 | Si tu ne comprends pas, demande au professeur ou cherche dans le dictionnaire.
+- {疲|つか}れたなら、{休|やす}むなり{寝|ね}る[なり]したらどう? | Si tu es fatigué, repose-toi ou va dormir, non ?
+- {電話|でんわ}なりメール[なり]で、{連絡|れんらく}してください。 | Contactez-moi par téléphone ou par mail.
+- {煮|に}るなり{焼|や}く[なり]、{好|す}きにしてくれ。 | Fais de moi ce que tu veux.
+
+## de-are
+titre: 〜であれ
+sens: que ce soit, quel que soit
+forme: Nom + であれ
+forme: Nom + であれ + Nom + であれ
+forme: Interrogatif + であれ : quel que soit
+voir: demo
+
+**であれ** est le でも très écrit : quoi que ce soit, ça ne change rien. {理由|りゆう}が{何|なん}**であれ**、{暴力|ぼうりょく}は{許|ゆる}されない, quelle qu'en soit la raison, la violence est inadmissible.
+
+Répété, il couvre deux cas : {男|おとこ}**であれ**{女|おんな}**であれ**, homme ou femme.
+
+- {理由|りゆう}が{何|なん}[であれ]、{嘘|うそ}をつくのはよくない。 | Quelle que soit la raison, mentir est mal.
+- {大人|おとな}であれ{子|こ}ども[であれ]、ルールは{守|まも}らなければならない。 | Adulte ou enfant, on doit respecter les règles.
+- どんな{仕事|しごと}[であれ]、{真剣|しんけん}に{取|と}り{組|く}むべきだ。 | Quel que soit le travail, il faut s'y investir sérieusement.
+- {誰|だれ}[であれ]、{例外|れいがい}は{認|みと}めない。 | Qui que ce soit, aucune exception ne sera admise.
+
+=== Concéder, malgré tout
+Même si, quoi que, que… ou non, et pourtant : la concession dans tous ses registres, du plus solennel au plus amer.
+
+## to-iedomo
+titre: 〜といえども
+sens: même, tout… que ; bien que
+forme: Nom / Phrase (style neutre) + といえども
+forme: {一|いち} + compteur + といえども : pas même un
+voir: to-wa-ie
+
+**といえども** est la concession la plus solennelle : même dans ce cas, qu'on croirait à part, la règle s'applique. {子|こ}ども**といえども**、{法律|ほうりつ}は{守|まも}らなければならない, même un enfant doit respecter la loi.
+
+Avec « un » et une négation : {一円|いちえん}**といえども**{無駄|むだ}にできない, on ne peut pas gaspiller un seul yen.
+
+- {社長|しゃちょう}[といえども]、{規則|きそく}を{破|やぶ}ることは{許|ゆる}されない。 | Même le PDG n'a pas le droit d'enfreindre le règlement.
+- {冬|ふゆ}[といえども]、{沖縄|おきなわ}は{暖|あたた}かい。 | Même en hiver, il fait doux à Okinawa.
+- {専門家|せんもんか}[といえども]、{間違|まちが}えることはある。 | Même un spécialiste peut se tromper.
+- {一瞬|いっしゅん}[といえども]、{油断|ゆだん}してはならない。 | Il ne faut pas relâcher son attention, ne serait-ce qu'un instant.
+
+## tomo
+titre: 〜(よ)うとも
+sens: quoi que, même si (on fait)
+forme: Verbe (forme volitive) + とも
+forme: Adjectif en い : 〜かろうとも
+voir: te-mo, ikou
+
+**(よ)うとも** : la forme volitive (N4), puis とも : même si cela arrive, rien ne changera. Souvent avec un mot interrogatif : {何|なに}があろう**とも**、{諦|あきら}めない, quoi qu'il arrive, je n'abandonnerai pas.
+
+C'est le 〜ても de l'écrit soutenu, plus déterminé.
+
+- {誰|だれ}が{反対|はんたい}しよう[とも]、{私|わたし}は{行|い}く。 | Qui que ce soit qui s'y oppose, j'irai.
+- どんなに{苦|くる}しかろう[とも]、{最後|さいご}までやり{遂|と}げる。 | Si dur que ce soit, j'irai jusqu'au bout.
+- {何|なに}を{言|い}われよう[とも]、{気|き}にしない。 | Quoi qu'on dise de moi, je n'y prête pas attention.
+- たとえ{失敗|しっぱい}しよう[とも]、{後悔|こうかい}はしない。 | Même si j'échoue, je ne regretterai rien.
+
+## you-ga-mai-ga
+titre: 〜(よ)うが〜まいが
+sens: que… ou non
+forme: Verbe (forme volitive) + が + Verbe + まいが
+forme: aussi : 〜(よ)うと〜まいと
+voir: mai, ni-kakawarazu
+
+**〜(よ)うが〜まいが** : le même verbe, à la forme volitive puis avec まい (N2) : que cela se fasse ou non, peu importe. {雨|あめ}が{降|ふ}ろう**が{降|ふ}るまいが**、{試合|しあい}は{行|おこな}う, qu'il pleuve ou non, le match aura lieu.
+
+Le ton est tranché : la décision ne dépend pas de ce choix.
+
+- {君|きみ}が{来|こ}ようが{来|く}る[まいが]、{私|わたし}は{行|い}く。 | Que tu viennes ou non, moi, j'y vais.
+- {彼|かれ}が{信|しん}じようが{信|しん}じる[まいが]、これは{事実|じじつ}だ。 | Qu'il le croie ou non, c'est un fait.
+- {食|た}べようが{食|た}べる[まいが]、{料金|りょうきん}は{同|おな}じです。 | Que vous mangiez ou non, le prix est le même.
+- {売|う}れようが{売|う}れる[まいが]、{自分|じぶん}の{好|す}きな{絵|え}を{描|か}く。 | Que ça se vende ou non, je peins ce qui me plaît.
+
+## tote
+titre: 〜とて
+sens: même (lui, ce cas-là) ; même si
+forme: Nom + とて
+forme: Verbe (forme en た) + とて : même si
+forme: Phrase + からとて : ce n'est pas parce que
+voir: kara-to-itte
+
+**とて**, littéraire : « même », pour une personne ou un cas dont on pourrait croire qu'il échappe à la règle. {私|わたし}**とて**、{悲|かな}しくないわけではない, moi non plus, ce n'est pas que je ne sois pas triste.
+
+Après la forme en た : même si. **からとて** est le からといって (N3) des livres : {謝|あやま}った**からとて**、{許|ゆる}されるものではない, ce n'est pas parce qu'on s'est excusé qu'on est pardonné.
+
+- {私|わたし}[とて]、{完璧|かんぺき}な{人間|にんげん}ではない。 | Moi non plus, je ne suis pas parfait.
+- {先生|せんせい}[とて]、{知|し}らないことはある。 | Même un professeur ne sait pas tout.
+- {子|こ}どもだから[とて]、{甘|あま}やかしてはいけない。 | Ce n'est pas parce que c'est un enfant qu'il faut le gâter.
+- {今|いま}さら{泣|な}いた[とて]、{何|なに}も{変|か}わらない。 | Pleurer maintenant ne changera rien.
+
+## mono-wo
+titre: 〜ものを
+sens: et pourtant (si seulement…, regret, reproche)
+forme: Verbe / Adjectif (style neutre) + ものを
+voir: noni, ba-yokatta
+
+**ものを** : la situation aurait pu bien tourner, mais l'autre n'a pas fait ce qu'il fallait. C'est un のに (N4) chargé de regret ou de reproche ; la fin de phrase reste souvent en suspens. {言|い}ってくれれば{手伝|てつだ}った**ものを**, si tu me l'avais dit, je t'aurais aidé, pourtant…
+
+- {早|はや}く{病院|びょういん}に{行|い}けば{治|なお}った[ものを]。 | Si tu étais allé tôt à l'hôpital, tu aurais guéri…
+- {黙|だま}っていればいい[ものを]、{余計|よけい}なことを{言|い}うから{怒|おこ}られるんだ。 | Il n'avait qu'à se taire ; il se fait gronder parce qu'il dit des choses inutiles.
+- {相談|そうだん}してくれれば、{力|ちから}になった[ものを]。 | Si tu m'en avais parlé, je t'aurais aidé, pourtant.
+- {素直|すなお}に{謝|あやま}ればすむ[ものを]、{彼|かれ}は{言|い}い{訳|わけ}ばかりしている。 | Il suffirait qu'il s'excuse franchement, mais il ne fait que se justifier.
+
+## nagara-ni-shite
+titre: 〜ながらにして
+sens: tout en restant (sans bouger) ; dès (la naissance)
+forme: Nom / Verbe (forme en ます sans ます) + ながらにして
+voir: nagara-mo
+
+**ながらにして** : un état qui ne change pas, et dans lequel pourtant une chose remarquable arrive. {家|いえ}にい**ながらにして**{世界中|せかいじゅう}の{映画|えいが}が{見|み}られる, on peut voir des films du monde entier sans quitter sa maison.
+
+Des expressions figées : {生|う}まれ**ながらにして**, de naissance ; {涙|なみだ}ながらに, les larmes aux yeux.
+
+- インターネットのおかげで、{家|いえ}にい[ながらにして]{買|か}い{物|もの}ができる。 | Grâce à Internet, on peut faire ses courses sans sortir de chez soi.
+- {彼|かれ}は{生|う}まれ[ながらにして]{音楽|おんがく}の{才能|さいのう}に{恵|めぐ}まれていた。 | Il était doué pour la musique dès la naissance.
+- {日本|にほん}にい[ながらにして]、{本場|ほんば}のフランス{料理|りょうり}が{味|あじ}わえる。 | Sans quitter le Japon, on peut savourer une authentique cuisine française.
+- {彼女|かのじょ}は{涙|なみだ}[ながらに]{事故|じこ}の{様子|ようす}を{語|かた}った。 | Les larmes aux yeux, elle a raconté l'accident.
+
+## you-ni-mo
+titre: 〜(よ)うにも〜ない
+sens: on voudrait bien… mais on ne peut pas
+forme: Verbe (forme volitive) + にも + Verbe (potentiel négatif)
+voir: ikou, kanou
+
+**〜(よ)うにも〜ない** : on veut agir, mais quelque chose rend la chose impossible. Le même verbe deux fois : volitif, puis potentiel négatif. {電話|でんわ}しよう**にも**、{番号|ばんごう}がわから**ない**, je voudrais bien appeler, mais je n'ai pas le numéro.
+
+- {帰|かえ}ろう[にも]、{電車|でんしゃ}がもう{動|うご}いていない。 | J'aimerais rentrer, mais il n'y a plus de trains.
+- {助|たす}けよう[にも]、{泳|およ}げないので{助|たす}けられない。 | Je voudrais bien le secourir, mais je ne sais pas nager.
+- {笑|わら}おう[にも]{笑|わら}えない{話|はなし}だ。 | C'est une histoire dont on voudrait rire, mais on ne peut pas.
+- {熱|ねつ}があって、{起|お}きよう[にも]{起|お}きられない。 | J'ai de la fièvre : je voudrais me lever, mais je n'y arrive pas.
+
+## ni-shite
+titre: 〜にして
+sens: seulement à (ce stade) ; à la fois
+forme: Nom + にして
+forme: Nom + にして + Nom : à la fois… et
+voir: ni-shite-wa
+
+**にして** a deux emplois écrits.
+
+Le stade où une chose arrive enfin, ou le niveau qui seul la permet : {四十歳|よんじゅっさい}**にして**{初|はじ}めて{結婚|けっこん}した, c'est à quarante ans qu'il s'est marié pour la première fois ; {彼|かれ}**にして**{初|はじ}めてできることだ, il n'y a que lui pour faire ça.
+
+L'addition, « à la fois » : {医者|いしゃ}**にして**{作家|さっか}, à la fois médecin et écrivain.
+
+- {七十歳|ななじゅっさい}[にして]、{彼|かれ}は{大学|だいがく}を{卒業|そつぎょう}した。 | C'est à soixante-dix ans qu'il a obtenu son diplôme universitaire.
+- この{技術|ぎじゅつ}は、{長年|ながねん}の{経験|けいけん}を{持|も}つ{彼|かれ}[にして]{初|はじ}めて{可能|かのう}だ。 | Seul quelqu'un d'aussi expérimenté que lui peut maîtriser cette technique.
+- {彼|かれ}は{医者|いしゃ}[にして]{詩人|しじん}でもある。 | Il est à la fois médecin et poète.
+- {三度目|さんどめ}[にして]、ようやく{試験|しけん}に{合格|ごうかく}した。 | C'est à la troisième tentative que j'ai enfin réussi l'examen.
+
+=== Conditions et nécessité
+Sans, s'il s'agit de, inutile de, il n'y a plus qu'à, ne pas manquer de, être contraint de.
+
+## nakushite-wa
+titre: 〜なくして(は)
+sens: sans (on ne peut pas)
+forme: Nom + なくして(は) + négation
+voir: wo-nuki-ni
+
+**なくしては** : sans cet élément, la suite est impossible. La fin de phrase est négative. {努力|どりょく}**なくしては**、{成功|せいこう}はない, sans effort, pas de succès.
+
+Plus solennel que 〜なしには ; on y met une chose essentielle : l'amour, l'effort, la confiance, l'aide de quelqu'un.
+
+- {皆様|みなさま}のご{協力|きょうりょく}[なくしては/なくして]、この{計画|けいかく}は{実現|じつげん}しなかった。 | Sans votre coopération à tous, ce projet n'aurait pas vu le jour.
+- {信頼|しんらい}[なくして/なくしては]、{本当|ほんとう}の{友情|ゆうじょう}はありえない。 | Sans confiance, il n'y a pas de véritable amitié.
+- {親|おや}の{支|ささ}え[なくしては/なくして]、{留学|りゅうがく}できなかった。 | Sans le soutien de mes parents, je n'aurais pas pu étudier à l'étranger.
+- {愛情|あいじょう}[なくして/なくしては]、{子育|こそだ}てはできない。 | On ne peut pas élever un enfant sans amour.
+
+## nashi-ni
+titre: 〜なしに・〜なしで
+sens: sans
+forme: Nom + なしに・なしで
+forme: Nom + なしには + négation : impossible sans
+voir: zu-ni, nakushite-wa
+
+**なしに** : sans une chose qui aurait dû être là - une autorisation, un avertissement. {許可|きょか}**なしに**{入|はい}ってはいけない, on n'entre pas sans autorisation.
+
+Plus oral : **なしで**. Avec は et une négation, c'est l'impossibilité : {辞書|じしょ}**なしには**{読|よ}めない, impossible à lire sans dictionnaire.
+
+- {彼|かれ}は{連絡|れんらく}[なしに]{会社|かいしゃ}を{休|やす}んだ。 | Il s'est absenté du travail sans prévenir.
+- {予約|よやく}[なしで]{入|はい}れますか。 | Peut-on entrer sans réservation ?
+- {断|ことわ}り[なしに]{人|ひと}の{部屋|へや}に{入|はい}らないでください。 | N'entrez pas dans la chambre des autres sans demander.
+- {眼鏡|めがね}[なしには]、{何|なに}も{見|み}えない。 | Sans lunettes, je ne vois rien.
+
+## to-areba
+titre: 〜とあれば
+sens: s'il s'agit de, si c'est pour
+forme: Nom / Phrase (style neutre) + とあれば
+
+**とあれば** : si la situation est celle-là - souvent une raison exceptionnelle - on est prêt à tout. {子|こ}どものため**とあれば**、{何|なん}でもする, si c'est pour mes enfants, je ferais n'importe quoi.
+
+- {社長|しゃちょう}の{命令|めいれい}[とあれば]、{従|したが}うしかない。 | Si c'est un ordre du PDG, il n'y a plus qu'à obéir.
+- {彼女|かのじょ}のため[とあれば]、{彼|かれ}はどこへでも{行|い}く。 | Si c'est pour elle, il irait n'importe où.
+- {必要|ひつよう}[とあれば]、いつでもお{手伝|てつだ}いします。 | Si c'est nécessaire, je vous aiderai à tout moment.
+- {大好|だいす}きな{歌手|かしゅ}が{来|く}る[とあれば]、{会|あ}いに{行|い}かないわけにはいかない。 | Si mon chanteur préféré vient, je ne peux pas ne pas aller le voir.
+
+## to-atte
+titre: 〜とあって
+sens: vu que, comme c'est (une occasion particulière)
+forme: Nom / Phrase (style neutre) + とあって
+
+**とあって** : une situation particulière explique ce qu'on observe - souvent une foule, une ambiance. {連休|れんきゅう}**とあって**、{観光地|かんこうち}は{人|ひと}でいっぱいだ, comme c'est un long week-end, les sites touristiques sont bondés.
+
+Le ton est celui du reportage : on décrit, de l'extérieur.
+
+- {年末|ねんまつ}[とあって]、{駅|えき}は{帰省客|きせいきゃく}で{込|こ}み{合|あ}っていた。 | Comme c'était la fin de l'année, la gare était pleine de gens rentrant dans leur famille.
+- {人気|にんき}{歌手|かしゅ}が{来|く}る[とあって]、{会場|かいじょう}には{朝|あさ}から{長|なが}い{列|れつ}ができた。 | Comme une chanteuse célèbre venait, une longue file s'est formée dès le matin.
+- {初|はじ}めての{試合|しあい}[とあって]、{選手|せんしゅ}たちは{緊張|きんちょう}していた。 | Comme c'était leur premier match, les joueurs étaient tendus.
+- {半額|はんがく}セール[とあって]、{店|みせ}は{大勢|おおぜい}の{客|きゃく}で{賑|にぎ}わった。 | Avec les soldes à moitié prix, le magasin a été envahi de clients.
+
+## naradewa
+titre: 〜ならでは
+sens: propre à, que seul… peut offrir
+forme: Nom + ならではの + Nom
+forme: Nom + ならでは + négation : seul… peut
+
+**ならでは** : une qualité qu'on ne trouve que là, ou que chez cette personne. Toujours un éloge. {京都|きょうと}**ならでは**の{景色|けしき}, un paysage qu'on ne voit qu'à Kyôto.
+
+- これは{北海道|ほっかいどう}[ならでは]の{味|あじ}だ。 | C'est une saveur propre à Hokkaidô.
+- {手作|てづく}り[ならでは]の{温|あたた}かさがある。 | Il y a là une chaleur qu'on ne trouve que dans le fait main.
+- {子|こ}ども[ならでは]の{自由|じゆう}な{発想|はっそう}に{驚|おどろ}いた。 | J'ai été surpris par cette liberté d'imagination propre aux enfants.
+- {老舗|しにせ}[ならでは]の{丁寧|ていねい}なサービスだ。 | C'est un service soigné, comme seule une vieille maison peut en offrir.
+
+## ba-sore-made-da
+titre: 〜ばそれまでだ
+sens: si… alors c'en est fini, tout est perdu
+forme: Verbe (forme en ば / en たら) + それまでだ
+
+**ばそれまでだ** : si cela arrive, tout ce qui précède n'aura servi à rien. いくら{練習|れんしゅう}しても、{本番|ほんばん}で{失敗|しっぱい}すれ**ばそれまでだ**, on a beau s'entraîner, si on rate le jour J, tout est perdu.
+
+Une façon de relativiser, un peu fataliste.
+
+- いくらお{金|かね}があっても、{死|し}んでしまえば[それまでだ]。 | On a beau avoir de l'argent, une fois mort, c'en est fini.
+- {高|たか}いカメラを{買|か}っても、{使|つか}わなければ[それまでだ]。 | Un appareil photo coûteux ne sert à rien si on ne s'en sert pas.
+- どんなに{準備|じゅんび}しても、{雨|あめ}が{降|ふ}ったら[それまでだ]。 | On a beau tout préparer, s'il pleut, tout tombe à l'eau.
+- {才能|さいのう}があっても、{努力|どりょく}しなければ[それまでだ]。 | Le talent ne sert à rien sans effort.
+
+## made-mo-nai
+titre: 〜までもない
+sens: il n'est pas nécessaire de, inutile de
+forme: Verbe (forme du dictionnaire) + までもない
+forme: 〜までもなく : sans même qu'il soit besoin de
+voir: koto-wa-nai
+
+**までもない** : la chose est si évidente, ou si simple, qu'il est inutile d'aller jusqu'à la faire. {言|い}う**までもない**, inutile de le dire, cela va sans dire.
+
+**までもなく** ouvre souvent une phrase : {言|い}う**までもなく**、{健康|けんこう}は{大切|たいせつ}だ, il va sans dire que la santé est importante.
+
+- この{程度|ていど}の{怪我|けが}なら、{病院|びょういん}に{行|い}く[までもない]。 | Pour une blessure aussi légère, pas besoin d'aller à l'hôpital.
+- {言|い}う[までもなく]、{約束|やくそく}は{守|まも}るべきだ。 | Il va sans dire qu'on doit tenir ses promesses.
+- {簡単|かんたん}な{質問|しつもん}だから、{先生|せんせい}に{聞|き}く[までもない]。 | C'est une question simple, inutile de la poser au professeur.
+- {調|しら}べる[までもなく]、{答|こた}えは{明|あき}らかだ。 | Pas besoin de vérifier, la réponse est évidente.
+
+## made-da
+titre: 〜までだ
+sens: il n'y a plus qu'à ; c'est simplement que
+forme: Verbe (forme du dictionnaire) + までだ : la dernière solution
+forme: Verbe (forme en た) + までだ : simplement
+voir: shika-nai
+
+**までだ** a deux emplois.
+
+Après la forme du dictionnaire : si ça ne marche pas, on fera ceci, c'est tout - une résolution calme. {電車|でんしゃ}がなければ、{歩|ある}いて{帰|かえ}る**までだ**, s'il n'y a plus de train, je rentrerai à pied, voilà tout.
+
+Après la forme en た : je n'ai fait que ça, sans intention particulière. {聞|き}かれたから{答|こた}えた**までだ**, on me l'a demandé, alors j'ai répondu, c'est tout.
+
+- {反対|はんたい}されても、{一人|ひとり}でやる[までだ/までです]。 | Même si on s'y oppose, je le ferai seul, voilà tout.
+- {試験|しけん}に{落|お}ちたら、また{来年|らいねん}{受|う}ける[までだ/までです]。 | Si je rate l'examen, je le repasserai l'an prochain, c'est tout.
+- {本当|ほんとう}のことを{言|い}った[までです/までだ]。 | Je n'ai fait que dire la vérité.
+- {頼|たの}まれたから、やった[までだ/までです]。 | On me l'a demandé, alors je l'ai fait, c'est tout.
+
+## zu-ni-wa-okanai
+titre: 〜ずにはおかない
+sens: ne pas manquer de (provoquer) ; ne pas laisser sans
+forme: Verbe (forme en ない sans ない) + ずにはおかない
+forme: する → せずにはおかない
+voir: zu-ni-wa-irarenai
+
+**ずにはおかない** a deux sens.
+
+Une œuvre, un événement provoque forcément une réaction : この{映画|えいが}は{見|み}る{人|ひと}を{感動|かんどう}させ**ずにはおかない**, ce film ne peut que bouleverser ceux qui le voient.
+
+Une volonté farouche : {犯人|はんにん}を{捕|つか}まえ**ずにはおかない**, je ne laisserai pas le coupable courir, je l'attraperai.
+
+- {彼|かれ}の{演説|えんぜつ}は、{聞|き}く{人|ひと}の{心|こころ}を{動|うご}かさ[ずにはおかない]。 | Son discours ne peut que toucher le cœur de ceux qui l'écoutent.
+- この{事件|じけん}は、{社会|しゃかい}に{大|おお}きな{影響|えいきょう}を{与|あた}え[ずにはおかない]だろう。 | Cette affaire ne manquera pas d'avoir un grand retentissement dans la société.
+- {今度|こんど}こそ、{真実|しんじつ}を{明|あき}らかにせ[ずにはおかない]。 | Cette fois, je ferai éclater la vérité, coûte que coûte.
+- {彼女|かのじょ}の{歌声|うたごえ}は、{人|ひと}を{惹|ひ}きつけ[ずにはおかない]。 | Sa voix ne peut que captiver.
+
+## zu-ni-wa-sumanai
+titre: 〜ずにはすまない
+sens: on ne peut pas éviter de, il faudra bien
+forme: Verbe (forme en ない sans ない) + ずにはすまない
+forme: する → せずにはすまない ; aussi : 〜ないではすまない
+voir: zu-ni-wa-irarenai
+
+**ずにはすまない**, « ça ne se règle pas sans » : vu la situation, les obligations sociales ou morales imposent de faire cela. {人|ひと}の{物|もの}を{壊|こわ}したのだから、{謝|あやま}ら**ずにはすまない**, j'ai cassé un objet qui ne m'appartient pas, je ne peux pas me dispenser de m'excuser.
+
+> ずにはいられない (N2) : une impulsion intérieure. ずにはすまない : une obligation venue de l'extérieur.
+
+- {大切|たいせつ}な{書類|しょるい}をなくしたのだから、{上司|じょうし}に{報告|ほうこく}せ[ずにはすまない]。 | J'ai perdu un document important, je ne peux pas éviter d'en informer mon supérieur.
+- {迷惑|めいわく}をかけたのだから、{謝|あやま}ら[ずにはすまない]だろう。 | Puisque tu as causé du tort, tu ne pourras pas te dispenser de t'excuser.
+- これほどの{問題|もんだい}になったら、{社長|しゃちょう}が{説明|せつめい}せ[ずにはすまない]。 | Le problème a pris une telle ampleur que le PDG devra forcément s'expliquer.
+- {借|か}りた{車|くるま}に{傷|きず}をつけたので、{弁償|べんしょう}せ[ずにはすまない]。 | J'ai rayé la voiture qu'on m'avait prêtée, je vais bien devoir dédommager.
+
+## wo-yoginaku-sareru
+titre: 〜を{余儀|よぎ}なくされる
+sens: être contraint de, se voir obligé de
+forme: Nom (une action) + を{余儀|よぎ}なくされる
+forme: Nom + を{余儀|よぎ}なくさせる : contraindre à
+voir: zaru-wo-enai
+
+**を{余儀|よぎ}なくされる**, « on vous ôte toute autre possibilité » : des circonstances extérieures imposent une action non voulue. {台風|たいふう}のため、{試合|しあい}は{中止|ちゅうし}**を{余儀|よぎ}なくされた**, le match a dû être annulé à cause du typhon.
+
+La langue des nouvelles ; le nom est souvent un mot en する : {中止|ちゅうし}, {変更|へんこう}, {撤退|てったい}, {入院|にゅういん}…
+
+- {大雪|おおゆき}のため、{電車|でんしゃ}は{運休|うんきゅう}[を{余儀|よぎ}なくされた]。 | En raison des fortes chutes de neige, les trains ont dû être supprimés.
+- {彼|かれ}は{怪我|けが}で{引退|いんたい}[を{余儀|よぎ}なくされた]。 | Il a été contraint de prendre sa retraite à cause d'une blessure.
+- {不景気|ふけいき}で、{多|おお}くの{会社|かいしゃ}が{倒産|とうさん}[を{余儀|よぎ}なくされた]。 | Avec la récession, de nombreuses entreprises ont été acculées à la faillite.
+- {地震|じしん}で{家|いえ}が{壊|こわ}れ、{避難所|ひなんじょ}での{生活|せいかつ}[を{余儀|よぎ}なくされている]。 | Leur maison ayant été détruite par le séisme, ils sont contraints de vivre dans un abri.
+
+=== Le but, la cause, le rang
+Afin de, à cause de, il est interdit de, quand on en arrive à, digne de son rang : les tournures solennelles.
+
+## beku
+titre: 〜べく
+sens: afin de, pour (écrit)
+forme: Verbe (forme du dictionnaire) + べく
+forme: する → すべく
+voir: tame-ni
+
+**べく**, de べき : afin de, avec la ferme intention de. C'est le ために (N4) des textes soutenus. {夢|ゆめ}を{叶|かな}える**べく**、{毎日|まいにち}{努力|どりょく}している, il fait des efforts chaque jour afin de réaliser son rêve.
+
+Le sujet agit lui-même, avec volonté ; べく ne sert pas pour un résultat qu'on ne contrôle pas.
+
+- {彼|かれ}は{医者|いしゃ}になる[べく]、{必死|ひっし}に{勉強|べんきょう}した。 | Il a étudié d'arrache-pied afin de devenir médecin.
+- {問題|もんだい}を{解決|かいけつ}す[べく]、{専門家|せんもんか}が{集|あつ}められた。 | Des experts ont été réunis pour résoudre le problème.
+- {記録|きろく}を{更新|こうしん}す[べく]、{毎日|まいにち}{練習|れんしゅう}を{重|かさ}ねている。 | Il s'entraîne jour après jour pour battre le record.
+- {真相|しんそう}を{明|あき}らかにす[べく]、{調査|ちょうさ}が{始|はじ}まった。 | Une enquête a été ouverte afin de faire la lumière sur l'affaire.
+
+## n-ga-tame
+titre: 〜んがため(に)
+sens: dans le seul but de, afin de (à tout prix)
+forme: Verbe (forme en ない sans ない) + んがため(に)
+forme: する → せんがため
+voir: beku
+
+**んがため**, archaïque et emphatique : un but qu'on poursuit à tout prix. {勝|か}た**んがため**には、どんな{努力|どりょく}も{惜|お}しまない, pour gagner, il ne ménage aucun effort.
+
+Formation : la base de la forme en ない, puis んがため : {勝|か}たない → {勝|か}たんがため. On ne le trouve plus guère que dans les discours et les textes.
+
+- {生|い}き{延|の}び[んがため/んがために]、{彼|かれ}らは{必死|ひっし}に{働|はたら}いた。 | Pour survivre, ils ont travaillé désespérément.
+- {夢|ゆめ}を{実現|じつげん}せ[んがため]に、{彼|かれ}は{故郷|こきょう}を{離|はな}れた。 | C'est pour réaliser son rêve qu'il a quitté son pays natal.
+- {自分|じぶん}の{罪|つみ}を{隠|かく}さ[んがため/んがために]、{彼|かれ}は{嘘|うそ}を{重|かさ}ねた。 | Pour cacher sa faute, il a accumulé les mensonges.
+- {試験|しけん}に{合格|ごうかく}せ[んがため/んがために]、{寝|ね}る{間|ま}も{惜|お}しんで{勉強|べんきょう}した。 | Pour réussir l'examen, il a étudié en rognant sur son sommeil.
+
+## yue-ni
+titre: 〜ゆえ(に)
+sens: à cause de, en raison de (écrit)
+forme: Nom + (の)ゆえ(に)
+forme: Verbe / Adjectif (style neutre) + (が)ゆえ(に)
+voir: kara-raison, node
+
+**ゆえに**, « la raison » : un から littéraire, qu'on trouve dans les textes anciens, les discours, les maximes. {貧|まず}しさ**ゆえに**、{学校|がっこう}に{行|い}けなかった, à cause de la pauvreté, il n'a pas pu aller à l'école.
+
+**がゆえに** après un verbe ou un adjectif : {若|わか}い**がゆえに**、{失敗|しっぱい}も{多|おお}い, c'est parce qu'on est jeune qu'on commet tant d'erreurs.
+
+Seul, ゆえに veut dire « donc » : 「{我|われ}{思|おも}う、ゆえに{我|われ}あり」, je pense, donc je suis.
+
+- {若|わか}さ[ゆえ]の{過|あやま}ちだった。 | C'était une erreur de jeunesse.
+- {彼女|かのじょ}は{優|やさ}しすぎる[がゆえに]、{傷|きず}つきやすい。 | C'est parce qu'elle est trop gentille qu'elle est si vulnérable.
+- {病気|びょうき}の[ゆえに/ゆえ]、{夢|ゆめ}を{諦|あきら}めざるを{得|え}なかった。 | À cause de la maladie, il a dû renoncer à son rêve.
+- {有名|ゆうめい}である[がゆえに/がゆえ]、{自由|じゆう}に{外出|がいしゅつ}できない。 | Parce qu'il est célèbre, il ne peut pas sortir librement.
+
+## bekarazu
+titre: 〜べからず・〜べからざる
+sens: il est interdit de ; inadmissible
+forme: Verbe (forme du dictionnaire) + べからず : l'interdiction écrite
+forme: Verbe + べからざる + Nom : qu'on ne doit pas
+voir: beki
+
+**べからず** : l'interdiction des écriteaux et des maximes, sèche et ancienne. {芝生|しばふ}に{入|はい}る**べからず**, défense de marcher sur la pelouse.
+
+**べからざる** devant un nom : {許|ゆる}す**べからざる**{行為|こうい}, un acte impardonnable ; {欠|か}く**べからざる**, indispensable, dont on ne peut se passer.
+
+- ここにごみを{捨|す}てる[べからず]。 | Défense de jeter des ordures ici.
+- {初心|しょしん}{忘|わす}る[べからず]。 | N'oublie jamais l'esprit du débutant.
+- {水|みず}は{生活|せいかつ}に{欠|か}く[べからざる]ものだ。 | L'eau est une chose dont on ne peut se passer.
+- それは{教師|きょうし}として{許|ゆる}す[べからざる]{行為|こうい}だ。 | C'est un acte inadmissible de la part d'un enseignant.
+
+## tomo-naku
+titre: 〜ともなく
+sens: sans intention, sans trop savoir
+forme: Verbe (forme du dictionnaire) + ともなく・ともなしに
+forme: Interrogatif (+ particule) + ともなく : on ne sait trop où, qui…
+
+**ともなく** : on fait une chose machinalement, sans but précis. {見|み}る**ともなく**テレビを{見|み}ていた, je regardais la télé sans vraiment la regarder.
+
+Avec un interrogatif : on ne sait trop d'où, qui, quand. どこから**ともなく**{音楽|おんがく}が{聞|き}こえてきた, de la musique est venue de je ne sais où.
+
+- {聞|き}く[ともなく]ラジオを{聞|き}いていたら、{懐|なつ}かしい{曲|きょく}が{流|なが}れてきた。 | J'écoutais la radio d'une oreille distraite quand une vieille chanson est passée.
+- {窓|まど}の{外|そと}を{見|み}る[ともなく]{見|み}ていた。 | Je regardais vaguement par la fenêtre.
+- どこから[ともなく]、いい{匂|にお}いがしてきた。 | Une bonne odeur est venue de je ne sais où.
+- {誰|だれ}から[ともなく]{拍手|はくしゅ}が{起|お}こった。 | Des applaudissements ont éclaté, sans qu'on sache qui avait commencé.
+
+## to-mo-nareba
+titre: 〜ともなると・〜ともなれば
+sens: quand on en arrive à, à ce niveau-là
+forme: Nom + ともなると・ともなれば
+
+**ともなると** : quand on atteint un certain niveau, un âge, un statut, les choses changent naturellement. {社長|しゃちょう}**ともなると**、{忙|いそが}しくて{休|やす}む{暇|ひま}もない, quand on devient PDG, on est si occupé qu'on n'a même plus le temps de se reposer.
+
+- {十二月|じゅうにがつ}[ともなると/ともなれば]、{街|まち}はクリスマスの{雰囲気|ふんいき}になる。 | En décembre, la ville prend des airs de Noël.
+- {大学生|だいがくせい}[ともなれば/ともなると]、{自分|じぶん}のことは{自分|じぶん}で{決|き}めるべきだ。 | À l'université, on doit prendre ses propres décisions.
+- プロの{選手|せんしゅ}[ともなると/ともなれば]、{練習|れんしゅう}の{量|りょう}が{違|ちが}う。 | Chez les professionnels, la quantité d'entraînement n'a rien à voir.
+- {週末|しゅうまつ}[ともなると/ともなれば]、この{公園|こうえん}は{家族連|かぞくづ}れで{賑|にぎ}わう。 | Le week-end, ce parc s'anime de familles.
+
+## taru
+titre: 〜たる
+sens: en tant que (digne de ce nom)
+forme: Nom (un statut) + たる + Nom (souvent {者|もの})
+voir: to-shite
+
+**たる**, d'un ancien verbe « être » : ce statut impose une conduite digne de lui. {教師|きょうし}**たる**{者|もの}、{生徒|せいと}の{手本|てほん}でなければならない, un enseignant digne de ce nom doit être un modèle pour ses élèves.
+
+Le ton est solennel, souvent moralisateur.
+
+- {医者|いしゃ}[たる]{者|もの}、{患者|かんじゃ}の{命|いのち}を{第一|だいいち}に{考|かんが}えるべきだ。 | Un médecin digne de ce nom doit placer la vie du patient avant tout.
+- {社長|しゃちょう}[たる]もの、{責任|せきにん}から{逃|に}げてはいけない。 | Un patron ne doit pas fuir ses responsabilités.
+- {親|おや}[たる]{者|もの}、{子|こ}どもの{見本|みほん}になるべきだ。 | Un parent doit être un exemple pour ses enfants.
+- {政治家|せいじか}[たる]もの、{国民|こくみん}の{声|こえ}に{耳|みみ}を{傾|かたむ}けるべきだ。 | Un homme politique digne de ce nom doit écouter la voix des citoyens.
+
+=== Juger, évaluer
+Digne de, insupportable à, on ne peut plus, le comble de : les mots de l'éloge et du blâme.
+
+## ni-taru
+titre: 〜に{足|た}る
+sens: digne de, qui mérite
+forme: Verbe (forme du dictionnaire) / Nom + に{足|た}る + Nom
+forme: 〜に{足|た}りない : qui ne mérite pas
+voir: ni-atai-suru
+
+**に{足|た}る**, « suffisant pour » : la chose mérite qu'on fasse cela. {信頼|しんらい}する**に{足|た}る**{人物|じんぶつ}, une personne digne de confiance.
+
+Au négatif, **に{足|た}りない** : {取|と}る**に{足|た}りない**{問題|もんだい}, un problème insignifiant.
+
+- {彼|かれ}は{信頼|しんらい}する[に{足|た}る]{人物|じんぶつ}だ。 | C'est une personne digne de confiance.
+- それは{取|と}る[に{足|た}りない]ことだ。 | C'est une chose insignifiante.
+- {満足|まんぞく}する[に{足|た}る]{結果|けっか}が{得|え}られた。 | Nous avons obtenu des résultats satisfaisants.
+- {彼|かれ}の{話|はなし}には、{信|しん}じる[に{足|た}る]{証拠|しょうこ}がない。 | Son récit manque de preuves qui permettraient de le croire.
+
+## ni-atai-suru
+titre: 〜に{値|あたい}する
+sens: mériter, valoir la peine de
+forme: Nom / Verbe (forme du dictionnaire) + に{値|あたい}する
+forme: 〜に{値|あたい}しない : ne pas mériter
+voir: ni-taru
+
+**に{値|あたい}する**, de {値|あたい} « la valeur » : la chose a assez de valeur pour mériter cela. {一見|いっけん}**に{値|あたい}する**, qui vaut le coup d'œil ; {称賛|しょうさん}**に{値|あたい}する**, digne d'éloges.
+
+- {彼|かれ}の{努力|どりょく}は{称賛|しょうさん}[に{値|あたい}する]。 | Ses efforts méritent d'être salués.
+- この{美術館|びじゅつかん}は{一見|いっけん}[に{値|あたい}する]。 | Ce musée vaut le détour.
+- そんな{話|はなし}は{議論|ぎろん}する[に{値|あたい}しない]。 | Ce genre de propos ne mérite pas qu'on en discute.
+- {彼女|かのじょ}の{勇気|ゆうき}は{尊敬|そんけい}[に{値|あたい}する]。 | Son courage force le respect.
+
+## ni-taenai
+titre: 〜に{堪|た}えない
+sens: insupportable à (voir, entendre) ; profondément (gratitude, regret)
+forme: Verbe (forme du dictionnaire) + に{堪|た}えない
+forme: Nom (un sentiment) + に{堪|た}えない
+voir: ni-taeru
+
+**に{堪|た}えない** a deux emplois.
+
+Après {見|み}る, {聞|き}く, {読|よ}む : si mauvais ou si cruel qu'on ne peut le supporter. {見|み}る**に{堪|た}えない**{光景|こうけい}, un spectacle insoutenable.
+
+Après un sentiment, dans les discours : un sentiment si fort qu'on ne peut le contenir. {感謝|かんしゃ}**に{堪|た}えません**, je ne sais comment vous remercier.
+
+- {事故|じこ}の{現場|げんば}は、{見|み}る[に{堪|た}えない]{状態|じょうたい}だった。 | Le lieu de l'accident était insoutenable à regarder.
+- {彼|かれ}の{悪口|わるくち}は、{聞|き}く[に{堪|た}えない]。 | Les méchancetés qu'il profère sont insupportables à entendre.
+- {皆様|みなさま}の{温|あたた}かいご{支援|しえん}、{感謝|かんしゃ}[に{堪|た}えません]。 | Je vous suis infiniment reconnaissant de votre chaleureux soutien.
+- このような{結果|けっか}になり、{遺憾|いかん}[に{堪|た}えない]。 | Je regrette profondément que les choses en soient arrivées là.
+
+## ni-taeru
+titre: 〜に{堪|た}える
+sens: digne de, qui résiste à (être vu, lu)
+forme: Verbe (forme du dictionnaire) / Nom + に{堪|た}える
+voir: ni-taenai, ni-taru
+
+**に{堪|た}える** : la chose a assez de qualité pour supporter qu'on la regarde, qu'on la lise. {鑑賞|かんしょう}**に{堪|た}える**{作品|さくひん}, une œuvre digne d'être contemplée.
+
+Au sens propre, {堪|た}える veut dire « résister » : {高温|こうおん}に{堪|た}える{素材|そざい}, un matériau qui résiste aux hautes températures.
+
+- これは{大人|おとな}の{鑑賞|かんしょう}[に{堪|た}える]アニメだ。 | C'est un dessin animé qu'un adulte peut regarder avec plaisir.
+- {彼|かれ}の{論文|ろんぶん}は{専門家|せんもんか}の{批判|ひはん}[に{堪|た}える]ものだ。 | Son article résiste à la critique des spécialistes.
+- この{建物|たてもの}は{強|つよ}い{地震|じしん}[に{堪|た}える]ように{設計|せっけい}されている。 | Ce bâtiment est conçu pour résister à un fort séisme.
+- {彼女|かのじょ}の{写真|しゃしん}は、プロの{目|め}[に{堪|た}える]{出来|でき}だ。 | Ses photos supportent le regard d'un professionnel.
+
+## wo-kinjienai
+titre: 〜を{禁|きん}じ{得|え}ない
+sens: ne pouvoir retenir (un sentiment)
+forme: Nom (un sentiment) + を{禁|きん}じ{得|え}ない
+
+**を{禁|きん}じ{得|え}ない**, « ne pas pouvoir s'interdire » : un sentiment surgit, malgré soi, devant un spectacle ou une nouvelle. {同情|どうじょう}**を{禁|きん}じ{得|え}ない**, ne pouvoir s'empêcher d'éprouver de la compassion.
+
+Les noms sont toujours des émotions : {涙|なみだ}, {怒|いか}り, {驚|おどろ}き, {同情|どうじょう}… Le sujet est celui qui parle.
+
+- {被災者|ひさいしゃ}の{話|はなし}を{聞|き}き、{涙|なみだ}[を{禁|きん}じ{得|え}なかった]。 | En écoutant les sinistrés, je n'ai pas pu retenir mes larmes.
+- {政府|せいふ}の{対応|たいおう}には{怒|いか}り[を{禁|きん}じ{得|え}ない]。 | Je ne peux contenir ma colère face à la réaction du gouvernement.
+- {彼|かれ}の{不幸|ふこう}な{生|お}い{立|た}ちには{同情|どうじょう}[を{禁|きん}じ{得|え}ない]。 | Je ne peux m'empêcher d'éprouver de la compassion pour son enfance malheureuse.
+- あまりの{変化|へんか}に{驚|おどろ}き[を{禁|きん}じ{得|え}ない]。 | Je ne peux cacher ma surprise devant un tel changement.
+
+## kiwamaru
+titre: 〜{極|きわ}まる・〜{極|きわ}まりない
+sens: extrêmement, au plus haut point
+forme: Adjectif en な (sans な) + {極|きわ}まる・{極|きわ}まりない
+
+**{極|きわ}まる**, « atteindre l'extrême » : un adjectif en な poussé au maximum. {失礼|しつれい}**{極|きわ}まる**{態度|たいど}, une attitude on ne peut plus impolie.
+
+**{極|きわ}まりない** dit exactement la même chose, malgré sa forme négative : « sans limite ». {危険|きけん}**{極|きわ}まりない**, extrêmement dangereux. Presque toujours pour juger sévèrement.
+
+- {彼|かれ}の{態度|たいど}は{失礼|しつれい}[{極|きわ}まりない/{極|きわ}まる]。 | Son attitude est on ne peut plus impolie.
+- {雨|あめ}の{日|ひ}の{山道|やまみち}の{運転|うんてん}は{危険|きけん}[{極|きわ}まりない/{極|きわ}まる]。 | Conduire sur une route de montagne un jour de pluie est extrêmement dangereux.
+- {毎日|まいにち}{同|おな}じ{仕事|しごと}で、{退屈|たいくつ}[{極|きわ}まりない/{極|きわ}まる]。 | Tous les jours le même travail : c'est d'un ennui mortel.
+- {彼|かれ}の{発言|はつげん}は{不愉快|ふゆかい}[{極|きわ}まる/{極|きわ}まりない]ものだった。 | Ses propos étaient on ne peut plus désagréables.
+
+## no-itari
+titre: 〜の{至|いた}り
+sens: le comble de, au plus haut degré (formule)
+forme: Nom + の{至|いた}り(です)
+voir: no-kiwami
+
+**の{至|いた}り**, « le point d'arrivée » : un sentiment au plus haut degré, dans les formules polies et les discours. {光栄|こうえい}**の{至|いた}り**です, c'est un immense honneur.
+
+Une expression courante : {若気|わかげ}**の{至|いた}り**, une folie de jeunesse.
+
+- このような{賞|しょう}をいただき、{光栄|こうえい}[の{至|いた}り]です。 | Recevoir un tel prix est pour moi un immense honneur.
+- あの{頃|ころ}の{行動|こうどう}は、{若気|わかげ}[の{至|いた}り]だった。 | Ce que j'ai fait à cette époque, c'était une folie de jeunesse.
+- {先生|せんせい}にお{会|あ}いでき、{感激|かんげき}[の{至|いた}り]です。 | Je suis profondément ému de vous rencontrer, maître.
+- ご{迷惑|めいわく}をおかけし、{恐縮|きょうしゅく}[の{至|いた}り]です。 | Je suis vraiment confus de vous avoir causé ce dérangement.
+
+## no-kiwami
+titre: 〜の{極|きわ}み
+sens: le summum de, le comble de
+forme: Nom + の{極|きわ}み
+voir: no-itari, kiwamaru
+
+**の{極|きわ}み**, « l'extrémité » : un état poussé à son sommet, en bien ou en mal. {贅沢|ぜいたく}**の{極|きわ}み**, le summum du luxe ; {疲労|ひろう}**の{極|きわ}み**, l'épuisement total.
+
+> の{至|いた}り sert surtout dans les formules polies (honneur, émotion) ; の{極|きわ}み décrit un état.
+
+- {一流|いちりゅう}ホテルのスイートに{泊|と}まるなんて、{贅沢|ぜいたく}[の{極|きわ}み]だ。 | Dormir dans la suite d'un palace, c'est le summum du luxe.
+- {徹夜|てつや}が{三日|みっか}{続|つづ}き、{疲労|ひろう}[の{極|きわ}み]に{達|たっ}した。 | Après trois nuits blanches, j'étais au comble de l'épuisement.
+- {大切|たいせつ}な{人|ひと}を{失|うしな}い、{悲|かな}しみ[の{極|きわ}み]だった。 | Ayant perdu un être cher, j'étais au fond du désespoir.
+- {彼|かれ}の{行動|こうどう}は{無責任|むせきにん}[の{極|きわ}み]だ。 | Son comportement est le comble de l'irresponsabilité.
+
+## kagiri-da
+titre: 〜{限|かぎ}りだ
+sens: on ne peut plus, vraiment (sentiment)
+forme: Adjectif en い + {限|かぎ}りだ
+forme: Adjectif en な + な + {限|かぎ}りだ
+voir: kagiri
+
+**{限|かぎ}りだ**, « c'est la limite » : celui qui parle ressent cela au plus haut point. {一人|ひとり}で{寂|さび}しい**{限|かぎ}りだ**, je me sens on ne peut plus seul.
+
+Seulement pour ses propres sentiments : {嬉|うれ}しい, {寂|さび}しい, {羨|うらや}ましい, {心細|こころぼそ}い, {残念|ざんねん}な…
+
+- {昔|むかし}の{友|とも}だちに{会|あ}えて、{嬉|うれ}しい[{限|かぎ}りだ/{限|かぎ}りです]。 | Je suis on ne peut plus heureux d'avoir revu mes vieux amis.
+- {一人|ひとり}で{外国|がいこく}に{住|す}むのは{心細|こころぼそ}い[{限|かぎ}りだ/{限|かぎ}りです]。 | Vivre seul à l'étranger, c'est bien angoissant.
+- {彼女|かのじょ}の{成功|せいこう}は{羨|うらや}ましい[{限|かぎ}りだ/{限|かぎ}りです]。 | Je l'envie vraiment pour sa réussite.
+- {試合|しあい}に{出|で}られず、{残念|ざんねん}な[{限|かぎ}りです/{限|かぎ}りだ]。 | Je regrette infiniment de ne pas pouvoir participer au match.
+
+## to-ittara-nai
+titre: 〜といったらない
+sens: d'un… indescriptible, on ne peut plus
+forme: Nom / Adjectif + といったらない
+forme: à l'oral : ったらない
+voir: sa
+
+**といったらない**, « il n'y a pas de mot pour dire » : une intensité qui dépasse les mots, souvent avec émotion. その{時|とき}の{恥|は}ずかしさ**といったらなかった**, je ne saurais dire à quel point j'avais honte.
+
+Souvent après un nom en さ (N4) : {悔|くや}しさ, {寒|さむ}さ, {美|うつく}しさ…
+
+- {試合|しあい}に{負|ま}けた{時|とき}の{悔|くや}しさ[といったらなかった]。 | La rage que j'ai éprouvée quand nous avons perdu le match était indescriptible.
+- {頂上|ちょうじょう}から{見|み}た{景色|けしき}の{美|うつく}しさ[といったらない]。 | La beauté du paysage vu du sommet est indescriptible.
+- {今朝|けさ}の{寒|さむ}さ[といったらない]。 | Il faisait un froid incroyable ce matin.
+- {彼|かれ}の{話|はなし}のつまらなさ[といったらない]。 | Ce qu'il raconte est d'un ennui sans nom.
+
+## to-wa
+titre: 〜とは
+sens: que… ! (surprise) ; ce qu'on appelle… c'est
+forme: Phrase (style neutre) + とは : la surprise
+forme: Nom + とは + définition
+voir: nante, to-iu-no-wa
+
+**とは** a deux emplois.
+
+La surprise, souvent avec la phrase en suspens : まさか{彼|かれ}が{犯人|はんにん}だった**とは**, dire que c'était lui le coupable ! C'est le なんて (N3) de l'écrit.
+
+La définition, comme というのは (N3) : 「{一期一会|いちごいちえ}」**とは**、{一生|いっしょう}に{一度|いちど}の{出会|であ}いのことだ.
+
+- まさか{彼|かれ}が{会社|かいしゃ}を{辞|や}める[とは]、{思|おも}わなかった。 | Je n'aurais jamais cru qu'il quitterait l'entreprise.
+- こんなところで{昔|むかし}の{先生|せんせい}に{会|あ}う[とは]。 | Rencontrer mon ancien professeur dans un endroit pareil !
+- {百歳|ひゃくさい}でマラソンを{走|はし}る[とは]、{驚|おどろ}きだ。 | Courir un marathon à cent ans, c'est étonnant !
+- 「{温故知新|おんこちしん}」[とは]、{古|ふる}いことから{新|あたら}しいことを{学|まな}ぶという{意味|いみ}だ。 | « Onko chishin » signifie apprendre du neuf en étudiant l'ancien.
+
+=== Tendances et apparences
+Une fâcheuse tendance, un air de printemps, couvert de sueur, comme pour dire : peindre les gens et les choses.
+
+## kirai-ga-aru
+titre: 〜きらいがある
+sens: avoir une fâcheuse tendance à
+forme: Verbe (forme du dictionnaire / en ない) + きらいがある
+forme: Nom + の + きらいがある
+voir: gachi
+
+**きらいがある**, de {嫌|きら}い : un penchant regrettable, un défaut de caractère, qu'on juge avec un certain recul. {彼|かれ}は{物事|ものごと}を{大|おお}げさに{言|い}う**きらいがある**, il a une fâcheuse tendance à exagérer.
+
+Plus écrit et plus critique que がち (N3).
+
+- {彼|かれ}は{人|ひと}の{話|はなし}を{最後|さいご}まで{聞|き}かない[きらいがある]。 | Il a la fâcheuse habitude de ne pas écouter les gens jusqu'au bout.
+- {最近|さいきん}の{若者|わかもの}は{何|なん}でもネットで{調|しら}べる[きらいがある]。 | Les jeunes d'aujourd'hui ont tendance à tout chercher sur Internet.
+- {彼女|かのじょ}は{一人|ひとり}で{問題|もんだい}を{抱|かか}え{込|こ}む[きらいがある]。 | Elle a une fâcheuse tendance à garder ses problèmes pour elle.
+- {部長|ぶちょう}は{物事|ものごと}を{悲観的|ひかんてき}に{考|かんが}える[きらいがある]。 | Le chef de service a tendance à voir les choses en noir.
+
+## shimatsu-da
+titre: 〜{始末|しまつ}だ
+sens: en arriver à (et c'est un comble)
+forme: Verbe (forme du dictionnaire) + {始末|しまつ}だ
+forme: この{始末|しまつ}だ : voilà où on en est
+
+**{始末|しまつ}だ**, « le dénouement » : après une série d'ennuis, on aboutit à un résultat encore pire, et on en est exaspéré. {彼|かれ}は{遅刻|ちこく}ばかりして、ついに{無断|むだん}で{休|やす}む**{始末|しまつ}だ**, il était toujours en retard, et voilà qu'il finit par s'absenter sans prévenir.
+
+- {息子|むすこ}は{勉強|べんきょう}をしないどころか、{学校|がっこう}もサボる[{始末|しまつ}だ]。 | Mon fils, loin d'étudier, en arrive à sécher les cours.
+- {彼|かれ}は{借金|しゃっきん}を{重|かさ}ね、{友人|ゆうじん}にまでお{金|かね}を{借|か}りる[{始末|しまつ}だ]。 | Il s'est endetté de plus en plus, jusqu'à emprunter de l'argent à ses amis.
+- {注意|ちゅうい}したら、{逆|ぎゃく}に{怒|おこ}り{出|だ}す[{始末|しまつ}だ]。 | Quand je lui fais une remarque, il va jusqu'à se mettre en colère.
+- {何度|なんど}{言|い}っても{聞|き}かず、この[{始末|しまつ}だ]。 | Je le lui ai dit cent fois, il n'a pas écouté, et voilà où on en est.
+
+## meku
+titre: 〜めく
+sens: prendre un air de, sentir (la saison)
+forme: Nom + めく
+forme: Nom + めいた + Nom
+
+**めく** : une chose commence à avoir l'air de, à ressembler à. {春|はる}**めいて**きた, ça commence à sentir le printemps ; {皮肉|ひにく}**めいた**{言|い}い{方|かた}, une façon de parler un peu ironique.
+
+Avec quelques noms seulement : les saisons, {冗談|じょうだん}, {皮肉|ひにく}, {謎|なぞ}, {言|い}い{訳|わけ}…
+
+- {日差|ひざ}しが{暖|あたた}かくなり、すっかり{春|はる}[めいて]きた。 | Le soleil se réchauffe, ça sent vraiment le printemps.
+- {彼|かれ}は{冗談|じょうだん}[めいた]{口調|くちょう}で{言|い}った。 | Il l'a dit sur un ton à moitié plaisantin.
+- {謎|なぞ}[めいた]{言葉|ことば}を{残|のこ}して、{彼女|かのじょ}は{去|さ}った。 | Elle est partie en laissant quelques mots énigmatiques.
+- {言|い}い{訳|わけ}[めいた]ことは{言|い}いたくない。 | Je ne veux rien dire qui ressemble à une excuse.
+
+## zukume
+titre: 〜ずくめ
+sens: rien que, entièrement
+forme: Nom + ずくめ
+
+**ずくめ** : une chose est faite entièrement d'une même chose, ou une série d'événements est toute du même genre. {黒|くろ}**ずくめ**の{服装|ふくそう}, une tenue tout en noir ; いいこと**ずくめ**の{一年|いちねん}, une année où il n'est arrivé que de bonnes choses.
+
+Avec peu de noms : {黒|くろ}, いいこと, {規則|きそく}, ごちそう…
+
+- {彼|かれ}はいつも{黒|くろ}[ずくめ]の{服|ふく}を{着|き}ている。 | Il est toujours habillé tout en noir.
+- {今年|ことし}は{結婚|けっこん}に{昇進|しょうしん}に、いいこと[ずくめ]だった。 | Mariage, promotion : cette année, il ne m'est arrivé que de bonnes choses.
+- この{学校|がっこう}は{規則|きそく}[ずくめ]で{窮屈|きゅうくつ}だ。 | Cette école n'est que règlements, on y étouffe.
+- {正月|しょうがつ}はごちそう[ずくめ]で、{太|ふと}ってしまった。 | Au Nouvel An, il n'y a eu que des festins, j'ai grossi.
+
+## mamire
+titre: 〜まみれ
+sens: couvert de, maculé de
+forme: Nom + まみれ
+voir: darake
+
+**まみれ** : une surface entièrement couverte de quelque chose de liquide ou de collant - sueur, sang, boue, poussière. {汗|あせ}**まみれ**になって{働|はたら}く, travailler couvert de sueur.
+
+> だらけ (N3) : plein de choses, partout (des fautes, des livres). まみれ : enduit, recouvert d'une matière.
+
+- {汗|あせ}[まみれ]になって、{畑|はたけ}で{働|はたら}いた。 | J'ai travaillé aux champs, ruisselant de sueur.
+- {倉庫|そうこ}の{箱|はこ}はほこり[まみれ/だらけ]だった。 | Les cartons de l'entrepôt étaient couverts de poussière.
+- {子|こ}どもたちは{泥|どろ}[まみれ/だらけ]で{遊|あそ}んでいる。 | Les enfants jouent, couverts de boue.
+- {彼|かれ}は{血|ち}[まみれ/だらけ]で{倒|たお}れていた。 | Il gisait couvert de sang.
+
+## gotoki
+titre: 〜ごとく・〜ごとき
+sens: comme, tel que ; un… comme (mépris, modestie)
+forme: Nom + の + ごとく (adverbe) ・ごとき (devant un nom)
+forme: Verbe (style neutre) + (が)ごとく
+forme: 〜ごとし : en fin de phrase, dans les proverbes
+voir: you-da
+
+**ごとく** est le ように de la langue classique : {前述|ぜんじゅつ}の**ごとく**, comme il a été dit plus haut ; {風|かぜ}の**ごとく**{走|はし}る, courir comme le vent.
+
+**ごとき** après un nom de personne peut mépriser, ou se faire modeste : {私|わたし}**ごとき**, une personne comme moi ; お{前|まえ}**ごとき**に{負|ま}けるものか, perdre contre un type comme toi ? Jamais.
+
+- {彼|かれ}は{風|かぜ}の[ごとく]{走|はし}り{去|さ}った。 | Il est parti en courant comme le vent.
+- {前述|ぜんじゅつ}の[ごとく]、この{問題|もんだい}は{複雑|ふくざつ}だ。 | Comme indiqué plus haut, ce problème est complexe.
+- {私|わたし}[ごとき]に、そんな{大役|たいやく}は{務|つと}まりません。 | Quelqu'un comme moi ne saurait assumer un rôle aussi important.
+- {光陰|こういん}{矢|や}の[ごとし]。 | Le temps passe comme une flèche.
+
+## n-bakari
+titre: 〜んばかり
+sens: comme si (on allait), presque à
+forme: Verbe (forme en ない sans ない) + んばかりに・んばかりの
+forme: する → せんばかり
+voir: to-bakari-ni
+
+**んばかり** : un état si fort qu'on dirait que l'action va arriver - mais elle n'arrive pas. {泣|な}き{出|だ}さ**んばかりの**{顔|かお}, un visage au bord des larmes ; {溢|あふ}れ**んばかりの**{笑顔|えがお}, un sourire débordant.
+
+Formation : la base de la forme en ない, puis んばかり : {泣|な}かない → {泣|な}かんばかり.
+
+- {彼女|かのじょ}は{泣|な}き{出|だ}さ[んばかりの]{顔|かお}をしていた。 | Elle avait l'air sur le point de fondre en larmes.
+- {会場|かいじょう}は{割|わ}れ[んばかりの]{拍手|はくしゅ}に{包|つつ}まれた。 | La salle a été envahie d'applaudissements à tout rompre.
+- {彼|かれ}は{今|いま}にも{殴|なぐ}りかから[んばかりの]{勢|いきお}いだった。 | Il était si furieux qu'on aurait dit qu'il allait frapper.
+- {子|こ}どもは{溢|あふ}れ[んばかりの]{笑顔|えがお}で{走|はし}ってきた。 | L'enfant est arrivé en courant, avec un sourire radieux.
+
+## to-bakari-ni
+titre: 〜とばかりに
+sens: comme pour dire
+forme: Phrase (souvent un ordre, une exclamation) + とばかりに
+voir: n-bakari
+
+**とばかりに** : sans le dire, quelqu'un agit comme s'il disait ces mots. {彼|かれ}は「{出|で}て{行|い}け」**とばかりに**ドアを{開|あ}けた, il a ouvert la porte, comme pour dire « dehors ! ».
+
+On décrit l'attitude d'un autre, souvent avec une phrase entre 「」.
+
+- {彼女|かのじょ}は「もう{知|し}らない」[とばかりに]、{横|よこ}を{向|む}いた。 | Elle a détourné la tête, comme pour dire « je m'en fiche ».
+- {店員|てんいん}は「{早|はや}く{帰|かえ}れ」[とばかりに]、{片付|かたづ}けを{始|はじ}めた。 | Le serveur a commencé à ranger, comme pour dire « partez vite ».
+- {犬|いぬ}は「{遊|あそ}んで」[とばかりに]、{尻尾|しっぽ}を{振|ふ}った。 | Le chien a remué la queue, comme pour dire « joue avec moi ».
+- {彼|かれ}はここぞ[とばかりに]、{自分|じぶん}の{意見|いけん}を{述|の}べた。 | Saisissant l'occasion, il a exposé son avis.
+
+## nari-ni
+titre: 〜なりに・〜なりの
+sens: à sa manière, dans la mesure de ses moyens
+forme: Nom / Verbe / Adjectif + なりに・なりの
+
+**なりに** : à la mesure de ce que l'on est ; ce n'est pas parfait, mais c'est sincère. {子|こ}ども**なりに**{考|かんが}えた, il y a réfléchi à sa manière d'enfant ; {私|わたし}**なりの**{意見|いけん}, mon avis, pour ce qu'il vaut.
+
+- {子|こ}ども[なりに]、{親|おや}のことを{心配|しんぱい}しているのだ。 | À sa manière d'enfant, il s'inquiète pour ses parents.
+- {私|わたし}[なりに]{一生懸命|いっしょうけんめい}{頑張|がんば}りました。 | J'ai fait de mon mieux, à ma façon.
+- {彼|かれ}には{彼|かれ}[なりの]{考|かんが}えがあるのだろう。 | Il doit avoir ses propres raisons.
+- {狭|せま}いなら{狭|せま}い[なりに]、{工夫|くふう}して{住|す}めばいい。 | Si c'est petit, il n'y a qu'à s'organiser en conséquence.
+
+## te-yamanai
+titre: 〜てやまない
+sens: ne cesser de (souhaiter, espérer), du fond du cœur
+forme: Verbe (forme en て) + やまない
+
+**てやまない**, « sans s'arrêter » : un sentiment profond et durable, dans les discours et les lettres. Les verbes sont toujours des souhaits ou des sentiments : {願|ねが}う, {祈|いの}る, {期待|きたい}する, {愛|あい}する. {皆様|みなさま}のご{健康|けんこう}を{願|ねが}っ**てやみません**, je vous souhaite à tous une excellente santé, de tout cœur.
+
+- {皆様|みなさま}のご{活躍|かつやく}を{期待|きたい}して[やみません]。 | Je souhaite de tout cœur que vous réussissiez tous.
+- {世界|せかい}の{平和|へいわ}を{願|ねが}って[やまない]。 | Je ne cesse d'appeler de mes vœux la paix dans le monde.
+- {彼|かれ}は{生涯|しょうがい}、{故郷|こきょう}を{愛|あい}して[やまなかった]。 | Toute sa vie, il n'a cessé d'aimer sa terre natale.
+- お{二人|ふたり}の{幸|しあわ}せを{心|こころ}から{祈|いの}って[やみません]。 | Je vous souhaite de tout cœur d'être heureux tous les deux.
