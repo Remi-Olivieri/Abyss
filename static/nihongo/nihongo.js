@@ -61,7 +61,58 @@
     ecrit(cle, valeur) {
       try { localStorage.setItem("nihongo:" + cle, JSON.stringify(valeur)); } catch (e) { /* tant pis */ }
     },
+    efface(cle) {
+      try { localStorage.removeItem("nihongo:" + cle); } catch (e) { /* tant pis */ }
+    },
   };
+
+  /* ---------- le rōmaji ----------
+     Le réglage « Rōmaji » écrit en lettres latines les mots, les phrases et
+     les textes (voir romaji.js). Les kanas et les kanjis gardent leur
+     écriture là où c'est elle qu'on apprend : leurs tableaux, leurs cartes,
+     la lecture d'un mot en kanjis, le test de niveau. Ce qui n'est pas
+     découpé en mots - les phrases de la grammaire, le japonais glissé dans
+     les explications - arrive transcrit de romaji.json, que la page ne
+     demande qu'en rōmaji. */
+  let EN_ROMAJI = Pref.lit("romaji", false) === true;
+  const romaji = () => EN_ROMAJI;
+  let TRANSCRITS = { fragments: {}, phrases: {} };
+  let transcritsCharges = null;
+  function chargeRomaji() {
+    if (!transcritsCharges) {
+      transcritsCharges = Matiere.json("romaji.json", "Le rōmaji n'a pas pu être chargé.")
+        .then((d) => { TRANSCRITS = d; })
+        .catch((e) => { transcritsCharges = null; throw e; });
+    }
+    return transcritsCharges;
+  }
+
+  /* La barre des rubriques lit ses mots en rōmaji, comme le reste. */
+  function appliqueRomaji() {
+    document.documentElement.classList.toggle("romaji", EN_ROMAJI);
+    document.querySelectorAll("#onglets rt").forEach((rt) => {
+      if (!rt.dataset.kana) rt.dataset.kana = rt.textContent;
+      rt.textContent = EN_ROMAJI ? Romaji.de(rt.dataset.kana) : rt.dataset.kana;
+    });
+  }
+
+  /* Le rōmaji n'est pas du japonais écrit : un élément lang="ja" où il ne
+     reste ni kana ni kanji passe en « ja-Latn », et perd les polices des
+     caractères (voir « Le rōmaji » dans nihongo.css). Les rendus gardent
+     leur lang="ja" : il change ici, à mesure qu'ils arrivent dans la page. */
+  const ECRIT_JAPONAIS = /[぀-ヿ㐀-鿿豈-﫿々〆]/;
+  function latinise(el) {
+    [el, ...el.querySelectorAll('[lang="ja"]')].forEach((x) => {
+      if (x.getAttribute("lang") === "ja" && !ECRIT_JAPONAIS.test(x.textContent)) x.setAttribute("lang", "ja-Latn");
+    });
+  }
+  new MutationObserver((changes) => {
+    if (!EN_ROMAJI) return;
+    changes.forEach((c) => c.addedNodes.forEach((n) => {
+      const el = n.nodeType === 1 ? n : n.parentElement && n.parentElement.closest('[lang="ja"]');
+      if (el) latinise(el);
+    }));
+  }).observe(document.body, { childList: true, subtree: true });
 
   let minuteurToast = null;
   function toast(texte, mauvais) {
@@ -102,11 +153,26 @@
     b.setAttribute("aria-label", nuit ? "Passer au thème clair" : "Passer au thème sombre");
     b.querySelector("span").textContent = nuit ? "昼" : "夜";
   }
-  $("themeBtn").addEventListener("click", () => {
-    const suivant = themeActuel() === "nuit" ? "jour" : "nuit";
-    document.documentElement.setAttribute("data-theme", suivant);
-    Pref.ecrit("theme", suivant);
+  /* Le thème choisi sur cet appareil : « jour », « nuit », ou « systeme » -
+     celui de l'appareil, qui suit ses changements (voir la tête de
+     nihongo.html, qui le pose avant le premier affichage). */
+  const NUIT_SYSTEME = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  function choixTheme() {
+    const t = Pref.lit("theme", null);
+    return t === "jour" || t === "nuit" ? t : "systeme";
+  }
+  function appliqueTheme() {
+    const c = choixTheme();
+    document.documentElement.setAttribute("data-theme",
+      c !== "systeme" ? c : NUIT_SYSTEME && NUIT_SYSTEME.matches ? "nuit" : "jour");
     majBoutonTheme();
+  }
+  if (NUIT_SYSTEME && NUIT_SYSTEME.addEventListener) NUIT_SYSTEME.addEventListener("change", appliqueTheme);
+  $("themeBtn").addEventListener("click", () => {
+    Pref.ecrit("theme", themeActuel() === "nuit" ? "jour" : "nuit");
+    appliqueTheme();
+    // la page des paramètres montre le thème choisi
+    if (ETAT && rubrique() === "parametres") rend();
   });
   majBoutonTheme();
 
@@ -244,6 +310,7 @@
     return { dit, ditPhrase, arrete, cle, choix };
   })();
 
+  const VOIX_CHOIX = [...VOIX, { id: "alterne", nom: "Les deux" }];
   const SANS_VOIX = "Pas encore de son pour celui-ci, et aucune voix japonaise sur cet appareil.";
   function dire(texte, lecture) {
     Voix.dit(texte, lecture, () => toast(SANS_VOIX, true));
@@ -264,24 +331,155 @@
     return Kana.depuisCle(cle) || Kanji.depuisCle(cle) || Mots.depuisCle(cle)
       || Grammaire.depuisCle(cle);
   }
-  /* Les cartes que crée la découverte (la carte « dire » d'un mot vient
-     plus tard, voir planDuJour). */
+  /* Les cartes que crée la découverte. Celles d'un mot dépendent de ce
+     qu'on sait déjà (voir « En kanjis, ou en kanas ») ; sa carte « dire »
+     vient plus tard, voir planDuJour. */
   function clesDe(item) {
-    return MODULES[item.type].cles(item);
+    if (item.type !== "mot") return MODULES[item.type].cles(item);
+    const cles = cleSens(item) === `${item.id}:sens` ? [`${item.id}:sens`] : [];
+    if (enKanjis(item)) cles.push(`${item.id}:lire`);
+    return cles;
+  }
+  /* Les cartes qu'un élément a, ou pourra avoir : de quoi dire s'il est
+     commencé, et depuis quand. Pas celle de son kanji, pour un mot qui
+     n'est que ce kanji : découvrir 上 ne fait pas découvrir うえ. */
+  function propres(item) {
+    return item.type === "mot" ? ["sens", "lire", "dire"].map((g) => `${item.id}:${g}`) : clesDe(item);
   }
   function carteDe(cle) {
     const d = depuisCle(cle);
     return { genre: d.genre, item: d.item, cle };
   }
   function commence(item) {
-    return clesDe(item).some((cle) => ETAT.cartes[cle]);
+    return propres(item).some((cle) => ETAT.cartes[cle]);
   }
   /* Cette façon de travailler existe-t-elle pour cet élément ? Un yōon ne
-     s'écrit pas, un mot tout en kanas ne se « lit » pas. */
+     s'écrit pas, un mot qui s'écrit en kanas ne se « lit » pas. */
   function aCeGenre(it, genre) {
-    if (it.type === "mot") return Mots.genres(it).includes(genre);
+    if (it.type === "mot") return genre === "lire" ? enKanjis(it) : genre === "sens" || genre === "dire";
     if (it.type === "gram") return genre === "completer";
     return genre !== "ecrire" || it.ecrire;
+  }
+
+  /* ---------- en kanjis, ou en kanas ----------
+     Un mot s'écrit en kanjis quand ses kanjis sont à portée : ceux du
+     niveau où l'on en est - le N5 tant qu'il reste des kanjis du N5 à
+     découvrir, puis le N4... - et ceux qu'on a déjà appris. Sinon il
+     s'écrit en kanas, dans la séance comme dans les textes : 壁 est un
+     kanji du N1, かべ un mot du deuxième texte, qu'on apprend tout de
+     suite. Son kanji viendra à son heure, et le mot gagnera alors sa
+     carte de lecture (voir aLire dans planDuJour). Un kanji hors des
+     listes du JLPT (誰, 頃) suit le niveau du mot.
+
+     Un mot qui n'est qu'un kanji (上 うえ, 人 ひと) n'a pas de carte de
+     sens à lui : c'est celle du kanji, qui accepte ses sens et le montre
+     parmi ses mots - deux cartes pour la même question, c'était une de
+     trop, et deux traductions pour un seul caractère. Il s'écrit donc en
+     kanji dès qu'on connaît ce kanji, et seulement alors : la séance fait
+     découvrir le kanji juste avant lui. Appris en kanas avant son kanji
+     (かべ), il a sa carte de sens en kanas, que la carte du kanji remplace
+     à son arrivée. Seul le mot le plus courant a ce lien (上 うえ, pas
+     上 かみ) : les autres gardent leurs cartes, avec leur lecture. */
+  const KANJI_CAR = /[㐀-鿿豈-﫿]/;
+  let NIVEAU_KANJIS = null;
+  function niveauKanjis() {
+    if (NIVEAU_KANJIS === null) {
+      const k = Kanji.TOUS.find((it) => !commence(it));
+      NIVEAU_KANJIS = k ? k.n : 1;
+    }
+    return NIVEAU_KANJIS;
+  }
+  /* Les cartes ont changé : le niveau des kanjis est à refaire. */
+  function cartesChangees() {
+    NIVEAU_KANJIS = null;
+  }
+  /* Connu : déjà dans les révisions, ou découvert pendant cette séance. */
+  function kanjiConnu(k) {
+    return commence(k) || !!(SEANCE && SEANCE.decouverts.has(k.id));
+  }
+  /* `repli` : le niveau d'un kanji hors des listes, celui du mot ou du
+     texte ; sans lui, le kanji passe. */
+  function aPortee(c, repli) {
+    const k = Kanji.PAR_CAR.get(c);
+    if (!k) return (repli || 5) >= niveauKanjis();
+    return k.n >= niveauKanjis() || kanjiConnu(k);
+  }
+  /* Le kanji d'un mot qui n'est que lui, le mot d'un kanji qui en forme un
+     à lui seul (le premier de la liste, le plus courant). */
+  let SEULS = null;
+  function seul(it) {
+    if (!SEULS) {
+      SEULS = new Map();
+      Mots.TOUS.forEach((m) => {
+        const k = [...m.m].length === 1 && Kanji.PAR_CAR.get(m.m);
+        if (k && !SEULS.has(k)) { SEULS.set(k, m); SEULS.set(m, k); }
+      });
+    }
+    return SEULS.get(it) || null;
+  }
+  const kanjiDuMot = (it) => seul(it);
+  const motDuKanji = (k) => seul(k);
+  function enKanjis(it) {
+    if (!it.kanjis) return false;
+    const k = kanjiDuMot(it);
+    if (k) return kanjiConnu(k);
+    return [...it.m].every((c) => !KANJI_CAR.test(c) || aPortee(c, it.n));
+  }
+  /* Le mot tel que la séance et les textes l'écrivent. */
+  function graphie(it) {
+    return it.kanjis && !enKanjis(it) ? it.l[0] : it.m;
+  }
+  /* Le mot tel que la page l'affiche : en rōmaji si c'est le réglage. */
+  function motEcrit(it) {
+    return romaji() ? Romaji.mot(it) : graphie(it);
+  }
+  /* Une lecture en kanas (たべる, le ニチ de 日), telle que la page
+     l'affiche. `p` : la nature du mot, s'il y en a un (voir
+     Romaji.prepare). */
+  function lectureEcrite(kana, p) {
+    return romaji() ? Romaji.de(Romaji.prepare(kana, p)) : kana;
+  }
+  /* Les kanjis qui le tiennent encore en kanas. */
+  function horsDePortee(it) {
+    const k = kanjiDuMot(it);
+    if (k) return kanjiConnu(k) ? [] : [k.k];
+    return [...new Set([...it.m].filter((c) => KANJI_CAR.test(c) && !aPortee(c, it.n)))];
+  }
+  /* La carte qui porte le sens d'un mot : la sienne, ou celle de son
+     kanji. */
+  function cleSens(it) {
+    const k = kanjiDuMot(it);
+    return k && kanjiConnu(k) ? `${k.id}:sens` : `${it.id}:sens`;
+  }
+  function cleDe(item, genre) {
+    return item.type === "mot" && genre === "sens" ? cleSens(item) : `${item.id}:${genre}`;
+  }
+  /* Une carte mise de côté : le sens d'un mot que porte maintenant la
+     carte de son kanji, la lecture d'un mot qui s'écrit pour l'instant en
+     kanas. Elle garde sa mémoire, et ne revient pas tant qu'elle ne sert
+     pas. */
+  function carteActive(cle) {
+    const d = depuisCle(cle);
+    if (!d) return false;
+    if (d.item.type !== "mot" || d.genre === "dire") return true;
+    return d.genre === "sens" ? cleSens(d.item) === cle : enKanjis(d.item);
+  }
+  /* Deux mots qui s'écrivent pareil (上 うえ et 上 かみ) : la carte dit
+     lequel on attend. */
+  let HOMOGRAPHES = null;
+  function homographe(it) {
+    if (!HOMOGRAPHES) {
+      HOMOGRAPHES = new Map();
+      Mots.TOUS.forEach((m) => HOMOGRAPHES.set(m.m, (HOMOGRAPHES.get(m.m) || 0) + 1));
+    }
+    return it.kanjis && HOMOGRAPHES.get(it.m) > 1;
+  }
+  /* Un sens tapé : celui d'un kanji vaut pour le mot qu'il forme à lui
+     seul, et inversement (下 : « au-dessous », ou « dessous, en bas »
+     comme した). */
+  function accepteSens(it, tape) {
+    const autre = it.type === "kanji" ? motDuKanji(it) : kanjiDuMot(it);
+    return Kanji.accepteSens(it, tape) || (!!autre && Kanji.accepteSens(autre, tape));
   }
 
   /* 0 : jamais vue · 1 : en cours (moins de 3 jours de mémoire) · 2 : sue
@@ -298,7 +496,7 @@
   }
   const NIVEAUX = ["pas encore vu", "en cours", "su", "acquis"];
   function niveauDe(item, genre) {
-    return niveau(ETAT.cartes[`${item.id}:${genre}`]);
+    return niveau(ETAT.cartes[cleDe(item, genre)]);
   }
 
   function echeance(carte) {
@@ -385,20 +583,40 @@
     return demandes.concat(ordreDesMots().filter((it) => !commence(it) && !voulus.has(it.id)));
   }
 
-  /* Les kanjis suivent les mots : d'abord ceux des mots déjà vus, dans
-     l'ordre où on les a découverts - 写真 appris, 写 et 真 viennent -, puis
-     ceux des mots qui arrivent. Les kanjis qu'aucun mot n'emploie ferment
-     la marche, dans l'ordre de l'école (voir construit_kanjis). */
+  /* Les kanjis, niveau par niveau : tout le N5 avant le N4. Dans un
+     niveau, un sur deux vient des mots - ceux déjà vus, dans l'ordre où on
+     les a découverts (写真 appris, 写 et 真 viennent), puis ceux qui
+     arrivent -, l'autre de l'ordre du niveau, qui commence par les nombres
+     et les jours de la semaine (voir construit_kanjis). Un kanji plus
+     difficile attend son niveau, même si un mot l'emploie : ce mot s'écrit
+     en kanas d'ici là (voir enKanjis), et son kanji passera en tête de son
+     niveau. Suivre les mots seuls faisait apprendre 使 et 住 avant 四 et
+     水. */
   function kanjisADecouvrir() {
-    const vus = new Set(), ordre = [];
-    const ajoute = (k) => { if (k && !vus.has(k)) { vus.add(k); ordre.push(k); } };
-    const deSesKanjis = (it) => { for (const c of it.m) ajoute(Kanji.PAR_CAR.get(c)); };
+    const desMots = [], vus = new Set();
+    const deSesKanjis = (it) => {
+      for (const c of it.m) {
+        const k = Kanji.PAR_CAR.get(c);
+        if (k && !vus.has(k)) { vus.add(k); desMots.push(k); }
+      }
+    };
     Mots.TOUS.filter((it) => it.kanjis && commence(it))
       .map((it) => [it, premiereCarte(it)]).sort((a, b) => a[1] - b[1])
       .forEach(([it]) => deSesKanjis(it));
     motsADecouvrir().forEach((it) => { if (it.kanjis) deSesKanjis(it); });
-    Kanji.TOUS.forEach(ajoute);
-    return ordre.filter((k) => !commence(k));
+    const ordre = [], places = new Set();
+    const libre = (k) => !places.has(k) && !commence(k);
+    const place = (k) => { if (k) { places.add(k); ordre.push(k); } };
+    for (const n of Kanji.NIVEAUX) {
+      const a = desMots.filter((k) => k.n === n), b = Kanji.TOUS.filter((k) => k.n === n);
+      for (let i = 0, j = 0; i < a.length || j < b.length;) {
+        while (i < a.length && !libre(a[i])) i++;
+        place(a[i++]);
+        while (j < b.length && !libre(b[j])) j++;
+        place(b[j++]);
+      }
+    }
+    return ordre;
   }
 
   /* La grammaire commence une fois les hiraganas découverts, les sons de
@@ -417,19 +635,21 @@
     return Object.keys(cartes)
       .filter((cle) => {
         const d = depuisCle(cle);
-        return d && (d.item.type === "gram") === !!grammaire && Date.parse(cartes[cle].e) <= maintenant;
+        return d && (d.item.type === "gram") === !!grammaire && Date.parse(cartes[cle].e) <= maintenant
+          && carteActive(cle);
       })
       .sort((a, b) => Date.parse(cartes[a].e) - Date.parse(cartes[b].e));
   }
 
   /* Ce que la séance du jour contient : les cartes dues, ce qu'il y a à
      découvrir - jusqu'au quota du jour, plus `extra` si on en redemande -
-     et les mots à retrouver depuis le français : la carte « dire » d'un mot
-     naît le jour où son sens est su (trois jours de mémoire), dans la
-     limite du quota des mots. Pas de grammaire : voir planGrammaire.
+     et les cartes qui naissent à des mots déjà vus, dans la limite du
+     quota des mots : « dire », le jour où leur sens est su (trois jours
+     de mémoire), et « lire », le jour où un mot appris en kanas passe en
+     kanjis. Pas de grammaire : voir planGrammaire.
      -> { dues, nouveaux (kanas, kanjis et mots alternés), kanas, kanjis,
-          mots, aDire, demandes (combien des mots ont été demandés en
-          lisant), decouverts: { kana, kanji, mot } } */
+          mots, aDire, aLire, demandes (combien des mots ont été demandés
+          en lisant) } */
   function planDuJour(extra) {
     extra = extra || {};
     const cartes = ETAT.cartes;
@@ -437,23 +657,31 @@
 
     // découvert aujourd'hui : sa première carte date d'après le début du
     // jour d'apprentissage. Celles du test de niveau (aucune révision)
-    // n'ont rien été découvert : elles étaient déjà sues.
+    // n'ont rien été découvert : elles étaient déjà sues. Une carte née
+    // aujourd'hui à un mot vu avant n'est pas une découverte, mais une
+    // promotion.
     const debut = Date.parse(ETAT.debut);
     const deja = { kana: new Set(), kanji: new Set(), mot: new Set(), gram: new Set() };
     let promus = 0;
     Object.keys(cartes).forEach((cle) => {
       const d = depuisCle(cle);
       if (!d || !cartes[cle].n || Date.parse(cartes[cle].c) < debut) return;
-      if (d.genre === "dire") promus++;
+      if (d.item.type === "mot" && premiereCarte(d.item) < debut) promus++;
       else deja[d.item.type].add(d.item.id);
     });
     const combien = (type) => Math.max(0, quota(type) - deja[type].size) + (extra[type] || 0);
     const kanas = Kana.TOUS.filter((it) => !commence(it)).slice(0, combien("kana"));
-    const kanjis = combien("kanji") > 0 ? kanjisADecouvrir().slice(0, combien("kanji")) : [];
     // les mots demandés en lisant passent même quand le quota est atteint
     const nMots = Math.max(combien("mot"),
                            Math.min(motsDemandes().length, DEMANDES_PAR_JOUR - deja.mot.size));
     const mots = nMots > 0 ? motsADecouvrir().slice(0, nMots) : [];
+    // un mot qui n'est qu'un kanji à portée (上) amène ce kanji, juste
+    // avant lui, quitte à dépasser le quota des kanjis : sans lui, il
+    // s'écrirait en kanas
+    const amenes = quota("kanji") > 0
+      ? mots.map(kanjiDuMot).filter((k) => k && !commence(k) && k.n >= niveauKanjis()) : [];
+    const nKanjis = Math.max(amenes.length, combien("kanji"));
+    const kanjis = nKanjis > 0 ? [...new Set([...amenes, ...kanjisADecouvrir()])].slice(0, nKanjis) : [];
     const nouveaux = [];
     for (let i = 0; i < Math.max(kanas.length, kanjis.length, mots.length); i++) {
       if (kanas[i]) nouveaux.push(kanas[i]);
@@ -464,11 +692,13 @@
     // dès la première bonne réponse, et la carte « dire » d'un mot découvert
     // le matin serait née avant midi
     const suDAvant = (c) => niveau(c) >= 2 && Date.parse(c.c) < debut;
-    const aDire = Mots.TOUS.filter((it) => !cartes[`${it.id}:dire`] && suDAvant(cartes[`${it.id}:sens`]))
-      .slice(0, Math.max(0, quota("mot") - promus)).map((it) => `${it.id}:dire`);
-    return { dues, nouveaux, kanas, kanjis, mots, aDire,
-             demandes: mots.filter(demande).length,
-             decouverts: { kana: deja.kana.size, kanji: deja.kanji.size, mot: deja.mot.size } };
+    const vuAvant = (it) => commence(it) && premiereCarte(it) < debut;
+    const place = Math.max(0, quota("mot") - promus);
+    const aDire = Mots.TOUS.filter((it) => !cartes[`${it.id}:dire`] && suDAvant(cartes[cleSens(it)]) && vuAvant(it))
+      .slice(0, place).map((it) => `${it.id}:dire`);
+    const aLire = Mots.TOUS.filter((it) => it.kanjis && !cartes[`${it.id}:lire`] && vuAvant(it) && enKanjis(it))
+      .slice(0, Math.max(0, place - aDire.length)).map((it) => `${it.id}:lire`);
+    return { dues, nouveaux, kanas, kanjis, mots, aDire, aLire, demandes: mots.filter(demande).length };
   }
 
   /* La grammaire, à part : elle ne se mêle pas à la séance du jour - une
@@ -508,6 +738,7 @@
 
   async function chargeEtat() {
     ETAT = await api("/api/nihongo/etat");
+    cartesChangees();
     return ETAT;
   }
 
@@ -542,17 +773,21 @@
      « -び », « おお- » : un suffixe, un préfixe. */
   function kunHtml(r) {
     const [tige, fin] = String(r).split(".");
-    const tiret = (s) => echappe(s).replace(/-/g, "‐");
+    const tiret = (s) => echappe(lectureEcrite(s)).replace(/-/g, "‐");
     return tiret(tige) + (fin ? `<span class="okuri">${tiret(fin)}</span>` : "");
   }
 
+  /* En rōmaji, les lectures on en capitales (NICHI), comme les
+     dictionnaires : on les distingue des kun sans les katakanas. */
   function lecturesHtml(it, court) {
     const on = court ? it.on.slice(0, 2) : it.on;
     const kun = court ? it.kun.slice(0, 2) : it.kun;
     if (!on.length && !kun.length) return "";
+    const enOn = (r) => echappe(romaji() ? Romaji.de(r).toUpperCase() : r);
+    const point = romaji() ? " · " : "・";
     return `<dl class="lectures">
-      ${on.length ? `<div><dt><span lang="ja">音</span> on</dt><dd lang="ja">${on.map(echappe).join("・")}</dd></div>` : ""}
-      ${kun.length ? `<div><dt><span lang="ja">訓</span> kun</dt><dd lang="ja">${kun.map(kunHtml).join("・")}</dd></div>` : ""}
+      ${on.length ? `<div><dt><span lang="ja">音</span> on</dt><dd lang="ja">${on.map(enOn).join(point)}</dd></div>` : ""}
+      ${kun.length ? `<div><dt><span lang="ja">訓</span> kun</dt><dd lang="ja">${kun.map(kunHtml).join(point)}</dd></div>` : ""}
     </dl>`;
   }
 
@@ -572,12 +807,18 @@
       }).join('<span class="cp-plus" aria-hidden="true">+</span>')}</p>`;
   }
 
+  /* Des mots courants qui l'emploient, et d'abord celui qu'il forme à lui
+     seul (上 : うえ, « dessus, en haut ») : sa carte de sens est la sienne
+     (voir « En kanjis, ou en kanas »). */
   function motsHtml(it) {
-    if (!it.m.length) return "";
+    const lui = motDuKanji(it);
+    const mots = lui && !it.m.some(([mot]) => mot === lui.m)
+      ? [[lui.m, lui.l[0], Mots.sens(lui, 3).join(", "), lui.fr.length ? 0 : 1], ...it.m] : it.m;
+    if (!mots.length) return "";
     const surligne = (mot) => [...mot].map((c) => c === it.k ? `<b>${echappe(c)}</b>` : echappe(c)).join("");
-    return `<ul class="mots">${it.m.map(([mot, lecture, sens, en]) => `
+    return `<ul class="mots">${mots.map(([mot, lecture, sens, en]) => `
       <li><button type="button" class="mot" data-mot="${echappe(mot)}" data-lecture="${echappe(lecture)}" aria-label="Écouter ${echappe(mot)}, ${echappe(lecture)}">
-          <span class="mot-jp" lang="ja">${surligne(mot)}</span><span class="mot-kana" lang="ja">${echappe(lecture)}</span>${ICONE_SON}</button>
+          <span class="mot-jp" lang="ja">${surligne(mot)}</span><span class="mot-kana" lang="ja">${echappe(lectureEcrite(lecture))}</span>${ICONE_SON}</button>
         <span class="mot-sens">${echappe(sens)}${en ? ' <em class="en">(en anglais)</em>' : ""}</span></li>`).join("")}</ul>`;
   }
 
@@ -596,10 +837,25 @@
 
   /* ---------- l'affichage d'un mot ---------- */
   /* Le mot en grand : la taille suit sa longueur, 人 et コンピューター
-     doivent tenir tous deux sur un téléphone. */
-  function motGrand(it, classe) {
-    const n = Math.max(2, [...it.m].length);
-    return `<div class="sc-mot ${classe || ""}" lang="ja" style="--n:${n}">${echappe(it.m)}</div>`;
+     doivent tenir tous deux sur un téléphone - et une lettre latine est
+     deux fois moins large qu'un kana. Tel que la séance l'écrit, en
+     kanjis, en kanas ou en rōmaji, sauf `texte` donné. */
+  function motGrand(it, classe, texte) {
+    const m = texte || motEcrit(it);
+    const n = Math.max(2, ECRIT_JAPONAIS.test(m) ? [...m].length : Math.ceil([...m].length * 0.55));
+    return `<div class="sc-mot ${classe || ""}" lang="ja" style="--n:${n}">${echappe(m)}</div>`;
+  }
+
+  /* Ce qu'il manque à un mot écrit en kanas pour passer en kanjis :
+     « quand 写 et 真 seront à ta portée ». */
+  function quandHtml(it) {
+    const liste = horsDePortee(it).map((c) => `<span lang="ja">${echappe(c)}</span>`);
+    return `quand ${liste.length > 1 ? `${liste.slice(0, -1).join(", ")} et ${liste[liste.length - 1]} seront`
+      : `${liste[0]} sera`} à ta portée`;
+  }
+  function plusTardHtml(it) {
+    return it.kanjis && !enKanjis(it)
+      ? ` · en kanjis <span lang="ja">${echappe(it.m)}</span>, ${quandHtml(it)}` : "";
   }
 
   function sensMotHtml(it, combien) {
@@ -625,25 +881,30 @@
   }
 
   /* Ce qu'une réponse dévoile d'un mot : sa lecture et sa voix, sa nature,
-     ses sens, ses kanjis. Le bouton du son s'appelle scSon. */
+     ses sens, ses kanjis - ceux d'un mot écrit en kanas attendent leur
+     tour. En rōmaji, le mot dit déjà sa lecture. Le bouton du son
+     s'appelle scSon. */
   function detailMotHtml(it, options) {
     const o = options || {};
-    const lecture = it.kanjis && o.lecture !== false
+    const enK = enKanjis(it);
+    const lecture = enK && o.lecture !== false && !romaji()
       ? `<span class="mt-lecture" lang="ja">${it.l.map(echappe).join(" · ")}</span>` : "";
     return `
       <div class="mt-ecoute">${lecture}${boutonSon("scSon")}</div>
-      <p class="mt-nature">${echappe(Mots.nature(it))}${it.a ? ` · s'écrit aussi <span lang="ja">${echappe(it.a)}</span>` : ""}</p>
+      <p class="mt-nature">${echappe(Mots.nature(it))}${plusTardHtml(it)}${it.a
+        ? ` · s'écrit aussi <span lang="ja">${echappe(it.a)}</span>` : ""}</p>
       <p class="sc-sens">${sensMotHtml(it)}</p>
-      ${kanjisDuMot(it, o.cliquable)}`;
+      ${enK ? kanjisDuMot(it, o.cliquable) : ""}`;
   }
 
   /* La saisie d'une lecture : le rōmaji se change en kanas à mesure qu'on
      tape (voir Mots.versKana). Pas pendant une composition : le clavier
-     japonais d'un téléphone fait déjà ce travail. */
+     japonais d'un téléphone fait déjà ce travail. Ni quand la page est en
+     rōmaji : la réponse s'écrit comme on la lit. */
   function saisieKana(input) {
     let compose = false;
     const convertit = () => {
-      if (compose || input.readOnly) return;
+      if (compose || input.readOnly || romaji()) return;
       const v = Mots.versKana(input.value);
       if (v !== input.value) input.value = v;
     };
@@ -651,6 +912,20 @@
     input.addEventListener("compositionend", () => { compose = false; convertit(); });
     input.addEventListener("input", convertit);
   }
+  /* La réponse validée : en kanas, sauf en rōmaji, où elle reste comme on
+     l'a tapée - les corrections la changent elles-mêmes en kanas. */
+  function valideSaisie(input) {
+    if (!romaji()) input.value = Mots.versKana(input.value, true);
+    return input.value.trim();
+  }
+  /* En rōmaji, une réponse tapée comme la page l'écrit (tōkyō, toukyou ou
+     tookyoo : voir Romaji.plat) est juste. */
+  function commeEcrit(tape, transcriptions) {
+    const t = Romaji.plat(tape);
+    return romaji() && !!t && transcriptions.some((x) => Romaji.plat(x) === t);
+  }
+  const PRESQUE = () => (romaji() ? " Presque : attention aux voyelles longues (ō, ū…) et aux consonnes doubles."
+                                  : " Presque : attention aux sons longs et aux っ.");
 
   /* ---------- l'affichage de la grammaire ----------
      Ses textes arrivent avec leurs furigana, {学生|がくせい}, et du
@@ -663,11 +938,40 @@
   function rubis(texte) {
     return enRubis(echappe(texte));
   }
+  /* Les textes et les phrases de la grammaire s'écrivent comme la séance
+     (voir « En kanjis, ou en kanas ») : un groupe de furigana dont un
+     kanji est hors de portée laisse la place à sa lecture. `repli` : le
+     niveau d'un kanji hors des listes, celui du texte. */
+  function kanaise(balise, repli) {
+    return String(balise || "").replace(RUBI, (tout, base, lu) =>
+      ([...base].some((c) => KANJI_CAR.test(c) && !aPortee(c, repli)) ? lu : tout));
+  }
+  /* En rōmaji, chaque morceau de japonais glissé dans un texte - le gras
+     (**) en son milieu compris - prend sa transcription de romaji.json : la
+     même découpe que FRAGMENT_JAPONAIS dans nihongo.py. À défaut (le
+     fichier n'est pas arrivé), celle de ses kanas, sans les espaces entre
+     les mots. */
+  const J = String.raw`\{[^{}|]+\|[^{}|]+\}|[ぁ-ゖァ-ヺー〜々・「」『』。、？！（）]|[㐀-鿿]`;
+  const FRAGMENT = new RegExp(`(?:${J})(?:${J}|\\*\\*(?=(?:${J})))*`, "g");
+  function roTexte(texte) {
+    return String(texte || "").replace(FRAGMENT, (m) => TRANSCRITS.fragments[m]
+      || Romaji.de(Grammaire.lecture(m.replace(/\*\*/g, ""))));
+  }
+  /* Du japonais à lire : une phrase, un titre de texte. `ecritJaponais`
+     l'écrit toujours en kanas et en kanjis (le test de niveau). */
+  function ecritJaponais(texte, repli) {
+    return rubis(kanaise(texte, repli));
+  }
+  function enJaponais(texte, repli) {
+    return romaji() ? echappe(roTexte(texte)) : ecritJaponais(texte, repli);
+  }
+  function titreHtml(t) {
+    return romaji() ? echappe(Romaji.capitale(roTexte(t.titre))) : enJaponais(t.titre, t.n);
+  }
   /* Du français, avec du japonais dedans. */
   function texteHtml(texte) {
-    return echappe(texte)
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(JAPONAIS, (m) => `<span lang="ja">${enRubis(m)}</span>`);
+    const html = echappe(romaji() ? roTexte(texte) : texte).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    return romaji() ? html : html.replace(JAPONAIS, (m) => `<span lang="ja">${enRubis(m)}</span>`);
   }
 
   /* L'explication d'un point : paragraphes, listes, tableaux, remarques. */
@@ -693,8 +997,14 @@
      quand le sens, affiché à côté, la dit déjà. */
   function motifHtml(it, toujours) {
     const { motif, precision } = Grammaire.decoupeTitre(it, toujours);
-    return `<span class="gr-motif" lang="ja">${rubis(motif).replace(/・/g, "・<wbr>")}</span>${precision
+    const ecrit = romaji() ? echappe(roTexte(motif)) : rubis(motif).replace(/・/g, "・<wbr>");
+    return `<span class="gr-motif" lang="ja">${ecrit}</span>${precision
       ? ` <span class="gr-precision">${texteHtml(precision)}</span>` : ""}`;
+  }
+
+  /* Un point en quelques signes, pour un bouton : son titre sans furigana. */
+  function motifCourt(it) {
+    return romaji() ? roTexte(it.titre) : it.court;
   }
 
   function enteteGramHtml(it, id) {
@@ -708,10 +1018,25 @@
      quelque chose), ou remplie - `etat` vaut alors « juste », « faux » ou
      « montre ». */
   function phraseHtml(ex, etat) {
+    if (romaji()) {
+      const ro = roPhrase(ex);
+      const trou = etat ? `<mark class="gr-rempli gr-${etat}">${echappe(ro.t)}</mark>`
+        : `<span class="gr-trou" style="--n:${Math.max(2, Math.ceil(ro.t.length * 0.55))}">${
+          ro.i ? `(${echappe(ro.i)})` : ""}</span>`;
+      return `${echappe(ro.a)}${trou}${echappe(ro.p)}`;
+    }
     const milieu = etat
-      ? `<mark class="gr-rempli gr-${etat}">${rubis(ex.t)}</mark>`
-      : `<span class="gr-trou" style="--n:${[...ex.r[0]].length}">${ex.i ? `（${rubis(ex.i)}）` : ""}</span>`;
-    return `${rubis(ex.a)}${milieu}${rubis(ex.p)}`;
+      ? `<mark class="gr-rempli gr-${etat}">${enJaponais(ex.t)}</mark>`
+      : `<span class="gr-trou" style="--n:${[...ex.r[0]].length}">${ex.i ? `（${enJaponais(ex.i)}）` : ""}</span>`;
+    return `${enJaponais(ex.a)}${milieu}${enJaponais(ex.p)}`;
+  }
+
+  /* Une phrase à trou en rōmaji : avant, le trou, après, ce que montre le
+     trou, les autres réponses (voir Romaniseur.exemple dans nihongo.py). */
+  function roPhrase(ex) {
+    const lu = (s) => Romaji.de(Grammaire.lecture(s || ""));
+    return TRANSCRITS.phrases[ex.son]
+      || { a: lu(ex.a), t: lu(ex.t), p: lu(ex.p), i: ex.i ? lu(ex.i) : "", r: ex.r.slice(1).map((r) => Romaji.de(r)) };
   }
 
   function exempleHtml(ex, i) {
@@ -740,7 +1065,10 @@
   function appliqueFurigana() {
     document.documentElement.classList.toggle("sans-furigana", !furigana());
   }
-  function reglageFurigana() {
+  /* `toujours` : même en rōmaji, où il n'y a pas de furigana à montrer (la
+     page des paramètres). */
+  function reglageFurigana(toujours) {
+    if (romaji() && !toujours) return "";
     return `<div class="segment segment-petit" role="radiogroup" aria-label="Furigana">
       <button type="button" role="radio" data-furigana="1" aria-checked="${furigana()}">Furigana</button>
       <button type="button" role="radio" data-furigana="0" aria-checked="${!furigana()}">Sans</button>
@@ -770,6 +1098,7 @@
     lecture: vueLecture,
     grammaire: vueGrammaire,
     progres: vueProgres,
+    parametres: vueParametres,
   };
 
   function rubrique() {
@@ -812,14 +1141,17 @@
      ===================================================================== */
   const JOURS_JP = "日月火水木金土";
 
+  /* Le salut de l'heure, en japonais ou en rōmaji, sans traduction : on le
+     lit tous les jours, il finit par se savoir. */
   function salut() {
     const h = new Date().getHours();
-    if (h >= 4 && h < 10) return { jp: "おはようございます", romaji: "ohayō gozaimasu", fr: "bonjour (le matin)" };
-    if (h >= 10 && h < 18) return { jp: "こんにちは", romaji: "konnichiwa", fr: "bonjour" };
-    return { jp: "こんばんは", romaji: "konbanwa", fr: "bonsoir" };
+    const s = h >= 4 && h < 10 ? ["おはようございます", "ohayō gozaimasu"]
+      : h >= 10 && h < 18 ? ["こんにちは", "konnichiwa"] : ["こんばんは", "konbanwa"];
+    return romaji() ? Romaji.capitale(s[1]) : s[0];
   }
 
   function dateJaponaise(d) {
+    if (romaji()) return Romaji.date(d);
     return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${JOURS_JP[d.getDay()]}）`;
   }
 
@@ -833,22 +1165,12 @@
 
   const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
 
-  const VOIX_CHOIX = [...VOIX, { id: "alterne", nom: "Les deux" }];
-  /* « 5 kanas, 3 kanjis, 5 mots par jour · voix : Femme » */
-  function resumeReglages() {
-    const voix = VOIX_CHOIX.find((v) => v.id === Voix.choix()) || VOIX_CHOIX[0];
-    return `${pluriel(quota("kana"), "kana")}, ${pluriel(quota("kanji"), "kanji")}, ${pluriel(quota("mot"), "mot")}
-      par jour · voix : ${voix.nom.toLowerCase()}`;
-  }
-
   function vueAujourdhui(vue) {
     const plan = planDuJour();
     const j = ETAT.aujourdhui;
-    const s = salut();
     const maintenant = new Date();
-    const dateFr = maintenant.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
     const precision = j.revisions ? Math.round(100 * j.justes / j.revisions) + " %" : "–";
-    const aReviser = plan.dues.length + plan.aDire.length;
+    const aReviser = plan.dues.length + plan.aDire.length + plan.aLire.length;
     const total = aReviser + plan.nouveaux.length;
     // une découverte prend une minute ou plus (présentation, tracé guidé,
     // deux cartes) ; une révision, une dizaine de secondes
@@ -866,9 +1188,13 @@
     // les révisions en une ligne, puis ce qu'il y a à découvrir, une ligne
     // par sorte - chaque élément ouvre sa fiche
     const apercus = new Map();
+    // un mot dont le kanji vient dans la même séance s'écrira en kanji
+    const prevus = new Set(plan.kanjis);
+    const ecrit = (it) => it.k || (romaji() ? Romaji.mot(it) : prevus.has(kanjiDuMot(it)) ? it.m : graphie(it));
+    // chaque élément a sa langue : en rōmaji, les mots passent en latin, les kanas restent
     const apercu = (liste) => `<span class="apercu-kanas" lang="ja">${liste.map((it) => {
       apercus.set(it.id, it);
-      return `<button type="button" class="apercu-el" data-apercu="${echappe(it.id)}">${echappe(it.k || it.m)}</button>`;
+      return `<button type="button" class="apercu-el" lang="ja" data-apercu="${echappe(it.id)}">${echappe(ecrit(it))}</button>`;
     }).join("")}</span>`;
     const nouveautes = [];
     const ligne = (liste, nom, plus) => `<li><span class="seance-sorte"><strong>${liste.length}</strong>
@@ -881,10 +1207,20 @@
     }
     let revisions = aReviser
       ? `<strong>${aReviser}</strong> révision${aReviser > 1 ? "s" : ""}` : "Aucune révision";
+    const premieres = [];
     if (plan.aDire.length) {
-      revisions += `, dont ${plan.aDire.length} mot${plan.aDire.length > 1 ? "s" : ""} à retrouver pour la première fois depuis le français`;
+      premieres.push(`${pluriel(plan.aDire.length, "mot")} à retrouver pour la première fois depuis le français`);
     }
-    const liste = (l) => l.length > 1 ? `${l.slice(0, -1).join(", ")} et ${l[l.length - 1]}` : l.join("");
+    if (plan.aLire.length) {
+      premieres.push(`${pluriel(plan.aLire.length, "mot")} à lire pour la première fois en kanjis`);
+    }
+    if (premieres.length) revisions += `, dont ${premieres.join(" et ")}`;
+    // les mots demandés en lisant qui attendent encore : on peut y renoncer
+    const enAttente = motsDemandes().length;
+    const demandesHtml = enAttente ? `<p class="seance-demandes">${enAttente > 1
+      ? `${enAttente} mots demandés en lisant attendent` : "Un mot demandé en lisant attend"} leur tour, ${
+      DEMANDES_PAR_JOUR} par jour au plus. <button type="button" class="btn-lien" id="annuleDemandes">Ne plus
+      ${enAttente > 1 ? "les" : "le"} demander</button></p>` : "";
 
     let seance;
     if (total > 0) {
@@ -894,6 +1230,7 @@
           <p>${revisions}${nouveautes.length ? ", et à découvrir :" : "."}</p>
           ${nouveautes.length ? `<ul class="seance-nouveaux">${nouveautes.join("")}</ul>` : ""}
           <p class="seance-duree">Environ ${pluriel(minutes, "minute")}.</p>
+          ${demandesHtml}
         </div>
         <button class="btn btn-grand" id="lance">始め <span>Commencer</span></button>`;
     } else {
@@ -907,26 +1244,16 @@
             ${reste.kanji ? `<button class="btn btn-second" id="encoreKanji">${QUOTAS.kanji.defaut} kanjis de plus</button>` : ""}
             ${reste.mot ? `<button class="btn btn-second" id="encoreMot">${QUOTAS.mot.defaut} mots de plus</button>` : ""}
           </div>
+          ${demandesHtml}
         </div>
         ${fait ? `<div class="tampon tampon-pose" aria-label="Séance terminée"><span lang="ja">済</span></div>` : ""}`;
     }
 
-    const reglage = (type, libelle) => `
-      <label class="reglage">${libelle}
-        <select data-quota="${type}">${QUOTAS[type].choix.map((n) =>
-          `<option value="${n}"${n === quota(type) ? " selected" : ""}>${n}</option>`).join("")}</select>
-      </label>`;
-    const decouverts = [];
-    if (plan.decouverts.kana) decouverts.push(pluriel(plan.decouverts.kana, "kana"));
-    if (plan.decouverts.kanji) decouverts.push(pluriel(plan.decouverts.kanji, "kanji"));
-    if (plan.decouverts.mot) decouverts.push(pluriel(plan.decouverts.mot, "mot"));
-
     vue.innerHTML = `
       <section class="accueil-tete">
         <div>
-          <p class="date"><span lang="ja">${dateJaponaise(maintenant)}</span> · ${echappe(dateFr)}</p>
-          <h1 class="salut"><span lang="ja">${s.jp}</span></h1>
-          <p class="salut-trad"><em>${s.romaji}</em> — ${s.fr}</p>
+          <p class="date"><span lang="ja">${dateJaponaise(maintenant)}</span></p>
+          <h1 class="salut"><span lang="ja">${salut()}</span></h1>
         </div>
         <p class="devise" lang="ja" aria-hidden="true">毎日少しずつ</p>
       </section>
@@ -944,26 +1271,6 @@
         ${gramCarteHtml("À étudier")}
         ${aLireHtml()}
       </div>
-
-      <details class="reglages" id="reglages"${Pref.lit("reglagesOuverts", false) === true ? " open" : ""}>
-        <summary><span class="reglage-titre">Réglages</span>
-          <span class="reglage-aide" id="reglagesResume">${resumeReglages()}</span></summary>
-        <section class="reglage-nouveaux">
-          <span class="reglage-titre">Nouveaux par jour :</span>
-          ${reglage("kana", "kanas")}
-          ${reglage("kanji", "kanjis")}
-          ${reglage("mot", "mots")}
-          <span class="reglage-aide">Sur cet appareil.${decouverts.length ? ` Découverts aujourd'hui : ${liste(decouverts)}.` : ""}</span>
-        </section>
-        <section class="reglage-nouveaux reglage-voix">
-          <span class="reglage-titre">Voix :</span>
-          <div class="segment segment-petit" role="radiogroup" aria-label="Voix">
-            ${VOIX_CHOIX.map((v) => `
-              <button type="button" role="radio" data-voix="${v.id}" aria-checked="${v.id === Voix.choix()}">${v.nom}</button>`).join("")}
-          </div>
-          ${boutonSon("essaiVoix", "Essayer")}
-        </section>
-      </details>
 
       <section class="programme">
         <h2 class="section-titre"><span lang="ja">道</span> Le chemin</h2>
@@ -989,19 +1296,12 @@
     if (encoreKanji) encoreKanji.addEventListener("click", () => lanceSeance({ kanji: QUOTAS.kanji.defaut }));
     const encoreMot = $("encoreMot");
     if (encoreMot) encoreMot.addEventListener("click", () => lanceSeance({ mot: QUOTAS.mot.defaut }));
-    // choisir une voix la fait entendre : c'est la seule façon de choisir
-    vue.querySelectorAll("[data-voix]").forEach((b) => b.addEventListener("click", () => {
-      Pref.ecrit("voix", b.dataset.voix);
-      vue.querySelectorAll("[data-voix]").forEach((x) => x.setAttribute("aria-checked", String(x === b)));
-      $("reglagesResume").textContent = resumeReglages();
-      dire(PHRASE_ESSAI);
-    }));
-    $("reglages").addEventListener("toggle", () => Pref.ecrit("reglagesOuverts", $("reglages").open));
-    $("essaiVoix").addEventListener("click", () => dire(PHRASE_ESSAI));
-    vue.querySelectorAll("select[data-quota]").forEach((s) => s.addEventListener("change", () => {
-      Pref.ecrit(QUOTAS[s.dataset.quota].pref, +s.value);
-      rend();
-    }));
+    const annuleDemandes = $("annuleDemandes");
+    if (annuleDemandes) {
+      annuleDemandes.addEventListener("click", async () => {
+        if (await demandeMots(motsDemandes().map((it) => it.id), false)) rend();
+      });
+    }
     vue.querySelectorAll(".etape a").forEach((a) => a.addEventListener("click", (e) => {
       e.preventDefault();
       va(a.dataset.rubrique);
@@ -1063,7 +1363,7 @@
 
   async function lanceSeance(extra) {
     const plan = planDuJour(extra);
-    const revues = melange([...plan.dues, ...plan.aDire].map(carteDe));
+    const revues = melange([...plan.dues, ...plan.aDire, ...plan.aLire].map(carteDe));
     try {
       await chargeTraces([...revues.map((e) => e.item), ...plan.nouveaux]);
     } catch (e) { toast(e.message, true); return; }
@@ -1114,6 +1414,9 @@
   }
 
   function etape() {
+    // une carte qui ne sert plus depuis le début de la séance : le sens de
+    // まえ, quand on vient de découvrir le kanji 前 qui le porte
+    while (SEANCE.file.length && SEANCE.file[0].cle && !carteActive(SEANCE.file[0].cle)) SEANCE.file.shift();
     const e = SEANCE.file.shift();
     SEANCE.courante = e || null;
     majJauge();
@@ -1142,6 +1445,7 @@
     try {
       const r = await api("/api/nihongo/reponse", "POST", { cle: e.cle, note: valeur, secondes });
       ETAT.cartes[r.cle] = r.carte;
+      cartesChangees();
       ETAT.aujourdhui = r.aujourdhui;
       ETAT.serie = r.serie;
     } catch (err) {
@@ -1307,6 +1611,7 @@
       <div class="carte-seance tache-fr">
         <p class="sc-genre"><span class="sc-marque" lang="ja">意</span> Sens · ${genreLabel(e)}</p>
         ${mot ? motGrand(it) : `<div class="sc-glyphe sc-glyphe-seul" lang="ja">${echappe(it.k)}</div>`}
+        ${mot && homographe(it) && enKanjis(it) && !romaji() ? `<p class="sc-precision" lang="ja">${echappe(it.l[0])}</p>` : ""}
         ${tacheHtml(`Que veut dire ce ${mot ? "mot" : "kanji"} ?`, "en français")}
         <form class="sc-reponse" id="scForm" autocomplete="off" data-langue="FR">
           <input id="scSaisie" class="sc-saisie sc-saisie-sens" autocapitalize="none" autocorrect="off"
@@ -1332,7 +1637,7 @@
       if (repondu) { continuer(); return; }
       repondu = true;
       const tape = saisie.value.trim();
-      const juste = Kanji.accepteSens(it, tape);
+      const juste = accepteSens(it, tape);
       saisie.readOnly = true;
       saisie.classList.add(juste ? "juste" : "faux");
       $("scRetour").innerHTML = juste
@@ -1386,13 +1691,15 @@
 
   /* La lecture d'un mot à kanjis : 食べる -> たべる. Le rōmaji devient des
      kanas pendant la frappe ; toutes les lectures du mot sont acceptées
-     (今日 : きょう ou こんにち). */
+     (今日 : きょう ou こんにち). Le mot reste en kanjis même quand la page
+     est en rōmaji : c'est eux qu'on apprend à lire. */
   function rendLireMot(e) {
     const it = e.item;
     $("scScene").innerHTML = `
       <div class="carte-seance tache-jp">
         <p class="sc-genre"><span class="sc-marque" lang="ja">読</span> Lecture · ${genreLabel(e)}</p>
-        ${motGrand(it)}
+        ${motGrand(it, "", graphie(it))}
+        ${homographe(it) ? `<p class="sc-precision">au sens de « ${sensMotHtml(it, 2)} »</p>` : ""}
         ${tacheHtml("Comment se lit ce mot ?", "en japonais")}
         <form class="sc-reponse" id="scForm" autocomplete="off" data-langue="JP">
           <input id="scSaisie" class="sc-saisie" lang="ja" autocapitalize="none" autocorrect="off"
@@ -1411,16 +1718,17 @@
       ev.preventDefault();
       if (repondu) { suivante(); return; }
       repondu = true;
-      saisie.value = Mots.versKana(saisie.value, true);
-      const tape = saisie.value.trim();
-      const juste = !!tape && Mots.accepteLecture(it, tape);
+      const tape = valideSaisie(saisie);
+      const lectures = it.l.map((l) => lectureEcrite(l, it.p));
+      const juste = !!tape && (Mots.accepteLecture(it, tape) || commeEcrit(tape, lectures));
       saisie.readOnly = true;
       saisie.classList.add(juste ? "juste" : "faux");
-      const lu = `<span lang="ja">${echappe(it.m)}</span> se lit « <strong lang="ja">${it.l.map(echappe).join(" » ou « ")}</strong> »`;
+      const lu = `<span lang="ja">${echappe(it.m)}</span> se lit « <strong lang="ja">${lectures.map(echappe).join(
+        "</strong> » ou « <strong lang=\"ja\">")}</strong> »`;
       $("scRetour").innerHTML = juste
         ? `<span class="verdict verdict-juste">正解</span> ${lu}.`
         : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> ${lu}${tape ? `, pas « <span lang="ja">${echappe(tape)}</span> »` : ""}.`
-          + (tape && Mots.presque(it, tape) ? " Presque : attention aux sons longs et aux っ." : "");
+          + (tape && Mots.presque(it, tape) ? PRESQUE() : "");
       $("scDetail").innerHTML = detailMotHtml(it, { lecture: false });
       $("scDetail").hidden = false;
       $("scSon").addEventListener("click", () => dis(it));
@@ -1439,7 +1747,8 @@
      après un indice compte comme « difficile ». */
   function rendDireMot(e) {
     const it = e.item;
-    const kanas = [...it.l[0]];
+    // l'indice dévoile un son après l'autre : un kana, ou sa syllabe en rōmaji
+    const kanas = romaji() ? Romaji.sons(it.l[0]) : [...it.l[0]];
     $("scScene").innerHTML = `
       <div class="carte-seance tache-jp">
         <p class="sc-genre"><span class="sc-marque" lang="ja">言</span> Retrouver le mot · ${genreLabel(e)}</p>
@@ -1470,7 +1779,8 @@
     }
     $("scAide").addEventListener("click", () => {
       indices = Math.min(indices + 1, Math.max(1, kanas.length - 1));
-      $("scIndice").textContent = kanas.map((k, i) => (i < indices ? k : "＿")).join(" ");
+      $("scIndice").textContent = romaji() ? Romaji.indice(it.l[0], indices)
+        : kanas.map((k, i) => (i < indices ? k : "＿")).join(" ");
       $("scIndice").hidden = false;
       if (indices >= kanas.length - 1) $("scAide").hidden = true;
       saisie.focus();
@@ -1478,14 +1788,14 @@
     $("scForm").addEventListener("submit", (ev) => {
       ev.preventDefault();
       if (repondu) { continuer(); return; }
-      saisie.value = Mots.versKana(saisie.value, true);
-      const tape = saisie.value.trim();
-      const juste = !!tape && Mots.accepteLecture(it, tape);
+      const tape = valideSaisie(saisie);
+      const juste = !!tape && (Mots.accepteLecture(it, tape) || commeEcrit(tape, [Romaji.mot(it)]));
       if (tape && !juste && !synonymeVu) {
         const autre = Mots.synonyme(it, tape);
         if (autre) {
           synonymeVu = true;
-          $("scRetour").innerHTML = `<span lang="ja">${echappe(autre.m)}</span>${autre.kanjis ? ` (<span lang="ja">${echappe(autre.l[0])}</span>)` : ""}
+          $("scRetour").innerHTML = `<span lang="ja">${echappe(motEcrit(autre))}</span>${enKanjis(autre) && !romaji()
+            ? ` (<span lang="ja">${echappe(autre.l[0])}</span>)` : ""}
             veut dire ça aussi ! Mais on cherche un autre mot : encore un essai.`;
           saisie.value = "";
           saisie.focus();
@@ -1672,8 +1982,10 @@
     $("scForm").addEventListener("submit", (ev) => {
       ev.preventDefault();
       if (repondu) { continuer(); return; }
-      saisie.value = Mots.versKana(saisie.value, true);
-      const verdict = Grammaire.corrige(ex, saisie.value);
+      const ro = romaji() ? roPhrase(ex) : null;
+      let verdict = Grammaire.corrige(ex, valideSaisie(saisie));
+      // en rōmaji, la particule は s'écrit « wa » : la taper ainsi est juste
+      if (ro && (verdict === "particule" || commeEcrit(saisie.value, [ro.t, ...(ro.r || [])]))) verdict = "juste";
       if (verdict === "particule" && !particuleVue) {
         particuleVue = true;
         $("scRetour").innerHTML = `Presque : は, へ et を, quand ce sont des particules, se tapent
@@ -1687,12 +1999,12 @@
       saisie.readOnly = true;
       saisie.classList.add(juste ? "juste" : "faux");
       $("grPhrase").innerHTML = phraseHtml(ex, juste ? "juste" : "faux");
-      const autres = (ex.e || ex.r).slice(1);
+      const autres = ro ? ro.r || [] : (ex.e || ex.r).slice(1);
       $("scRetour").innerHTML = juste
         ? `<span class="verdict verdict-juste">正解</span> ${aide ? "Avec un indice." : "C'est ça."}`
         : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> Il fallait
-           « <strong lang="ja">${rubis(ex.t)}</strong> »${autres.length ? ` (ou <span lang="ja">${autres.map(echappe).join("</span>, <span lang=\"ja\">")}</span>)` : ""}${tape ? `, pas « <span lang="ja">${echappe(tape)}</span> »` : ""}.`
-          + (verdict === "presque" ? " Presque : attention aux sons longs et aux っ." : "");
+           « <strong lang="ja">${ro ? echappe(ro.t) : enJaponais(ex.t)}</strong> »${autres.length ? ` (ou <span lang="ja">${autres.map(echappe).join("</span>, <span lang=\"ja\">")}</span>)` : ""}${tape ? `, pas « <span lang="ja">${echappe(tape)}</span> »` : ""}.`
+          + (verdict === "presque" ? PRESQUE() : "");
       $("grRappel").innerHTML = `
         <p class="gr-rappel-titre"><span>${motifHtml(it)}</span> : ${texteHtml(it.sens)}
           ${boutonSon("grSon", "Réécouter")}</p>
@@ -1738,7 +2050,7 @@
     const point = gramSuivant();
     const precision = SEANCE.notees ? Math.round(100 * SEANCE.justes / SEANCE.notees) : 100;
     const versTexte = suivant ? `<button type="button" class="btn-lien" id="scLire">Un texte :
-      <span lang="ja">${rubis(suivant.titre)}</span> (${echappe(suivant.fr)})</button>` : "";
+      <span lang="ja">${titreHtml(suivant)}</span> (${echappe(suivant.fr)})</button>` : "";
     const versPoint = point ? `<button type="button" class="btn-lien" id="scGram">${SEANCE.genre === "gram"
       ? "Le point suivant" : "Un point de grammaire"} : ${motifHtml(point, true)}</button>` : "";
     const suites = (SEANCE.genre === "gram" ? [versPoint, versTexte] : [versTexte, versPoint]).filter(Boolean);
@@ -1748,15 +2060,15 @@
       <span class="apercu-kanas" lang="ja">${items.map((it) => {
         elements.set(it.id, it);
         return `<button type="button" class="apercu-el" data-element="${echappe(it.id)}">${echappe(
-          it.type === "gram" ? it.court : it.k || it.m)}</button>`;
+          it.type === "gram" ? motifCourt(it) : it.k || motEcrit(it))}</button>`;
       }).join("")}</span></div>` : "");
     const recap = rangee("Découverts", [...SEANCE.decouverts.values()])
       + rangee("À revoir", [...SEANCE.rates.values()]);
     $("scScene").innerHTML = `
       <div class="carte-seance sc-fin">
         <div class="tampon" aria-hidden="true"><span lang="ja">済</span></div>
-        <h2 class="sc-fin-titre" lang="ja">お疲れさまでした</h2>
-        <p class="sc-fin-trad"><em>otsukaresama deshita</em> — « merci pour cet effort »</p>
+        <h2 class="sc-fin-titre" lang="ja">${romaji() ? "Otsukaresama deshita" : "お疲れさまでした"}</h2>
+        <p class="sc-fin-trad">${romaji() ? "" : "<em>otsukaresama deshita</em> — "}« merci pour cet effort »</p>
         <dl class="bilan">
           <div><dt>Réponses</dt><dd>${SEANCE.notees}</dd></div>
           <div><dt>Réponses justes</dt><dd>${precision} %</dd></div>
@@ -1823,7 +2135,9 @@
 
      Sans les hiraganas, rien d'autre ne se lit : le test s'arrête là.
      L'écriture ne se teste pas (tracer prendrait une heure) : les
-     caractères sus à la lecture reviennent à tracer dans les trois mois. */
+     caractères sus à la lecture reviennent à tracer dans les trois mois.
+     Le test reste en kanas et en kanjis même quand la page est en
+     rōmaji : c'est leur lecture qu'il mesure. */
   const TEST_QUESTIONS = { kana: 8, mot: 10, kanji: 8, gram: 8 };
   const TEST_ERREURS = 1;
   const TEST_DOMAINES = [
@@ -1936,7 +2250,7 @@
       const texte = (x) => Mots.sens(x, 2).join(", ");
       return auHasard(tous, n).map((it) => {
         const pareils = tous.filter((x) => (x.p || [])[0] === (it.p || [])[0]);
-        return { invite: motGrand(it), question: "Que veut dire ce mot ?", bonne: echappe(texte(it)),
+        return { invite: motGrand(it, "", it.m), question: "Que veut dire ce mot ?", bonne: echappe(texte(it)),
                  autres: leurres(it, pareils.length > 10 ? pareils : tous, texte, (x) => Mots.sens(x)).map(echappe) };
       });
     }
@@ -1962,12 +2276,12 @@
         const surface = Grammaire.surface(t);
         if (vus.has(surface) || justes.has(surface) || justes.has(Grammaire.lecture(t))) continue;
         vus.add(surface);
-        autres.push(rubis(t));
+        autres.push(ecritJaponais(t));
       }
       return {
         invite: `<p class="gr-consigne">${echappe(ex.fr)}</p>
-          <p class="gr-phrase gr-phrase-seance" lang="ja">${rubis(ex.a)}<span class="gr-trou" style="--n:3"></span>${rubis(ex.p)}</p>`,
-        question: "Que manque-t-il ?", bonne: rubis(ex.t), autres, jp: true,
+          <p class="gr-phrase gr-phrase-seance" lang="ja">${ecritJaponais(ex.a)}<span class="gr-trou" style="--n:3"></span>${ecritJaponais(ex.p)}</p>`,
+        question: "Que manque-t-il ?", bonne: ecritJaponais(ex.t), autres, jp: true,
       };
     });
   }
@@ -2073,14 +2387,24 @@
     else testNiveau(TEST.depart);
   }
 
-  /* Les cartes de ce qui est su, sauf celles qui existent déjà. */
+  /* Les cartes de ce qui est su, sauf celles qui existent déjà. Un mot su
+     a son sens et sa lecture, même si ses kanjis ne sont pas encore à
+     portée (la lecture attendra) ; son sens est sur la carte de son kanji
+     s'il n'est que lui et que ce kanji est su (voir « En kanjis, ou en
+     kanas »). */
   function clesDuTest() {
     const A = TEST.acquis, items = [];
     A.kana.forEach((sys) => items.push(...Kana.TOUS.filter((it) => it.sys === sys)));
     A.mot.forEach((n) => items.push(...Mots.TOUS.filter((it) => it.n === n)));
     A.kanji.forEach((n) => items.push(...Kanji.TOUS.filter((it) => it.n === n)));
     A.gram.forEach((n) => items.push(...Grammaire.TOUS.filter((it) => it.n === n)));
-    return [...new Set(items.flatMap(clesDe))].filter((cle) => !ETAT.cartes[cle]);
+    const cles = items.flatMap((it) => {
+      if (it.type !== "mot") return clesDe(it);
+      const k = kanjiDuMot(it);
+      const sens = k && (kanjiConnu(k) || A.kanji.includes(k.n)) ? `${k.id}:sens` : `${it.id}:sens`;
+      return it.kanjis ? [sens, `${it.id}:lire`] : [sens];
+    });
+    return [...new Set(cles)].filter((cle) => !ETAT.cartes[cle]);
   }
 
   function finTest() {
@@ -2300,7 +2624,7 @@
   /* Ce qu'on a déjà vu, tous niveaux mêlés, du plus récent au plus ancien :
      l'onglet « Vus » des kanjis et du vocabulaire. */
   function premiereCarte(it) {
-    return Math.min(...clesDe(it).map((cle) => (ETAT.cartes[cle] ? Date.parse(ETAT.cartes[cle].c) : Infinity)));
+    return Math.min(...propres(it).map((cle) => (ETAT.cartes[cle] ? Date.parse(ETAT.cartes[cle].c) : Infinity)));
   }
   function dejaVus(liste) {
     return liste.filter(commence).map((it) => [it, premiereCarte(it)])
@@ -2396,8 +2720,8 @@
     return `<li><button type="button" class="mt-ligne" data-id="${echappe(it.id)}"
         aria-label="${echappe(`${it.m}${it.kanjis ? `, ${it.l[0]}` : ""} : ${sens}. ${etats}.`)}">
       ${avecNiveau ? `<span class="kj-niveau">N${it.n}</span>` : ""}
-      <span class="mt-ligne-jp"><span class="mt-ligne-mot" lang="ja">${echappe(it.m)}</span>${it.kanjis
-        ? `<span class="mt-ligne-kana" lang="ja">${echappe(it.l[0])}</span>` : ""}</span>
+      <span class="mt-ligne-jp"><span class="mt-ligne-mot" lang="ja">${echappe(romaji() ? Romaji.mot(it) : it.m)}</span>${
+        it.kanjis && !romaji() ? `<span class="mt-ligne-kana" lang="ja">${echappe(it.l[0])}</span>` : ""}</span>
       <span class="mt-ligne-sens">${echappe(sens)}${it.fr.length ? "" : ' <em class="en">(en)</em>'}</span>
       <span class="kn-jauges mt-jauges" aria-hidden="true">${genres.map(([g]) => `<i class="niv niv-${niveauDe(it, g)}"></i>`).join("")}</span>
     </button></li>`;
@@ -2493,7 +2817,7 @@
     }
     const pour = gramPourTexte();
     const pourLire = pour && pour.point === it
-      ? ` Il sert à lire <span lang="ja">${rubis(pour.texte.titre)}</span>, le prochain texte.` : "";
+      ? ` Il sert à lire <span lang="ja">${titreHtml(pour.texte)}</span>, le prochain texte.` : "";
     return `
       <section class="feuille lc-suivant">
         <span class="lc-suivant-jp" lang="ja" aria-hidden="true">文</span>
@@ -2593,6 +2917,12 @@
     const f = Pref.lit("furiganaLecture", "auto");
     return MODES_FURIGANA.some(([m]) => m === f) ? f : "auto";
   }
+  function segmentFuriganaLecture(mode) {
+    return `<div class="segment segment-petit" role="radiogroup" aria-label="Furigana des textes">
+      ${MODES_FURIGANA.map(([m, nom]) => `<button type="button" role="radio" data-furi="${m}"
+        aria-checked="${m === mode}">${nom}</button>`).join("")}
+    </div>`;
+  }
 
   /* Ce que le serveur sait des textes lus. Un serveur pas encore redémarré
      depuis l'arrivée de la lecture n'en dit rien. */
@@ -2657,7 +2987,7 @@
         <span class="lc-suivant-jp" lang="ja" aria-hidden="true">読</span>
         <div class="lc-suivant-texte">
           <p class="lc-sur">${sur} · N${t.n} · ${Lecture.GENRES[t.genre]} · ${Lecture.minutes(t)} min</p>
-          <h2 class="lc-suivant-titre"><span lang="ja">${rubis(t.titre)}</span>
+          <h2 class="lc-suivant-titre"><span lang="ja">${titreHtml(t)}</span>
             <span class="lc-suivant-fr">${echappe(t.fr)}</span></h2>
           <p class="lc-suivant-intro">${texteHtml(t.intro)}</p>
           ${p.totalMots || p.totalPoints ? `<p class="lc-sur">Déjà connus : ${porteeHtml(p)}</p>` : ""}
@@ -2672,19 +3002,22 @@
   /* Aucun texte à portée : celui qui vient, ce qui lui manque, et de quoi
      demander ses mots - la séance les fera découvrir avant les autres. */
   function bientotHtml(t) {
-    const nouveaux = motsNouveaux(t).length;
+    const nouveaux = motsNouveaux(t).length, demandes = demandesDuTexte(t).length;
     return `
       <section class="feuille lc-suivant lc-bientot">
         <span class="lc-suivant-jp" lang="ja" aria-hidden="true">待</span>
         <div class="lc-suivant-texte">
           <p class="lc-sur">Bientôt · N${t.n} · ${Lecture.GENRES[t.genre]}</p>
-          <h2 class="lc-suivant-titre"><span lang="ja">${rubis(t.titre)}</span>
+          <h2 class="lc-suivant-titre"><span lang="ja">${titreHtml(t)}</span>
             <span class="lc-suivant-fr">${echappe(t.fr)}</span></h2>
           <p class="lc-suivant-intro">Proposé dès que tu en connaîtras ${Math.round(PORTEE * 100)} % - pour
             l'instant, ${porteeHtml(portee(t))}. Ses mots et sa grammaire passent en premier dans tes séances.</p>
         </div>
         ${nouveaux ? `<button type="button" class="btn btn-second" id="lcApprendre" data-texte="${echappe(t.nom)}">
-          Apprendre ses ${pluriel(nouveaux, "mot")}</button>` : ""}
+          Apprendre ses ${pluriel(nouveaux, "mot")}</button>`
+          : demandes ? `<p class="lc-demandes">${demandes > 1 ? `${demandes} de ses mots sont demandés`
+            : "Un de ses mots est demandé"} : ${demandes > 1 ? "ils passent" : "il passe"} en premier.
+            <button type="button" class="btn-lien" id="lcAnnule" data-texte="${echappe(t.nom)}">Annuler</button></p>` : ""}
       </section>`;
   }
   function brancheALire(racine) {
@@ -2726,6 +3059,13 @@
         if (await demandeMots(motsNouveaux(t).map((it) => it.id), true)) rend();
       });
     }
+    const annule = $("lcAnnule");
+    if (annule) {
+      annule.addEventListener("click", async () => {
+        const t = Lecture.PAR_NOM.get(annule.dataset.texte);
+        if (await demandeMots(demandesDuTexte(t).map((it) => it.id), false)) rend();
+      });
+    }
     vue.querySelectorAll(".segment [data-niveau]").forEach((b) => b.addEventListener("click", () => {
       Pref.ecrit("niveauLecture", +b.dataset.niveau);
       rend();
@@ -2742,7 +3082,7 @@
     const part = p.totalMots ? Math.round(100 * p.mots / p.totalMots) : 100;
     return `<li><button type="button" class="lc-carte${l ? " lc-lue" : ""}" data-nom="${echappe(t.nom)}">
       <span class="lc-sur">${t.numero} · ${Lecture.GENRES[t.genre]}</span>
-      <span class="lc-carte-titre" lang="ja">${rubis(t.titre)}</span>
+      <span class="lc-carte-titre" lang="ja">${titreHtml(t)}</span>
       <span class="lc-carte-fr">${echappe(t.fr)}</span>
       <span class="lc-carte-intro">${texteHtml(t.intro)}</span>
       <span class="lc-carte-pied">
@@ -2773,18 +3113,15 @@
           <span>${Lecture.GENRES[t.genre]} · ${t.numero} / ${duNiveau.length}</span>
         </nav>
         <header class="ls-tete">
-          <h1 class="ls-titre" lang="ja">${rubis(t.titre)}</h1>
+          <h1 class="ls-titre" lang="ja">${titreHtml(t)}</h1>
           <p class="ls-titre-fr">${echappe(t.fr)}</p>
           <p class="ls-intro">${texteHtml(t.intro)}</p>
         </header>
         <div class="ls-outils">
-          <div class="ls-outil">
+          ${romaji() ? "" : `<div class="ls-outil">
             <span class="ls-outil-nom">Furigana</span>
-            <div class="segment segment-petit" role="radiogroup" aria-label="Furigana">
-              ${MODES_FURIGANA.map(([m, nom]) => `<button type="button" role="radio" data-furi="${m}"
-                aria-checked="${m === mode}">${nom}</button>`).join("")}
-            </div>
-          </div>
+            ${segmentFuriganaLecture(mode)}
+          </div>`}
           <div class="ls-outil">
             <button type="button" class="ls-bascule" id="lsTrad" aria-pressed="${traduite}">Traduction</button>
             <button type="button" class="btn-son" id="lsEcoute">${ICONE_SON}<span>Tout écouter</span></button>
@@ -2796,8 +3133,8 @@
         <section class="feuille ls-fin" id="lsFin">${finHtml(t)}</section>
         <details class="ls-mots" id="lsMots">${motsDuTexteHtml(t)}</details>
         <nav class="fi-nav ls-suite">
-          ${prec ? `<button type="button" class="btn-lien" data-lire="${echappe(prec.nom)}">← <span lang="ja">${rubis(prec.titre)}</span></button>` : "<span></span>"}
-          ${suiv ? `<button type="button" class="btn-lien" data-lire="${echappe(suiv.nom)}"><span lang="ja">${rubis(suiv.titre)}</span> →</button>` : "<span></span>"}
+          ${prec ? `<button type="button" class="btn-lien" data-lire="${echappe(prec.nom)}">← <span lang="ja">${titreHtml(prec)}</span></button>` : "<span></span>"}
+          ${suiv ? `<button type="button" class="btn-lien" data-lire="${echappe(suiv.nom)}"><span lang="ja">${titreHtml(suiv)}</span> →</button>` : "<span></span>"}
         </nav>
       </article>
       <div class="pupitre" id="pupitre" role="dialog" aria-label="Le mot touché" hidden></div>`;
@@ -2851,19 +3188,91 @@
      ligne, avec qui parle. Chaque phrase porte sa traduction, que la
      bascule « Traduction » fait apparaître dessous. */
   function corpsTexte(t) {
+    const phrase = (ph) => phraseLs(ph, t.n);
     return t.p.map((par) => {
       if (par.some((ph) => ph.qui)) {
         return `<div class="ls-dialogue">${par.map((ph) => `<p class="ls-replique">
-          <span class="ls-qui">${ph.qui ? rubis(ph.qui) : ""}</span>
-          <span class="ls-dit">${phraseLs(ph)}</span></p>`).join("")}</div>`;
+          <span class="ls-qui">${!ph.qui ? "" : romaji() ? echappe(Romaji.capitale(roTexte(ph.qui)))
+            : enJaponais(ph.qui, t.n)}</span>
+          <span class="ls-dit">${phrase(ph)}</span></p>`).join("")}</div>`;
       }
-      return `<p class="ls-par">${par.map(phraseLs).join("")}</p>`;
+      // en rōmaji, une espace entre deux phrases, comme en français
+      return `<p class="ls-par">${par.map(phrase).join(romaji() ? " " : "")}</p>`;
     }).join("");
   }
 
-  function phraseLs(ph) {
-    return `<span class="ls-phrase" data-ph="${ph.i}">${ph.m.map((m, j) => motLs(m, ph.i, j)).join("")}</span>`
+  function phraseLs(ph, n) {
+    let majuscule = true;
+    const mots = ph.m.map((m, j) => {
+      if (!romaji()) return motLs(m, ph.i, j, n);
+      // la phrase commence par une capitale, un nom propre aussi
+      let r = Romaji.de(kanaLs(m)).replace(/ {2,}/g, " ").trim();
+      if ((majuscule && /[a-z]/.test(r)) || (typeof m.x === "number"
+          && NOMS_PROPRES.test(Lecture.GLOSSAIRE[m.x].nature || ""))) r = Romaji.capitale(r);
+      if (/[a-zāīūēō]/i.test(r)) majuscule = false;
+      if (typeof m === "string" && /[。？！]/.test(m)) majuscule = true;
+      return jointLs(ph.m[j - 1], m) + (typeof m === "string" ? echappe(r) : spanLs(m, ph.i, j, echappe(r)));
+    });
+    return `<span class="ls-phrase" data-ph="${ph.i}">${mots.join("")}</span>`
       + `<span class="ls-fr" lang="fr">${echappe(ph.fr)}</span>`;
+  }
+
+  /* ---------- un texte en rōmaji ----------
+     Les mots arrivent découpés : chacun se transcrit seul, ses particules
+     comme elles se disent (は : wa), une espace entre deux - sauf devant la
+     ponctuation, après un guillemet ouvrant, et devant un suffixe (田中さん :
+     Tanaka-san). */
+  const OUVRANTS = "「『（・";
+  const HONORIFIQUES = new Set(["さん", "さま", "様", "くん", "君", "ちゃん", "殿", "氏"]);
+  const NOMS_PROPRES = /prénom|nom de lieu|nom propre|nom de famille/;
+  const COPULES = ["です", "でした", "でしょう", "だ", "だった", "だろう", "な", "に", "じゃない", "ではない",
+                   "じゃありません", "ではありません", "じゃなかった", "ではなかった"];
+  /* Ses kanas, prêts à transcrire (voir Romaji.prepare). Un mot du texte
+     emporte ses terminaisons : la forme en て se détache de ce qui suit
+     ({住|す}んでいます : sunde imasu, 食べてもいい : tabete mo ii), et un
+     adjectif de sa copule (大好きです : daisuki desu), comme en Hepburn. */
+  function kanaLs(m) {
+    if (typeof m === "string") return m;
+    const lu = Lecture.lecture(m.t);
+    if (m.k) return lu.replace(/は/g, "わ").replace(/へ/g, "え");
+    if (typeof m.v === "number") {
+      const it = Mots.TOUS[m.v];
+      let k = lu;
+      if ((m.g || []).some((g) => /^te-/.test(g))) {
+        k = k.replace(/([てで])([^てで]+)$/, (x, te, reste) =>
+          `${te} ${reste.replace(/^は/, "わ ").replace(/^も(?=.)/, "も ")}`);
+      }
+      const base = it.l.find((l) => k.startsWith(l));
+      if (base && (it.p || []).some((c) => /^adj-(i|na)/.test(c)) && COPULES.includes(k.slice(base.length))) {
+        k = `${base} ${k.slice(base.length)}`;
+      }
+      return Romaji.prepare(k, it.p);
+    }
+    if (typeof m.x === "number") return Romaji.prepare(lu, null, Lecture.GLOSSAIRE[m.x].nature);
+    return lu;
+  }
+  function jointLs(avant, m) {
+    if (avant === "・") return " ";
+    if (avant === undefined || (typeof avant === "string" && OUVRANTS.includes(avant) && avant)) return "";
+    if (typeof m === "string") return m && OUVRANTS.includes(m) ? " " : "";
+    const suffixe = (typeof m.v === "number" && (Mots.TOUS[m.v].p || []).includes("suf"))
+      || (typeof m.x === "number" && Lecture.GLOSSAIRE[m.x].nature === "suffixe");
+    if (suffixe) return HONORIFIQUES.has(Lecture.surface(m.t)) ? "-" : "";
+    return " ";
+  }
+  /* Un mot du texte, tel que la page l'affiche. */
+  function ecritLs(m, n) {
+    return romaji() ? echappe(Romaji.de(kanaLs(m)).trim()) : rubis(baliseLs(m, n));
+  }
+
+  /* Un mot du texte tel qu'il s'écrit ici : comme le mot du vocabulaire
+     dans la séance ({住|す}んでいます passe en kanas tant que 住む s'y
+     écrit すむ), et pour les autres, en kanas dès qu'un de leurs kanjis est
+     hors de portée ({二|に}{階|かい} : にかい, pas 二かい). `n` : le niveau
+     du texte. */
+  function baliseLs(m, n) {
+    const kanas = typeof m.v === "number" ? !enKanjis(Mots.TOUS[m.v]) : kanaise(m.t, n) !== m.t;
+    return kanas ? Lecture.lecture(m.t) : m.t;
   }
 
   /* Un mot du vocabulaire est « su » à la lecture quand sa carte « lire »
@@ -2872,10 +3281,13 @@
   function motSu(m) {
     return typeof m.v === "number" && niveauDe(Mots.TOUS[m.v], "lire") >= 2;
   }
-  function motLs(m, i, j) {
-    if (typeof m === "string") return rubis(m);
+  function motLs(m, i, j, n) {
+    if (typeof m === "string") return enJaponais(m, n);
+    return spanLs(m, i, j, ecritLs(m, n));
+  }
+  function spanLs(m, i, j, contenu) {
     return `<span class="ls-mot${motSu(m) ? " su" : ""}${m.k ? " ls-particule" : ""}" data-m="${i}.${j}"
-      role="button" tabindex="0">${rubis(m.t)}</span>`;
+      role="button" tabindex="0">${contenu}</span>`;
   }
 
   /* ---------- le pupitre : ce qu'on sait du mot touché ---------- */
@@ -2912,11 +3324,12 @@
 
   const mouvement = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
 
-  /* Ici, le mot tel que le texte l'écrit, s'il n'est pas sous sa forme
-     du dictionnaire, et ce que disent ses terminaisons. */
-  function formeHtml(m, autre) {
+  /* Ici, le mot tel que le texte l'écrit (`balise`), s'il n'est pas sous
+     sa forme du dictionnaire, et ce que disent ses terminaisons. */
+  function formeHtml(m, balise, autre) {
     if (!m.f && !autre) return "";
-    return `<p class="pp-forme"><span class="pp-ici">Ici</span> <span lang="ja">${rubis(m.t)}</span>${m.f
+    return `<p class="pp-forme"><span class="pp-ici">Ici</span> <span lang="ja">${romaji() ? ecritLs(m)
+      : rubis(balise)}</span>${m.f
       ? ` : ${echappe(m.f)}` : ""}</p>`;
   }
 
@@ -2951,42 +3364,46 @@
   }
 
   function pupitreHtml(t, ph, m) {
-    const ici = Lecture.surface(m.t);
+    const balise = baliseLs(m, t.n), enKanas = balise !== m.t;
+    const ici = Lecture.surface(balise);
     let corps;
     if (typeof m.v === "number") {
-      const it = Mots.TOUS[m.v];
+      const it = Mots.TOUS[m.v], mot = graphie(it);
       corps = `
-        ${teteHtml(echappe(it.m), it.kanjis ? it.l.map(echappe).join(" · ") : "")}
-        <p class="pp-nature">${echappe(Mots.nature(it) || "mot")} · N${it.n}${it.a
+        ${teteHtml(echappe(motEcrit(it)), enKanjis(it) && !romaji() ? it.l.map(echappe).join(" · ") : "")}
+        <p class="pp-nature">${echappe(Mots.nature(it) || "mot")} · N${it.n}${plusTardHtml(it)}${it.a
           ? ` · s'écrit aussi <span lang="ja">${echappe(it.a)}</span>` : ""}</p>
         <p class="pp-sens">${sensMotHtml(it, 5)}</p>
-        ${formeHtml(m, ici !== it.m && ici !== it.a)}
+        ${formeHtml(m, balise, ici !== mot && ici !== it.m && ici !== it.a)}
         ${gramHtml(m.g)}
         <div class="pp-etat" id="ppEtat">${etatMotHtml(it)}</div>`;
     } else if (typeof m.x === "number") {
-      const e = Lecture.GLOSSAIRE[m.x];
+      const e = Lecture.GLOSSAIRE[m.x], mot = enKanas ? e.l : e.m;
+      const ecrit = !romaji() ? mot : NOMS_PROPRES.test(e.nature || "")
+        ? Romaji.capitale(Romaji.de(Romaji.prepare(e.l, null, e.nature))) : Romaji.de(Romaji.prepare(e.l, null, e.nature));
       corps = `
-        ${teteHtml(echappe(e.m), /[㐀-鿿々]/.test(e.m) ? echappe(e.l) : "")}
-        <p class="pp-nature">${echappe(e.nature || "mot")} · hors des listes du JLPT</p>
+        ${teteHtml(echappe(ecrit), !enKanas && !romaji() && /[㐀-鿿々]/.test(e.m) ? echappe(e.l) : "")}
+        <p class="pp-nature">${echappe(e.nature || "mot")} · hors des listes du JLPT${enKanas
+          ? ` · en kanjis <span lang="ja">${echappe(e.m)}</span>` : ""}</p>
         <p class="pp-sens">${e.fr.map(echappe).join(", ")}</p>
-        ${formeHtml(m, ici !== e.m)}
+        ${formeHtml(m, balise, ici !== mot)}
         ${gramHtml(m.g)}`;
     } else if (m.n) {
       corps = `
-        ${teteHtml(echappe(ici), echappe(Lecture.lecture(m.t)))}
+        ${romaji() ? teteHtml(ecritLs(m), "") : teteHtml(echappe(ici), enKanas ? "" : echappe(Lecture.lecture(m.t)))}
         <p class="pp-nature">un nombre et son compteur</p>
         <p class="pp-sens">${echappe(m.n)}</p>`;
     } else if (m.k) {
       const pa = Lecture.PARTICULES[m.k] || { fr: "", g: [] };
       corps = `
-        <div class="pp-tete"><span class="pp-mot" lang="ja">${echappe(ici)}</span></div>
+        <div class="pp-tete"><span class="pp-mot" lang="ja">${romaji() ? ecritLs(m) : echappe(ici)}</span></div>
         <p class="pp-nature">particule</p>
         <p class="pp-sens">${texteHtml(pa.fr)}</p>
         ${gramHtml(pa.g, "Ses emplois")}`;
     } else {
       corps = `
-        <div class="pp-tete"><span class="pp-mot" lang="ja">${rubis(m.t)}</span></div>
-        <p class="pp-nature">です, だ : « être »</p>
+        <div class="pp-tete"><span class="pp-mot" lang="ja">${romaji() ? ecritLs(m) : rubis(balise)}</span></div>
+        <p class="pp-nature">${romaji() ? "desu, da" : "です, だ"} : « être »</p>
         ${m.f ? `<p class="pp-sens">${echappe(m.f)}</p>` : ""}
         ${gramHtml(m.g)}`;
     }
@@ -3044,12 +3461,18 @@
 
   /* Demander des mots (ou y renoncer) : le serveur les garde, la séance
      les fera découvrir en premier. */
+  const DEMANDES_PAR_ENVOI = 300;          // DEMANDES_MAXI dans nihongo.py
   async function demandeMots(ids, oui) {
+    if (!ids.length) return true;
     try {
-      const r = await api("/api/nihongo/demande", "POST", { mots: ids, oui });
-      ETAT.demandes = r.demandes;
+      for (let i = 0; i < ids.length; i += DEMANDES_PAR_ENVOI) {
+        const r = await api("/api/nihongo/demande", "POST", { mots: ids.slice(i, i + DEMANDES_PAR_ENVOI), oui });
+        ETAT.demandes = r.demandes;
+      }
       if (oui) toast(ids.length > 1 ? `${ids.length} mots viendront aux prochaines séances.`
                                     : "Il viendra à la prochaine séance.");
+      else toast(ids.length > 1 ? `${ids.length} demandes annulées : ces mots reprennent leur place.`
+                                : "Demande annulée.");
       return true;
     } catch (e) {
       toast(e.statut === 404 || e.statut === 405
@@ -3225,17 +3648,23 @@
             pas encore dans tes révisions.
             <button type="button" class="btn-lien" id="lsApprendreFin">${nouveaux.length > 1 ? "Les apprendre" : "L'apprendre"}</button></p>` : ""}
           ${suivant && suivant !== t ? `<p><button type="button" class="btn" data-lire="${echappe(suivant.nom)}">Texte suivant :
-            <span lang="ja">${rubis(suivant.titre)}</span></button></p>` : ""}
+            <span lang="ja">${titreHtml(suivant)}</span></button></p>` : ""}
         </div>
       </div>`;
     brancheALire($("lsFin"));
     const apprendre = $("lsApprendreFin");
     if (apprendre) {
       apprendre.addEventListener("click", async () => {
-        if (await demandeMots(nouveaux.map((it) => it.id), true)) {
-          apprendre.replaceWith(document.createTextNode("C'est demandé."));
+        if (!(await demandeMots(nouveaux.map((it) => it.id), true))) return;
+        const fait = document.createElement("span");
+        fait.innerHTML = `C'est demandé. <button type="button" class="btn-lien" id="lsAnnuleFin">Annuler</button>`;
+        apprendre.replaceWith(fait);
+        majMotsDuTexte(t);
+        $("lsAnnuleFin").addEventListener("click", async () => {
+          if (!(await demandeMots(nouveaux.map((it) => it.id), false))) return;
+          fait.textContent = "Demande annulée.";
           majMotsDuTexte(t);
-        }
+        });
       });
     }
   }
@@ -3244,12 +3673,15 @@
   function motsNouveaux(t) {
     return t.mots.map((v) => Mots.TOUS[v]).filter((it) => !commence(it) && !demande(it));
   }
+  function demandesDuTexte(t) {
+    return t.mots.map((v) => Mots.TOUS[v]).filter(demande);
+  }
 
   function motsDuTexteHtml(t) {
     if (!t.mots.length) return "";
     const items = t.mots.map((v) => Mots.TOUS[v]);
     const vus = items.filter(commence).length;
-    const demandes = items.filter(demande).length;
+    const demandes = demandesDuTexte(t).length;
     const nouveaux = motsNouveaux(t).length;
     const morceaux = [`${vus} déjà vu${vus > 1 ? "s" : ""}`];
     if (demandes) morceaux.push(`${demandes} demandé${demandes > 1 ? "s" : ""}`);
@@ -3260,6 +3692,9 @@
       ${nouveaux ? `<p class="ls-mots-action"><button type="button" class="btn btn-second" id="lsApprendre">
         Apprendre les ${nouveaux} nouveau${nouveaux > 1 ? "x" : ""}</button>
         <span>Ils viendront dans les prochaines séances, avant les autres.</span></p>` : ""}
+      ${demandes ? `<p class="ls-mots-action"><span>${demandes > 1 ? `${demandes} sont demandés : ils passent`
+        : "Un est demandé : il passe"} avant les autres dans les séances.</span>
+        <button type="button" class="btn-lien" id="lsAnnule">Annuler ${demandes > 1 ? "ces demandes" : "la demande"}</button></p>` : ""}
       <ul class="mt-liste ls-liste">${items.map((it) => ligneMot(it, true)).join("")}</ul>`;
   }
 
@@ -3270,6 +3705,12 @@
     if (apprendre) {
       apprendre.addEventListener("click", async () => {
         if (await demandeMots(motsNouveaux(t).map((it) => it.id), true)) majMotsDuTexte(t);
+      });
+    }
+    const annule = $("lsAnnule");
+    if (annule) {
+      annule.addEventListener("click", async () => {
+        if (await demandeMots(demandesDuTexte(t).map((it) => it.id), false)) majMotsDuTexte(t);
       });
     }
     zone.querySelectorAll(".mt-ligne").forEach((b) => b.addEventListener("click", () => {
@@ -3299,7 +3740,7 @@
 
   function etatHtml(item, genres) {
     return `<dl class="fi-etat">${genres.map(([genre, nom, absente]) => {
-      const c = ETAT.cartes[`${item.id}:${genre}`];
+      const c = ETAT.cartes[cleDe(item, genre)];
       const texte = !c && absente ? absente : `${NIVEAUX[niveau(c)]} · ${echeance(c)}`;
       return `<div><dt>${nom}</dt><dd><i class="niv niv-${niveau(c)}"></i>${texte}</dd></div>`;
     }).join("")}</dl>`;
@@ -3321,10 +3762,16 @@
       </div>`;
   }
 
+  /* Le voisin d'une fiche, en un mot : son caractère, sa graphie, son motif. */
+  function nomVoisin(x) {
+    if (x.type === "mot") return romaji() ? Romaji.mot(x) : x.m;
+    return x.type === "gram" ? motifCourt(x) : x.k;
+  }
+
   function navHtml(prec, suiv) {
     return `<div class="fi-nav">
-      ${prec ? `<button type="button" class="btn-lien" id="fiPrec">← <span lang="ja">${echappe(prec.k || prec.m || prec.court)}</span></button>` : "<span></span>"}
-      ${suiv ? `<button type="button" class="btn-lien" id="fiSuiv"><span lang="ja">${echappe(suiv.k || suiv.m || suiv.court)}</span> →</button>` : "<span></span>"}
+      ${prec ? `<button type="button" class="btn-lien" id="fiPrec">← <span lang="ja">${echappe(nomVoisin(prec))}</span></button>` : "<span></span>"}
+      ${suiv ? `<button type="button" class="btn-lien" id="fiSuiv"><span lang="ja">${echappe(nomVoisin(suiv))}</span> →</button>` : "<span></span>"}
     </div>`;
   }
 
@@ -3430,7 +3877,7 @@
             ${etatHtml(item, [["sens", "Sens"], ["ecrire", "Écriture"]])}
           </div>
         </div>
-        ${item.m.length ? `<div class="fi-mots"><h3>Dans des mots</h3>${motsHtml(item)}</div>` : ""}
+        ${item.m.length || motDuKanji(item) ? `<div class="fi-mots"><h3>Dans des mots</h3>${motsHtml(item)}</div>` : ""}
         ${traits ? pratiqueHtml() : ""}
         ${navHtml(voisins[i - 1], voisins[i + 1])}
       </div>`;
@@ -3449,7 +3896,10 @@
     if (depuis) FICHE.retour = depuis;
     const voisins = Mots.TOUS.filter((it) => it.n === item.n);
     const i = voisins.indexOf(item);
-    const lectures = item.kanjis ? `<span class="mt-lecture" lang="ja">${item.l.map(echappe).join(" · ")}</span>` : "";
+    // en rōmaji, le mot en grand dit sa lecture : dessous, comment il s'écrit
+    const lectures = romaji() ? `<span class="mt-lecture" lang="ja">${echappe(item.m)}</span>`
+      : item.kanjis ? `<span class="mt-lecture" lang="ja">${item.l.map(echappe).join(" · ")}</span>` : "";
+    const enKanas = item.kanjis && !enKanjis(item);
 
     $("fiche").innerHTML = `
       <div class="fi-boite fi-boite-mot" role="dialog" aria-modal="true" aria-labelledby="fiTitre">
@@ -3458,9 +3908,13 @@
           <button type="button" class="fi-x" id="fiX" aria-label="Fermer">&times;</button>
         </div>
         <div class="fi-mot">
-          <h2 class="fi-titre" id="fiTitre">${motGrand(item, "fi-glyphe-mot")}</h2>
+          <h2 class="fi-titre" id="fiTitre">${motGrand(item, "fi-glyphe-mot", romaji() ? Romaji.mot(item) : item.m)}</h2>
           <div class="mt-ecoute">${lectures}${boutonSon("fiSon")}</div>
           ${item.a ? `<p class="mt-nature">s'écrit aussi <span lang="ja">${echappe(item.a)}</span></p>` : ""}
+          ${enKanas && !romaji() ? `<p class="mt-nature">Dans tes séances et tes textes, il s'écrit en kanas
+            (<span lang="ja">${echappe(item.l[0])}</span>) ; en kanjis ${quandHtml(item)}.</p>` : ""}
+          ${kanjiDuMot(item) && !enKanas ? `<p class="mt-nature">Son sens se révise avec le kanji
+            <span lang="ja">${echappe(item.m)}</span>.</p>` : ""}
           <p class="fi-sens">${sensMotHtml(item)}</p>
           ${item.fr.length && item.en.length ? `<p class="mt-en">En anglais : ${echappe(item.en.join(", "))}</p>` : ""}
           ${kanjisDuMot(item, true)}
@@ -3701,6 +4155,130 @@
   }
 
   /* =====================================================================
+     設定 - Les paramètres
+     =====================================================================
+     Tout ce qui se règle, au même endroit : ce que la séance fait
+     découvrir, la voix, l'écriture, l'aide à la lecture, le thème. Sur cet
+     appareil, comme le reste des réglages ; un choix compte dès qu'on le
+     fait. La liseuse et les fiches de grammaire gardent leurs bascules sous
+     la main : ce sont les mêmes réglages. */
+  const THEMES = [["systeme", "Comme l'appareil"], ["jour", "Clair"], ["nuit", "Sombre"]];
+
+  function vueParametres(vue) {
+    const segment = (nom, cle, choix, actuel) => `<div class="segment segment-petit" role="radiogroup" aria-label="${nom}">
+      ${choix.map(([v, libelle]) => `<button type="button" role="radio" data-${cle}="${v}"
+        aria-checked="${v === actuel}">${libelle}</button>`).join("")}</div>`;
+    const quotaHtml = (type, nom) => `
+      <label class="param-quota"><span class="param-nom">${nom}</span>
+        <select data-quota="${type}">${QUOTAS[type].choix.map((n) =>
+          `<option value="${n}"${n === quota(type) ? " selected" : ""}>${n}</option>`).join("")}</select>
+      </label>`;
+    const traduite = Pref.lit("traductionLecture", false) === true;
+
+    vue.innerHTML = `
+      <header class="rubrique-tete">
+        <h1 class="titre"><span class="titre-jp" lang="ja">設定</span><span class="titre-fr">Les paramètres</span></h1>
+        <p class="chapeau">Réglés sur cet appareil : un autre garde les siens. Tes cartes et tes progrès, eux, te
+          suivent partout.</p>
+      </header>
+
+      <div class="params">
+        <section class="feuille param">
+          <h2 class="section-titre"><span lang="ja">新規</span> Nouveaux par jour</h2>
+          <p class="param-aide">Ce que la séance du jour fait découvrir, en plus des révisions. Les mots demandés en
+            lisant passent en plus, ${DEMANDES_PAR_JOUR} par jour au plus.</p>
+          <div class="param-ligne">
+            ${quotaHtml("kana", "Kanas")}${quotaHtml("kanji", "Kanjis")}${quotaHtml("mot", "Mots")}
+          </div>
+        </section>
+
+        <section class="feuille param">
+          <h2 class="section-titre"><span lang="ja">声</span> La voix</h2>
+          <p class="param-aide">Celle qui dit les kanas, les mots et les phrases. Dans un dialogue, chacun parle avec la
+            sienne ; « Les deux » les alterne partout ailleurs.</p>
+          <div class="param-ligne">
+            ${segment("Voix", "voix", VOIX_CHOIX.map((v) => [v.id, v.nom]), Voix.choix())}
+            ${boutonSon("essaiVoix", "Essayer")}
+          </div>
+        </section>
+
+        <section class="feuille param">
+          <h2 class="section-titre"><span lang="ja">文字</span> L'écriture</h2>
+          <p class="param-aide">En rōmaji, les mots, les phrases et les textes s'écrivent en lettres latines :
+            <em>Tōkyō ni sunde imasu.</em> Les kanas et les kanjis gardent leur écriture là où c'est elle qu'on
+            apprend : leurs tableaux, leurs cartes, la lecture d'un mot en kanjis, le test de niveau.</p>
+          <div class="param-ligne">
+            ${segment("Écriture", "ecriture", [["kanas", "Kanas et kanjis"], ["romaji", "Rōmaji"]], romaji() ? "romaji" : "kanas")}
+          </div>
+        </section>
+
+        <section class="feuille param">
+          <h2 class="section-titre"><span lang="ja">読</span> L'aide à la lecture</h2>
+          <p class="param-aide">Les furigana, la lecture en petit au-dessus des kanjis : ${romaji()
+            ? "sans effet en rōmaji, où il n'y a pas de kanjis."
+            : "cachés, un mot touché montre toujours les siens."}</p>
+          <div class="param-champ${romaji() ? " param-eteint" : ""}">
+            <span class="param-nom">Furigana de la grammaire</span>${reglageFurigana(true)}
+          </div>
+          <div class="param-champ${romaji() ? " param-eteint" : ""}">
+            <span class="param-nom">Furigana des textes</span>${segmentFuriganaLecture(furiganaLecture())}
+          </div>
+          <div class="param-champ">
+            <span class="param-nom">Traduction des textes</span>
+            ${segment("Traduction des textes", "traduction", [["0", "Cachée"], ["1", "Sous chaque phrase"]], traduite ? "1" : "0")}
+          </div>
+        </section>
+
+        <section class="feuille param">
+          <h2 class="section-titre"><span lang="ja">色</span> Le thème</h2>
+          <p class="param-aide">Le papier le jour, l'encre la nuit. Le bouton en haut de la page passe de l'un à
+            l'autre.</p>
+          <div class="param-ligne">${segment("Thème", "choix-theme", THEMES, choixTheme())}</div>
+        </section>
+      </div>`;
+
+    // un groupe de boutons : celui qu'on touche devient le choix
+    const coche = (cle, b) => vue.querySelectorAll(`[data-${cle}]`)
+      .forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+    vue.querySelectorAll("select[data-quota]").forEach((s) => s.addEventListener("change", () => {
+      Pref.ecrit(QUOTAS[s.dataset.quota].pref, +s.value);
+    }));
+    // choisir une voix la fait entendre : c'est la seule façon de choisir
+    vue.querySelectorAll("[data-voix]").forEach((b) => b.addEventListener("click", () => {
+      Pref.ecrit("voix", b.dataset.voix);
+      coche("voix", b);
+      dire(PHRASE_ESSAI);
+    }));
+    $("essaiVoix").addEventListener("click", () => dire(PHRASE_ESSAI));
+    vue.querySelectorAll("[data-ecriture]").forEach((b) => b.addEventListener("click", async () => {
+      const oui = b.dataset.ecriture === "romaji";
+      if (oui === romaji()) return;
+      if (oui) {
+        try { await chargeRomaji(); } catch (e) { toast(`${e.message} Les phrases s'écrivent sans espaces.`, true); }
+      }
+      EN_ROMAJI = oui;
+      Pref.ecrit("romaji", oui);
+      appliqueRomaji();
+      rend();
+    }));
+    brancheFurigana(vue);
+    vue.querySelectorAll("[data-furi]").forEach((b) => b.addEventListener("click", () => {
+      Pref.ecrit("furiganaLecture", b.dataset.furi);
+      coche("furi", b);
+    }));
+    vue.querySelectorAll("[data-traduction]").forEach((b) => b.addEventListener("click", () => {
+      Pref.ecrit("traductionLecture", b.dataset.traduction === "1");
+      coche("traduction", b);
+    }));
+    vue.querySelectorAll("[data-choix-theme]").forEach((b) => b.addEventListener("click", () => {
+      if (b.dataset.choixTheme === "systeme") Pref.efface("theme");
+      else Pref.ecrit("theme", b.dataset.choixTheme);
+      appliqueTheme();
+      coche("choix-theme", b);
+    }));
+  }
+
+  /* =====================================================================
      Démarrage
      ===================================================================== */
   function vueFermee(vue) {
@@ -3718,12 +4296,16 @@
   async function demarre() {
     const vue = $("vue");
     appliqueFurigana();
+    appliqueRomaji();
+    // en rōmaji, les transcriptions de la grammaire et des textes ; sans
+    // elles, la page transcrit les kanas, sans espaces entre les mots
+    const transcrits = romaji() ? chargeRomaji().catch(() => {}) : null;
     try {
       // tout en même temps : l'état dit ce qui est dû, les kanjis, les mots
       // et la grammaire dans quel ordre les découvrir, les textes ce qu'il
       // y a à lire
       await Promise.all([chargeEtat(), Kanji.charge(), Mots.charge(), Grammaire.charge(),
-                         Lecture.charge()]);
+                         Lecture.charge(), transcrits]);
     } catch (e) {
       if (e.statut === 404) { vueFermee(vue); return; }
       vue.innerHTML = `<p class="erreur-page">Impossible de charger la page : ${echappe(e.message)}</p>`;

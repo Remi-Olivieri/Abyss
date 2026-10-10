@@ -134,7 +134,7 @@
     </div>
     <footer id="foot">
       <div class="classeurs" id="classeurs"></div>
-      <span class="jump">Page
+      <span class="jump"><span class="jump-mot">Page</span>
         <input id="goPage" type="number" min="1" inputmode="numeric" aria-label="Numéro de page">
         <span id="ofPages"></span></span>
     </footer>
@@ -989,7 +989,10 @@ function renderMeter(){
 function renderClasseurs(){
   const cs = T().classeurs;
   el('classeurs').innerHTML = cs.length < 2 ? '' :
-    cs.map((c, i) => '<button data-c="' + i + '" aria-pressed="' + (i === S.c) + '">Classeur '
+    /* Le mot dans un <span> : sur téléphone la barre du bas ne l'écrit
+       qu'une fois, devant les numéros (voir .cl-mot dans collection.css). */
+    cs.map((c, i) => '<button data-c="' + i + '" aria-pressed="' + (i === S.c)
+      + '" aria-label="Classeur ' + c.n + '"><span class="cl-mot">Classeur </span>'
       + c.n + '</button>').join('');
 }
 

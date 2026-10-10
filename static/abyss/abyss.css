@@ -756,6 +756,28 @@ input,textarea{
 @media (max-width:620px){
   .enveloppe{padding:18px 18px 64px}
   .modale{padding:22px 20px 24px}
+
+  /* ---------- le téléphone ----------
+     16 px dans tout ce qui se saisit : en dessous, iOS zoome sur le champ
+     dès qu'on y pose le doigt, puis laisse la page de travers une fois le
+     clavier refermé. */
+  .champ input,.champ textarea,.champ select{font-size:16px}
+  /* Les boutons qu'on vise du pouce : 40 px, la taille d'un bout de doigt.
+     Le retour, la croix d'une fenêtre, l'oeil d'un mot de passe. */
+  .back{width:40px;height:40px;border-radius:11px}
+  .fermer{width:38px;height:38px;top:12px;right:12px}
+  .mdp-oeil{width:40px;height:40px;right:2px}
+  .mdp-wrap input{padding-right:48px}
+  .onglets{margin-right:46px}
+  .onglet{padding:10px 10px}
+  .valider{padding:13px 16px}
+  /* Une fenêtre plus haute que l'écran - l'inscription, clavier ouvert -
+     perdait son haut : centrée par align-items, ce qui dépasse vers le
+     haut ne se rattrape pas en défilant. Les marges automatiques centrent
+     pareil quand il y a la place, et laissent défiler quand il n'y en a
+     pas. */
+  .voile{align-items:flex-start;padding:14px}
+  .modale{margin:auto}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition-duration:.01ms !important;animation-duration:.01ms !important}

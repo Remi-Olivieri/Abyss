@@ -1483,3 +1483,204 @@ select.create-input option {
 }
 
 #password-overlay.active { display: flex; }
+/* ============================================================
+    LE TÉLÉPHONE
+
+    Jusqu'ici la feuille ne connaissait que l'écran large : le lobby
+    gardait ses deux colonnes à 160 px chacune (les champs coupés au
+    milieu du mot), la partie gardait sa colonne de joueurs de 220 px,
+    et <body> ne défilait pas -- ce qui dépassait était perdu.
+
+    Sous 700 px tout passe en une colonne, la page défile, et la
+    partie range ses joueurs en bandeau au-dessus de la carte.
+    ============================================================ */
+@media (max-width: 700px) {
+  /* 100dvh : la hauteur réellement visible, barre d'adresse comprise.
+     100vh la compte repliée, et le bas de la page passait dessous. */
+  body { min-height: 100dvh; overflow-x: hidden; overflow-y: auto; }
+
+  /* ---------- l'en-tête de la connexion et du lobby ----------
+     Le bouton de retour reste dans son coin ; le titre descend sous
+     lui au lieu de passer dessous, et rétrécit pour tenir sur une
+     ligne jusqu'à 320 px. */
+  header {
+    padding: calc(4.1rem + env(safe-area-inset-top, 0px)) 1rem 1rem;
+  }
+  .back {
+    top: calc(.9rem + env(safe-area-inset-top, 0px));
+    left: max(.9rem, env(safe-area-inset-left, 0px));
+    width: 42px; height: 42px;
+  }
+  .title-main { font-size: clamp(1.7rem, 9vw, 2.4rem); letter-spacing: .08em; }
+  .title-sub { letter-spacing: .3em; }
+
+  /* ---------- la connexion ---------- */
+  .container { min-height: 0; align-items: flex-start; padding: .5rem .9rem 2rem; }
+  .card-content { padding: 2rem 1.25rem 2.1rem; gap: 1.4rem; }
+
+  /* ---------- le lobby ----------
+     Une colonne : la salle où l'on attend d'abord, puis celles qu'on
+     peut rejoindre, puis la création. */
+  .lobby-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: .25rem max(.9rem, env(safe-area-inset-left, 0px))
+             calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    flex: 0 0 auto;
+    align-content: start;
+  }
+  /* La liste des salles ne s'étire plus sur la hauteur de sa voisine :
+     vide, elle tient en quelques lignes ; pleine, elle défile chez elle
+     pour que « Créer une salle » reste à portée. */
+  #rooms-list { max-height: 46dvh; }
+  .empty-state { padding: 1.6rem 1rem; }
+  .room-item { padding: .8rem 1rem; min-height: 56px; }
+  .join-btn { padding: .6rem .9rem; font-size: .72rem; }
+  /* 16 px : en dessous, iOS zoome sur le champ dès qu'on y pose le
+     doigt, et ne remet pas la page d'aplomb ensuite. */
+  .create-input, .user-input { font-size: 16px; }
+  .create-input { padding: .75rem .85rem; }
+  .create-btn { padding: .95rem 1rem; font-size: .85rem; }
+  .button { padding: 1rem 1.5rem; }
+
+  /* La salle d'attente : les joueurs au-dessus, les boutons dessous. */
+  .room-panel-inner { grid-template-columns: 1fr; }
+  .room-players-section { border-right: none; border-bottom: 1px solid var(--panel-border); }
+  .room-sidebar { padding: 1rem; gap: .8rem; }
+  .ready-btn { padding: 1rem; font-size: .88rem; }
+  .leave-btn { padding: .8rem 1rem; font-size: .74rem; }
+
+  .leave-dialog { padding: 1.6rem 1.25rem; width: calc(100% - 1.8rem); }
+  .leave-confirm-btn, .leave-cancel-btn { padding: .85rem .5rem; }
+
+  /* Le toast ne tient plus sur une ligne : il se replie et garde ses
+     marges, au-dessus de la barre d'accueil. */
+  .toast {
+    white-space: normal;
+    text-align: center;
+    width: max-content;
+    max-width: calc(100vw - 1.8rem);
+    bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ---------- la partie ----------
+     La grille « colonne de joueurs + carte » devient une pile : la barre,
+     les joueurs en bandeau, puis la carte sur tout ce qui reste. Elle
+     tient dans l'écran sans défiler -- la réponse se tape en bas, sous
+     le pouce. */
+  body:has(#players-list) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas: "header" "left" "main";
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  body:has(#players-list) header {
+    padding: calc(.5rem + env(safe-area-inset-top, 0px)) .75rem .5rem;
+    gap: .5rem;
+  }
+  body:has(#players-list) .title-main { font-size: 1.05rem; letter-spacing: .06em; }
+  .header-info { gap: .4rem; min-width: 0; }
+  .game-info { gap: .3rem; font-size: .62rem; letter-spacing: .04em; }
+  .game-info span { padding: .2rem .5rem; white-space: nowrap; }
+  .user-badge {
+    font-size: .62rem; letter-spacing: .08em; padding: .25rem .6rem;
+    max-width: 8.5em; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Les joueurs : des jetons qui passent à la ligne. La réponse de
+     chacun s'écrit dans son jeton, sous son nom -- elle sortait à droite
+     de la colonne, par-dessus la carte, et il n'y a plus de colonne. */
+  #players-list { border-right: none; border-bottom: 1px solid var(--panel-border); }
+  .players-header { display: none; }
+  #players {
+    display: flex; flex-wrap: wrap; gap: .35rem;
+    padding: .45rem .6rem;
+    max-height: 5.6rem; overflow-y: auto;
+  }
+  #players li {
+    flex-direction: column; align-items: stretch; gap: .15rem;
+    padding: .25rem .55rem;
+    border: 1px solid rgba(201,168,76,.14);
+    border-radius: 9px;
+    min-width: 0; max-width: 100%;
+  }
+  #players li.answer-locked,
+  #players li.answer-correct,
+  #players li.answer-wrong { border-left-width: 1px; }
+  #players li.answer-locked { border-color: var(--gold); }
+  #players li.answer-correct { border-color: var(--correct); }
+  #players li.answer-wrong { border-color: var(--wrong); }
+  .player-info { flex-wrap: nowrap; }
+  .player-name { font-size: .82rem; max-width: 9em; }
+  .player-score { font-size: .72rem; }
+  #players li .player-response,
+  #players li .player-response.correct,
+  #players li .player-response.wrong {
+    position: static;
+    padding: 0;
+    border: none;
+    background: none;
+    font-size: .66rem;
+    white-space: nowrap;
+    max-width: 11em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #players li .player-response.visible { display: block; }
+
+  #main-content { gap: .6rem; padding: .6rem .75rem calc(.75rem + env(safe-area-inset-bottom, 0px)); }
+  #loading-message { left: 0; right: 0; }
+  .loading-text { font-size: 1.25rem; text-align: center; }
+  .timer-container { width: 100%; gap: .25rem; }
+  .timer-label { font-size: .78rem; }
+  .timer-bar { height: 9px; }
+  /* La carte prend la hauteur qui reste et jamais plus que la largeur :
+     70vh la faisait déborder des deux côtés d'un écran étroit. */
+  .card { height: min(52dvh, 128vw); max-width: 100%; }
+  .zoom-effect.zoomed { transform: scale(1.12); }
+  .input-section { width: 100%; }
+  #image_name { font-size: 1.05rem; margin-top: .35rem; }
+  #suggestions { max-height: min(200px, 34dvh); }
+  #suggestions li { padding: .75rem 1rem; }
+}
+
+/* La connexion et le lobby défilent quand ils ne tiennent pas dans la
+   fenêtre. <body> coupait tout ce qui dépassait : sur un téléphone tenu
+   en paysage - 390 px de haut - le bas de « Créer une salle » et son
+   bouton étaient hors d'atteinte. La partie, elle, garde sa grille figée
+   à la hauteur de l'écran. */
+body:not(:has(#players-list)) { overflow-x: hidden; overflow-y: auto; }
+
+/* ---------- la partie sur un écran bas ----------
+   Un téléphone en paysage, ou une fenêtre tassée : la carte faisait 70 %
+   de la hauteur sans regarder ce que le chronomètre et le champ de
+   réponse en prenaient déjà, et les trois se chevauchaient. Elle prend
+   maintenant ce qui reste. */
+@media (max-height: 560px) and (min-width: 701px) {
+  body:has(#players-list) { grid-template-columns: 180px 1fr; height: 100dvh; }
+  body:has(#players-list) header { padding: .4rem 1rem; }
+  body:has(#players-list) .title-main { font-size: 1.15rem; }
+  #loading-message { left: 180px; right: 0; }
+  .players-header { padding: .5rem .8rem; }
+  #players li { padding: .35rem .8rem; }
+  .player-name { font-size: .92rem; max-width: 100px; }
+  #main-content { gap: .45rem; padding: .5rem 1rem .6rem; }
+  .timer-container { width: 60%; gap: .2rem; }
+  .timer-label { font-size: .72rem; }
+  .timer-bar { height: 8px; }
+  .card { height: calc(100dvh - 205px); min-height: 110px; }
+  .zoom-effect.zoomed { transform: scale(1.15); }
+  #image_name { font-size: 1rem; margin-top: .2rem; }
+  .user-input { padding: .6rem 1rem; }
+  #suggestions { max-height: min(160px, 40dvh); }
+}
+
+/* Le doigt n'a pas de survol : les boutons ne restent pas « soulevés »
+   après un appui. */
+@media (hover: none) {
+  .button:hover, .create-btn:hover, .join-btn:hover, .ready-btn:hover,
+  .leave-confirm-btn:hover { transform: none; }
+}

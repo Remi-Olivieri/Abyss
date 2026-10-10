@@ -249,6 +249,8 @@ main{position:relative;z-index:1;padding-bottom:64px;min-height:60vh}
 .seance-sorte{color:var(--encre-2)}
 .seance-dont{display:block}
 .seance-dont{color:var(--encre-3);font-size:13px}
+.seance-demandes{color:var(--encre-3);font-size:13.5px;margin-top:8px !important}
+.seance-demandes .btn-lien{font-size:inherit}
 .apercu-kanas{display:flex;flex-wrap:wrap;gap:4px;font-family:var(--pinceau);font-size:21px;color:var(--encre)}
 .apercu-el{
   padding:1px 8px;border:1px solid var(--filet);border-radius:7px;background:var(--papier);
@@ -258,26 +260,10 @@ main{position:relative;z-index:1;padding-bottom:64px;min-height:60vh}
 .seance .tampon{position:absolute;right:26px;top:50%;margin-top:-44px}
 .seance:has(.tampon) .seance-texte{padding-right:110px}
 
-.reglage-nouveaux{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;margin:14px 4px 0;font-size:13.5px;color:var(--encre-2)}
-.reglage{display:inline-flex;align-items:center;gap:6px}
-.reglage select{
-  padding:4px 8px;border-radius:6px;border:1px solid var(--filet-fort);background:var(--feuille);cursor:pointer;
-}
-.reglage-aide{color:var(--encre-3)}
-/* les réglages, repliés : leur titre dit ce qui est réglé */
-.reglages{margin:16px 4px 0}
-.reglages summary{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;cursor:pointer;
-  font-size:13.5px;color:var(--encre-2);list-style:none}
-.reglages summary::-webkit-details-marker{display:none}
-.reglages summary .reglage-titre::after{content:" ▾";color:var(--encre-3)}
-.reglages[open] summary .reglage-titre::after{content:" ▴"}
-.reglages .reglage-nouveaux{margin-top:10px}
 .seance-encore{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 /* la séance, puis ce qui se propose à côté : le test, la grammaire, un texte */
 .accueil-cartes{display:flex;flex-direction:column;gap:14px}
 .accueil-cartes .lc-suivant{margin:0}
-.reglage-voix{margin-top:10px}
-.reglage-voix .btn-son{padding:4px 11px 4px 9px;font-size:13px}
 
 .programme{margin-top:40px}
 .etapes{list-style:none;margin:0;padding:0;display:grid;gap:8px}
@@ -593,6 +579,7 @@ summary.gr-chapitre-tete::after{
 .lc-suivant-fr{font-size:17px;font-weight:500;color:var(--encre-2);margin-left:6px}
 .lc-suivant-intro{margin:0 0 4px;color:var(--encre-2);font-size:14.5px;max-width:62ch}
 .lc-suivant .btn-grand{white-space:nowrap}
+.lc-demandes{margin:0;max-width:22ch;font-size:13px;color:var(--encre-3)}
 /* pas encore à portée : le sceau à l'encre pâle, pas au vermillon */
 .lc-bientot .lc-suivant-jp{color:var(--encre-3);border-color:var(--encre-3);
   box-shadow:inset 0 0 0 2px var(--feuille),inset 0 0 0 3px var(--encre-3)}
@@ -1030,6 +1017,33 @@ body.pupitre-ouvert main{padding-bottom:52vh}
 .nv-resultats dt [lang="ja"]{color:var(--shu);margin-right:4px}
 .nv-resultats dd{margin:0;color:var(--encre-2);font-size:14.5px}
 
+/* ---------- 設定, les paramètres ----------
+   Une feuille par sujet, deux colonnes quand la place le permet. */
+.params{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:14px;align-items:start}
+.param .section-titre{margin-bottom:6px}
+.param-aide{margin:0 0 14px;max-width:62ch;font-size:13.5px;color:var(--encre-3)}
+.param-aide em{color:var(--encre-2)}
+.param-ligne{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
+.param-ligne .btn-son{padding:4px 11px 4px 9px;font-size:13px}
+.param-quota{display:inline-flex;align-items:center;gap:8px}
+.param-quota select{
+  padding:4px 8px;border-radius:6px;border:1px solid var(--filet-fort);background:var(--feuille);cursor:pointer;
+}
+.param-nom{font-size:14px;color:var(--encre-2)}
+.param-champ{display:flex;align-items:center;justify-content:space-between;gap:8px 14px;flex-wrap:wrap;
+  padding:10px 0;border-top:1px solid var(--filet)}
+.param-champ:first-of-type{border-top:0;padding-top:0}
+.param-eteint .segment{opacity:.55}
+
+/* ---------- le rōmaji ----------
+   Le japonais en lettres latines (le réglage « Rōmaji ») : ses éléments
+   passent en lang="ja-Latn" (voir latinise dans nihongo.js) et quittent les
+   polices des caractères - Klee One écrit bien les kanas, moins bien le
+   latin - pour celle des titres, et l'interlettrage du japonais. */
+html [lang="ja-Latn"]{font-family:var(--titre);letter-spacing:normal}
+.romaji .ls-texte{line-height:1.9}
+.romaji .ls-qui{line-height:2.7}
+
 /* ---------- porte close, chargement, pied ---------- */
 .ferme{display:flex;flex-direction:column;align-items:center;text-align:center;padding:80px 0 40px;gap:4px}
 .ferme .tampon{margin-bottom:18px}
@@ -1118,7 +1132,7 @@ body.pupitre-ouvert main{padding-bottom:52vh}
   .bilan{grid-template-columns:repeat(2,minmax(0,1fr))}
   .barre-kana{grid-template-columns:66px minmax(0,1fr) 54px;gap:8px}
   /* 16 px : en dessous, iOS zoome sur le champ dès qu'on y pose le doigt */
-  .sc-saisie,.sg-select,.sg-zone,.reglage select,.recherche input{font-size:16px}
+  .sc-saisie,.sg-select,.sg-zone,.param-quota select,.recherche input{font-size:16px}
   .kj-grille{grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:4px}
   .kj-glyphe{font-size:26px}
   .mt-liste{grid-template-columns:1fr}
@@ -1136,7 +1150,7 @@ body.pupitre-ouvert main{padding-bottom:52vh}
   .lc-suivant-titre{font-size:22px}
   /* tout bouton sous le texte : laissé dans la grille, il élargissait la
      colonne du sceau et écrasait le texte (« Apprendre ses 14 mots ») */
-  .lc-suivant > .btn{grid-column:1/-1}
+  .lc-suivant > .btn,.lc-demandes{grid-column:1/-1;max-width:none}
   .lc-grille{grid-template-columns:1fr}
   .pg-onglets button{padding:6px 12px 8px}
   .nv-departs{grid-template-columns:1fr;gap:6px}
@@ -1156,6 +1170,27 @@ body.pupitre-ouvert main{padding-bottom:52vh}
   .sg-fond{padding:0;align-items:flex-end}
   .sg-boite{width:100%;max-height:92dvh;border-radius:16px 16px 0 0;border-bottom:none;
     animation:monte .26s cubic-bezier(.2,.8,.3,1)}
+
+  /* ---------- tracer au doigt ----------
+     Un trait se trace du bout du doigt, qui cache ce qu'il dessine : la
+     surface prend presque toute la largeur de l'écran au lieu de s'arrêter
+     à 250 px - un tiers de place en plus pour chaque trait. */
+  .tr-hote:not(.fi-demo),.sc-trace-memoire{width:min(100%,340px)}
+  .sc-guide .tr-hote{width:min(100%,330px)}
+  .tr-hote.fi-trace{width:min(100%,320px)}
+
+  /* ---------- sous le pouce ----------
+     38 à 40 px pour ce qu'on vise sans regarder : les boutons de la barre,
+     la croix d'une fiche, celle de la séance. Les liens soulignés gardent
+     leur dessin et gagnent en hauteur ce qu'il faut pour ne pas toucher
+     leur voisin. */
+  .entete-action{width:38px;height:38px}
+  .fi-x,.sc-quitter{width:40px;height:40px}
+  .btn-lien{padding:10px 4px}
+  .btn-son{padding:9px 15px 9px 12px;font-size:14.5px}
+  .param-ligne .btn-son{padding:8px 13px 8px 11px;font-size:14px}
+  .btn-petit{padding:9px 16px;font-size:14.5px}
+  .pg-onglets button{padding:9px 13px 10px}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition-duration:.01ms !important;animation-duration:.01ms !important}

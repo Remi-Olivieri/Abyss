@@ -275,8 +275,15 @@
      quand il vise l'autre. */
   @media (max-width:640px){
     .sug-ligne{flex-wrap:wrap}
-    .sug-boutons{width:100%;margin-left:23px;margin-top:10px}
+    /* calc et non 100 % : avec le retrait de 23 px en plus, la rangée
+       dépassait d'autant et « Résolu » sortait de la carte par la droite. */
+    .sug-boutons{width:calc(100% - 23px);margin-left:23px;margin-top:12px;gap:8px}
     .sug-sep{margin-left:auto;background:none;margin-right:0}
+    /* Au pouce : 38 px de haut pour Copier et Résolu, 34 pour les trois
+       pastilles d'importance - à 23 px on en touchait deux à la fois. */
+    .sug-fait,.sug-copier{padding:0 14px;height:38px;font-size:13.5px}
+    .sug-niv{width:34px;height:34px;font-size:13px}
+    .sug-niveaux{gap:6px}
   }
 
   /* ---------- le toast et son « Annuler » ---------- */

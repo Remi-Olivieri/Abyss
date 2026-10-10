@@ -295,8 +295,13 @@
     .mon-tuile u{font-size:9.5px;letter-spacing:.12em}
     .mon-tuile b{font-size:26px;margin:7px 0 2px}
     .mon-tuile i{font-size:11.5px}
-    .mon-onglets{margin-bottom:16px}
-    .mon-onglet{font-size:13px;padding:7px 11px}
+    /* Les cinq onglets tiennent sur 390 px sans défiler - « Site » restait
+       caché à droite, hors de l'écran - et gagnent en hauteur ce qu'ils
+       rendent en marge : 38 px sous le pouce. Plus étroit, la barre défile
+       comme avant. */
+    .mon-onglets{margin-bottom:16px;gap:2px}
+    .mon-onglet{font-size:13px;padding:10px 6px;gap:5px;flex:1 1 auto}
+    .mon-onglet-n{padding:0 6px}
     .mon-carte{padding:16px 14px 18px;border-radius:14px}
     .jours{height:118px}
     /* Le nom de la page passe au-dessus de sa barre : treize em de libellé,

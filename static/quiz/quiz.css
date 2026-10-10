@@ -348,7 +348,11 @@ html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
   color:#fff;background:#B4295C;border-color:#B4295C;
 }
 
-.qz-corps{padding:32px 0 90px}
+/* padding-top/-bottom et non le raccourci : .qz-corps est pose sur le meme
+   element que .wrap, et « padding:32px 0 90px » ecrasait ses marges
+   laterales -- sur telephone, les cartes et les titres collaient aux deux
+   bords de l'ecran. */
+.qz-corps{padding-top:32px;padding-bottom:90px}
 
 /* =======================================================================
    Avec quels jeux on joue
@@ -840,7 +844,16 @@ html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
   }
   /* .qz-face sert aussi au tableau de fin : ici, seule celle de la frise
      change de forme. */
-  .qz-frise .qz-face{flex:0 0 auto;width:auto;height:auto;align-self:stretch;border-radius:0}
+  /* Largeur fixe, et l'image sortie du calcul : en « width:auto », la
+     vignette prenait la largeur naturelle de la jaquette, puis sa hauteur
+     par aspect-ratio -- cinq affiches d'un ecran de haut au lieu de cinq
+     lignes. L'image en absolu ne pese plus rien : la ligne fait la hauteur
+     de son texte, la vignette la suit. */
+  .qz-frise .qz-face{
+    flex:0 0 46px;width:46px;height:auto;aspect-ratio:auto;
+    align-self:stretch;border-radius:0;
+  }
+  .qz-frise .qz-face img,.qz-frise .qz-face .qz-vide{position:absolute;inset:0}
   .qz-rang{top:4px;left:4px;min-width:20px;height:20px;padding:0 4px;font-size:10px;border-radius:99px}
   .qz-vide{font-size:17px}
   .qz-titre{flex:1;justify-content:center;gap:1px;padding:7px 0;text-align:left}
@@ -1042,7 +1055,7 @@ html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
   .qz-hero{padding:32px 0 26px}
   .qz-hero p{font-size:13.5px;margin-top:10px}
   .qz-fam{margin-top:28px}
-  .qz-corps{padding:22px 0 calc(40px + env(safe-area-inset-bottom,0px))}
+  .qz-corps{padding-top:22px;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
 
   /* ---------- une partie ----------
      Les cibles passent a 48 px : repondre est le seul geste de cet ecran,
@@ -1059,6 +1072,12 @@ html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
   .qz-boutons{gap:8px}
   .qz-boutons .cta,.qz-boutons .cta.auto,.qz-boutons .ghost{flex:1 1 0;height:48px}
   .qz-nav{margin-bottom:16px}
+  /* Vide sur le menu : elle y reservait 48 px de noir entre le titre et la
+     premiere famille de jeux. */
+  .qz-nav:empty{display:none}
+  /* La croix d'abandon et la fleche de retour : 40 px, la plus petite cible
+     qu'un pouce trouve sans viser. */
+  .qz-nav .sbtn{min-width:40px;height:40px}
   /* Deux options ecrites en toutes lettres ne tiennent plus a cote du titre
      de famille : la piste passe a la ligne suivante, sur toute la largeur,
      plutot que de rogner ses libelles. Le titre garde son trait au-dessus. */
@@ -1321,12 +1340,17 @@ html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
   .gc-bande{padding:10px 12px}
   .gc-bande i{font-size:11.5px}
   .gc-bande b{font-size:9.5px;letter-spacing:.14em}
-  .gc-actions{gap:6px}
-  .gc-actions .ghost,.gc-ok{flex:1 1 0;height:46px;padding:0 10px;min-width:0}
+  /* Deux boutons en haut, « Valider » sur toute la largeur dessous :
+     a trois de front, « Deselectionner » passait sous son voisin. */
+  .gc-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .gc-actions .ghost,.gc-ok{width:auto;height:46px;padding:0 10px;min-width:0}
+  .gc-ok{grid-column:1 / -1;height:50px}
   .gc-message{font-size:12.5px}
 }
 @media (max-width:380px){
   .gc-case{min-height:92px;font-size:9.5px}
+  /* « Désélectionner » sortait de son bouton sous 360 px. */
+  .gc-actions .ghost{font-size:11px;letter-spacing:.03em;padding:0 6px}
 }
 /* Mouvement reduit : tout ce qui bouge s'arrete, rien de ce qui informe ne
    part. Le cerne, la couleur, la coche et le texte du message disent deja

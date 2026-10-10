@@ -71,13 +71,15 @@ jour.
 Les fichiers
 ------------
     static/nihongo/traces-kana.json        les traits des kanas
-    static/nihongo/kanji.json              les 2 211 kanjis du JLPT : sens,
+    static/nihongo/kanji.json              les 2 230 kanjis du JLPT : sens,
                                            lectures, morceaux, mots courants
     static/nihongo/traces-kanji-n5.json    leurs traits, un fichier par niveau
     ...                                    (N1 pese 1,2 Mo : la page ne le
     static/nihongo/traces-kanji-n1.json     demande que si on en est la)
     static/nihongo/vocabulaire.json        les 7 900 mots du JLPT
     static/nihongo/grammaire.json          les points de grammaire, N5 a N1
+    static/nihongo/romaji.json             la grammaire et les textes en romaji,
+                                           pour qui regle la page ainsi
     matiere/vocabulaire-fr.tsv             les sens francais des mots
     matiere/grammaire-n5.txt ... -n1.txt   la grammaire : explications et
                                            phrases d'exemple
@@ -793,10 +795,19 @@ def lit_kanjidic() -> dict:
     return kd
 
 
+# Les niveaux de l'ancien JLPT (4 = le plus facile), pour la vingtaine de
+# kanjis que kanji-data a oublie de ranger dans le nouveau : 分 (自分, 半分,
+# 五分) en est, et le site ne l'apprenait pas. L'ancien niveau 2 s'est
+# partage entre le N3 et le N2 : on prend le N3, ce sont des kanjis courants
+# (的, 無, 身, 可).
+ANCIENS_NIVEAUX = {4: 5, 3: 4, 2: 3, 1: 1}
+
+
 def niveaux_jlpt() -> dict:
     """{kanji: 5 pour N5 ... 1 pour N1}."""
     donnees = json.loads(source("jlpt.json").read_text(encoding="utf-8"))
-    return {k: v["jlpt_new"] for k, v in donnees.items() if v.get("jlpt_new")}
+    return {k: v.get("jlpt_new") or ANCIENS_NIVEAUX[v["jlpt_old"]]
+            for k, v in donnees.items() if v.get("jlpt_new") or v.get("jlpt_old")}
 
 
 def _rang(priorites):
@@ -902,13 +913,26 @@ def mots_d_exemple(niveaux, n=MOTS_PAR_KANJI) -> dict:
     return sortie
 
 
+# Les 80 kanjis du N5 par themes, dans l'ordre ou un debutant les apprend :
+# les nombres, les jours de la semaine (le soleil, la lune et les cinq
+# elements), les gens, la nature, les positions, le temps, l'ecole et la
+# famille, les directions, les verbes de base, le reste. L'ordre de l'ecole
+# (annee, puis nombre de traits) melait 一 人 十 二 九 入 : les chiffres
+# arrivaient en desordre, 火 et 水 apres 千.
+ORDRE_N5 = ("一二三四五六七八九十百千万円" "日月火水木金土" "人子女男" "山川天気雨"
+            "上下中大小" "年今午前後時分半間毎" "本学生先校名語友父母" "右左東西南北外"
+            "行来出入休見食書話聞読" "何国長高白車電")
+
+
 def construit_kanjis(traduits=None) -> tuple[list, dict]:
     """La liste des kanjis dans l'ordre ou on les apprend, et leurs traits
     par niveau.
 
-    L'ordre : N5 d'abord, puis N4... ; dans un niveau, ceux de l'ecole
-    primaire avant les autres, une annee apres l'autre, et a annee egale
-    les plus simples (le moins de traits) d'abord -- 一 avant 二 avant 人.
+    L'ordre : N5 d'abord, par themes (ORDRE_N5), puis N4... ; a partir du
+    N4, ceux de l'ecole primaire avant les autres, une annee apres l'autre,
+    et a annee egale les plus simples (le moins de traits) d'abord. La page
+    fait passer devant, dans chaque niveau, les kanjis des mots qu'on
+    apprend (voir kanjisADecouvrir dans nihongo.js).
 
     `traduits` : {(mot, lecture): [sens]} du vocabulaire. Un mot d'exemple
     qui en fait partie prend ces sens-la, traduits a la main, plutot que
@@ -944,7 +968,9 @@ def construit_kanjis(traduits=None) -> tuple[list, dict]:
 
     def ordre(k):
         d = kd.get(k, {})
-        return (-niveaux[k], d.get("g") or 99, len(kvg[k]["traits"]), d.get("f") or 9999)
+        theme = ORDRE_N5.find(k) if niveaux[k] == 5 else -1
+        return (-niveaux[k], theme if theme >= 0 else len(ORDRE_N5), d.get("g") or 99,
+                len(kvg[k]["traits"]), d.get("f") or 9999)
 
     liste, traces = [], {}
     for k in sorted((k for k in niveaux if k in kvg), key=ordre):
@@ -2924,6 +2950,318 @@ def construit_lecture(fichiers=None, vocabulaire=None, glossaire=None, points=No
                            for k in sorted(analyseur.particules)}}
 
 
+# --------------------------------------------------------------------------
+#   Le romaji
+# --------------------------------------------------------------------------
+# La page peut ecrire le japonais en lettres latines (le reglage « rōmaji »,
+# voir static/nihongo/romaji.js) : le Hepburn des dictionnaires et des
+# gares, ses voyelles longues marquees (とうきょう : tōkyō), les particules
+# comme elles se disent (は : wa, へ : e, を : o), et des espaces entre les
+# mots.
+#
+# Un mot seul, la page le transcrit elle-meme, et les textes de la lecture
+# aussi : ils arrivent deja decoupes en mots. Les phrases de la grammaire,
+# et le japonais glisse dans les explications en francais, ne le sont pas :
+# SudachiPy les decoupe ici, une fois, et static/nihongo/romaji.json garde
+# leur transcription -- la page ne le demande qu'en romaji. Les lectures
+# sont celles des furigana, pas celles de l'analyseur : 私 se lit わたし,
+# comme la phrase l'ecrit.
+#
+# Meme table et memes regles que static/nihongo/romaji.js.
+def _table_romaji() -> dict:
+    t = {}
+    lignes = {"": "あいうえお", "k": "かきくけこ", "s": "さしすせそ", "t": "たちつてと", "n": "なにぬねの",
+              "h": "はひふへほ", "m": "まみむめも", "r": "らりるれろ", "g": "がぎぐげご", "z": "ざじずぜぞ",
+              "d": "だぢづでど", "b": "ばびぶべぼ", "p": "ぱぴぷぺぽ"}
+    for c, kanas in lignes.items():
+        for v, k in zip("aiueo", kanas):
+            t[k] = c + v
+    t.update({"し": "shi", "ち": "chi", "つ": "tsu", "ふ": "fu", "じ": "ji", "ぢ": "ji", "づ": "zu",
+              "や": "ya", "ゆ": "yu", "よ": "yo", "わ": "wa", "ゐ": "i", "ゑ": "e", "を": "o", "ん": "n",
+              "ゔ": "vu", "ぁ": "a", "ぃ": "i", "ぅ": "u", "ぇ": "e", "ぉ": "o", "ゃ": "ya", "ゅ": "yu",
+              "ょ": "yo", "ゎ": "wa", "ゕ": "ka", "ゖ": "ke"})
+    # les sons contractes : きゃ kya, しゃ sha, じゃ ja
+    for k, c in zip("きにひみりぎびぴ", ("k", "n", "h", "m", "r", "g", "b", "p")):
+        for petit, v in zip("ゃゅょ", "auo"):
+            t[k + petit] = c + "y" + v
+    for k, c in (("し", "sh"), ("ち", "ch"), ("じ", "j"), ("ぢ", "j")):
+        for petit, v in zip("ゃゅょ", "auo"):
+            t[k + petit] = c + v
+    # les sons des mots d'ailleurs : ティ, ファ, ヴァ
+    t.update({"しぇ": "she", "ちぇ": "che", "じぇ": "je", "てぃ": "ti", "でぃ": "di", "とぅ": "tu",
+              "どぅ": "du", "てゅ": "tyu", "でゅ": "dyu", "ふぁ": "fa", "ふぃ": "fi", "ふぇ": "fe",
+              "ふぉ": "fo", "ふゅ": "fyu", "うぃ": "wi", "うぇ": "we", "うぉ": "wo", "ゔぁ": "va",
+              "ゔぃ": "vi", "ゔぇ": "ve", "ゔぉ": "vo", "つぁ": "tsa", "つぃ": "tsi", "つぇ": "tse",
+              "つぉ": "tso", "いぇ": "ye", "くぁ": "kwa", "ぐぁ": "gwa", "きぇ": "kye", "にぇ": "nye",
+              "ひぇ": "hye"})
+    return t
+
+
+ROMAJI = _table_romaji()
+_PETITS = "ぁぃぅぇぉゃゅょゎ"
+_LONGUES = {("a", "あ"), ("u", "う"), ("o", "う"), ("o", "お"), ("e", "え")}
+_MACRON = dict(zip("aiueo", "āīūēō"))
+PONCTUATION_ROMAJI = {"。": ".", "、": ",", "？": "?", "！": "!", "「": "“", "」": "”", "『": "“",
+                      "』": "”", "（": "(", "）": ")", "・": "·", "〜": "~", "～": "~", "―": "—",
+                      "　": " ", "，": ",", "．": "."}
+COUPURE = "|"                  # entre deux voyelles qui ne font pas une longue
+_TENU = "\x01"                 # une marque (**) au milieu d'un mot : passe telle quelle
+
+
+def _moras(s) -> list:
+    """Les kanas un par un, un son contracte (きょ, ティ) comptant pour un."""
+    moras, i = [], 0
+    while i < len(s):
+        if s[i + 1:i + 2] in tuple(_PETITS) and s[i:i + 2] in ROMAJI:
+            moras.append(s[i:i + 2])
+            i += 2
+        else:
+            moras.append(s[i])
+            i += 1
+    return moras
+
+
+def kana_en_romaji(texte, suite="") -> str:
+    """« とうきょう » -> « tōkyō ». っ double la consonne qui suit (がっこう :
+    gakkō), ん prend une apostrophe devant une voyelle (こんや : kon'ya), ー
+    et une voyelle qui en allonge une autre font une voyelle longue (コーヒー :
+    kōhī, おかあさん : okāsan) -- sauf い, qui reste ecrit (せんせい : sensei,
+    いいえ : iie). を se dit o. COUPURE separe deux voyelles qui ne font pas
+    une longue (おも|う : omou). Le reste passe tel quel. `suite` : les kanas
+    du mot colle a celui-ci, pour un っ ou un ん final (吸っ・て : sutte)."""
+    moras = _moras(_hira(str(texte or "")))
+    apres = _moras(_hira(str(suite or "")))[:1]
+    moras_et_suite = moras + apres
+    sortie, voyelle = "", None          # la voyelle sur laquelle finit le dernier kana
+    for k, m in enumerate(moras):
+        if m == COUPURE:
+            voyelle = None
+            continue
+        if m == _TENU:
+            sortie += m
+            voyelle = None
+            continue
+        if m == "っ":
+            r = ROMAJI.get(next((x for x in moras_et_suite[k + 1:] if x != _TENU), ""), "")
+            if r and r[0] not in "aiueo":
+                sortie += "t" if r.startswith("ch") else r[0]
+            voyelle = None
+            continue
+        if m == "ん":
+            r = ROMAJI.get(next((x for x in moras_et_suite[k + 1:] if x not in (_TENU, COUPURE)), ""), "")
+            sortie += "n'" if r[:1] in tuple("aiueoy") and r else "n"
+            voyelle = None
+            continue
+        if m == "ー":
+            if voyelle:
+                sortie = sortie[:-1] + _MACRON[voyelle]
+            voyelle = None
+            continue
+        r = ROMAJI.get(m)
+        if r is None:
+            sortie += PONCTUATION_ROMAJI.get(m, m)
+            voyelle = None
+            continue
+        if voyelle and (voyelle, m) in _LONGUES:
+            sortie = sortie[:-1] + _MACRON[voyelle]
+            voyelle = None
+            continue
+        sortie += r
+        voyelle = r[-1] if r[-1] in "aiueo" else None
+    return sortie
+
+
+_J_ROMAJI = r"\{[^{}|]+\|[^{}|]+\}|[ぁ-ゖァ-ヺー〜々・「」『』。、？！（）]|[㐀-鿿]"
+# Le japonais glisse dans du francais : la meme chose que JAPONAIS dans
+# nihongo.js, et le gras (**) en son milieu -- {話|はな}せる**ようになりました.
+FRAGMENT_JAPONAIS = re.compile(rf"(?:{_J_ROMAJI})(?:{_J_ROMAJI}|\*\*(?=(?:{_J_ROMAJI})))*")
+_MORCEAU = re.compile(r"\{([^{}|]+)\|([^{}|]+)\}|(\*\*|\x02)|(.)", re.S)
+HONORIFIQUES = {"さん", "さま", "様", "くん", "君", "ちゃん", "殿", "氏"}
+_ATTACHES = {"て", "で", "ば", "たり", "だり", "ちゃ", "じゃ", "つつ", "ながら"}
+_A_PART = {"だ", "です", "らしい", "べし"}
+
+
+class Romaniseur:
+    """Du japonais balise ({学生|がくせい}です), en romaji : « gakusei desu »."""
+
+    def __init__(self):
+        try:
+            from sudachipy import Dictionary, SplitMode
+        except ImportError:
+            raise SystemExit("Le romaji a besoin de SudachiPy : "
+                             "venv/bin/pip install sudachipy sudachidict_core") from None
+        self._decoupeur = Dictionary(dict="core").tokenizer(mode=SplitMode.C)
+
+    def _mots(self, balise):
+        """Les mots de la phrase : des morceaux de l'analyseur, recousus quand
+        un groupe de furigana passe a cheval ; leur lecture (celle des
+        furigana), et les marques (**, \\x02) qui tombent en leur milieu."""
+        morceaux, marques, texte = [], [], ""
+        for m in _MORCEAU.finditer(balise):
+            base, lu, marque, car = m.groups()
+            if marque:
+                marques.append((len(texte), marque))
+            else:
+                s = base or car
+                morceaux.append((len(texte), s, lu or (car if not _cjk(car) else None)))
+                texte += s
+        bornes = {debut for debut, _, _ in morceaux} | {len(texte)}
+        jetons = list(self._decoupeur.tokenize(texte)) if texte.strip() else []
+        mots, courant = [], None
+        for j in jetons:
+            if courant is None:
+                pos = j.part_of_speech()
+                courant = {"s": j.begin(), "pos": pos, "dic": j.dictionary_form(),
+                           "lu_analyseur": "", "fin_pos": pos}
+            courant["e"] = j.end()
+            courant["fin_pos"] = j.part_of_speech()
+            courant["lu_analyseur"] += _hira(j.reading_form())
+            if j.end() in bornes:
+                mots.append(courant)
+                courant = None
+        for mot in mots:
+            mot["t"] = texte[mot["s"]:mot["e"]]
+            dedans = [(d, s, lu) for d, s, lu in morceaux if mot["s"] <= d < mot["e"]]
+            if any(lu is None for _, _, lu in dedans):
+                mot["lu"] = mot["lu_analyseur"]           # un kanji sans furigana
+            else:
+                lu = ""
+                for d, s, l in dedans:
+                    lu += "".join(_TENU for p, _ in marques if p == d and d > mot["s"]) + l
+                mot["lu"] = lu
+        return mots, marques
+
+    @staticmethod
+    def _joint(avant, mot):
+        """Ce qui separe deux mots : une espace, rien (たべ・ました, ご・はん),
+        ou un trait d'union (田中-さん, 3-時)."""
+        p0, p1, p2 = mot["pos"][:3]
+        a0, a1 = avant["pos"][:2]
+        if avant["t"] in ("「", "『", "（", "〜", "～") or a0 == "接頭辞":
+            return ""
+        if avant["t"] == "・":
+            return " "
+        if p0 in ("補助記号", "空白"):
+            return " " if mot["t"] in ("「", "『", "（", "・", "〜", "～") else ""
+        chiffres = avant["t"].isascii() and avant["t"].isdigit()
+        if p0 == "接尾辞":
+            return "-" if mot["t"] in HONORIFIQUES or chiffres else ""
+        if a1 == "数詞" and (p1 == "数詞" or p2 == "助数詞可能"):
+            return "-" if chiffres and p1 != "数詞" else ""
+        if p0 == "助動詞":
+            return " " if mot["dic"] in _A_PART else ""
+        if p0 == "助詞" and ((p1 == "接続助詞" and mot["t"] in _ATTACHES) or (p1 == "準体助詞" and mot["t"] == "ん")):
+            return ""
+        fin = avant["fin_pos"]
+        if p0 == "動詞" and p1 == "非自立可能" and fin[0] == "動詞" and fin[5].startswith("連用形"):
+            return ""
+        if p0 == "形状詞" and p1 == "助動詞語幹" and mot["t"] == "そう" and fin[0] in ("動詞", "形容詞"):
+            return ""
+        return " "
+
+    @staticmethod
+    def _kana(mot):
+        """La lecture d'un mot, prete a transcrire : les particules comme elles
+        se disent, et le う final d'un verbe (思う) qui n'allonge rien."""
+        lu, p0 = mot["lu"], mot["pos"][0]
+        if p0 == "助詞" and mot["t"] in ("は", "へ"):
+            return "わ" if mot["t"] == "は" else "え"
+        if p0 in ("接続詞", "感動詞") and lu.endswith("は"):
+            return lu[:-1] + "わ"
+        fin = mot["fin_pos"]
+        if fin[0] == "動詞" and fin[4] == "五段-ワア行" and fin[5].startswith(("終止形", "連体形")) \
+                and lu.endswith("う"):
+            return lu[:-1] + COUPURE + "う"
+        return lu
+
+    def transcrit(self, balise, phrase=None, gras=0) -> str:
+        """`phrase` : capitaliser son debut et celui de chaque phrase (par
+        defaut, s'il y a un point). `gras` : 1 si le texte commence dans du
+        gras, pour savoir quel ** ouvre et lequel ferme. Un ** qui ouvre se
+        colle au mot qui suit, un ** qui ferme a celui d'avant -- de meme pour
+        les \\x02 qui bornent le trou d'une phrase a completer."""
+        mots, marques = self._mots(balise)
+        if phrase is None:
+            phrase = bool(re.search(r"[。？！]", balise))
+        compte = {"**": gras, "\x02": 0}
+        sens = []                           # chaque marque : ouvre (True) ou ferme
+        for _, m in marques:
+            sens.append(compte[m] % 2 == 0)
+            compte[m] += 1
+        joints = [self._joint(avant, mot) if k else "" for k, (avant, mot) in enumerate(zip([None] + mots, mots))]
+        kanas = [self._kana(mot) for mot in mots]
+        sortie, majuscule = "", phrase
+        for k, mot in enumerate(mots):
+            ici = [(m, o) for (d, m), o in zip(marques, sens) if d == mot["s"]]
+            sortie += "".join(m for m, o in ici if not o) + joints[k] + "".join(m for m, o in ici if o)
+            colle = k + 1 < len(mots) and joints[k + 1] == ""
+            r = kana_en_romaji(kanas[k], kanas[k + 1] if colle else "")
+            for d, m in marques:
+                if mot["s"] < d < mot["e"]:
+                    r = r.replace(_TENU, m, 1)
+            if mot["pos"][1] == "固有名詞" or (majuscule and re.search(r"[a-z]", r)):
+                r = re.sub(r"[a-zāīūēō]", lambda x: x.group().upper(), r, count=1)
+                majuscule = False
+            if phrase and mot["t"] in ("。", "？", "！"):
+                majuscule = True
+            sortie += r
+        fin = len(surface(balise.replace("**", "").replace("\x02", "")))
+        return sortie + "".join(m for d, m in marques if d >= fin)
+
+    def fragments(self, texte, sortie) -> None:
+        """Le japonais glisse dans un texte en francais, chaque morceau vers sa
+        transcription -- la page les remplace un a un (voir texteHtml dans
+        nihongo.js)."""
+        for m in FRAGMENT_JAPONAIS.finditer(texte or ""):
+            if m.group() not in sortie:
+                sortie[m.group()] = self.transcrit(m.group(), gras=texte[:m.start()].count("**") % 2)
+
+    def exemple(self, ex) -> dict:
+        """Une phrase a trou : avant, le trou, apres -- chacun avec ses espaces,
+        les morceaux mis bout a bout font la phrase. Et ce que montre le trou,
+        les autres reponses justes."""
+        a, t, p = self.transcrit(f"{ex['a']}\x02{ex['t']}\x02{ex['p']}", phrase=True).split("\x02")
+        sortie = {"a": a, "t": t, "p": p}
+        if ex.get("i"):
+            sortie["i"] = self.transcrit(ex["i"], phrase=False)
+        if len(ex["r"]) > 1:
+            sortie["r"] = [self.transcrit(f"{ex['a']}\x02{r}\x02{ex['p']}", phrase=True).split("\x02")[1].strip()
+                           for r in ex["r"][1:]]
+        return sortie
+
+
+def construit_romaji(grammaire, lecture) -> dict:
+    """static/nihongo/romaji.json : le japonais de la grammaire et des
+    textes qui n'est pas decoupe en mots (voir plus haut). « fragments » :
+    chaque morceau de japonais d'un texte en francais, d'un titre, d'un
+    motif ; « phrases » : chaque phrase a trou, par le nom de son son."""
+    r = Romaniseur()
+    fragments, phrases = {}, {}
+    for c in grammaire["chapitres"]:
+        r.fragments(c["nom"], fragments)
+        r.fragments(c.get("intro", ""), fragments)
+    for point in grammaire["points"]:
+        for texte in (point["titre"], point["sens"], *point["formes"]):
+            r.fragments(texte, fragments)
+        for b in point["texte"]:
+            for texte in [b.get("p"), b.get("note"), *b.get("l", []), *(c for l in b.get("t", []) for c in l)]:
+                r.fragments(texte, fragments)
+        for ex in point["ex"]:
+            phrases[ex["son"]] = r.exemple(ex)
+    for t in lecture["textes"]:
+        for texte in (t["titre"], t["intro"]):
+            r.fragments(texte, fragments)
+        for q in t["q"]:
+            for texte in (q["q"], *q["c"]):
+                r.fragments(texte, fragments)
+        for par in t["p"]:
+            for ph in par:
+                r.fragments(ph.get("qui"), fragments)
+    for pa in lecture["particules"].values():
+        r.fragments(pa["fr"], fragments)
+    return {"fragments": dict(sorted(fragments.items())), "phrases": phrases}
+
+
 def ecrit_matiere(dossier=None) -> list:
     """Refait tous les fichiers de static/nihongo/ qui viennent des sources."""
     dossier = Path(dossier or STATIQUE)
@@ -2960,7 +3298,11 @@ def ecrit_matiere(dossier=None) -> list:
                   "decoupee en mots par SudachiPy (Apache 2.0)",
         **lecture}))
 
-    traduits = {(m["m"], l): m["fr"] for m in vocabulaire if m["fr"] for l in m["l"][:1]}
+    ecrits.append(_ecrit(dossier / "romaji.json", {
+        "source": "Transcrit pour Nihongo, decoupe en mots par SudachiPy (Apache 2.0)",
+        **construit_romaji(grammaire, lecture)}))
+
+    traduits ={(m["m"], l): m["fr"] for m in vocabulaire if m["fr"] for l in m["l"][:1]}
     liste, traces = construit_kanjis(traduits)
     ecrits.append(_ecrit(dossier / "kanji.json", {
         "source": "KANJIDIC2 et JMdict (EDRDG, CC BY-SA 4.0), niveaux JLPT de "

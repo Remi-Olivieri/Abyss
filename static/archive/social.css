@@ -720,7 +720,13 @@ button.soc-vers-jeu:hover,
      « Suggestion ». */
   .soc-barre-vide{order:3;flex:1 1 auto;margin-left:0}
 
-  .soc-colonne{padding:16px 0 80px}
+  /* Le haut et le bas seulement : .soc-colonne est pose sur le meme element
+     que .wrap, et le raccourci « padding:16px 0 80px » remettait ses marges
+     laterales a zero -- le titre et les cartes du fil touchaient les deux
+     bords de l'ecran. */
+  .soc-colonne{padding-top:16px;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px));
+    padding-left:max(14px,env(safe-area-inset-left,0px));
+    padding-right:max(14px,env(safe-area-inset-right,0px))}
   .soc-post{padding:15px 15px 11px;border-radius:12px}
   /* Le panneau du sujet garde ses marges sur telephone, en plus serre : sans
      elles on retombe exactement sur ce qui n'allait pas en grand. */
@@ -746,6 +752,15 @@ button.soc-vers-jeu:hover,
      200 px, le champ et son bouton mangeaient la moitie d'un ecran de
      telephone et il ne restait plus rien de la conversation au-dessus. */
   .soc-champ{max-height:132px}
+  /* 16 px dans les deux champs d'ecriture -- le commentaire et la reponse :
+     en dessous, iOS zoome sur le champ au premier appui et laisse la
+     fenetre de travers une fois le clavier referme. */
+  .soc-champ,.soc-mini-form .soc-champ{font-size:16px}
+  /* Les deux boutons de la reponse, a hauteur de pouce. */
+  .soc-mini-form .soc-envoi{height:40px;padding:0 16px;font-size:13.5px}
+  /* « J'aime » et « reponses » : 38 px de haut, comme les boutons de la
+     barre -- a 30 px, on visait le coeur et on ouvrait la discussion. */
+  .soc-act{height:38px;padding:0 12px;font-size:13.5px}
   /* Le retrait des reponses ne bouge pas : c'est la largeur d'une photo, et
      une photo fait la meme taille ici qu'ailleurs. Le reduire aurait casse
      l'alignement sous le texte du parent, qui est tout ce qui fait lire la

@@ -833,6 +833,10 @@ body.sansreflets .foil{display:none}
   .search{width:100%}
   .col{width:100%}
   .panel{padding:14px 14px 18px}
+  /* Les flèches suivent le défilement. Centrées sur une scène devenue plus
+     haute que l'écran - deux pages empilées - elles se retrouvaient au
+     milieu de la colonne, hors de vue depuis le haut comme depuis le bas. */
+  .nav{align-self:flex-start;position:sticky;top:calc(50vh - 19px);top:calc(50dvh - 19px)}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
@@ -995,4 +999,191 @@ h1{
 }
 @media (hover:none){
   .tab:hover{background:none}
+}
+
+/* =======================================================================
+   Le téléphone
+
+   Sous 900 px le classeur passait déjà en colonne, mais il gardait la
+   disposition du grand écran autour : les flèches de page de part et
+   d'autre des pochettes (76 px de largeur en moins, soit des cartes d'un
+   tiers plus petites), le pied sous la page (hors de l'écran dès qu'une
+   double-page s'empile), et des fenêtres centrées plus larges que l'écran.
+
+   Ici tout ce qui tourne les pages descend dans une barre fixe, sous le
+   pouce ; les pochettes prennent toute la largeur ; les fenêtres montent
+   du bas, comme partout ailleurs sur le site.
+   ======================================================================= */
+@media (max-width:640px){
+  /* ---------- l'en-tête : une rangée d'icônes rondes, le titre au milieu ----------
+     38 px, comme la barre de l'Archive : la plus petite cible qu'un pouce
+     trouve du premier coup. « Rechercher » perd son libellé - la loupe le
+     dit - et c'est ce qui laisse les réglages remonter sur la rangée du
+     titre au lieu d'en occuper une à eux seuls. */
+  header{padding:calc(10px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 0
+    max(14px,env(safe-area-inset-left,0px))}
+  main{padding-left:max(14px,env(safe-area-inset-left,0px));
+    padding-right:max(14px,env(safe-area-inset-right,0px))}
+  .brand{gap:8px;flex-wrap:wrap}
+  .entete-action,.maison,.gear,.jnl-search{
+    width:38px;height:38px;padding:0;border-radius:50%;justify-content:center;flex:0 0 auto}
+  .jnl-search span{display:none}
+  .titre{flex:1 1 0;min-width:0;gap:8px}
+  h1,.titre h1{font-size:19px;line-height:1.3;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cog-wrap{margin-left:0;gap:8px}
+  .menu{min-width:min(236px,calc(100vw - 28px))}
+  .menu-item{padding:12px 12px;font-size:14.5px}
+  .tabs{gap:6px;padding-bottom:4px;margin:2px -14px 0;padding-left:14px;padding-right:14px;
+    flex-basis:calc(100% + 28px);scroll-padding:0 14px}
+  .tab{padding:9px 13px;font-size:13.5px}
+
+  /* ---------- la scène ----------
+     Le haut, et non le milieu : centrée dans un écran plus haut qu'elle, la
+     première page laissait deux cents pixels vides sous les onglets. */
+  main{padding-top:12px}
+  .stage{display:block}
+  .topbar{gap:9px;padding-bottom:11px}
+  /* 16 px : en dessous, iOS zoome sur le champ dès qu'on y pose le doigt. */
+  .search input{font-size:16px;padding:10px 13px}
+  .results button{padding:13px 13px;font-size:14px}
+  .meter{flex:1 1 100%}
+  .meter .bar{flex:1 1 auto;width:auto}
+  .face{margin-bottom:10px}
+  .face .pg{font-size:15px}
+  .face .cnt{font-size:11.5px}
+
+  /* ---------- la barre du bas : tourner les pages sous le pouce ----------
+     Les deux flèches quittent les côtés du classeur pour ses deux bouts ;
+     entre elles, le choix du classeur et le numéro de page. Fixe : une
+     double-page empilée fait plus d'un écran, et il fallait remonter pour
+     tourner la suivante.
+
+     « Classeur » ne s'écrit qu'une fois, devant les numéros, et « Page »
+     s'efface - « 2 / 30 » sous un classeur se lit tout seul. */
+  footer{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;margin:0;
+    flex-wrap:nowrap;gap:12px;min-height:64px;
+    padding:10px calc(64px + env(safe-area-inset-right,0px))
+            calc(10px + env(safe-area-inset-bottom,0px))
+            calc(64px + env(safe-area-inset-left,0px));
+    background:rgba(13,17,30,.9);border-top:1px solid var(--edge);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  }
+  /* top:auto : la règle des tablettes, plus haut, les colle au milieu de
+     l'écran - ici elles vivent dans la barre. */
+  #prev,#next{
+    position:fixed;z-index:41;width:44px;height:44px;font-size:21px;top:auto;
+    bottom:calc(10px + env(safe-area-inset-bottom,0px));background:#ffffff0a;
+  }
+  #prev{left:max(10px,env(safe-area-inset-left,0px))}
+  #next{right:max(10px,env(safe-area-inset-right,0px))}
+  .classeurs{align-items:center;gap:6px;min-width:0;overflow-x:auto;scrollbar-width:none}
+  .classeurs::-webkit-scrollbar{display:none}
+  .classeurs:not(:empty)::before{content:"Classeur";flex:0 0 auto;margin-right:2px;
+    font-family:'DM Mono';font-size:11.5px;color:var(--ink-dim)}
+  .cl-mot{display:none}
+  .classeurs button{flex:0 0 auto;min-width:38px;height:38px;padding:0 10px;border-radius:9px;font-size:13px}
+  .jump{flex:0 0 auto;gap:6px;font-size:13px}
+  .jump-mot{display:none}
+  .jump input{width:54px;height:38px;padding:0 6px;border-radius:9px;font-size:16px}
+
+  /* Le bouton du stock ne flotte plus : dans le coin, il se posait sur les
+     pochettes de la page du bas. Il redevient un bouton ordinaire, avec son
+     libellé, à la fin de la page - c'est un geste d'entretien, il n'a pas
+     à suivre le défilement. La place de la barre fixe passe alors de <main>
+     à <body>, pour qu'il reste au-dessus d'elle. */
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  main{padding-bottom:16px}
+  .stock-maj{position:static;align-self:flex-start;width:auto;height:40px;
+    padding:0 16px 0 13px;border-radius:99px;
+    margin:0 14px 18px max(14px,env(safe-area-inset-left,0px))}
+  .stock-maj span{display:inline}
+  .toast{bottom:calc(78px + env(safe-area-inset-bottom,0px));width:max-content}
+
+  /* ---------- la carte au premier plan ----------
+     Le nom a toute la largeur, moins la croix : elle se posait sur sa
+     dernière lettre. Les deux menus se partagent une ligne, les boutons
+     prennent la suivante en entier. */
+  .zoomnav{width:42px;height:42px;font-size:20px}
+  .panel{padding:16px max(14px,env(safe-area-inset-right,0px))
+    calc(16px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}
+  .panel-in{gap:12px}
+  .panel .who{flex:1 1 100%;padding:0 34px}
+  .panel .who h3{font-size:18px}
+  .coord{flex:1 1 100%;justify-content:center}
+  .cbox{flex:1 1 0;min-width:0;padding:6px 4px}
+  .cbox .k{font-size:8.5px;letter-spacing:.08em}
+  .edit{flex:1 1 100%;gap:8px}
+  .edit select{flex:1 1 0;min-width:0;height:44px;padding:0 10px;font-size:16px}
+  .edit .act{flex:1 1 100%;height:46px;font-size:14.5px}
+  .close{top:6px;right:6px;width:42px;height:42px;display:grid;place-items:center;font-size:24px}
+
+  /* ---------- les fenêtres : elles montent du bas ----------
+     Centrée, la boîte prenait la largeur de son contenu - plus que l'écran,
+     son bord droit sortait - et rien ne la faisait défiler : sur un petit
+     téléphone, « Exporter » finissait hors de portée. */
+  .modal{padding:0;place-items:end stretch;grid-template-columns:minmax(0,1fr)}
+  .sheetbox,.sheetbox:has(.st-corps){
+    width:100%;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;
+    border-radius:16px 16px 0 0;border-bottom:none;
+    padding:20px max(16px,env(safe-area-inset-right,0px))
+      calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+    animation:sg-monte .26s cubic-bezier(.2,.8,.3,1);
+  }
+  .modal .row .act{height:46px;padding:0 12px}
+  /* Les bascules prennent la largeur de leur section et se la partagent :
+     « Tout le classeur » sortait de la sienne par la droite. */
+  .exp-format{display:flex;align-self:stretch}
+  .exp-btn{flex:1 1 auto;padding:10px 8px;font-size:12.5px}
+  .exp-case{height:42px;font-size:13.5px}
+  .exp-case input{width:17px;height:17px}
+  .cm-liste{padding:11px 11px}
+  .st-reprendre{padding:10px 12px}
+  .st-fleches button{width:36px;height:36px}
+  .aj-opt{padding:11px 11px;font-size:14px}
+
+  /* ---------- la recherche d'un classeur ---------- */
+  .voile-rech{padding:calc(12px + env(safe-area-inset-top,0px)) 12px 12px}
+  .rsearch-input{font-size:16px}
+  .rsearch-x{width:38px;height:38px}
+
+  /* ---------- les écrans d'accueil ---------- */
+  .gate{padding:28px 0 40px}
+  .gate .act{min-width:0;width:100%;height:48px;font-size:14.5px}
+}
+/* Les très petits écrans : la barre du bas se resserre plutôt que de faire
+   défiler ses classeurs. */
+@media (max-width:380px){
+  footer{gap:8px;padding-left:calc(58px + env(safe-area-inset-left,0px));
+    padding-right:calc(58px + env(safe-area-inset-right,0px))}
+  #prev,#next{width:42px;height:42px}
+  .brand{gap:6px}
+  .entete-action,.maison,.gear,.jnl-search{width:36px;height:36px}
+  .titre,.cog-wrap{gap:6px}
+  h1,.titre h1{font-size:17.5px}
+}
+@media (max-width:340px){
+  /* 320 px : le mot « Classeur » cède sa place aux numéros, et les trois
+     formats de l'export se serrent pour tenir sur une ligne. */
+  .classeurs:not(:empty)::before{display:none}
+  .exp-btn{padding:10px 3px;font-size:11px;letter-spacing:0}
+}
+/* Un écran court (téléphone de 5 pouces, ou clavier ouvert) : le panneau de
+   la carte se tasse pour laisser la carte elle-même visible au-dessus - les
+   deux boutons côte à côte, les quatre cases moins hautes. */
+@media (max-width:640px) and (max-height:660px){
+  .panel{padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  .panel-in{gap:8px}
+  .panel .who h3{font-size:16px}
+  .cbox{padding:4px 4px}
+  .cbox .v{font-size:15px}
+  /* 40 % de base : deux par ligne, jamais trois - les menus restent
+     ensemble, les boutons aussi. */
+  .edit select{flex:1 1 40%;height:40px}
+  .edit .act{flex:1 1 40%;height:42px;padding:0 8px;font-size:13.5px}
+}
+/* Le doigt n'a pas de survol : une pochette touchée ne reste pas soulevée. */
+@media (hover:none){
+  .slot:not(.void):hover{transform:none;border-color:#ffffff0d}
 }

@@ -1,7 +1,7 @@
 /* =======================================================================
    Nihongo - kanji.js
 
-   Les kanjis : 2 211, ceux des cinq niveaux du JLPT, dans l'ordre où on
+   Les kanjis : 2 230, ceux des cinq niveaux du JLPT, dans l'ordre où on
    les apprend (voir construit_kanjis dans nihongo.py). Rien ici ne touche
    à la page : les données, et de quoi corriger un sens tapé au clavier.
 
@@ -56,12 +56,13 @@
 
   /* ---------- corriger un sens tapé ----------
      Ce qui ne change pas le sens ne compte pas : les accents, les
-     majuscules, l'article (« le soleil »), le pluriel, ce qui est entre
-     parenthèses, et une faute de frappe dans un mot assez long. L'anglais
+     majuscules, l'article (« le soleil »), la préposition de tête (« en
+     dessous » vaut « au-dessous » et « dessous »), le pluriel, ce qui est
+     entre parenthèses, et une faute de frappe dans un mot assez long. L'anglais
      est accepté aussi : on sait ce que veut dire 日 si on répond « sun ».
      Pour le reste, la page propose « J'avais bon » : un synonyme que
      KANJIDIC ne connaît pas n'est pas une erreur. */
-  const ARTICLES = /^(?:(?:le|la|les|l|un|une|des|du|de|d|se|s|to|the|a|an)\s+)+/;
+  const ARTICLES = /^(?:(?:le|la|les|l|un|une|des|du|de|d|se|s|au|aux|en|to|the|a|an)\s+)+/;
 
   /* Les nombres s'écrivent en chiffres ou en lettres : « 1 » vaut « un »,
      « 20 ans » vaut « vingt ans ». Les chiffres passent en lettres, des
@@ -151,17 +152,33 @@
   }
 
   /* Une faute de frappe dès cinq lettres, deux dès neuf. En dessous, rien :
-     « mer » et « mère » sont deux kanjis différents. */
+     « mer » et « mère » sont deux kanjis différents. Ni entre deux
+     contraires qu'une lettre sépare : « dessus » n'est pas une faute de
+     frappe pour 下. */
+  const CONTRAIRES = [["dessus", "dessous"]].map((paire) => paire.map(normaliseSens));
   function proche(a, b) {
     if (a === b) return true;
     const n = Math.max(a.length, b.length);
     if (n < 5) return false;
+    if (CONTRAIRES.some(([x, y]) => a.replace(y, x) === b.replace(y, x))) return false;
     return distance(a, b) <= (n >= 9 ? 2 : 1);
   }
 
+  /* Les mots qu'on abrège en parlant : « PC », « télé », « maths ». Une
+     réponse abrégée vaut le mot entier - パソコン se répond « PC » comme
+     « ordinateur ». */
+  const FAMILIERS = Object.fromEntries(Object.entries({
+    "PC": ["ordinateur personnel", "ordinateur"], "ordi": ["ordinateur"], "télé": ["télévision"],
+    "pub": ["publicité"], "clim": ["climatisation", "climatiseur"], "maths": ["mathématiques"],
+    "prof": ["professeur"], "fac": ["université", "faculté"], "appart": ["appartement"],
+    "resto": ["restaurant"], "ciné": ["cinéma"], "frigo": ["réfrigérateur"], "info": ["information"],
+    "dico": ["dictionnaire"], "manif": ["manifestation"], "labo": ["laboratoire"], "ado": ["adolescent"],
+    "aprem": ["après-midi"], "sympa": ["sympathique"],
+  }).map(([court, longs]) => [normaliseSens(court), longs.map(normaliseSens)]));
+
   function accepteSens(item, saisie) {
     const essais = String(saisie || "").split(/[,;/]|\bou\b|\bor\b/)
-      .map(normaliseSens).filter(Boolean);
+      .map(normaliseSens).filter(Boolean).flatMap((e) => [e, ...(FAMILIERS[e] || [])]);
     if (!essais.length) return false;
     const sens = [...item.fr, ...item.en].flatMap(formesDuSens);
     return essais.some((e) => sens.some((s) => proche(e, s)));

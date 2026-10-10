@@ -515,6 +515,7 @@ def introuvable(err):
         return r
 
     page = f"""<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Abyss - 404</title>
 <link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
 <style>
@@ -525,7 +526,7 @@ def introuvable(err):
      background:linear-gradient(180deg,#EEF7FC,#89B4CE 52%,#2E4E66);
      -webkit-background-clip:text;background-clip:text;color:transparent}}
   p{{color:#72899D}}
-  a{{color:#5B9BF5}}
+  a{{color:#5B9BF5;display:inline-block;padding:10px 6px}}
 </style></head><body><div>
   <h1>{err.code}</h1>
   <p>Perdu dans l'Abyss...</p>

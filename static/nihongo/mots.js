@@ -17,10 +17,14 @@
 
    Trois cartes par mot :
      sens  voir le mot, taper ce qu'il veut dire ;
-     lire  voir le mot, taper sa lecture - seulement s'il a des kanjis ;
+     lire  voir le mot, taper sa lecture - seulement s'il s'écrit en
+           kanjis ;
      dire  lire le sens en français, retrouver le mot. Elle n'arrive
            qu'une fois le sens su (voir planDuJour dans nihongo.js) : on
            retrouve un mot bien plus difficilement qu'on ne le reconnaît.
+   Lesquelles un mot a, et s'il s'écrit en kanjis ou en kanas, dépend de
+   ce qu'on sait déjà : c'est la page qui le décide (voir « En kanjis, ou
+   en kanas » dans nihongo.js).
    ======================================================================= */
 (function () {
   "use strict";
@@ -52,14 +56,6 @@
         .catch((e) => { PRET = null; throw e; });
     }
     return PRET;
-  }
-
-  /* Les cartes que crée la découverte d'un mot. `dire` vient plus tard. */
-  function cles(item) {
-    return item.kanjis ? [`${item.id}:sens`, `${item.id}:lire`] : [`${item.id}:sens`];
-  }
-  function genres(item) {
-    return item.kanjis ? ["sens", "lire", "dire"] : ["sens", "dire"];
   }
 
   function depuisCle(cle) {
@@ -157,7 +153,11 @@
   const VOYELLE_OU_Y = /^[aiueoy]$/;
 
   function versKana(texte, fin) {
-    const s = String(texte || "").normalize("NFKC").replace(/[’`´]/g, "'").toLowerCase();
+    // une voyelle longue tapée comme la page l'écrit en rōmaji (tōkyō) : la
+    // voyelle et le trait qui l'allonge
+    const s = String(texte || "").normalize("NFKC").replace(/[’`´]/g, "'").toLowerCase()
+      .replace(/[āâ]/g, "aー").replace(/[īî]/g, "iー").replace(/[ūû]/g, "uー")
+      .replace(/[ēê]/g, "eー").replace(/[ōô]/g, "oー");
     let sortie = "";
     let i = 0;
     while (i < s.length) {
@@ -286,7 +286,7 @@
   }
 
   window.Mots = Object.assign(api, {
-    charge, installe, cles, genres, depuisCle, sens, nature, cleDe,
+    charge, installe, depuisCle, sens, nature, cleDe,
     versKana, versHira, compareLecture, sansLongues, accepteLecture, presque, accepteSens, synonyme, cherche,
   });
 })();

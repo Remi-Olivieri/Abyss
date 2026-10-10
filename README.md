@@ -33,9 +33,9 @@ static/
 ├── yugiquiz/     yugiquiz.css, commun.js     (cartes : voir yugioh/)
 ├── chainz/       cartes.json, images.json, art/{old,new}/
 └── nihongo/      nihongo.css, nihongo.js, kana.js, kanji.js, mots.js,
-                  grammaire.js, lecture.js, trace.js, traces-kana.json,
+                  grammaire.js, lecture.js, trace.js, romaji.js, traces-kana.json,
                   kanji.json, vocabulaire.json, grammaire.json, lecture.json,
-                  traces-kanji-n{5..1}.json
+                  romaji.json, traces-kanji-n{5..1}.json
                   (fabriqués par nihongo.py, voir plus bas) · voix/
 
 matiere/          la matière de Nihongo écrite à la main, et non fabriquée :
@@ -91,19 +91,21 @@ Deux exceptions qui **servent** au lieu de rediriger :
 
 ```sh
 venv/bin/python app.py            # http://127.0.0.1:8000/abyss
-venv/bin/python -m unittest tests  # 380 tests
+venv/bin/python -m unittest tests  # 395 tests
 venv/bin/python nihongo.py matiere # refait les JSON de static/nihongo/
 ```
 
 Les JSON de Nihongo sont versionnés : on ne les refait que si une source
 change (KanjiVG, KANJIDIC2, JMdict, listes JLPT) ou que `matiere/` change -
 une traduction, un point de grammaire, un texte. Un test refuse un
-`grammaire.json` ou un `lecture.json` en retard sur ses fichiers. Les sources
+`grammaire.json`, un `lecture.json` ou un `romaji.json` en retard sur ses fichiers. Les sources
 (une vingtaine de Mo) sont téléchargées une fois dans `donnees/nihongo/`.
 
 Les textes à lire sont découpés en mots à la fabrication, par SudachiPy, et
 chaque mot relié à son entrée du vocabulaire ou du glossaire : la page
-n'embarque aucun analyseur. Il ne sert qu'à `nihongo.py matiere` :
+n'embarque aucun analyseur. SudachiPy découpe aussi, pour le réglage
+« rōmaji », les phrases de la grammaire et le japonais glissé dans ses
+explications (`romaji.json`). Il ne sert qu'à `nihongo.py matiere` :
 
 ```sh
 venv/bin/pip install sudachipy sudachidict_core
