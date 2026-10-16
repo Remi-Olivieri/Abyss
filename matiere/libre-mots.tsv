@@ -1,0 +1,390 @@
+# Nihongo - le glossaire de la lecture libre.
+#
+# Les mots des phrases de Tatoeba (voir « La lecture libre » dans nihongo.py)
+# que ni le vocabulaire du JLPT ni le glossaire des textes
+# (matiere/lecture-mots.tsv) n'ont : les prenoms et les lieux qu'emploient
+# ses phrases, Tom en tete, des mots courants hors des listes, et les
+# suffixes des mots composes (弁護士 : 弁護 + 士). Meme format que
+# lecture-mots.tsv, champs separes par des tabulations :
+#
+#   graphie   lecture   sens, separes par « ; »   nature (facultative)
+#
+# Une phrase dont un mot n'est nulle part est laissee de cote : chaque ligne
+# ici en fait entrer d'autres. Un mot deja dans lecture-mots.tsv n'a pas a y
+# etre : la fabrication le refuse.
+
+# ---------------------------------------------------------------- prenoms
+トム	とむ	Tom	prénom
+メアリー	めありー	Mary	prénom
+ジョン	じょん	John	prénom
+ボブ	ぼぶ	Bob	prénom
+ジム	じむ	Jim	prénom
+ケン	けん	Ken	prénom
+健	けん	Ken	prénom
+ジェーン	じぇーん	Jane	prénom
+トニー	とにー	Tony	prénom
+ジャック	じゃっく	Jack	prénom
+ナンシー	なんしー	Nancy	prénom
+アン	あん	Anne	prénom
+ジョージ	じょーじ	George	prénom
+ベティ	べてぃ	Betty	prénom
+ケイト	けいと	Kate	prénom
+ルーシー	るーしー	Lucy	prénom
+マユコ	まゆこ	Mayuko	prénom
+ジュディ	じゅでぃ	Judy	prénom
+アリス	ありす	Alice	prénom
+スーザン	すーざん	Susan	prénom
+メグ	めぐ	Meg	prénom
+ピーター	ぴーたー	Peter	prénom
+ポール	ぽーる	Paul	prénom
+スミス	すみす	Smith	nom de famille
+ブラウン	ぶらうん	Brown	nom de famille
+ジョーンズ	じょーんず	Jones	nom de famille
+ホワイト	ほわいと	White	nom de famille
+田中	たなか	Tanaka	nom de famille
+ピカソ	ぴかそ	Picasso	nom propre
+タトエバ	たとえば	Tatoeba (le site de ces phrases)	nom propre
+サンタ	さんた	le père Noël	nom propre
+
+# ---------------------------------------------------------------- lieux
+ドイツ	どいつ	l'Allemagne	nom de lieu
+イギリス	いぎりす	l'Angleterre, le Royaume-Uni	nom de lieu
+英国	えいこく	le Royaume-Uni, l'Angleterre	nom de lieu
+イタリア	いたりあ	l'Italie	nom de lieu
+スペイン	すぺいん	l'Espagne	nom de lieu
+スイス	すいす	la Suisse	nom de lieu
+ロシア	ろしあ	la Russie	nom de lieu
+ギリシャ	ぎりしゃ	la Grèce	nom de lieu
+中国	ちゅうごく	la Chine	nom de lieu
+インド	いんど	l'Inde	nom de lieu
+アラビア	あらびあ	l'Arabie	nom de lieu
+カナダ	かなだ	le Canada	nom de lieu
+米国	べいこく	les États-Unis	nom de lieu
+メキシコ	めきしこ	le Mexique	nom de lieu
+ブラジル	ぶらじる	le Brésil	nom de lieu
+オーストラリア	おーすとらりあ	l'Australie	nom de lieu
+ハワイ	はわい	Hawaï	nom de lieu
+ロンドン	ろんどん	Londres	nom de lieu
+ローマ	ろーま	Rome	nom de lieu
+ニューヨーク	にゅーよーく	New York	nom de lieu
+ボストン	ぼすとん	Boston	nom de lieu
+シカゴ	しかご	Chicago	nom de lieu
+大阪	おおさか	Osaka	nom de lieu
+神戸	こうべ	Kobe	nom de lieu
+名古屋	なごや	Nagoya	nom de lieu
+奈良	なら	Nara	nom de lieu
+横浜	よこはま	Yokohama	nom de lieu
+沖縄	おきなわ	Okinawa	nom de lieu
+成田	なりた	Narita (l'aéroport de Tokyo)	nom de lieu
+ディズニーランド	でぃずにーらんど	Disneyland	nom de lieu
+
+# ---------------------------------------------------------------- suffixes
+達	たち	(après une personne) et les autres, pluriel : 私達, nous	suffixe
+ら	ら	(pluriel, familier) : 僕ら, nous ; 彼ら, eux	suffixe
+等	ら	(pluriel) : 彼等, eux	suffixe
+がた	がた	(pluriel poli) : あなたがた, vous	suffixe
+者	しゃ	celui qui… : 労働者, travailleur ; 科学者, scientifique	suffixe
+家	か	celui qui pratique, -iste : 芸術家, artiste ; 作家, écrivain	suffixe
+士	し	(un métier) : 弁護士, avocat ; 消防士, pompier	suffixe
+師	し	maître, artisan : 工芸師, artisan d'art	suffixe
+官	かん	agent, fonctionnaire : 警察官, policier	suffixe
+人	にん	personne qui… : 面会人, visiteur ; 被告人, accusé	suffixe
+力	りょく	force, capacité : 想像力, imagination ; 記憶力, mémoire	suffixe
+書	しょ	document, écrit : 請求書, facture ; 申告書, déclaration	suffixe
+証	しょう	carte, certificat : 免許証, permis de conduire	suffixe
+帳	ちょう	carnet, registre : 電話帳, annuaire	suffixe
+中	じゅう	tout au long de, partout dans : 一日中, toute la journée	suffixe
+通り	どおり	comme, conformément à : 時間通り, à l'heure	suffixe
+どおり	どおり	comme, conformément à : 予定どおり, comme prévu	suffixe
+車	しゃ	voiture : 日本車, voiture japonaise	suffixe
+機	き	appareil, avion : 旅客機, avion de ligne	suffixe
+物	ぶつ	objet, chose : 落下物, chute d'objets	suffixe
+屋	や	marchand, boutique : 郵便屋, facteur ; 花屋, fleuriste	suffixe
+停	てい	arrêt : バス停, arrêt de bus	suffixe
+化	か	-isation, rendre : 正当化, justification	suffixe
+感	かん	sentiment : 幸福感, sentiment de bonheur	suffixe
+史	し	histoire (d'un domaine) : 古代史, histoire ancienne	suffixe
+医	い	médecin : 研修医, interne	suffixe
+国	こく	pays : 主要国, grands pays	suffixe
+外	がい	hors de : 問題外, hors de question	suffixe
+末	まつ	fin (d'une période) : 今月末, la fin du mois	suffixe
+日	び	jour : 記念日, jour anniversaire, fête	suffixe
+み	み	(fait un nom d'un adjectif) : 面白み, intérêt ; 楽しみ, plaisir	suffixe
+おき	おき	tous les… : 一日おき, un jour sur deux	suffixe
+っぱなし	っぱなし	(laisser) tel quel, sans arrêt : つけっぱなし, laissé allumé	suffixe
+っ放し	っぱなし	(laisser) tel quel, sans arrêt : 開けっ放し, laissé ouvert	suffixe
+長	ちょう	long : 長時間, longtemps	préfixe
+老	ろう	vieux, âgé : 老婦人, vieille dame	préfixe
+英	えい	anglais, l'anglais : 英会話, conversation en anglais	préfixe
+未	み	pas encore, non : 未解決, non résolu	préfixe
+真	ま	en plein, tout à fait : 真夜中, en pleine nuit	préfixe
+
+# ---------------------------------------------------------------- la famille, les gens
+父さん	とうさん	papa, père	nom
+母さん	かあさん	maman, mère	nom
+兄さん	にいさん	grand frère	nom
+兄ちゃん	にいちゃん	grand frère (familier)	nom
+姉ちゃん	ねえちゃん	grande sœur (familier)	nom
+おばあちゃん	おばあちゃん	mamie, grand-mère	nom
+おじいちゃん	おじいちゃん	papi, grand-père	nom
+パパ	ぱぱ	papa	nom
+ママ	まま	maman	nom
+叔父	おじ	oncle	nom
+おじ	おじ	oncle	nom
+叔母	おば	tante	nom
+おば	おば	tante	nom
+主人	しゅじん	maître ; mari ; patron	nom
+奥様	おくさま	madame (l'épouse, très poli)	nom
+彼氏	かれし	petit ami, copain	nom
+ガールフレンド	がーるふれんど	petite amie	nom
+隣人	りんじん	voisin	nom
+病人	びょうにん	malade (une personne)	nom
+持ち主	もちぬし	propriétaire	nom
+怠け者	なまけもの	paresseux, fainéant	nom
+うそつき	うそつき	menteur	nom
+ピアニスト	ぴあにすと	pianiste	nom
+スパイ	すぱい	espion	nom
+ネイティブ	ねいてぃぶ	natif, locuteur natif	nom
+ベジタリアン	べじたりあん	végétarien	nom
+天使	てんし	ange	nom
+聴衆	ちょうしゅう	auditoire, public	nom
+市長	しちょう	maire	nom
+旧友	きゅうゆう	vieil ami	nom
+あいつ	あいつ	lui, ce type (familier)	pronom
+あんた	あんた	toi (familier)	pronom
+きみ	きみ	tu, toi (familier)	pronom
+やつ	やつ	type, gars ; truc (familier)	nom
+奴	やつ	type, gars ; truc (familier)	nom
+
+# ---------------------------------------------------------------- la maison, les repas
+夕食	ゆうしょく	dîner, repas du soir	nom
+朝食	ちょうしょく	petit-déjeuner	nom
+朝ご飯	あさごはん	petit-déjeuner	nom
+ディナー	でぃなー	dîner	nom
+外食	がいしょく	manger dehors, au restaurant	nom
+ピザ	ぴざ	pizza	nom
+ハンバーガー	はんばーがー	hamburger	nom
+クッキー	くっきー	biscuit, cookie	nom
+チョコレート	ちょこれーと	chocolat	nom
+アイス	あいす	glace (le dessert)	nom
+リンゴ	りんご	pomme	nom
+りんご	りんご	pomme	nom
+バナナ	ばなな	banane	nom
+レモン	れもん	citron	nom
+イチゴ	いちご	fraise	nom
+トマト	とまと	tomate	nom
+ぶどう酒	ぶどうしゅ	vin	nom
+タバコ	たばこ	tabac, cigarette	nom
+喫煙	きつえん	le fait de fumer	nom
+皿洗い	さらあらい	la vaisselle (la faire)	nom
+寝室	しんしつ	chambre à coucher	nom
+我が家	わがや	chez soi, notre maison	nom
+エアコン	えあこん	climatiseur	nom
+ゴミ	ごみ	ordures, déchets	nom
+かぎ	かぎ	clé	nom
+持ち物	もちもの	affaires, effets personnels	nom
+一人暮らし	ひとりぐらし	vivre seul	nom
+
+# ---------------------------------------------------------------- les loisirs, les choses
+野球	やきゅう	base-ball	nom
+サッカー	さっかー	football	nom
+フットボール	ふっとぼーる	football	nom
+バスケットボール	ばすけっとぼーる	basket-ball	nom
+ゴルフ	ごるふ	golf	nom
+チェス	ちぇす	échecs (le jeu)	nom
+ジョギング	じょぎんぐ	jogging	nom
+魚釣り	さかなつり	pêche (à la ligne)	nom
+オリンピック	おりんぴっく	Jeux olympiques	nom
+ロック	ろっく	rock (la musique) ; serrure	nom
+エスペラント	えすぺらんと	espéranto	nom
+アルファベット	あるふぁべっと	alphabet	nom
+インターネット	いんたーねっと	Internet	nom
+メール	めーる	courriel, e-mail	nom
+リスト	りすと	liste	nom
+チケット	ちけっと	billet, ticket	nom
+ビザ	びざ	visa	nom
+クレジット	くれじっと	crédit (la carte de crédit)	nom
+コイン	こいん	pièce (de monnaie)	nom
+ドル	どる	dollar	nom
+ポンド	ぽんど	livre (monnaie, poids)	nom
+マイル	まいる	mile	nom
+スーパー	すーぱー	supermarché	nom
+バイク	ばいく	moto	nom
+新車	しんしゃ	voiture neuve	nom
+ジャケット	じゃけっと	veste	nom
+サングラス	さんぐらす	lunettes de soleil	nom
+腕時計	うでどけい	montre (bracelet)	nom
+バラ	ばら	rose (la fleur)	nom
+木の葉	このは	feuilles des arbres	nom
+ライオン	らいおん	lion	nom
+ヘビ	へび	serpent	nom
+蛇	へび	serpent	nom
+熊	くま	ours	nom
+羊	ひつじ	mouton	nom
+鶏	にわとり	poule, poulet	nom
+リス	りす	écureuil	nom
+クモ	くも	araignée	nom
+
+# ---------------------------------------------------------------- le temps, le corps
+昨夜	さくや	hier soir, la nuit dernière	nom
+昨晩	さくばん	hier soir	nom
+夜通し	よどおし	toute la nuit	nom
+一日中	いちにちじゅう	toute la journée	nom
+放課後	ほうかご	après les cours	nom
+休日	きゅうじつ	jour de congé	nom
+定刻	ていこく	heure prévue	nom
+早め	はやめ	un peu tôt, en avance (早めに)	nom
+遅く	おそく	tard ; tardivement	nom
+早起き	はやおき	se lever tôt	nom
+当分	とうぶん	pour le moment, pour un temps	nom
+生涯	しょうがい	toute une vie	nom
+大雨	おおあめ	forte pluie	nom
+大雪	おおゆき	fortes chutes de neige	nom
+にわか雨	にわかあめ	averse	nom
+地面	じめん	sol, terre	nom
+体重	たいじゅう	poids (du corps)	nom
+体調	たいちょう	état de santé, forme	nom
+顔色	かおいろ	teint, mine	nom
+視力	しりょく	vue, vision	nom
+左手	ひだりて	main gauche	nom
+両手	りょうて	les deux mains	nom
+左側	ひだりがわ	côté gauche	nom
+右側	みぎがわ	côté droit	nom
+向こう側	むこうがわ	l'autre côté	nom
+大声	おおごえ	voix forte, à voix haute	nom
+アレルギー	あれるぎー	allergie	nom
+ガン	がん	cancer	nom
+ダイエット	だいえっと	régime (pour maigrir)	nom
+散髪	さんぱつ	coupe de cheveux	nom
+長生き	ながいき	longue vie, vivre longtemps	nom
+年上	としうえ	aîné, plus âgé	nom
+年下	としした	cadet, plus jeune	nom
+年	ねん	an, année ; âge (同じ年 : le même âge)	nom
+
+# ---------------------------------------------------------------- d'autres noms
+多く	おおく	beaucoup ; la plupart	nom
+多数	たすう	grand nombre, majorité	nom
+多額	たがく	grosse somme	nom
+最大	さいだい	le plus grand, maximum	nom
+最悪	さいあく	le pire	nom
+最良	さいりょう	le meilleur	nom
+全力	ぜんりょく	toutes ses forces	nom
+何事	なにごと	quoi que ce soit ; qu'y a-t-il ?	nom
+万事	ばんじ	tout, toutes choses	nom
+件	けん	affaire, question	nom
+割	わり	proportion ; (〜の割に) pour, compte tenu de	nom
+仮	かり	provisoire ; (仮に) supposons que	nom
+常	つね	habituel (常に : toujours)	nom
+真	しん	vrai, la vérité	nom
+類	るい	sorte, espèce	nom
+天	てん	ciel, le Ciel	nom
+この世	このよ	ce monde, ici-bas	nom
+とこ	とこ	endroit ; moment (ところ, à l'oral)	nom
+ふう	ふう	façon, manière (そんなふう : de cette façon)	nom
+風	ふう	façon, manière (そんな風 : de cette façon)	nom
+存知	ぞんじ	(ご存知) savoir, connaître (respect)	nom
+お気に入り	おきにいり	préféré, favori	nom
+持ち合わせ	もちあわせ	ce qu'on a sur soi (de l'argent)	nom
+人前	ひとまえ	en public, devant les gens	nom
+悪口	わるぐち	médisance, dire du mal	nom
+失礼	しつれい	impolitesse, impoli ; pardon, excusez-moi	adjectif en な
+不足	ふそく	manque, insuffisance	nom
+不注意	ふちゅうい	inattention, négligent	adjectif en な
+無実	むじつ	innocence, innocent	nom
+無罪	むざい	non coupable	nom
+有罪	ゆうざい	coupable	nom
+潔白	けっぱく	innocence, intégrité	nom
+奇跡	きせき	miracle	nom
+名案	めいあん	bonne idée	nom
+名声	めいせい	renommée, réputation	nom
+賞賛	しょうさん	admiration, éloge	nom
+善悪	ぜんあく	le bien et le mal	nom
+忍耐	にんたい	patience	nom
+分別	ふんべつ	discernement, bon sens	nom
+当惑	とうわく	embarras, perplexité	nom
+内緒	ないしょ	secret	nom
+母語	ぼご	langue maternelle	nom
+母国	ぼこく	pays natal, patrie	nom
+習得	しゅうとく	apprentissage, acquisition (d'un savoir)	nom
+順応	じゅんのう	adaptation	nom
+離陸	りりく	décollage	nom
+試着	しちゃく	essayage	nom
+返却	へんきゃく	restitution (d'un objet)	nom
+所有	しょゆう	possession	nom
+精通	せいつう	connaissance approfondie (〜に精通する : bien connaître)	nom
+手助け	てだすけ	aide, coup de main	nom
+助力	じょりょく	aide, concours	nom
+長居	ながい	rester longtemps (chez quelqu'un)	nom
+使い方	つかいかた	façon d'utiliser, mode d'emploi	nom
+外見	がいけん	apparence	nom
+世界一周	せかいいっしゅう	tour du monde	nom
+行方	ゆくえ	où se trouve quelqu'un (行方不明 : disparu)	nom
+途方	とほう	(途方に暮れる) ne plus savoir que faire	nom
+同然	どうぜん	pareil à, autant dire	nom
+職場	しょくば	lieu de travail	nom
+本屋	ほんや	librairie	nom
+キス	きす	baiser	nom
+アドバイス	あどばいす	conseil	nom
+当地	とうち	ici, ce lieu	nom
+時代遅れ	じだいおくれ	démodé, dépassé	nom
+
+# ---------------------------------------------------------------- adjectifs, adverbes
+当然	とうぜん	naturel, évident ; naturellement	adjectif en な
+裕福	ゆうふく	riche, aisé	adjectif en な
+流暢	りゅうちょう	couramment, avec aisance	adjectif en な
+内気	うちき	timide	adjectif en な
+怠惰	たいだ	paresse, paresseux	adjectif en な
+全面的	ぜんめんてき	total, complet	adjectif en な
+まとも	まとも	convenable, sérieux ; en face	adjectif en な
+くたくた	くたくた	épuisé ; usé, fripé	adjectif en な
+大嫌い	だいきらい	détester, avoir horreur de	adjectif en な
+大っ嫌い	だいっきらい	détester (familier)	adjectif en な
+バカ	ばか	idiot, imbécile	adjectif en な
+マジ	まじ	(familier) sérieux, vraiment	adjectif en な
+勝手	かって	à sa guise, sans permission ; égoïste	adjectif en な
+無い	ない	ne pas y avoir, ne pas avoir	adjectif en い
+興味深い	きょうみぶかい	intéressant, passionnant	adjectif en い
+めった	めった	(めったに + négatif) rarement	adverbe
+滅多	めった	(滅多に + négatif) rarement	adverbe
+概して	がいして	en général	adverbe
+注意深く	ちゅういぶかく	attentivement	adverbe
+仲良く	なかよく	en bons termes, en bonne entente	adverbe
+とっても	とっても	très (familier)	adverbe
+めっちゃ	めっちゃ	(familier) super, vachement	adverbe
+いま	いま	maintenant	adverbe
+自ら	みずから	soi-même, de soi-même	adverbe
+どういう	どういう	quel (genre de)	déterminant
+何らか	なんらか	quelque, un certain (何らかの)	déterminant
+どのような	どのような	quel (genre de)	déterminant
+主な	おもな	principal	déterminant
+わが	わが	mon, notre	déterminant
+我が	わが	mon, notre	déterminant
+
+# ---------------------------------------------------------------- verbes
+頑張る	がんばる	faire de son mieux, tenir bon	verbe en -u
+知り合う	しりあう	faire connaissance	verbe en -u
+見失う	みうしなう	perdre de vue	verbe en -u
+巻き込む	まきこむ	entraîner, impliquer (dans une affaire)	verbe en -u
+使い果たす	つかいはたす	épuiser, dépenser entièrement	verbe en -u
+立ち去る	たちさる	s'en aller, partir	verbe en -u
+抱く	だく	tenir dans ses bras ; éprouver (un sentiment)	verbe en -u
+くつろぐ	くつろぐ	se détendre, se mettre à l'aise	verbe en -u
+ござる	ござる	être, y avoir (très poli : ございます)	verbe en -u
+書き留める	かきとめる	noter, prendre note	verbe en -ru
+着替える	きがえる	se changer	verbe en -ru
+傷つける	きずつける	blesser	verbe en -ru
+食べ過ぎる	たべすぎる	trop manger	verbe en -ru
+持ち合わせる	もちあわせる	avoir sur soi	verbe en -ru
+青ざめる	あおざめる	pâlir	verbe en -ru
+ばかげる	ばかげる	être absurde (ばかげた : absurde)	verbe en -ru
+はねる	はねる	renverser (une voiture renverse) ; sauter	verbe en -ru
+いける	いける	aller (bien), être possible ; (au négatif) ne pas falloir	verbe en -ru
+す	す	faire (forme écrite de する : すべき)	verbe
+
+# ---------------------------------------------------------------- expressions, interjections
+おいで	おいで	viens ! ; (〜ておいで) va… et reviens	expression
+ただいま	ただいま	je suis rentré !	expression
+さよなら	さよなら	au revoir	expression
+ほら	ほら	regarde ! tiens !	interjection
+ねえ	ねえ	dis ! hé ! (pour appeler)	interjection
+ううん	ううん	non (familier)	interjection

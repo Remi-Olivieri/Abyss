@@ -1,0 +1,23 @@
+{
+  "id": "tk-ex-latia",
+  "nom": "EX Kit dresseur (Latias)",
+  "bloc": "tk",
+  "date": "2004-07-01",
+  "officiel": 10,
+  "total": 10,
+  "sigle": "TK1A",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+  "cartes": [
+    ["1", "Draby", "Sans rareté", "N", "P", 371],
+    ["2", "Galifeu", "Sans rareté", "N", "P", 256],
+    ["3", "Delcatty", "Sans rareté", "N", "P", 301],
+    ["4", "Latias", "Sans rareté", "H", "P", 380],
+    ["5", "Chamallot", "Sans rareté", "N", "P", 322],
+    ["6", "Skitty", "Sans rareté", "N", "P", 300],
+    ["7", "Poussifeu", "Sans rareté", "N", "P", 255],
+    ["8", "Potion", "Sans rareté", "N", "D", null],
+    ["9", "Recherche d'énergie", "Sans rareté", "N", "D", null],
+    ["10", "Énergie Feu", "Sans rareté", "N", "E", null]
+  ]
+}

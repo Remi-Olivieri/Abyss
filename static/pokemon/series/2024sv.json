@@ -1,0 +1,28 @@
+{
+  "id": "2024sv",
+  "nom": "Collection McDonald's 2024",
+  "bloc": "mc",
+  "date": "2024-12-04",
+  "officiel": 15,
+  "total": 15,
+  "sigle": "MCD24",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
+  "cartes": [
+    ["1", "Dracaufeu", "Sans rareté", "N", "P", 6],
+    ["2", "Pikachu", "Sans rareté", "H", "P", 25],
+    ["3", "Miraidon", "Sans rareté", "H", "P", 1008],
+    ["4", "Rondoudou", "Sans rareté", "N", "P", 39],
+    ["5", "Bibichut", "Sans rareté", "N", "P", 856],
+    ["6", "Lanssorien", "Sans rareté", "N", "P", 887],
+    ["7", "Maraiste", "Sans rareté", "N", "P", 195],
+    ["8", "Koraidon", "Sans rareté", "H", "P", 1007],
+    ["9", "Noctali", "Sans rareté", "N", "P", 197],
+    ["10", "Trioxhydre", "Sans rareté", "H", "P", 635],
+    ["11", "Rugit-Lune", "Sans rareté", "H", "P", 1005],
+    ["12", "Dracolosse", "Sans rareté", "H", "P", 149],
+    ["13", "Évoli", "Sans rareté", "N", "P", 133],
+    ["14", "Rayquaza", "Sans rareté", "N", "P", 384],
+    ["15", "Draïeul", "Sans rareté", "H", "P", 780]
+  ]
+}

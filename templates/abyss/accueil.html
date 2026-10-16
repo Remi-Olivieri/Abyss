@@ -10,8 +10,12 @@
 <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
+<!-- IBM Plex Mono, la police de tout Abyss ; le japonais ne demande que les
+     trois caractères de l'affiche de Nihongo (text=). -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700&text=%E6%97%A5%E6%9C%AC%E8%AA%9E&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/abyss/abyss.css">
+<link rel="stylesheet" href="/static/abyss/accueil.css">
 </head>
 <body>
 <canvas id="neige" aria-hidden="true"></canvas>
@@ -37,9 +41,11 @@
       <h1 class="titre">Abyss</h1>
     </div>
     <p class="sous-titre">Tous mes projets réunis au même endroit.</p>
+    <!-- le radar et l'heure : voir dessineInfos -->
+    <div class="entete-infos" id="enteteInfos"></div>
   </header>
 
-  <main class="grille" id="grille"></main>
+  <main class="hub" id="grille"></main>
 
   <p class="note-masques" id="noteMasques" hidden></p>
 </div>
@@ -145,7 +151,8 @@
           <option value="abyss">Abyss</option>
           <option value="jeux-videos">Archive Jeux Vidéos</option>
           <option value="collection">Collection Yu-Gi-Oh!</option>
-          <option value="quiz">Mini-Jeux / Quiz</option>
+          <option value="quiz">Mini-Jeux Vidéo</option>
+          <option value="yugiquiz">Yu-Gi-Quiz!</option>
         </select>
       </label>
       <label class="champ">
@@ -179,7 +186,7 @@
    Un projet = un objet. L'`id` sert de clé aux préférences
    d'affichage : ne le renomme pas sans vider la table
    `preference`, sinon les masquages retombent sur du vide.
-   Il doit aussi figurer dans PROJETS_CONNUS, côté base.py.
+   Il doit aussi figurer dans PROJETS, côté comptes.py.
    ========================================================= */
 /* le quiz vit sur un autre port, mais sur la MEME machine que ce hub :
    en deduire l'hote plutot que d'ecrire localhost permet d'ouvrir Abyss
@@ -187,81 +194,86 @@
    faudra le monter sur /quiz plutot que d'exposer le port 5000. */
 const HOTE = location.hostname || "localhost";
 
+/* Les catégories de l'accueil : c'est leur ordre ici qui fait celui
+   de la page. Un projet dit la sienne par `categorie` ; une catégorie dont
+   tous les projets sont masqués ne s'affiche pas, et un projet sans
+   catégorie connue finit dans « Autres » plutôt que de disparaître.
+
+   `couleur` est la lueur de la catégorie : tous ses projets la portent,
+   c'est elle qui dit d'un coup d'œil qu'ils vont ensemble. Cinq teintes
+   éloignées les unes des autres sur le cercle des couleurs -- vert, or,
+   rose, violet, et le bleu d'« Autres » (voir groupes) -- pour que deux
+   catégories voisines ne se confondent jamais. */
+const CATEGORIES = [
+    { id: "jeux-videos", nom: "Jeux vidéo", couleur: "#3CF0B4" },
+    { id: "collection", nom: "Collection", couleur: "#FFCB52" },
+    { id: "mini-jeux", nom: "Mini-jeux", couleur: "#FF5FAE" },
+    { id: "apprendre", nom: "Apprentissage", couleur: "#A28CFF" }
+];
+
 const PROJETS = [
     {
         id: "jeux-videos",
         nom: "Archive Jeux Vidéos",
         texte: "Liste de jeux terminés par année avec notes et temps de jeu.",
         url: "/archive",
-        accent: "var(--algue)",
-        embleme: "grille"
+        categorie: "jeux-videos"
     },
     {
         id: "collection",
         nom: "Collection Yu-Gi-Oh!",
         texte: "Suivi de collection Yu-Gi-Oh!",
         url: "/collection",
-        accent: "var(--luciole)",
-        embleme: "pile"
+        categorie: "collection"
+    },
+    {
+        /* En chantier : réservée à l'administration, comme toute son API
+           (voir pokemon.reserve). */
+        id: "pokemon",
+        nom: "Collection Pokémon",
+        texte: "Suivi de collection Pokémon, série par série et version par version.",
+        url: "/pokemon",
+        categorie: "collection",
+        admin: true
     },
     {
         id: "chainz",
         nom: "L'Atelier Chainz",
         texte: "Le site de mon jeu vidéo Chainz.",
+        categorie: "jeux-videos",
         /* La page vivait sur son propre domaine et s'ouvrait dans un
            nouvel onglet ; elle est maintenant servie ici, donc plus de
            `externe` -- on reste dans le site, et le compte suit. */
-        url: "/chainz",
-        accent: "var(--meduse)",
-        embleme: "eventail"
+        url: "/chainz"
     },
     {
-        /* Une seule tuile pour tous les quiz du site. Yu-Gi-Quiz avait la
-           sienne et pointait droit sur son serveur ; il vit maintenant dans
-           cette page-ci, à côté des mini-jeux de jaquettes, chacun sous sa
-           catégorie. Une porte pour les jeux, pas une par jeu. */
+        /* Les mini-jeux autour des jeux vidéo. Le Yu-Gi-Quiz s'y est rangé
+           un temps, sous sa propre famille ; il a retrouvé sa tuile, plus
+           bas, et cette page ne parle plus que de jeux vidéo. */
         id: "quiz",
-        nom: "Mini-Jeux / Quiz",
-        texte: "Deviner un jeu à sa jaquette, une carte à son artwork.",
+        nom: "Mini-Jeux Vidéo",
+        texte: "Jaquette floue, chronologie, grille de connexions : des jeux autour des jeux vidéo.",
         url: "/quiz",
-        /* Le bleu et le losange interrogatif étaient ceux de Yu-Gi-Quiz.
-           Cette tuile-ci a pris sa place et son rôle : elle en garde le
-           visuel, pour qu'on la retrouve là où on la cherchait. */
-        accent: "var(--plancton)",
-        embleme: "question"
+        categorie: "mini-jeux"
     },
     {
-        /* En chantier : la tuile ne s'affiche que pour l'administration
-           (voir visibles), et /api/nihongo répond 404 aux autres. */
+        /* Un projet à lui : sa page, son salon, ses parties à plusieurs. */
+        id: "yugiquiz",
+        nom: "Yu-Gi-Quiz!",
+        texte: "Deviner une carte Yu-Gi-Oh! à son artwork, seul ou avec des amis.",
+        url: "/yugiquiz",
+        categorie: "mini-jeux"
+    },
+    {
+        /* Ouvert à tous ; sans compte, la page invite à se connecter, la
+           progression étant à chacun (voir nihongo.compte_requis). */
         id: "nihongo",
         nom: "Nihongo",
         texte: "Apprendre le japonais, un peu chaque jour.",
         url: "/nihongo",
-        accent: "var(--corail)",
-        embleme: "torii",
-        admin: true
+        categorie: "apprendre"
     }
 ];
-
-/* ---------- Emblèmes ---------- */
-const EMBLEMES = {
-  pile: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
-    <rect x="6" y="14" width="20" height="28" rx="3"/><rect x="14" y="8" width="20" height="28" rx="3"/>
-    <rect x="22" y="4" width="20" height="28" rx="3"/></svg>`,
-  grille: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
-    <rect x="5" y="5" width="15" height="15" rx="2"/><rect x="28" y="5" width="15" height="15" rx="2"/>
-    <rect x="5" y="28" width="15" height="15" rx="2"/><path d="M28 35.5h15M35.5 28v15"/></svg>`,
-  eventail: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
-    <rect x="17" y="8" width="16" height="24" rx="2"/>
-    <rect x="17" y="8" width="16" height="24" rx="2" transform="rotate(-22 25 32)"/>
-    <rect x="17" y="8" width="16" height="24" rx="2" transform="rotate(22 25 32)"/></svg>`,
-  question: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M24 4 44 24 24 44 4 24z"/><path d="M19.5 19.5a4.5 4.5 0 1 1 5.6 4.4c-.9.3-1.3 1-1.3 1.9v1.4"/>
-    <circle cx="23.8" cy="33" r="1.3" fill="currentColor" stroke="none"/></svg>`,
-  torii: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 9.5c8 2.6 32 2.6 40 0l-1.6 5H5.6z"/><path d="M9 22h30"/>
-    <path d="M13.5 14.5V44M34.5 14.5V44M24 14.5V22"/></svg>`
-};
 
 const echappe = (s) => String(s).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -307,7 +319,17 @@ function poseEtat(data) {
        formulaire qui échoue à l'envoi qu'un formulaire barré à tort */
     inscriptions: data.inscriptions || { ouvertes: true, restantes: null, libre_a: null }
   };
+  /* les images de quelqu'un d'autre ne restent pas à l'écran après lui */
+  if (!MOI.connecte || (PERSO_DE && PERSO_DE !== MOI.utilisateur.pseudo)) {
+    PERSO = { jeux: [], cartes: [], pokemon: [] };
+    PERSO_DE = null;
+  }
   dessine();
+  chargePerso();
+}
+
+function estAdmin() {
+  return !!(MOI.connecte && MOI.utilisateur && MOI.utilisateur.admin);
 }
 
 /* =========================================================
@@ -318,22 +340,13 @@ function poseEtat(data) {
    Ce n'est pas une protection - c'est l'API du projet qui refuse - juste de
    quoi ne pas mettre une porte fermée sous les yeux de tout le monde. */
 function visibles() {
-  const admin = MOI.connecte && MOI.utilisateur && MOI.utilisateur.admin;
+  const admin = estAdmin();
   return PROJETS.filter((p) => (!p.admin || admin) && MOI.masques.indexOf(p.id) < 0);
 }
 
 function dessineGrille() {
   const liste = visibles();
-  el("grille").innerHTML = liste.map((p) => `
-  <a class="carte" style="--accent:${p.accent}" href="${echappe(p.url)}"${
-      p.externe ? ' target="_blank" rel="noopener noreferrer"' : ""}>
-    <div class="bandeau">
-      <h2 class="nom">${echappe(p.nom)}</h2>
-      <span class="fleche" aria-hidden="true">&#8599;</span>
-    </div>
-    <div class="illu" aria-hidden="true">${EMBLEMES[p.embleme] || ""}</div>
-    <div class="corps"><p class="texte">${echappe(p.texte)}</p></div>
-  </a>`).join("");
+  el("grille").innerHTML = hub(liste);
 
   /* Tout masquer laisserait une page vide sans explication : on garde une
      porte de sortie visible. */
@@ -351,6 +364,153 @@ function dessineGrille() {
       <a class="lien" href="/abyss/profil">modifier</a>`;
   }
 }
+
+/* ---------- un sas par catégorie ----------
+   Mis en forme par static/abyss/accueil.css. */
+function groupes(liste) {
+  const connues = CATEGORIES.map((c) => c.id);
+  return CATEGORIES
+    .map((c) => ({ id: c.id, nom: c.nom, couleur: c.couleur,
+                   projets: liste.filter((p) => p.categorie === c.id) }))
+    .concat([{ id: "autres", nom: "Autres", couleur: "#6CC8FF",
+               projets: liste.filter((p) => connues.indexOf(p.categorie) < 0) }])
+    .filter((g) => g.projets.length);
+}
+
+/* data-n et --cols : combien de colonnes le sas occupe, trois au plus --
+   voir « les sas se partagent les rangées » dans accueil.css. */
+function hub(liste) {
+  return groupes(liste).map((g) => {
+    const n = Math.min(g.projets.length, 3);
+    return `
+  <section class="rayon" data-cat="${g.id}" data-n="${n}"
+           style="--cat:${g.couleur};--cols:${n}" aria-labelledby="rayon-${g.id}">
+    <div class="rayon-tete">
+      <h2 class="rayon-nom" id="rayon-${g.id}">${echappe(g.nom)}</h2>
+      <span class="rayon-trait" aria-hidden="true"></span>
+    </div>
+    <div class="rayon-projets">${g.projets.map(projet).join("")}</div>
+  </section>`;
+  }).join("");
+}
+
+function projet(p) {
+  return `
+      <a class="projet" data-id="${echappe(p.id)}" href="${echappe(p.url)}"${
+          p.externe ? ' target="_blank" rel="noopener noreferrer"' : ""}>
+        ${visuel(p)}
+        <div class="projet-corps">
+          <h3 class="projet-nom">${mots(p.nom)}</h3>
+          <p class="projet-texte">${echappe(p.texte)}</p>
+        </div>
+        <span class="projet-action" aria-hidden="true">&#8599;</span>
+      </a>`;
+}
+
+/* Un nom ne se coupe qu'entre ses mots : « Yu-Gi-Oh! » se coupait à son
+   trait d'union, et « Gi-Oh! » finissait seul sur la ligne suivante. */
+function mots(nom) {
+  return echappe(nom).split(" ").map((m) => `<span class="mot">${m}</span>`).join(" ");
+}
+
+/* ---------- les vignettes des projets ----------
+   De vraies images du site, prises là où elles vivent déjà : des jaquettes
+   de l'Archive, des cartes du classeur, l'art de Chainz. Floues pour les
+   mini-jeux, puisque c'est leur jeu.
+
+   Les jeux vidéo et la collection sont ceux de qui regarde, quand il en a
+   (voir PERSO plus bas) ; sinon les images d'ici. Celles des jeux sont des
+   jeux que tout le monde connaît -- Clair Obscur, Hollow Knight, Ocarina of
+   Time -- et celles des cartes, le trio du duel de Yugi et Kaiba. */
+const VISUELS = {
+  "jeux-videos": { forme: "mosaique", images: [
+    "/static/archive/Cover/305152.webp", "/static/archive/Cover/14593.webp",
+    "/static/archive/Cover/1029.webp"] },
+  "collection": { forme: "eventail", images: [
+    "/collection/vignette/46986414.jpg", "/collection/vignette/89631139.jpg",
+    "/collection/vignette/74677422.jpg"] },
+  /* Dracaufeu, Tortank et Florizarre, du Set de Base : la première série
+     parue en France. Sans le stock téléchargé, elles se cachent d'elles-mêmes
+     (voir onerror plus bas). */
+  "pokemon": { forme: "eventail", images: [
+    "/static/pokemon/Vignettes/base/base1/2.webp", "/static/pokemon/Vignettes/base/base1/4.webp",
+    "/static/pokemon/Vignettes/base/base1/15.webp"] },
+  /* de gauche à droite : Dresseur de Bêtes, Tigre de la Terre, Aqua, Mage de
+     l'Eau -- leur numéro dans static/chainz/cartes.json */
+  "chainz": { forme: "eventail", images: [
+    "/static/chainz/art/new/1.png", "/static/chainz/art/new/14.png",
+    "/static/chainz/art/new/48.png"] },
+  "quiz": { forme: "mosaique floue", images: [
+    "/static/archive/Cover/72.webp", "/static/archive/Cover/7346.webp",
+    "/static/archive/Cover/17000.webp"] },
+  "yugiquiz": { forme: "seule", images: ["/static/yugioh/CardsCropped/33396948.jpg"] },
+  "nihongo": { forme: "affiche", texte: "日本語", drapeau: true }
+};
+
+function visuel(p) {
+  const v = VISUELS[p.id];
+  if (!v) return '<span class="projet-visuel" aria-hidden="true"></span>';
+  let images = v.images || [];
+  if (p.id === "jeux-videos" && PERSO.jeux.length) images = PERSO.jeux.map((j) => j.image);
+  if (p.id === "collection" && PERSO.cartes.length) images = PERSO.cartes.map((c) => c.image);
+  if (p.id === "pokemon" && PERSO.pokemon.length) images = PERSO.pokemon.map((c) => c.image);
+  const dedans = (v.texte
+      ? `<span class="visuel-texte">${echappe(v.texte)}</span>`
+      : images.map((src) =>
+          `<img src="${echappe(src)}" alt="" decoding="async" onerror="this.hidden=true">`).join(""))
+    + (v.drapeau ? '<span class="visuel-drapeau"></span>' : "");
+  return `<span class="projet-visuel ${v.forme}" aria-hidden="true">${dedans}</span>`;
+}
+
+/* ---------- ce qui parle de qui regarde ----------
+   Ses trois jeux préférés et ses trois cartes favorites (voir accueil.py).
+   Demandés une fois par compte ; rien de trouvé, et les images par défaut
+   restent. */
+let PERSO = { jeux: [], cartes: [], pokemon: [] };
+let PERSO_DE = null;     // le pseudo pour qui PERSO a été demandé
+
+async function chargePerso() {
+  if (!MOI.connecte || !MOI.utilisateur) return;
+  const qui = MOI.utilisateur.pseudo;
+  if (PERSO_DE === qui) return;
+  PERSO_DE = qui;
+  try {
+    const d = await api("/api/accueil");
+    if (PERSO_DE !== qui) return;          // parti entre-temps
+    PERSO = { jeux: d.jeux || [], cartes: d.cartes || [], pokemon: d.pokemon || [] };
+    if (PERSO.jeux.length || PERSO.cartes.length || PERSO.pokemon.length) dessineGrille();
+  } catch (err) {
+    PERSO_DE = null;                       // on réessaiera au prochain dessin
+  }
+}
+
+/* ---------- l'en-tête ----------
+   Le radar et l'heure, rien d'autre. */
+function dessineInfos() {
+  el("enteteInfos").innerHTML = `
+      ${radar(groupes(visibles()))}
+      <dl class="releves"><div><dt>Heure</dt><dd id="hudHeure">${heure()}</dd></div></dl>`;
+}
+
+/* Le radar : un quartier par catégorie, et dans chaque quartier un écho
+   par projet, à la couleur de la catégorie. Chaque écho s'allume quand le
+   balayage passe dessus : même tour de 4 s, d'où le délai tiré de l'angle. */
+function radar(rangs) {
+  const part = 360 / Math.max(rangs.length, 1);
+  const echos = rangs.map((g, k) => g.projets.map((p, j) => {
+    const angle = Math.round(part * k + part * (j + 1) / (g.projets.length + 1));
+    const rayon = 18 + ((j * 13 + k * 7) % 30);
+    return `<i style="--a:${angle}deg;--r:${rayon}px;--d:${(angle / 90).toFixed(2)}s;--cat:${g.couleur}"></i>`;
+  }).join("")).join("");
+  const quartiers = rangs.map((g, k) =>
+    `<b style="--a:${Math.round(part * k)}deg"></b>`).join("");
+  return `<div class="radar" aria-hidden="true">${quartiers}<span class="radar-balayage"></span>${echos}</div>`;
+}
+
+function heure() {
+  return new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+setInterval(() => { const h = el("hudHeure"); if (h) h.textContent = heure(); }, 15000);
 
 /* =========================================================
    Menu du compte
@@ -375,7 +535,7 @@ function dessineCompte() {
   });
 }
 
-function dessine() { dessineCompte(); dessineGrille(); }
+function dessine() { dessineCompte(); dessineGrille(); dessineInfos(); }
 
 /* =========================================================
    Modales

@@ -10,28 +10,11 @@
 <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/abyss/abyss.css">
 <style>
   /* cette barre-ci porte un retour à gauche en plus du compte à droite */
   .barre{justify-content:space-between}
-
-  /* ---------- en-tête ----------
-     Le titre reprend celui d'Abyss en plus petit : on est dans une page du
-     hub, pas dans un outil à part. */
-  .sug-entete{margin-bottom:30px}
-  .sug-titre{
-    font-family:"Eczar",Georgia,serif;font-weight:600;
-    font-size:clamp(34px,6vw,52px);line-height:1.05;letter-spacing:.06em;
-    text-transform:uppercase;margin:0;
-    background:linear-gradient(180deg,#EEF7FC 0%,#89B4CE 58%,#2E4E66 100%);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-  }
-  .sug-sous{margin:12px 0 0;max-width:60ch;color:var(--brume);font-size:14px;line-height:1.55}
-  .sug-sous code{
-    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
-    padding:1px 6px;border-radius:5px;background:rgba(3,8,15,.7);color:#9FC4DA;
-  }
 
   /* ---------- filtres ----------
      Trois menus déroulants - Type, Importance, Page - au lieu d'une rangée
@@ -44,68 +27,71 @@
   .sug-dd{position:relative}
   .sug-dd-btn{
     display:inline-flex;align-items:center;gap:8px;
-    font:inherit;font-size:13px;padding:7px 12px 7px 14px;border-radius:999px;
-    color:var(--brume);border:1px solid rgba(150,195,220,.16);
-    background:rgba(3,8,15,.6);cursor:pointer;white-space:nowrap;
+    font:inherit;font-size:12.5px;padding:7px 12px 7px 14px;border-radius:4px;
+    color:var(--ui-dim);border:1px solid var(--ui-trait);
+    background:rgba(2,6,10,.7);cursor:pointer;white-space:nowrap;
     transition:border-color .2s ease,color .2s ease,background .2s ease;
   }
-  .sug-dd-btn:hover{color:var(--os)}
-  .sug-dd-btn b{font-weight:500;color:var(--os)}
+  .sug-dd-btn:hover{color:var(--ui)}
+  .sug-dd-btn b{font-weight:500;color:var(--ui)}
   .sug-dd-btn svg{opacity:.6;transition:transform .2s ease}
   .sug-dd-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
   /* un menu qui filtre se voit fermé : c'est lui qui explique une liste courte */
   .sug-dd.actif .sug-dd-btn{
-    color:var(--os);border-color:rgba(120,200,230,.55);background:rgba(120,200,230,.12);
+    color:var(--ui);border-color:var(--ui-pale);background:rgba(190,220,236,.1);
   }
-  .sug-dd-btn:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  .sug-dd-btn:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
   .sug-dd-panneau{
     position:absolute;top:calc(100% + 6px);left:0;z-index:30;
     min-width:220px;max-height:min(60vh,380px);overflow-y:auto;padding:6px;
-    border-radius:12px;background:#0B1624;border:1px solid rgba(150,195,220,.22);
+    border-radius:4px;background:#060C13;border:1px solid var(--ui-trait);
     box-shadow:0 18px 40px rgba(0,0,0,.55);
   }
   .sug-dd-panneau[hidden]{display:none}
   .sug-opt{
-    display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;
-    font-size:13.5px;color:#DCE8F0;cursor:pointer;user-select:none;
+    display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:3px;
+    font-size:13px;color:var(--ui);cursor:pointer;user-select:none;
   }
-  .sug-opt:hover{background:rgba(120,200,230,.08)}
-  .sug-opt input{margin:0;accent-color:var(--plancton);width:15px;height:15px;flex:none}
+  .sug-opt:hover{background:rgba(190,220,236,.08)}
+  .sug-opt input{margin:0;accent-color:var(--c-apprendre);width:15px;height:15px;flex:none}
   .sug-opt span{flex:1}
-  .sug-opt b{font-weight:500;font-size:12px;color:var(--brume);font-variant-numeric:tabular-nums}
+  .sug-opt b{font-weight:500;font-size:12px;color:var(--ui-dim);font-variant-numeric:tabular-nums}
   /* une valeur qui ne donnerait rien avec les autres filtres : lisible, éteinte */
   .sug-opt.zero{opacity:.45}
   /* la pastille de couleur des niveaux, dans leur menu */
   .sug-opt i{
-    width:8px;height:8px;border-radius:50%;flex:none;
-    background:var(--n,rgba(150,195,220,.35));box-shadow:0 0 8px -1px var(--n,transparent);
+    width:8px;height:8px;border-radius:2px;flex:none;
+    background:var(--n,var(--ui-pale));box-shadow:0 0 8px -1px var(--n,transparent);
   }
   .sug-opt.n1{--n:#FF8A8A}.sug-opt.n2{--n:#F2B25C}.sug-opt.n3{--n:#4FE0AF}
   .sug-dd-pied{
     display:flex;justify-content:flex-end;padding:6px 4px 2px;margin-top:4px;
-    border-top:1px solid rgba(150,195,220,.1);
+    border-top:1px solid var(--ui-trait);
   }
   .sug-lien{
-    font:inherit;font-size:12.5px;color:var(--brume);background:none;border:0;
-    padding:6px 8px;border-radius:7px;cursor:pointer;
+    font:inherit;font-size:12px;color:var(--ui-dim);background:none;border:0;
+    padding:6px 8px;border-radius:3px;cursor:pointer;
   }
-  .sug-lien:hover{color:var(--os);background:rgba(120,200,230,.08)}
+  .sug-lien:hover{color:var(--ui);background:rgba(190,220,236,.08)}
   .sug-effacer{margin-left:4px}
-  .sug-resume{margin-left:auto;font-size:12.5px;color:var(--brume)}
+  .sug-resume{margin-left:auto;font-size:12px;color:var(--ui-dim)}
 
-  /* ---------- une section ---------- */
-  .sug-section{margin-bottom:34px}
+  /* ---------- une section ----------
+     Une par projet, à la couleur de sa catégorie sur l'accueil : son
+     étiquette, son trait, la pastille de ses lignes. */
+  .sug-section{--cat:var(--c-abyss);margin-bottom:34px}
+  .sug-section:is([data-projet="jeux-videos"],[data-projet="chainz"]){--cat:var(--c-jeux)}
+  .sug-section[data-projet="collection"]{--cat:var(--c-collection)}
+  .sug-section:is([data-projet="quiz"],[data-projet="yugiquiz"]){--cat:var(--c-minijeux)}
+  .sug-section[data-projet="nihongo"]{--cat:var(--c-apprendre)}
   .sug-section[hidden]{display:none}
   .sug-section-tete{
-    display:flex;align-items:baseline;gap:12px;
+    display:flex;align-items:center;gap:12px;
     padding-bottom:10px;margin-bottom:14px;
-    border-bottom:1px solid transparent;
-    border-image:linear-gradient(90deg,rgba(120,200,220,.34),rgba(120,200,220,.02)) 1;
+    border-bottom:1px solid color-mix(in srgb,var(--cat) 35%,transparent);
   }
-  .sug-section-tete h2{
-    font-family:"Eczar",Georgia,serif;font-size:21px;font-weight:600;margin:0;
-  }
-  .sug-compte{font-size:12.5px;color:var(--brume);margin-left:auto}
+  .sug-section-tete .etiquette-panneau{margin:0}
+  .sug-compte{font-size:12px;color:var(--ui-dim);margin-left:auto}
 
   /* ---------- une ligne ----------
      Une carte par ligne du fichier. Le bouton n'apparaît qu'au survol sur
@@ -114,15 +100,15 @@
      survol pour le faire venir. */
   .sug-ligne{
     position:relative;display:flex;align-items:flex-start;gap:14px;
-    padding:14px 16px;margin-bottom:8px;border-radius:13px;
-    border:1px solid rgba(150,195,220,.14);
-    background:linear-gradient(170deg,rgba(19,34,56,.55),rgba(8,15,26,.55));
+    padding:14px 16px;margin-bottom:8px;border-radius:3px;
+    border:1px solid var(--ui-trait);
+    background:linear-gradient(180deg,rgba(12,20,31,.7),rgba(4,9,15,.7));
     transition:border-color .2s ease,transform .15s ease,background .2s ease,
                box-shadow .2s ease;
   }
   .sug-ligne:hover{
-    border-color:rgba(150,195,220,.3);
-    background:linear-gradient(170deg,rgba(23,41,66,.7),rgba(10,18,31,.7));
+    border-color:color-mix(in srgb,var(--cat) 45%,transparent);
+    background:linear-gradient(180deg,rgba(14,24,36,.8),rgba(5,10,17,.8));
   }
   .sug-ligne.part{opacity:0;transform:translateX(26px)}
   @media (prefers-reduced-motion:no-preference){
@@ -133,7 +119,7 @@
      sans lire, et sans dépendre de la seule couleur */
   .sug-pion{
     flex:none;width:9px;height:9px;margin-top:7px;border-radius:50%;
-    background:var(--plancton);box-shadow:0 0 9px var(--plancton);
+    background:var(--cat);box-shadow:0 0 9px var(--cat);
   }
   .sug-ligne.bug .sug-pion{
     border-radius:2px;background:#E8788C;box-shadow:0 0 9px rgba(232,120,140,.8);
@@ -153,16 +139,15 @@
   .sug-ligne.p3{--n:#4FE0AF;--n-bord:rgba(79,224,175,.42);--n-fond:rgba(63,217,164,.11)}
 
   /* La barre allumée à gauche est une ombre intérieure, pas un élément posé
-     sur le bord : une ombre `inset` suit l'arrondi de la carte, alors qu'un
-     ::before de 3px ne peut pas porter un coin de 13px - il restait droit et
-     dépassait de la courbe. La seconde ombre est son halo, vers l'intérieur. */
+     sur le bord : elle suit le bord de la carte quel qu'il soit. La seconde
+     ombre est son halo, vers l'intérieur. */
   .sug-ligne.p1,.sug-ligne.p2,.sug-ligne.p3{
     --barre:inset 3px 0 0 var(--n),inset 10px 0 16px -10px var(--n);
     box-shadow:var(--barre);
     border-color:var(--n-bord);
     background:
-      linear-gradient(100deg,var(--n-fond),rgba(8,15,26,.55) 46%),
-      linear-gradient(170deg,rgba(19,34,56,.55),rgba(8,15,26,.55));
+      linear-gradient(100deg,var(--n-fond),rgba(4,9,15,.7) 46%),
+      linear-gradient(180deg,rgba(12,20,31,.7),rgba(4,9,15,.7));
   }
   .sug-ligne.p1:hover,.sug-ligne.p2:hover,.sug-ligne.p3:hover{
     border-color:var(--n);
@@ -172,7 +157,7 @@
     background:var(--n);box-shadow:0 0 10px var(--n);
   }
   .sug-prio{
-    padding:1px 8px;border-radius:999px;font-weight:500;
+    padding:1px 8px;border-radius:3px;font-weight:500;
     color:var(--n);border:1px solid var(--n-bord);background:var(--n-fond);
   }
 
@@ -182,9 +167,9 @@
   .sug-niveaux{display:flex;gap:4px;align-items:center}
   .sug-niv{
     font:inherit;font-size:11.5px;line-height:1;width:23px;height:23px;
-    padding:0;border-radius:50%;cursor:pointer;
-    color:var(--brume);border:1px solid rgba(150,195,220,.2);
-    background:rgba(3,8,15,.6);
+    padding:0;border-radius:3px;cursor:pointer;
+    color:var(--ui-dim);border:1px solid var(--ui-trait);
+    background:rgba(2,6,10,.7);
     opacity:.45;transition:opacity .18s ease,color .2s ease,border-color .2s ease,
                          background .2s ease,box-shadow .2s ease;
   }
@@ -194,23 +179,23 @@
   .sug-ligne:hover .sug-niv,.sug-niv:focus-visible{opacity:1}
   .sug-niv:hover{color:var(--n);border-color:var(--n);box-shadow:0 0 12px -3px var(--n)}
   .sug-niv[aria-pressed="true"]{
-    color:#04101A;font-weight:600;
+    color:var(--fond);font-weight:600;
     background:var(--n);border-color:var(--n);box-shadow:0 0 14px -3px var(--n);
   }
-  .sug-niv:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  .sug-niv:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
   .sug-niv[disabled]{cursor:progress}
   @media (hover:none){ .sug-niv{opacity:1} }
 
   .sug-corps{flex:1;min-width:0}
-  .sug-texte{margin:0;font-size:14.5px;line-height:1.55;word-break:break-word}
+  .sug-texte{margin:0;font-size:13.5px;line-height:1.6;color:var(--ui);word-break:break-word}
   .sug-meta{
     display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-    margin-top:7px;font-size:11.5px;color:var(--brume);
+    margin-top:7px;font-size:11.5px;color:var(--ui-dim);
   }
-  .sug-auteur{color:#9FC4DA}
+  .sug-auteur{color:#8FCBFF}
   .sug-etiq{
-    padding:1px 8px;border-radius:999px;
-    border:1px solid rgba(150,195,220,.2);
+    padding:1px 8px;border-radius:3px;
+    border:1px solid var(--ui-trait);
   }
   .sug-ligne.bug .sug-etiq{border-color:rgba(232,120,140,.4);color:#E8A9B6}
   .sug-main{opacity:.55}       /* écrite à la main : pas de compte derrière */
@@ -232,9 +217,9 @@
   .sug-boutons{display:flex;align-items:center;gap:6px;flex:none}
   .sug-fait,.sug-copier{
     display:inline-flex;align-items:center;gap:6px;
-    font:inherit;font-size:12.5px;padding:6px 13px;border-radius:999px;
-    color:var(--brume);border:1px solid rgba(150,195,220,.2);
-    background:rgba(3,8,15,.6);cursor:pointer;white-space:nowrap;
+    font:inherit;font-size:12px;padding:6px 13px;border-radius:3px;
+    color:var(--ui-dim);border:1px solid var(--ui-trait);
+    background:rgba(2,6,10,.7);cursor:pointer;white-space:nowrap;
     opacity:.6;transition:opacity .18s ease,color .2s ease,border-color .2s ease,background .2s ease;
   }
   .sug-fait svg,.sug-copier svg{flex:none}
@@ -243,7 +228,7 @@
   /* le trait qui met Résolu à part : un vrai vide, pas un simple écart */
   .sug-sep{
     width:1px;align-self:stretch;margin:2px 10px 2px 8px;
-    background:rgba(150,195,220,.16);
+    background:var(--ui-trait);
   }
   .sug-fait{
     color:#8FE0B0;border-color:rgba(143,224,176,.32);background:rgba(143,224,176,.05);
@@ -252,18 +237,18 @@
     color:#B6F0CE;border-color:rgba(143,224,176,.65);background:rgba(143,224,176,.14);
   }
   .sug-copier:hover{
-    color:var(--os);border-color:rgba(120,200,230,.55);background:rgba(120,200,230,.1);
+    color:var(--ui);border-color:var(--ui-pale);background:rgba(190,220,236,.1);
   }
-  .sug-copier.fait{color:#9FC4DA;border-color:rgba(120,200,230,.5);opacity:1}
-  .sug-fait:focus-visible,.sug-copier:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  .sug-copier.fait{color:#8FCBFF;border-color:rgba(143,203,255,.5);opacity:1}
+  .sug-fait:focus-visible,.sug-copier:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
 
   /* Une ligne déjà copiée le garde écrit, tant que la page reste ouverte :
      on copie, on part corriger ailleurs, on revient - et c'est cette carte
      qui dit « c'est moi que tu viens de traiter ». Son Résolu s'allume,
      puisque c'est le geste qui suit. */
   .sug-copiee-marque{
-    display:none;padding:1px 8px;border-radius:999px;
-    color:#9FC4DA;border:1px solid rgba(120,200,230,.4);background:rgba(120,200,230,.08);
+    display:none;padding:1px 8px;border-radius:3px;
+    color:#8FCBFF;border:1px solid rgba(143,203,255,.4);background:rgba(143,203,255,.08);
   }
   .sug-ligne.copiee .sug-copiee-marque{display:inline-block}
   .sug-ligne.copiee .sug-fait{opacity:1;border-color:rgba(143,224,176,.6)}
@@ -281,7 +266,7 @@
     .sug-sep{margin-left:auto;background:none;margin-right:0}
     /* Au pouce : 38 px de haut pour Copier et Résolu, 34 pour les trois
        pastilles d'importance - à 23 px on en touchait deux à la fois. */
-    .sug-fait,.sug-copier{padding:0 14px;height:38px;font-size:13.5px}
+    .sug-fait,.sug-copier{padding:0 14px;height:38px;font-size:13px}
     .sug-niv{width:34px;height:34px;font-size:13px}
     .sug-niveaux{gap:6px}
   }
@@ -289,18 +274,18 @@
   /* ---------- le toast et son « Annuler » ---------- */
   .toast.montre{pointer-events:auto}
   .toast-action{
-    font:inherit;font-size:13px;font-weight:500;margin-left:14px;padding:3px 11px;
-    border-radius:999px;cursor:pointer;
-    color:var(--os);border:1px solid rgba(120,200,230,.5);background:rgba(120,200,230,.12);
+    font:inherit;font-size:12.5px;font-weight:500;margin-left:14px;padding:3px 11px;
+    border-radius:3px;cursor:pointer;
+    color:var(--ui);border:1px solid var(--ui-pale);background:rgba(190,220,236,.1);
   }
-  .toast-action:hover{background:rgba(120,200,230,.24)}
+  .toast-action:hover{background:rgba(190,220,236,.2)}
 
   /* ---------- états ---------- */
   .sug-etat{
-    padding:44px 20px;text-align:center;color:var(--brume);font-size:14px;
-    border:1px dashed rgba(150,195,220,.18);border-radius:14px;
+    padding:44px 20px;text-align:center;color:var(--ui-dim);font-size:13px;
+    border:1px dashed var(--ui-trait);border-radius:4px;
   }
-  .sug-etat b{display:block;font-size:16px;color:var(--os);margin-bottom:6px}
+  .sug-etat b{display:block;font-size:15px;color:var(--ui);margin-bottom:6px}
   #gate{max-width:46ch}
 </style>
 </head>
@@ -319,16 +304,16 @@
   </div>
 
   <main id="corps" hidden>
-    <header class="sug-entete">
-      <h1 class="sug-titre">Suggestions</h1>
+    <header class="page-entete">
+      <h1 class="page-titre">Suggestions</h1>
     </header>
 
     <div class="sug-filtres" id="filtres"></div>
     <div id="listes"></div>
   </main>
 
-  <section class="carte-profil" id="gate" hidden>
-    <h2>Rien à voir ici</h2>
+  <section class="panneau" id="gate" hidden>
+    <h2 class="etiquette-panneau">Rien à voir ici</h2>
     <p class="explication">Cette page est réservée à l'administration du site.</p>
     <p><a class="lien" href="/abyss">Retour à Abyss</a></p>
   </section>
@@ -565,9 +550,9 @@ function dessine() {
     rendues += lignes.length;
     if (!lignes.length) return "";
     return `
-      <section class="sug-section">
+      <section class="sug-section" data-projet="${echappe(s.projet)}">
         <div class="sug-section-tete">
-          <h2>${echappe(s.titre)}</h2>
+          <h2 class="etiquette-panneau">${echappe(s.titre)}</h2>
           <span class="sug-compte">${lignes.length} ligne${lignes.length > 1 ? "s" : ""}</span>
         </div>
         ${lignes.map((l) => {

@@ -1,0 +1,25 @@
+{
+  "id": "tk-ex-p",
+  "nom": "EX Kit dresseur (Positi)",
+  "bloc": "tk",
+  "date": "2006-03-01",
+  "officiel": 12,
+  "total": 12,
+  "sigle": "TK2P",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  "cartes": [
+    ["1", "Terhal", "Sans rareté", "N", "P", 374],
+    ["2", "Dynavolt", "Sans rareté", "N", "P", 309],
+    ["3", "Groret", "Sans rareté", "N", "P", 326],
+    ["4", "Miaouss", "Sans rareté", "N", "P", 52],
+    ["5", "Métang", "Sans rareté", "N", "P", 375],
+    ["6", "Posipi", "Sans rareté", "H", "P", 311],
+    ["7", "Spoink", "Sans rareté", "N", "P", 325],
+    ["8", "Recherche d'énergie", "Sans rareté", "N", "D", null],
+    ["9", "Potion", "Sans rareté", "N", "D", null],
+    ["10", "La découverte du Professeur Kosmo", "Sans rareté", "N", "D", null],
+    ["11", "Énergie Électrique", "Sans rareté", "N", "E", null],
+    ["12", "Énergie Psy", "Sans rareté", "N", "E", null]
+  ]
+}

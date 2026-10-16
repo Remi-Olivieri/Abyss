@@ -10,50 +10,40 @@
 <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/abyss/abyss.css">
 <style>
   /* cette barre-ci porte un retour à gauche en plus du compte à droite */
   .barre{justify-content:space-between}
-
-  .mon-entete{margin-bottom:26px}
-  .mon-titre{
-    font-family:"Eczar",Georgia,serif;font-weight:600;
-    font-size:clamp(34px,6vw,52px);line-height:1.05;letter-spacing:.06em;
-    text-transform:uppercase;margin:0;
-    background:linear-gradient(180deg,#EEF7FC 0%,#89B4CE 58%,#2E4E66 100%);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-  }
-  .mon-sous{margin:10px 0 0;color:var(--brume);font-size:13.5px}
 
   /* ---------- les chiffres de tête ----------
      Un nombre seul, en grand : c'est la réponse à « combien », et un
      graphique pour quatre valeurs sans rapport entre elles ne dirait rien
      de plus qu'elles. */
   .mon-tuiles{
-    display:grid;gap:12px;margin-bottom:30px;
+    display:grid;gap:12px;margin-bottom:26px;
     grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
   }
   .mon-tuile{
-    padding:16px 18px;border-radius:14px;
-    border:1px solid rgba(150,195,220,.14);
-    background:linear-gradient(170deg,rgba(19,34,56,.55),rgba(8,15,26,.55));
+    position:relative;padding:16px 18px;
+    border:1px solid var(--ui-trait);
+    background:var(--panneau);
   }
   .mon-tuile u{
     display:flex;align-items:center;gap:7px;
     font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--brume);text-decoration:none;
+    color:var(--ui-dim);text-decoration:none;
   }
   .mon-tuile b{
     display:block;margin:9px 0 2px;
-    font-family:"Eczar",Georgia,serif;font-weight:600;font-size:34px;line-height:1;
-    color:var(--os);font-variant-numeric:tabular-nums;
+    font-weight:500;font-size:32px;line-height:1;letter-spacing:.02em;
+    color:var(--ui);font-variant-numeric:tabular-nums;
   }
-  .mon-tuile i{font-style:normal;font-size:12px;color:var(--brume)}
+  .mon-tuile i{font-style:normal;font-size:12px;color:var(--ui-dim)}
   /* le point qui bat : « en ce moment » est la seule tuile qui bouge */
   .vivant{
-    width:7px;height:7px;border-radius:50%;flex:none;
-    background:var(--algue);box-shadow:0 0 8px var(--algue);
+    width:7px;height:7px;border-radius:1px;flex:none;
+    background:var(--c-jeux);box-shadow:0 0 8px var(--c-jeux);
   }
   @media (prefers-reduced-motion:no-preference){
     .vivant{animation:battement 2.4s ease-in-out infinite}
@@ -70,53 +60,52 @@
   .mon-onglets{
     position:sticky;top:10px;z-index:1;
     display:flex;gap:4px;margin:0 0 22px;padding:4px;
-    border-radius:13px;border:1px solid rgba(150,195,220,.12);
-    background:rgba(4,9,16,.84);
+    border-radius:4px;border:1px solid var(--ui-trait);
+    background:rgba(3,7,11,.9);
     -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
     overflow-x:auto;scrollbar-width:none;
   }
   .mon-onglets::-webkit-scrollbar{display:none}
   .mon-onglet{
     flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;
-    font:inherit;font-size:13.5px;color:var(--brume);white-space:nowrap;
-    padding:8px 14px;border:0;border-radius:9px;background:transparent;cursor:pointer;
+    font:inherit;font-size:12.5px;letter-spacing:.04em;color:var(--ui-dim);white-space:nowrap;
+    padding:8px 14px;border:0;border-radius:3px;background:transparent;cursor:pointer;
     transition:color .2s ease,background .2s ease;
   }
-  .mon-onglet:hover{color:var(--os)}
-  .mon-onglet[aria-selected="true"]{color:var(--os);background:rgba(120,190,225,.14)}
-  .mon-onglet:focus-visible{outline:2px solid var(--plancton);outline-offset:-2px}
+  .mon-onglet:hover{color:var(--ui)}
+  .mon-onglet[aria-selected="true"]{color:var(--ui);background:rgba(190,220,236,.12)}
+  .mon-onglet:focus-visible{outline:2px solid var(--ui);outline-offset:-2px}
   /* qui est là, compté jusque sur l'onglet : on le voit depuis les autres */
   .mon-onglet-n{
-    font-size:11px;font-weight:500;line-height:1.6;padding:0 7px;border-radius:99px;
-    font-variant-numeric:tabular-nums;color:var(--algue);background:rgba(63,217,164,.12);
+    font-size:11px;font-weight:500;line-height:1.6;padding:0 7px;border-radius:3px;
+    font-variant-numeric:tabular-nums;color:var(--c-jeux);background:rgba(60,240,180,.12);
   }
 
-  /* ---------- une carte ---------- */
-  .mon-carte{
-    padding:20px 22px 22px;margin-bottom:22px;border-radius:16px;
-    border:1px solid rgba(150,195,220,.14);
-    background:linear-gradient(170deg,rgba(19,34,56,.5),rgba(8,15,26,.5));
-  }
-  .mon-carte > h2{
-    font-family:"Eczar",Georgia,serif;font-size:19px;font-weight:600;margin:0 0 3px;
-  }
-  .mon-carte > p{margin:0 0 18px;color:var(--brume);font-size:12.5px}
-  .mon-vide{color:var(--brume);font-size:13.5px;margin:0}
+  /* ---------- les panneaux ----------
+     Une teinte par rubrique : vert ce qui est en direct, or l'activité,
+     violet les comptes, bleu l'audience et le site, rouge ce qui touche au
+     serveur. */
+  #pan-direct .panneau{--cat:var(--c-jeux)}
+  #pan-activite .panneau{--cat:var(--c-collection)}
+  #pan-comptes .panneau{--cat:var(--c-apprendre)}
+  .panneau.danger{--cat:var(--c-danger)}
+  .panneau{padding:20px 22px 22px}
+  .panneau > p{margin:0 0 18px;color:var(--ui-dim);font-size:12px}
+  .mon-vide{color:var(--ui-dim);font-size:13px;margin:0}
 
   /* ---------- redémarrer ----------
      Teinte rouge, discrète : c'est la seule action de la page, et la seule
      du site qui touche au serveur. Elle doit se distinguer des cartes qui ne
      font que montrer des chiffres, sans pour autant crier. */
-  .mon-carte.mon-danger{border-color:rgba(232,106,106,.22)}
   .redem{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
-  .redem .bouton{border-color:rgba(232,106,106,.32)}
+  .redem .bouton{border-color:rgba(255,107,122,.4)}
   .redem .bouton:hover,.redem .bouton:focus-visible{
-    border-color:rgba(232,106,106,.65);box-shadow:0 0 22px -8px rgba(232,106,106,.55);
+    border-color:rgba(255,107,122,.7);box-shadow:0 0 22px -8px rgba(255,107,122,.55);
   }
   .redem .bouton:disabled{opacity:.5;cursor:default;box-shadow:none}
-  .redem-etat{color:var(--brume);font-size:13px}
-  .redem-etat.travaille{color:#FFD9A8}
-  .redem-etat.mauvais{color:#FFD9D9}
+  .redem-etat{color:var(--ui-dim);font-size:12.5px}
+  .redem-etat.travaille{color:#FFE2A8}
+  .redem-etat.mauvais{color:#FFD9DD}
 
   /* ---------- la courbe des jours ----------
      Des barres et non une ligne : un jour est une case, pas un point sur un
@@ -130,18 +119,18 @@
     background:none;border:0;padding:0;cursor:default;
   }
   .jour i{
-    display:block;width:100%;border-radius:4px 4px 0 0;
-    background:var(--plancton);
+    display:block;width:100%;border-radius:2px 2px 0 0;
+    background:var(--cat);
     transition:filter .15s;
   }
   /* un jour sans personne garde un trait : une case vide et une case absente
      ne se distinguent pas, et l'une des deux serait un mensonge */
-  .jour.creux i{background:rgba(150,195,220,.16);border-radius:3px}
+  .jour.creux i{background:var(--ui-trait);border-radius:2px}
   .jour:hover i{filter:brightness(1.25)}
-  .jour.pointe i{box-shadow:0 0 14px -3px var(--plancton)}
+  .jour.pointe i{box-shadow:0 0 14px -3px var(--cat)}
   .jours-axe{
     display:flex;gap:2px;margin-top:8px;
-    font-size:10px;color:var(--brume);font-variant-numeric:tabular-nums;
+    font-size:10px;color:var(--ui-dim);font-variant-numeric:tabular-nums;
   }
   .jours-axe span{flex:1;min-width:0;text-align:center;overflow:hidden}
   /* toutes les dates ne tiennent pas : une sur trois, plus la dernière */
@@ -154,19 +143,19 @@
   .pages{display:flex;flex-direction:column;gap:9px}
   .page-l{display:grid;grid-template-columns:minmax(0,13em) 1fr auto;gap:12px;align-items:center}
   .page-nom{
-    font-size:13px;color:var(--os);
+    font-size:12.5px;color:var(--ui);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
-  .page-piste{height:9px;border-radius:99px;background:rgba(150,195,220,.1);overflow:hidden}
+  .page-piste{height:9px;background:var(--ui-trait);overflow:hidden}
   .page-piste i{
-    display:block;height:100%;border-radius:99px;background:var(--plancton);
+    display:block;height:100%;background:var(--cat);box-shadow:0 0 10px -2px var(--cat);
     transition:width .3s cubic-bezier(.2,.7,.3,1);
   }
   .page-val{
-    font-size:12px;color:var(--brume);white-space:nowrap;
+    font-size:12px;color:var(--ui-dim);white-space:nowrap;
     font-variant-numeric:tabular-nums;
   }
-  .page-val b{color:var(--os);font-weight:500}
+  .page-val b{color:var(--ui);font-weight:500}
 
   /* ---------- une personne ----------
      Le même dessin pour « qui est là » et pour les comptes : une photo, un
@@ -177,110 +166,113 @@
   .gens{display:flex;flex-direction:column;gap:8px}
   .gen{
     display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:3px 12px;
-    align-items:start;padding:11px 13px;border-radius:12px;
-    border:1px solid rgba(150,195,220,.1);background:rgba(3,8,15,.35);
+    align-items:start;padding:11px 13px;border-radius:3px;
+    border:1px solid var(--ui-trait);background:rgba(2,6,10,.55);
   }
-  .gen.ici{border-color:rgba(63,217,164,.22)}
+  .gen.ici{border-color:color-mix(in srgb,var(--c-jeux) 35%,transparent)}
   .gen-av{
-    grid-row:1 / span 4;width:38px;height:38px;border-radius:50%;
+    grid-row:1 / span 4;width:38px;height:38px;border-radius:4px;
     object-fit:cover;display:grid;place-items:center;
-    font-family:"Eczar",Georgia,serif;font-weight:600;font-size:16px;
-    color:var(--os);background:rgba(150,195,220,.12);
+    font-weight:600;font-size:15px;
+    color:var(--ui);background:rgba(190,220,236,.1);
   }
-  .gen.anonyme .gen-av{color:var(--brume);background:rgba(150,195,220,.06)}
+  .gen.anonyme .gen-av{color:var(--ui-dim);background:rgba(190,220,236,.05)}
   .gen-nom{
     display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;
-    font-size:14px;font-weight:500;color:var(--os);min-width:0;
+    font-size:13.5px;font-weight:500;color:var(--ui);min-width:0;
   }
-  .gen.anonyme .gen-nom{color:var(--brume);font-weight:400}
+  .gen.anonyme .gen-nom{color:var(--ui-dim);font-weight:400}
   .gen-quand{
-    font-size:12px;color:var(--brume);white-space:nowrap;text-align:right;
+    font-size:12px;color:var(--ui-dim);white-space:nowrap;text-align:right;
     font-variant-numeric:tabular-nums;padding-top:2px;
   }
   .gen-l{
-    grid-column:2 / -1;font-size:12.5px;line-height:1.5;color:var(--brume);
+    grid-column:2 / -1;font-size:12px;line-height:1.5;color:var(--ui-dim);
     min-width:0;overflow-wrap:anywhere;
   }
-  .gen-l b{color:var(--os);font-weight:500}
-  .gen-l.lieu b{color:var(--plancton)}
+  .gen-l b{color:var(--ui);font-weight:500}
+  .gen-l.lieu b{color:var(--cat)}
   .etiq{
     font-size:10.5px;font-weight:500;letter-spacing:.05em;line-height:1.5;
-    padding:1px 8px;border-radius:999px;white-space:nowrap;
-    color:var(--brume);border:1px solid rgba(150,195,220,.2);
+    padding:1px 8px;border-radius:3px;white-space:nowrap;
+    color:var(--ui-dim);border:1px solid var(--ui-trait);
   }
-  .etiq.actif{color:var(--algue);border-color:rgba(63,217,164,.35);background:rgba(63,217,164,.1)}
-  .etiq.session{color:var(--plancton);border-color:rgba(91,155,245,.3)}
+  .etiq.actif{color:var(--c-jeux);border-color:rgba(60,240,180,.35);background:rgba(60,240,180,.1)}
+  .etiq.session{color:var(--c-abyss);border-color:rgba(108,200,255,.3)}
 
   /* ceux qui viennent de partir : une ligne chacun, plus discrète */
-  .partis{margin-top:16px;padding-top:14px;border-top:1px solid rgba(150,195,220,.1)}
-  .mon-carte h3{
+  .partis{margin-top:16px;padding-top:14px;border-top:1px solid var(--ui-trait)}
+  .panneau h3{
     margin:0 0 8px;font-size:10.5px;font-weight:500;letter-spacing:.16em;
-    text-transform:uppercase;color:var(--brume);
+    text-transform:uppercase;color:var(--ui-dim);
   }
   .parti-l{
     display:flex;flex-wrap:wrap;gap:2px 10px;padding:5px 0;
-    font-size:12.5px;color:var(--brume);
-    border-bottom:1px solid rgba(150,195,220,.06);
+    font-size:12px;color:var(--ui-dim);
+    border-bottom:1px solid rgba(190,220,236,.06);
   }
   .parti-l:last-child{border-bottom:0}
-  .parti-l b{color:var(--os);font-weight:500}
+  .parti-l b{color:var(--ui);font-weight:500}
 
   /* ---------- l'activité ----------
      Un fil par jour, l'heure dans une colonne à part : on le parcourt de
      haut en bas en cherchant un moment, puis une personne. */
   .filtres{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 14px}
   .filtre{
-    font:inherit;font-size:12px;padding:4px 11px;border-radius:999px;cursor:pointer;
-    color:var(--brume);background:rgba(3,8,15,.5);border:1px solid rgba(150,195,220,.2);
+    font:inherit;font-size:12px;padding:4px 11px;border-radius:3px;cursor:pointer;
+    color:var(--ui-dim);background:rgba(2,6,10,.55);border:1px solid var(--ui-trait);
   }
-  .filtre:hover{color:var(--os)}
+  .filtre:hover{color:var(--ui)}
   .filtre[aria-pressed="true"]{
-    color:var(--os);border-color:rgba(91,155,245,.5);background:rgba(91,155,245,.14);
+    color:var(--ui);border-color:var(--ui-pale);background:rgba(190,220,236,.1);
   }
-  .filtre:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  .filtre:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
   .fil-jour{margin:18px 0 4px}
   .fil-jour:first-child{margin-top:0}
   .fil-l{
     display:grid;grid-template-columns:3.2em minmax(0,1fr);gap:10px;
-    padding:6px 0;font-size:13px;line-height:1.5;color:var(--os);
-    border-bottom:1px solid rgba(150,195,220,.06);
+    padding:6px 0;font-size:12.5px;line-height:1.5;color:var(--ui);
+    border-bottom:1px solid rgba(190,220,236,.06);
   }
-  .fil-h{color:var(--brume);font-size:12px;font-variant-numeric:tabular-nums;padding-top:1px}
+  .fil-h{color:var(--ui-dim);font-size:12px;font-variant-numeric:tabular-nums;padding-top:1px}
   .fil-l b{font-weight:500}
-  .fil-l .app{display:block;font-size:11.5px;color:var(--brume)}
+  .fil-l .app{display:block;font-size:11.5px;color:var(--ui-dim)}
   .fil-l details summary{cursor:pointer;list-style:none}
   .fil-l details summary::-webkit-details-marker{display:none}
-  .fil-plus{margin-left:6px;font-size:12px;color:var(--plancton);white-space:nowrap}
-  .fil-l details[open] .fil-plus{color:var(--brume)}
-  .fil-l ul{margin:6px 0 2px;padding-left:16px;font-size:12.5px;color:var(--brume)}
+  .fil-plus{margin-left:6px;font-size:12px;color:#8FCBFF;white-space:nowrap}
+  .fil-l details[open] .fil-plus{color:var(--ui-dim)}
+  .fil-l ul{margin:6px 0 2px;padding-left:16px;font-size:12px;color:var(--ui-dim)}
   .fil-l li{padding:1px 0}
   .fil-l li span{font-variant-numeric:tabular-nums;margin-right:6px}
-  .supprime{color:var(--brume);font-weight:400;font-size:12px}
+  .supprime{color:var(--ui-dim);font-weight:400;font-size:12px}
 
   .plus-gens{margin-top:10px}
   .plus-gens summary{
-    cursor:pointer;font-size:12.5px;color:var(--plancton);list-style:none;padding:4px 0;
+    cursor:pointer;font-size:12px;color:#8FCBFF;list-style:none;padding:4px 0;
   }
   .plus-gens summary::-webkit-details-marker{display:none}
   .plus-gens .gens{margin-top:8px}
 
   /* ---------- infobulle ----------
      Une barre est trop étroite pour porter son chiffre : il vient au
-     survol, avec la date, plutôt que d'écrire quinze nombres illisibles. */
+     survol, avec la date, plutôt que d'écrire quinze nombres illisibles.
+     Hors de .enveloppe, donc à l'échelle de l'écran : elle suit le
+     pointeur au pixel près, même quand la page grandit (voir le zoom dans
+     abyss.css). */
   .bulle{
     position:fixed;z-index:50;pointer-events:none;
-    padding:7px 11px;border-radius:9px;
-    background:#0C1523;border:1px solid rgba(150,195,220,.24);
+    padding:7px 11px;border-radius:4px;
+    background:#060C13;border:1px solid var(--ui-trait);
     box-shadow:0 14px 34px rgba(0,0,0,.6);
-    font-size:12px;line-height:1.5;color:var(--os);white-space:nowrap;
+    font-size:12px;line-height:1.5;color:var(--ui);white-space:nowrap;
     opacity:0;transition:opacity .12s;
   }
   .bulle.montre{opacity:1}
-  .bulle u{display:block;text-decoration:none;color:var(--brume);font-size:10.5px}
+  .bulle u{display:block;text-decoration:none;color:var(--ui-dim);font-size:10.5px}
 
   .mon-etat{
-    padding:44px 20px;text-align:center;color:var(--brume);font-size:14px;
-    border:1px dashed rgba(150,195,220,.18);border-radius:14px;
+    padding:44px 20px;text-align:center;color:var(--ui-dim);font-size:13px;
+    border:1px dashed var(--ui-trait);border-radius:4px;
   }
   #gate{max-width:46ch}
   /* ---------- le téléphone ----------
@@ -288,8 +280,6 @@
      quatre chiffres qu'on compare, et les empiler obligeait à faire défiler
      entre deux lectures de la même question. */
   @media (max-width:620px){
-    .mon-entete{margin-bottom:20px}
-    .mon-sous{font-size:13px}
     .mon-tuiles{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px}
     .mon-tuile{padding:13px 14px}
     .mon-tuile u{font-size:9.5px;letter-spacing:.12em}
@@ -297,12 +287,13 @@
     .mon-tuile i{font-size:11.5px}
     /* Les cinq onglets tiennent sur 390 px sans défiler - « Site » restait
        caché à droite, hors de l'écran - et gagnent en hauteur ce qu'ils
-       rendent en marge : 38 px sous le pouce. Plus étroit, la barre défile
-       comme avant. */
+       rendent en marge : 38 px sous le pouce. La chasse fixe est plus large
+       qu'une police ordinaire, d'où la taille et l'espacement resserrés.
+       Plus étroit, la barre défile comme avant. */
     .mon-onglets{margin-bottom:16px;gap:2px}
-    .mon-onglet{font-size:13px;padding:10px 6px;gap:5px;flex:1 1 auto}
+    .mon-onglet{font-size:11.5px;letter-spacing:0;padding:10px 5px;gap:5px;flex:1 1 auto}
     .mon-onglet-n{padding:0 6px}
-    .mon-carte{padding:16px 14px 18px;border-radius:14px}
+    .panneau{padding:16px 14px 18px}
     .jours{height:118px}
     /* Le nom de la page passe au-dessus de sa barre : treize em de libellé,
        une piste et un chiffre ne tiennent pas côte à côte sur 360 px, et le
@@ -312,11 +303,10 @@
     /* la photo rapetisse, l'heure passe sous le nom : sur 360 px, trois
        colonnes laissaient au nom la place d'un seul mot */
     .gen{grid-template-columns:32px minmax(0,1fr);padding:10px 11px;gap:2px 10px}
-    .gen-av{width:32px;height:32px;font-size:14px}
+    .gen-av{width:32px;height:32px;font-size:13px}
     .gen-quand{grid-column:2;text-align:left;padding-top:0}
     .fil-l{grid-template-columns:2.9em minmax(0,1fr);gap:8px}
   }
-
 </style>
 </head>
 <body>
@@ -334,9 +324,9 @@
   </div>
 
   <main id="corps" hidden>
-    <header class="mon-entete">
-      <h1 class="mon-titre">Monitoring</h1>
-      <p class="mon-sous" id="sous"></p>
+    <header class="page-entete">
+      <h1 class="page-titre">Monitoring</h1>
+      <p class="page-sous" id="sous"></p>
     </header>
 
     <div class="mon-tuiles" id="tuiles"></div>
@@ -359,8 +349,8 @@
     </div>
 
     <div role="tabpanel" id="pan-direct" aria-labelledby="ong-direct">
-      <section class="mon-carte">
-        <h2>Qui est là en ce moment</h2>
+      <section class="panneau">
+        <h2 class="etiquette-panneau">Qui est là en ce moment</h2>
         <p id="quiSous"></p>
         <div class="gens" id="qui"></div>
         <div class="partis" id="partis" hidden></div>
@@ -368,8 +358,8 @@
     </div>
 
     <div role="tabpanel" id="pan-activite" aria-labelledby="ong-activite" hidden>
-      <section class="mon-carte">
-        <h2>Activité</h2>
+      <section class="panneau">
+        <h2 class="etiquette-panneau">Activité</h2>
         <p id="filSous"></p>
         <div class="filtres" id="filtres" role="group" aria-label="Filtrer par compte"></div>
         <div id="fil"></div>
@@ -377,31 +367,31 @@
     </div>
 
     <div role="tabpanel" id="pan-comptes" aria-labelledby="ong-comptes" hidden>
-      <section class="mon-carte">
-        <h2>Comptes</h2>
+      <section class="panneau">
+        <h2 class="etiquette-panneau">Comptes</h2>
         <p id="comptesSous"></p>
         <div id="comptesListe"></div>
       </section>
     </div>
 
     <div role="tabpanel" id="pan-audience" aria-labelledby="ong-audience" hidden>
-      <section class="mon-carte">
-        <h2>Visiteurs par jour</h2>
+      <section class="panneau">
+        <h2 class="etiquette-panneau">Visiteurs par jour</h2>
         <p id="joursSous"></p>
         <div class="jours" id="jours"></div>
         <div class="jours-axe" id="joursAxe"></div>
       </section>
 
-      <section class="mon-carte">
-        <h2>Pages</h2>
+      <section class="panneau">
+        <h2 class="etiquette-panneau">Pages</h2>
         <p id="pagesSous"></p>
         <div class="pages" id="pages"></div>
       </section>
     </div>
 
     <div role="tabpanel" id="pan-site" aria-labelledby="ong-site" hidden>
-      <section class="mon-carte">
-        <h2>Ce que le site contient</h2>
+      <section class="panneau">
+        <h2 class="etiquette-panneau">Ce que le site contient</h2>
         <p>Compté en base, pas dans les visites.</p>
         <div class="pages" id="contenu"></div>
       </section>
@@ -409,8 +399,8 @@
       <!-- Redémarrer le site. Sa place est ici : c'est la page où l'on vient
            voir si quelque chose ne tourne pas rond, donc celle d'où l'on veut
            pouvoir y remédier - de loin, sans ouvrir un terminal. -->
-      <section class="mon-carte mon-danger">
-        <h2>Redémarrer Abyss</h2>
+      <section class="panneau danger">
+        <h2 class="etiquette-panneau">Redémarrer Abyss</h2>
         <div class="redem">
           <button class="bouton" id="redemBtn" type="button">Redémarrer</button>
           <span class="redem-etat" id="redemEtat"></span>
@@ -419,8 +409,8 @@
     </div>
   </main>
 
-  <section class="carte-profil" id="gate" hidden>
-    <h2>Rien à voir ici</h2>
+  <section class="panneau" id="gate" hidden>
+    <h2 class="etiquette-panneau">Rien à voir ici</h2>
     <p class="explication">Cette page est réservée à l'administration du site.</p>
     <p><a class="lien" href="/abyss">Retour à Abyss</a></p>
   </section>
@@ -630,7 +620,7 @@ function dessineTuiles() {
       i: "comptes encore connectés" },
   ];
   el("tuiles").innerHTML = tuiles.map((t) => `
-    <div class="mon-tuile">
+    <div class="mon-tuile equerres">
       <u>${t.u}</u>
       <b>${t.b}</b>
       <i>${echappe(t.i)}</i>

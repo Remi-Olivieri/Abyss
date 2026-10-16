@@ -11,14 +11,18 @@ from flask import Flask, Response, abort, jsonify, redirect, request, send_from_
 from flask_socketio import SocketIO
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+import accueil
 import alertes
 import apercu
 import cartes
 import collection
 import comptes
+import entretien
 import journal
 import monitoring
 import nihongo
+import pokemon
+import pokemon_stock
 import quiz
 import sauvegarde
 import social
@@ -42,6 +46,7 @@ FEED = "archive/feed.html"
 REINITIALISER = "abyss/reinitialiser.html"
 CHAINZ = "chainz/chainz.html"
 NIHONGO = "nihongo/nihongo.html"
+POKEMON = "pokemon/pokemon.html"
 # La cle qui signe les cookies de session Flask. Elle ne sert qu'au pseudo
 # d'invite du Yu-Gi-Quiz : les comptes Abyss, eux, ont leur propre cookie et
 # leur table de sessions (voir comptes.COOKIE). Gardee dans donnees/, qui
@@ -185,6 +190,9 @@ app.register_blueprint(cartes.branche(STATIQUE / "yugioh"))
 # en direct la recoit sans rechargement (voir social.annonce_jaquette).
 app.register_blueprint(blueprint_jaquettes(STATIQUE / "archive" / "Cover",
                                            sur_jaquette=social.annonce_jaquette))
+# l'analyse IGDB de toute la base, a minuit (voir entretien.py). Lancee ici et
+# pas avec les deux autres fils : elle a besoin du dossier des jaquettes.
+entretien.lance(STATIQUE / "archive" / "Cover")
 app.register_blueprint(blueprint_suggestions)
 app.register_blueprint(social.blueprint_social)
 # Le temps reel du Social se branche sur le meme serveur SocketIO que le
@@ -196,13 +204,22 @@ app.register_blueprint(quiz.branche(STATIQUE / "archive" / "Cover"))
 # Les apercus de lien : les balises Open Graph glissees dans chaque page (voir
 # envoie), et la mosaique de jaquettes d'un journal partage.
 app.register_blueprint(apercu.branche(STATIQUE / "archive" / "Cover"))
+# Les images de l'accueil qui parlent de qui regarde : ses jeux preferes, ses
+# cartes favorites (voir accueil.py).
+app.register_blueprint(accueil.branche(STATIQUE / "archive" / "Cover"))
 # Deux blueprints, les pages et leur API : voir yugiquiz.branche.
 for bp in yugiquiz.branche(socketio):
     app.register_blueprint(bp)
 # Le japonais : les revisions de chacun, en base ; la matiere (kanas,
-# traces), en fichiers sous static/nihongo/. Reserve a l'administration tant
-# qu'il est en chantier, voir nihongo.reserve.
+# traces), en fichiers sous static/nihongo/. Un compte suffit, voir
+# nihongo.compte_requis.
 app.register_blueprint(nihongo.branche(STATIQUE / "nihongo"))
+# La collection Pokemon : le catalogue (blocs, series, cartes et leurs
+# images) sous static/pokemon/, ce que chacun possede en base. Le stock le
+# remplit depuis TCGdex, au meme endroit -- voir pokemon_stock.py. Les deux
+# sont reserves a l'administration tant que le projet est en chantier.
+app.register_blueprint(pokemon.branche(STATIQUE / "pokemon"))
+app.register_blueprint(pokemon_stock.branche())
 
 
 @app.before_request
@@ -470,12 +487,24 @@ def page_chainz():
 
 # Nihongo : une page pour toutes ses rubriques (/nihongo/kana,
 # /nihongo/progres...), qui lit l'adresse et affiche la bonne. Servie a tout
-# le monde, comme le monitoring : c'est /api/nihongo qui repond 404 a qui
-# n'est pas admin, et la page affiche alors sa porte close.
+# le monde : c'est /api/nihongo qui repond 401 a qui n'est pas connecte, et
+# la page l'envoie alors se connecter.
 @app.route("/nihongo", strict_slashes=False)
 @app.route("/nihongo/<rubrique>", strict_slashes=False)
 def page_nihongo(rubrique=None):
     return envoie(NIHONGO)
+
+# La collection Pokemon : meme principe que le classeur Yu-Gi-Oh, une
+# adresse pour la sienne et une pour celle des autres, servies par la meme
+# page. Une serie ouverte s'ecrit en ?serie=, pour qu'un rechargement ou un
+# lien partage retombent dessus.
+@app.route("/pokemon", strict_slashes=False)
+def page_pokemon():
+    return envoie(POKEMON)
+
+@app.route("/pokemon/<pseudo>", strict_slashes=False)
+def pokemon_de(pseudo):
+    return envoie(POKEMON)
 
 @app.route("/collection-yugioh.html")
 def ancienne_collection():

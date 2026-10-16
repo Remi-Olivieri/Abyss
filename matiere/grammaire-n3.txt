@@ -1650,7 +1650,7 @@ Avec un nom d'action d'origine chinoise, ご : ご{注意|ちゅうい}くださ
 
 - {係|かかり}の{者|もの}が{参|まい}りますので、こちらでお[{待|ま}ち<{待|ま}つ>]ください。 | Un employé va venir : veuillez patienter ici.
 - こちらにお{名前|なまえ}をお[{書|か}き<{書|か}く>]ください。 | Veuillez écrire votre nom ici.
-- {足元|あしもと}に[ご{注意|ちゅうい}]ください。 | Attention à la marche.
+- {足元|あしもと}に[ご{注意|ちゅうい}<{注意|ちゅうい}>]ください。 | Attention à la marche.
 - どうぞお{座|すわ}り[ください]。 | Asseyez-vous, je vous en prie.
 - {何|なに}かありましたら、ご{連絡|れんらく}[ください]。 | En cas de besoin, veuillez nous contacter.
 

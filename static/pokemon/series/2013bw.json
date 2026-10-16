@@ -1,0 +1,25 @@
+{
+  "id": "2013bw",
+  "nom": "Collection McDonald's 2013",
+  "bloc": "mc",
+  "date": "2013-11-01",
+  "officiel": 12,
+  "total": 12,
+  "sigle": "",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  "cartes": [
+    ["1", "Phyllali", "Sans Rareté", "H", "P", 470],
+    ["2", "Pyroli", "Sans Rareté", "H", "P", 136],
+    ["3", "Aquali", "Sans Rareté", "H", "P", 134],
+    ["4", "Givrali", "Sans Rareté", "H", "P", 471],
+    ["5", "Pikachu", "Sans Rareté", "H", "P", 25],
+    ["6", "Voltali", "Sans Rareté", "H", "P", 135],
+    ["7", "Mentali", "Sans Rareté", "H", "P", 196],
+    ["8", "Charpenti", "Sans Rareté", "H", "P", 532],
+    ["9", "Noctali", "Sans Rareté", "H", "P", 197],
+    ["10", "Baggiguane", "Sans Rareté", "H", "P", 559],
+    ["11", "Zorua", "Sans Rareté", "H", "P", 570],
+    ["12", "Évoli", "Sans Rareté", "H", "P", 133]
+  ]
+}

@@ -2093,6 +2093,14 @@ body:has(.rattrapage) .igdb-maj{bottom:78px}
 .igdb-in .fgrid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
 .igdb-info{font-size:13.5px;line-height:1.6;color:var(--muted);margin:0 0 18px}
 .igdb-info b{color:var(--text);font-weight:700}
+/* l'analyse de la nuit (voir entretien.py) : la première chose proposée,
+   avant les réglages d'une analyse à la main, dans un bloc à part pour
+   qu'on ne la confonde pas avec eux */
+.igdb-nuit{margin:0 0 20px;padding:14px 16px 16px;background:var(--bg);border:1px solid var(--line);border-radius:13px}
+.igdb-nuit .igdb-info{margin:0 0 12px}
+.igdb-nuit .igdb-note{margin:12px 0 0}
+.igdb-nuit > :first-child{margin-top:0}
+.igdb-nuit-rien{margin:0 0 18px}
 
 /* ---------- export du journal ---------- */
 .export-sheet{max-width:560px}

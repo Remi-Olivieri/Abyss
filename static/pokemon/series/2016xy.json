@@ -1,0 +1,25 @@
+{
+  "id": "2016xy",
+  "nom": "Collection McDonald's 2016",
+  "bloc": "mc",
+  "date": "2016-08-20",
+  "officiel": 12,
+  "total": 12,
+  "sigle": "MCD16",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  "cartes": [
+    ["1", "Goupix", "Sans rareté", "H", "P", 37],
+    ["2", "Poussifeu", "Sans rareté", "H", "P", 255],
+    ["3", "Feunnec", "Sans rareté", "H", "P", 653],
+    ["4", "Magicarpe", "Sans rareté", "H", "P", 129],
+    ["5", "Kaiminus", "Sans rareté", "H", "P", 158],
+    ["6", "Pikachu", "Sans rareté", "H", "P", 25],
+    ["7", "Baggiguane", "Sans rareté", "H", "P", 559],
+    ["8", "Rondoudou", "Sans rareté", "H", "P", 39],
+    ["9", "Togepi", "Sans rareté", "H", "P", 175],
+    ["10", "Dedenne", "Sans rareté", "H", "P", 702],
+    ["11", "Miaouss", "Sans rareté", "H", "P", 52],
+    ["12", "Évoli", "Sans rareté", "H", "P", 133]
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "tk-sm-l",
+  "nom": "SM Kit du dresseur (Lougarox)",
+  "bloc": "tk",
+  "date": "2017-04-21",
+  "officiel": 30,
+  "total": 30,
+  "sigle": "TK10L",
+  "images_en": [],
+  "sans_image": ["1", "4", "5", "11", "12", "13", "14", "15", "16", "18", "19", "21", "22", "23", "25", "27", "29", "30"],
+  "cartes": [
+    ["1", "Chenipan", "Commune", "N", "P", 10],
+    ["4", "Piclairon", "Peu commune", "N", "P", 732],
+    ["5", "Énergie Combat", "Commune", "N", "E", null],
+    ["11", "Passerouge", "Commune", "N", "P", 661],
+    ["12", "Manglouton", "Commune", "N", "P", 734],
+    ["13", "Braisillon", "Peu commune", "N", "P", 662],
+    ["14", "Rocabot", "Commune", "N", "P", 744],
+    ["15", "Picassaut", "Commune", "N", "P", 731],
+    ["16", "Lougaroc", "Sans rareté", "N", "P", 745],
+    ["18", "Makuhita", "Commune", "N", "P", 296],
+    ["19", "Tili", "Peu commune", "N", "D", null],
+    ["21", "Super Ball", "Peu commune", "N", "D", null],
+    ["22", "Bazoucan", "Rare", "N", "P", 733],
+    ["23", "Tili", "Peu commune", "N", "D", null],
+    ["25", "Super Ball", "Peu commune", "N", "D", null],
+    ["27", "Malasada Maxi", "Peu commune", "N", "D", null],
+    ["29", "Rocabot", "Commune", "N", "P", 744],
+    ["30", "Lougaroc", "Sans rareté", "H", "P", 745]
+  ]
+}

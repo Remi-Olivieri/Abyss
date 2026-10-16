@@ -1,0 +1,24 @@
+{
+  "id": "tk-dp-l",
+  "nom": "DP Kit dresseur (Lucario)",
+  "bloc": "tk",
+  "date": "2007-09-01",
+  "officiel": 11,
+  "total": 11,
+  "sigle": "TK3L",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
+  "cartes": [
+    ["1", "Racaillou", "Sans rareté", "N", "P", 74],
+    ["2", "Gravalanch", "Sans rareté", "N", "P", 75],
+    ["3", "Lucario", "Sans rareté", "H", "P", 448],
+    ["4", "Machopeur", "Sans rareté", "N", "P", 67],
+    ["5", "Machoc", "Sans rareté", "N", "P", 66],
+    ["6", "Riolu", "Sans rareté", "N", "P", 447],
+    ["7", "Etourmi", "Sans rareté", "N", "P", 396],
+    ["8", "Recherche d'énergie", "Sans rareté", "N", "D", null],
+    ["9", "Potion", "Sans rareté", "N", "D", null],
+    ["10", "Balle rapide", "Sans rareté", "N", "D", null],
+    ["11", "Énergie Combat", "Sans rareté", "N", "E", null]
+  ]
+}

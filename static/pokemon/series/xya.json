@@ -1,0 +1,19 @@
+{
+  "id": "xya",
+  "nom": "carte alternative A Jaune",
+  "bloc": "xy",
+  "date": "2014-02-05",
+  "officiel": 6,
+  "total": 6,
+  "sigle": "",
+  "images_en": [],
+  "sans_image": ["24a", "28a", "54a", "55a", "92a", "107a"],
+  "cartes": [
+    ["24a", "M-Élecsprint-ex", "Rare", "N", "P", 310],
+    ["28a", "Voltali-ex", "Rare", "N", "P", 135],
+    ["54a", "Zygarde-ex", "Rare", "N", "P", 718],
+    ["55a", "M-Lucario-ex", "Rare", "N", "P", 448],
+    ["92a", "Courrier du Dresseur", "Peu commune", "N", "D", null],
+    ["107a", "Professeur Platane", "Peu commune", "N", "D", null]
+  ]
+}

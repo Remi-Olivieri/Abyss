@@ -1,0 +1,30 @@
+{
+  "id": "pop7",
+  "nom": "POP Série 7",
+  "bloc": "pop",
+  "date": "2008-03-01",
+  "officiel": 17,
+  "total": 17,
+  "sigle": "P7",
+  "images_en": [],
+  "sans_image": [],
+  "cartes": [
+    ["1", "Pharamp", "Rare", "NH", "P", 181],
+    ["2", "Gallame", "Rare", "NH", "P", 475],
+    ["3", "Latias", "Rare", "NH", "P", 380],
+    ["4", "Latios", "Rare", "NH", "P", 381],
+    ["5", "Papilord", "Rare", "NH", "P", 414],
+    ["6", "Cadoizo", "Peu commune", "N", "P", 225],
+    ["7", "Lainergie", "Peu commune", "N", "P", 180],
+    ["8", "Kirlia", "Peu commune", "NH", "P", 281],
+    ["9", "Cerfrousse", "Peu commune", "NH", "P", 234],
+    ["10", "Cheniselle Cape Sable", "Peu commune", "N", "P", 413],
+    ["11", "Cheniti Cape Plante", "Commune", "N", "P", 412],
+    ["12", "Cheniti Cape Sable", "Commune", "N", "P", 412],
+    ["13", "Corayon", "Commune", "N", "P", 222],
+    ["14", "Wattouat", "Commune", "N", "P", 179],
+    ["15", "Tarsal", "Commune", "N", "P", 280],
+    ["16", "Fouinette", "Commune", "N", "P", 161],
+    ["17", "Spinda", "Commune", "N", "P", 327]
+  ]
+}

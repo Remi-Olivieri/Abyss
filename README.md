@@ -7,13 +7,14 @@ un seul compte : `app.py` branche chaque projet comme un blueprint.
 
 | Projet | Adresse | Python | `static/` | `templates/` |
 |---|---|---|---|---|
-| **Abyss** — le hub, le compte, le profil | `/abyss` | `comptes.py` `monitoring.py` `suggestions.py` `apercu.py` | `abyss/` | `abyss/` |
-| **Archive Jeux Vidéos** — journaux, fil social | `/archive` | `journal.py` `jaquettes.py` `social.py` | `archive/` | `archive/` |
-| **Mini-Jeux / Quiz** — jaquette floue, chronologie, grille | `/quiz` | `quiz.py` | `quiz/` | `quiz/` |
+| **Abyss** — le hub, le compte, le profil | `/abyss` | `comptes.py` `monitoring.py` `suggestions.py` `apercu.py` `accueil.py` | `abyss/` | `abyss/` |
+| **Archive Jeux Vidéos** — journaux, fil social | `/archive` | `journal.py` `jaquettes.py` `social.py` `entretien.py` | `archive/` | `archive/` |
+| **Mini-Jeux Vidéo** — jaquette floue, chronologie, grille | `/quiz` | `quiz.py` | `quiz/` | `quiz/` |
 | **Collection Yu-Gi-Oh!** — le classeur | `/collection` | `collection.py` `cartes.py` | `collection/` | `collection/` |
+| **Collection Pokémon** — série par série, version par version *(en chantier, admin seul)* | `/pokemon` | `pokemon.py` `pokemon_stock.py` | `pokemon/` | `pokemon/` |
 | **Yu-Gi-Quiz** — deviner une carte à son artwork | `/yugiquiz` | `yugiquiz.py` | `yugiquiz/` | `yugiquiz/` |
 | **Chainz** — le site du jeu | `/chainz` | *(page seule)* | `chainz/` | `chainz/` |
-| **Nihongo** — le japonais, un peu chaque jour *(en chantier, admin seul)* | `/nihongo` | `nihongo.py` | `nihongo/` | `nihongo/` |
+| **Nihongo** — le japonais, un peu chaque jour | `/nihongo` | `nihongo.py` | `nihongo/` | `nihongo/` |
 
 ## Où vit quoi
 
@@ -23,20 +24,25 @@ static/
 │                 gestes.js, neige.js, presence.js, suggestion.js, polices/,
 │                 vendor/, logo/ (la méduse : favicon, icônes, en-tête)
 ├── Avatars/      les photos de profil        (Bannieres/ : pas encore)
-├── abyss/        abyss.css
+├── abyss/        abyss.css (le dessin de toutes les pages d'Abyss),
+│                 accueil.css
 ├── archive/      archive.css, social.css, archive-*.js · Cover/
 ├── quiz/         quiz.css            (jaquettes : voir archive/Cover/)
 ├── yugioh/       cartes-fr.json, cartes-en.json, cartes-vues.json,
 │                 cartes-rarity.json, cartes-ignorees.json ·
 │                 Cards/ CardsCropped/
 ├── collection/   collection.css              (cartes : voir yugioh/)
+├── pokemon/      pokemon.css · blocs.json, series/<serie>.json (le catalogue,
+│                 écrit par pokemon_stock.py depuis TCGdex) ·
+│                 Cartes/<bloc>/<serie>/ Vignettes/<bloc>/<serie>/ Logos/
 ├── yugiquiz/     yugiquiz.css, commun.js     (cartes : voir yugioh/)
 ├── chainz/       cartes.json, images.json, art/{old,new}/
 └── nihongo/      nihongo.css, nihongo.js, kana.js, kanji.js, mots.js,
                   grammaire.js, lecture.js, trace.js, romaji.js, traces-kana.json,
                   kanji.json, vocabulaire.json, grammaire.json, lecture.json,
                   romaji.json, traces-kanji-n{5..1}.json
-                  (fabriqués par nihongo.py, voir plus bas) · voix/
+                  (fabriqués par nihongo.py, voir plus bas) · voix/ ·
+                  libre/ (les phrases de la lecture libre, hors du dépôt)
 
 matiere/          la matière de Nihongo écrite à la main, et non fabriquée :
 ├── vocabulaire-fr.tsv       les sens français des 7 913 mots
@@ -45,8 +51,9 @@ matiere/          la matière de Nihongo écrite à la main, et non fabriquée :
 │                               tête de grammaire-n5.txt)
 ├── lecture-n5.txt … -n1.txt    les textes à lire, du N5 au N1 (format en
 │                               tête de lecture-n5.txt)
-└── lecture-mots.tsv            les mots des textes que le vocabulaire n'a
-                                pas : noms propres, mots hors des listes
+├── lecture-mots.tsv            les mots des textes que le vocabulaire n'a
+│                               pas : noms propres, mots hors des listes
+└── libre-mots.tsv              ceux des phrases de la lecture libre (Tatoeba)
 ```
 
 Un dossier par projet, sauf deux **matières partagées**, qui portent le nom de
@@ -63,8 +70,11 @@ existent tous les deux : deux projets sans rapport, deux dossiers.
 ### Les dossiers d'images
 
 `Avatars/`, `Bannieres/`, `archive/Cover/`, `yugioh/Cards/`,
-`yugioh/CardsCropped/` et `chainz/art/` sont dans `.gitignore` : lourds, jamais
-édités à la main, déjà sur le serveur.
+`yugioh/CardsCropped/`, `chainz/art/` et les images de `pokemon/` sont dans
+`.gitignore` : lourds, jamais édités à la main, déjà sur le serveur. Les cartes
+Pokémon se téléchargent depuis la page, bouton « Mettre à jour » (admin) :
+environ 2 Go et une heure et demie pour tout le catalogue, une minute par série
+nouvelle.
 
 Chacun vit dans le dossier du projet qui l'alimente, comme le reste : l'Archive
 télécharge les jaquettes, donc `archive/Cover/` ; les artworks de cartes sont
@@ -91,7 +101,7 @@ Deux exceptions qui **servent** au lieu de rediriger :
 
 ```sh
 venv/bin/python app.py            # http://127.0.0.1:8000/abyss
-venv/bin/python -m unittest tests  # 395 tests
+venv/bin/python -m unittest tests  # 478 tests
 venv/bin/python nihongo.py matiere # refait les JSON de static/nihongo/
 ```
 
@@ -99,7 +109,15 @@ Les JSON de Nihongo sont versionnés : on ne les refait que si une source
 change (KanjiVG, KANJIDIC2, JMdict, listes JLPT) ou que `matiere/` change -
 une traduction, un point de grammaire, un texte. Un test refuse un
 `grammaire.json`, un `lecture.json` ou un `romaji.json` en retard sur ses fichiers. Les sources
-(une vingtaine de Mo) sont téléchargées une fois dans `donnees/nihongo/`.
+(une quarantaine de Mo) sont téléchargées une fois dans `donnees/nihongo/`.
+
+La lecture libre sert, une à une, des phrases de Tatoeba (CC BY 2.0 FR) :
+celles qui ont une traduction française et dont l'analyseur explique chaque
+mot, 22 000 environ, du N5 au N1. Les trier prend deux minutes ;
+`nihongo.py matiere` garde le résultat dans `donnees/nihongo/libre.json` et
+ne le refait que si le vocabulaire, la grammaire, un glossaire ou l'analyseur
+ont changé. Ses paquets (`static/nihongo/libre/`, ~7 Mo) restent hors du
+dépôt : ils se refont à l'identique depuis les sources.
 
 Les textes à lire sont découpés en mots à la fabrication, par SudachiPy, et
 chaque mot relié à son entrée du vocabulaire ou du glossaire : la page

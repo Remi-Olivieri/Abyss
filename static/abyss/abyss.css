@@ -1,50 +1,72 @@
+/* =========================================================
+   Abyss : le dessin commun à toutes ses pages
+   =========================================================
+   Le poste de pilotage du bathyscaphe (le dessin « Sas ») : une seule
+   police à chasse fixe, des panneaux aux coins marqués d'équerres, une
+   interface d'un blanc bleuté neutre -- et de la couleur seulement là où
+   elle dit quelque chose : la catégorie d'un projet, l'importance d'une
+   suggestion, ce qui est en direct.
+
+   Ce fichier porte ce que toutes les pages d'Abyss partagent : le fond, la
+   barre, le compte, les fenêtres, les champs, les boutons, les panneaux.
+   Chaque page ajoute ce qui lui est propre dans son <style> ; l'accueil a
+   sa feuille à lui, static/abyss/accueil.css. */
 :root{
-  --abysse:#03060B;
-  --carte:#0D1725;
-  --carte-2:#070E18;
-  --creux:#040910;
-  --os:#DCE8F0;
-  --brume:#72899D;
+  --fond:#03070B;
+  --ui:#DCEBF4;
+  --ui-dim:rgba(190,220,236,.55);
+  --ui-pale:rgba(190,220,236,.38);
+  --ui-trait:rgba(190,220,236,.16);
+  --texte:#C9DCE8;
+  --panneau:linear-gradient(180deg,rgba(14,24,36,.66),rgba(3,8,13,.8));
+  /* le dégradé du titre et du bouton qui valide : les lueurs de l'abysse */
+  --lueurs:linear-gradient(100deg,#FF8FC4 0%,#B9A6FF 34%,#7FC4FF 64%,#6CF0C2 100%);
 
-  /* bioluminescence */
-  --luciole:#E8A34A;
-  --algue:#3FD9A4;
-  --meduse:#E0559B;
-  --plancton:#5B9BF5;
-  --corail:#F07A5A;       /* Nihongo : le vermillon, vu du fond */
+  /* Les couleurs des catégories de l'accueil (voir CATEGORIES dans
+     abyss/accueil.html), reprises partout ailleurs pour dire la même chose :
+     vert les jeux vidéo, or la collection, rose les mini-jeux, violet
+     l'apprentissage, bleu Abyss lui-même. */
+  --c-jeux:#3CF0B4;
+  --c-collection:#FFCB52;
+  --c-minijeux:#FF5FAE;
+  --c-apprendre:#A28CFF;
+  --c-abyss:#6CC8FF;
+  --c-danger:#FF6B7A;
 
-  --rouge:#E86A6A;
-
-  --r:14px;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 
 *{box-sizing:border-box}
 html,body{margin:0}
+/* La barre de défilement, quand il y en a une : fine et sombre, et non la
+   grosse barre claire du système plantée dans le noir. */
+html{scrollbar-width:thin;scrollbar-color:rgba(190,220,236,.22) transparent}
 body{
-  background:
-    radial-gradient(900px 430px at 50% -14%, rgba(96,168,208,.16), transparent 72%),
-    linear-gradient(180deg,#0B1524 0%,#060C15 38%,var(--abysse) 100%);
-  background-attachment:fixed;
-  color:var(--os);
-  font-family:"Archivo","Segoe UI",system-ui,sans-serif;
-  font-size:16px;
+  font-family:var(--mono);
+  font-size:14px;
   line-height:1.55;
-  min-height:100vh;
+  color:var(--texte);
+  background:
+    radial-gradient(40vw 30vw at 0% 0%, rgba(255,95,174,.08), transparent 70%),
+    radial-gradient(44vw 34vw at 100% 6%, rgba(108,200,255,.09), transparent 70%),
+    radial-gradient(50vw 40vw at 50% 110%, rgba(162,140,255,.06), transparent 70%),
+    var(--fond);
+  background-attachment:fixed;
   -webkit-font-smoothing:antialiased;
-  /* le hub n'est qu'une grille de liens : rien a copier, et une selection
-     accidentelle en glissant sur une carte n'apporte que du bruit */
+  /* les pages d'Abyss sont des tableaux de bord : rien à copier, et une
+     sélection accidentelle en glissant sur un panneau n'apporte que du bruit */
   -webkit-user-select:none;
   user-select:none;
 }
 
-/* ... sauf dans les champs, ou couper le copier-coller serait une punition :
-   un mot de passe se colle depuis un gestionnaire, pas a la main. */
+/* ... sauf dans les champs, où couper le copier-coller serait une punition :
+   un mot de passe se colle depuis un gestionnaire, pas à la main. */
 input,textarea{
   -webkit-user-select:text;
   user-select:text;
 }
 
-/* Sans ce !important, les regles `display:flex` des modales l'emportent sur
+/* Sans ce !important, les règles `display:flex` des fenêtres l'emportent sur
    l'attribut hidden du HTML, et tout s'affiche en permanence. */
 [hidden]{display:none !important}
 
@@ -56,26 +78,118 @@ input,textarea{
   pointer-events:none;
 }
 
+/* Le contenu, et non le fond. Le padding du bas reste court : une page qui
+   tient dans l'écran ne doit pas déborder de quelques pixels de vide, et
+   faire apparaître une barre de défilement pour rien. */
 .enveloppe{
   position:relative;
   z-index:1;
-  max-width:1080px;
+  max-width:1180px;
   margin:0 auto;
-  padding:26px 26px 90px;
+  padding:20px 26px 20px;
 }
 
-/* ---------- Barre du compte ---------- */
-/* position + z-index sur la barre ENTIERE, et non plus sur tel ou tel
-   bouton qu'on aurait pense a proteger.
-   Le titre qui suit porte line-height:.94, bien en dessous de la hauteur
-   naturelle de sa police : son texte deborde de sa propre boite et vient
-   recouvrir le bas de la barre. Invisible -- le titre est en
-   background-clip:text, donc transparent la ou il deborde -- mais le clic
-   y reste pris, et la moitie basse des boutons devient morte.
-   .back avait deja eu le probleme et l'avait resolu pour lui seul ; le
-   bouton suivant ajoute a la barre est retombe dans le meme trou. D'ou le
-   correctif ici et pas la : c'est la barre qui doit passer devant ce qui
-   la suit, quels que soient les boutons qu'on y mettra. */
+/* Un peu plus grand sur ordinateur : de douze pour cent, tout d'un bloc --
+   les textes, les marges, les panneaux. zoom plutôt que de tout réécrire en
+   rem, et sur le contenu seulement : le fond, la neige et l'infobulle du
+   monitoring (placée au pointeur de la souris) restent à l'échelle de
+   l'écran. Une fenêtre ouverte grandit avec le reste.
+
+   Seulement quand l'écran a la place : pas sur téléphone, où chaque pixel
+   de largeur compte, ni sur un écran bas -- l'accueil y tient à taille
+   normale, et grossi il ferait apparaître une barre de défilement. */
+@media (min-width:960px) and (min-height:840px){
+  .enveloppe,.modale,.toast{zoom:1.12}
+}
+
+/* ---------- Les équerres ----------
+   Huit traits peints sur un calque posé par-dessus le panneau, à la
+   couleur de --equerre. Une seule règle pour tous les panneaux du site :
+   chacun choisit sa couleur, aucun ne redessine ses coins. Un élément à
+   qui on les donne par la classe .equerres doit être en position:relative. */
+.equerres::before,.modale::before,.panneau::before,.page-entete::before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  z-index:1;
+  pointer-events:none;
+  --e:var(--equerre,var(--ui-pale));
+  background:
+    linear-gradient(var(--e),var(--e)) top left / 12px 2px no-repeat,
+    linear-gradient(var(--e),var(--e)) top left / 2px 12px no-repeat,
+    linear-gradient(var(--e),var(--e)) top right / 12px 2px no-repeat,
+    linear-gradient(var(--e),var(--e)) top right / 2px 12px no-repeat,
+    linear-gradient(var(--e),var(--e)) bottom left / 12px 2px no-repeat,
+    linear-gradient(var(--e),var(--e)) bottom left / 2px 12px no-repeat,
+    linear-gradient(var(--e),var(--e)) bottom right / 12px 2px no-repeat,
+    linear-gradient(var(--e),var(--e)) bottom right / 2px 12px no-repeat;
+}
+
+/* ---------- Un panneau ----------
+   Le cadre de tout ce qui se range dans une page : le profil, les cartes du
+   monitoring, la porte des pages réservées. Sa couleur, --cat, teinte son
+   bord, ses équerres et son étiquette ; bleu Abyss par défaut. */
+.panneau{
+  position:relative;
+  --cat:var(--c-abyss);
+  --equerre:color-mix(in srgb,var(--cat) 75%,transparent);
+  padding:24px 24px 26px;
+  margin-bottom:22px;
+  background:var(--panneau);
+  border:1px solid color-mix(in srgb,var(--cat) 30%,transparent);
+  box-shadow:inset 0 0 34px -18px color-mix(in srgb,var(--cat) 70%,transparent);
+}
+/* Le titre d'un panneau : une étiquette pleine à sa couleur, comme le nom
+   d'une catégorie sur l'accueil. */
+.etiquette-panneau{
+  display:inline-flex;
+  align-items:center;
+  margin:0 0 10px;
+  padding:3px 10px;
+  font-family:var(--mono);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.18em;
+  line-height:1.5;
+  text-transform:uppercase;
+  color:var(--fond);
+  background:var(--cat,var(--ui));
+  box-shadow:0 0 16px color-mix(in srgb,var(--cat,var(--ui)) 50%,transparent);
+}
+
+/* ---------- L'en-tête d'une page ----------
+   Le tableau de bord de l'accueil, en plus court : le titre en capitales
+   espacées, au dégradé des lueurs, dans un panneau à équerres. */
+.page-entete{
+  position:relative;
+  padding:22px 26px;
+  margin-bottom:26px;
+  border:1px solid var(--ui-trait);
+  background:var(--panneau);
+}
+.page-titre{
+  display:inline-block;
+  margin:0;
+  text-transform:uppercase;
+  font-family:var(--mono);
+  font-weight:600;
+  font-size:clamp(24px,4.4vw,38px);
+  line-height:1.15;
+  letter-spacing:.3em;
+  background:var(--lueurs);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  filter:drop-shadow(0 0 14px rgba(160,140,255,.35));
+}
+.page-sous{margin:8px 0 0;font-size:12.5px;color:var(--ui-dim)}
+.page-sous::before{content:"> "}
+
+/* ---------- Barre du compte ----------
+   position + z-index sur la barre ENTIÈRE, et non sur tel ou tel bouton
+   qu'on aurait pensé à protéger : c'est la barre qui doit passer devant ce
+   qui la suit -- son menu s'ouvre par-dessus l'en-tête de la page --, quels
+   que soient les boutons qu'on y mettra. */
 .barre{
   position:relative;
   z-index:2;
@@ -83,135 +197,135 @@ input,textarea{
   justify-content:flex-end;
   align-items:center;
   min-height:38px;
-  margin-bottom:24px;
+  margin-bottom:18px;
 }
-/* La barre alignait tout a droite quand elle ne portait que le compte.
-   Depuis qu'un bouton l'accompagne, c'est cette cale qui les separe --
-   justify-content:flex-end les aurait colles l'un a l'autre. */
+/* La barre alignait tout à droite quand elle ne portait que le compte.
+   Depuis qu'un bouton l'accompagne, c'est cette cale qui les sépare --
+   justify-content:flex-end les aurait collés l'un à l'autre. */
 .barre-espace{flex:1}
 .compte{position:relative}
 
 /* ---------- suggestions et bugs ---------- */
 .sugg-genres{display:flex;gap:8px;margin-bottom:15px}
 .sugg-genre{flex:1}
-/* Le rond natif est masque, pas retire : il continue de porter le clavier,
-   le nom du groupe et l'etat coche, c'est juste l'etiquette qui se peint. */
+/* Le rond natif est masqué, pas retiré : il continue de porter le clavier,
+   le nom du groupe et l'état coché, c'est juste l'étiquette qui se peint. */
 .sugg-genre input{position:absolute;opacity:0;width:0;height:0}
 .sugg-genre span{
   display:block;text-align:center;
-  padding:9px 12px;border-radius:10px;
-  font-size:14px;color:var(--brume);
-  border:1px solid rgba(150,195,220,.16);
-  background:rgba(3,8,15,.66);
+  padding:9px 12px;border-radius:4px;
+  font-size:13px;color:var(--ui-dim);
+  border:1px solid var(--ui-trait);
+  background:rgba(2,6,10,.8);
   cursor:pointer;
   transition:border-color .2s ease,color .2s ease,background .2s ease;
 }
-.sugg-genre:hover span{color:var(--os)}
+.sugg-genre:hover span{color:var(--ui)}
 .sugg-genre input:checked + span{
-  color:var(--os);
-  border-color:rgba(120,200,230,.55);
-  background:rgba(120,200,230,.10);
+  color:var(--ui);
+  border-color:var(--ui-pale);
+  background:rgba(190,220,236,.1);
 }
-.sugg-genre input:focus-visible + span{outline:2px solid var(--plancton);outline-offset:2px}
+.sugg-genre input:focus-visible + span{outline:2px solid var(--ui);outline-offset:2px}
 
 @media (max-width:520px){
   .barre{flex-wrap:wrap;gap:10px}
-  #btnSugg{font-size:13px;padding:7px 12px}
+  #btnSugg{font-size:12.5px;padding:7px 12px}
 }
 .enveloppe-menu{position:relative}
 
-/* Bouton retour, même langage que .fermer : un carré arrondi discret,
-   pas un lien souligné qui jure avec le reste des boutons de la barre.
+/* Bouton retour, même langage que .fermer : un carré discret, pas un lien
+   souligné qui jure avec le reste des boutons de la barre.
    position + z-index : .compte est en position:relative pour ancrer son
    menu déroulant, ce qui le fait peindre par-dessus tout voisin statique
    sur leur zone de recouvrement - invisible, mais le clic y reste pris.
    Le bouton retour gagne toujours l'empilement, quoi qu'il arrive à côté. */
 .back{
   position:relative;z-index:1;
-  width:34px;height:34px;border-radius:9px;color:var(--brume);
+  width:34px;height:34px;border-radius:4px;color:var(--ui-dim);
   display:grid;place-items:center;flex:none;
-  border:1px solid rgba(150,195,220,.14);
+  border:1px solid var(--ui-trait);
+  background:rgba(4,10,16,.7);
   transition:color .2s ease,border-color .2s ease;
 }
-.back:hover{color:var(--os);border-color:rgba(150,195,220,.35)}
-.back:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+.back:hover{color:var(--ui);border-color:var(--ui-pale)}
+.back:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
 
 .bouton{
   font:inherit;
-  font-size:14px;
-  color:var(--os);
+  font-size:13px;
+  color:var(--ui);
   display:inline-flex;
   align-items:center;
   gap:8px;
   padding:8px 15px;
-  border-radius:999px;
-  border:1px solid rgba(150,195,220,.18);
-  background:linear-gradient(170deg,rgba(20,36,55,.92),rgba(9,17,28,.92));
+  border-radius:4px;
+  border:1px solid var(--ui-trait);
+  background:rgba(4,10,16,.92);
   cursor:pointer;
   transition:border-color .25s ease, box-shadow .25s ease, transform .2s ease;
 }
 .bouton:hover,.bouton:focus-visible{
-  border-color:rgba(120,200,230,.45);
-  box-shadow:0 0 22px -8px rgba(120,200,230,.6);
+  border-color:var(--ui-pale);
+  box-shadow:0 0 22px -8px rgba(160,200,240,.6);
 }
-.bouton:focus-visible{outline:2px solid var(--plancton);outline-offset:3px}
+.bouton:focus-visible{outline:2px solid var(--ui);outline-offset:3px}
 .bouton:active{transform:translateY(1px)}
 
 /* ---------- Le bouton de compte ----------
-   Un seul dessin pour toutes les pages : le medaillon, le pseudo, le
-   chevron. Le HTML est fabrique par static/commun/compte.js, qui explique
+   Un seul dessin pour toutes les pages : le médaillon, le pseudo, le
+   chevron. Le HTML est fabriqué par static/commun/compte.js, qui explique
    pourquoi il ne vit plus dans chaque page.
 
-   Le medaillon touche presque le bord arrondi -- d'ou le padding gauche
-   reduit -- et sa hauteur fixe celle du bouton. min-height le maintient
-   quand meme : sans lui, un pseudo sans photo donnerait un bouton plus
-   plat que le voisin, et c'est precisement le genre d'ecart qu'on cherche
-   a faire disparaitre ici. */
+   Le médaillon touche presque le bord -- d'où le padding gauche réduit --
+   et sa hauteur fixe celle du bouton. min-height le maintient quand même :
+   sans lui, un pseudo sans photo donnerait un bouton plus plat que le
+   voisin, et c'est précisément le genre d'écart qu'on cherche à faire
+   disparaître ici. */
 .bouton.pseudo{
   gap:9px;
   padding:5px 14px 5px 5px;
   min-height:38px;
   max-width:min(46vw,260px);
 }
-/* Menu ouvert : le bouton reste allume, exactement comme au survol. Sans
-   ca le menu semble flotter sous un bouton eteint, et on ne voit plus d'ou
-   il sort -- ce qui compte d'autant plus qu'il s'ouvre au-dessus du reste
-   de la page. L'etat est lu sur aria-expanded, que compte.js tient deja a
-   jour pour les lecteurs d'ecran : rien a ajouter dans le HTML. */
+/* Menu ouvert : le bouton reste allumé, exactement comme au survol. Sans
+   ça le menu semble flotter sous un bouton éteint, et on ne voit plus d'où
+   il sort. L'état est lu sur aria-expanded, que compte.js tient déjà à
+   jour pour les lecteurs d'écran : rien à ajouter dans le HTML. */
 .bouton.pseudo[aria-expanded="true"]{
-  border-color:rgba(120,200,230,.45);
-  box-shadow:0 0 22px -8px rgba(120,200,230,.6);
+  border-color:var(--ui-pale);
+  box-shadow:0 0 22px -8px rgba(160,200,240,.6);
 }
-/* Un pseudo long tient sur une ligne et se coupe : sans ca il pousse le
-   chevron hors de la barre, et sur telephone il passe carrement dessous. */
+/* Un pseudo long tient sur une ligne et se coupe : sans ça il pousse le
+   chevron hors de la barre, et sur téléphone il passe carrément dessous. */
 .pseudo-nom{
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
 }
 .avatar-mini{
-  width:27px;height:27px;border-radius:50%;object-fit:cover;flex:none;
-  border:1px solid rgba(150,195,220,.3);
-  background:rgba(3,8,15,.6);
+  width:27px;height:27px;border-radius:3px;object-fit:cover;flex:none;
+  border:1px solid var(--ui-pale);
+  background:rgba(2,6,10,.6);
 }
-/* Pas de photo : l'initiale sur une teinte tiree du pseudo -- la meme
-   regle que les avatars du journal, pour qu'une personne garde sa couleur
-   d'un bout a l'autre du site. Un medaillon plein plutot qu'un rond vide :
-   la place occupee doit etre la meme avec ou sans photo. */
+/* Pas de photo : l'initiale sur une teinte tirée du pseudo -- la même
+   règle que les avatars du journal, pour qu'une personne garde sa couleur
+   d'un bout à l'autre du site. Un médaillon plein plutôt qu'un carré vide :
+   la place occupée doit être la même avec ou sans photo. */
 .avatar-lettre{
   display:grid;place-items:center;
-  font-family:"Eczar",Georgia,serif;font-weight:600;font-size:13px;
+  font-family:var(--mono);font-weight:600;font-size:13px;
   line-height:1;color:#F2F8FC;letter-spacing:.02em;
   background:hsl(var(--h,205) 46% 32%);
   border-color:hsl(var(--h,205) 46% 46%);
 }
-/* Le chevron se retourne a l'ouverture : c'est la seule chose qui dise, au
-   premier coup d'oeil et sans lire, dans quel sens le prochain clic ira. */
+/* Le chevron se retourne à l'ouverture : c'est la seule chose qui dise, au
+   premier coup d'œil et sans lire, dans quel sens le prochain clic ira. */
 .chevron{
-  color:var(--brume);font-size:11px;flex:none;
+  color:var(--ui-dim);font-size:11px;flex:none;
   transition:transform .2s ease,color .2s ease;
 }
-.bouton.pseudo[aria-expanded="true"] .chevron{transform:rotate(180deg);color:var(--os)}
+.bouton.pseudo[aria-expanded="true"] .chevron{transform:rotate(180deg);color:var(--ui)}
 
-/* Lu par les lecteurs d'ecran, invisible a l'oeil. Pas display:none, qui
+/* Lu par les lecteurs d'écran, invisible à l'œil. Pas display:none, qui
    les ferait taire aussi. */
 .lecture-seule{
   position:absolute;width:1px;height:1px;margin:-1px;padding:0;
@@ -219,31 +333,31 @@ input,textarea{
 }
 
 /* ---------- la pastille de notification ----------
-   Un compte en rouge, pose sur le bord de ce qui y mene. Elle ne dit pas ce
-   qui est arrive, seulement qu'il s'est passe quelque chose sans nous --
+   Un compte en rouge, posé sur le bord de ce qui y mène. Elle ne dit pas ce
+   qui est arrivé, seulement qu'il s'est passé quelque chose sans nous --
    c'est la page qui le dira.
 
-   L'anneau sombre est ce qui la detache : sans lui, un chiffre rouge sur un
+   L'anneau sombre est ce qui la détache : sans lui, un chiffre rouge sur un
    bouton sombre se lit comme une partie du bouton. Il reprend le fond de la
-   page, si bien que la pastille semble decoupee dedans.
+   page, si bien que la pastille semble découpée dedans.
 
-   Le zero ne s'affiche jamais : une pastille qui annonce « rien » est du
-   bruit, et la page ne pose l'element que s'il y a quelque chose a dire. */
+   Le zéro ne s'affiche jamais : une pastille qui annonce « rien » est du
+   bruit, et la page ne pose l'élément que s'il y a quelque chose à dire. */
 .neuf{
-  min-width:19px;height:19px;padding:0 5px;border-radius:999px;
+  min-width:19px;height:19px;padding:0 5px;border-radius:3px;
   display:inline-grid;place-items:center;flex:none;
   font-size:11px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;
-  color:#2B0A0E;background:var(--rouge);
-  box-shadow:0 0 0 2px var(--abysse), 0 0 12px -3px var(--rouge);
+  color:#2B0A0E;background:var(--c-danger);
+  box-shadow:0 0 0 2px var(--fond), 0 0 12px -3px var(--c-danger);
 }
 /* Sur un bouton : dans le coin, comme toute notification. Le bouton porte
-   la position, la pastille deborde volontairement de son arrondi. */
+   la position, la pastille déborde volontairement de son bord. */
 .a-neuf{position:relative}
 .a-neuf .neuf{position:absolute;top:-7px;right:-7px}
-/* Dans le menu du compte : au bout de la ligne, la ou il y a la place. */
+/* Dans le menu du compte : au bout de la ligne, là où il y a la place. */
 .entree .neuf{float:right;margin-left:8px}
 
-/* ---------- Menu deroulant ---------- */
+/* ---------- Menu déroulant ---------- */
 .menu{
   position:absolute;
   top:calc(100% + 8px);
@@ -251,15 +365,15 @@ input,textarea{
   z-index:30;
   min-width:236px;
   padding:6px;
-  border-radius:12px;
-  /* fond opaque plutot qu'un backdrop-filter : le flou coute une passe de
-     compositing a chaque image, et fait ramer la neige derriere */
-  background:#0C1523;
-  border:1px solid rgba(150,195,220,.16);
+  border-radius:4px;
+  /* fond opaque plutôt qu'un backdrop-filter : le flou coûte une passe de
+     compositing à chaque image, et fait ramer la neige derrière */
+  background:#060C13;
+  border:1px solid var(--ui-trait);
   box-shadow:0 18px 42px rgba(0,0,0,.66);
-  /* Il descend du bouton, et le dit : le coin d'ou il sort est celui qui
-     ne bouge pas. Le menu est montre en retirant `hidden`, donc l'animation
-     rejoue a chaque ouverture, sans rien a nettoyer derriere. */
+  /* Il descend du bouton, et le dit : le coin d'où il sort est celui qui
+     ne bouge pas. Le menu est montré en retirant `hidden`, donc l'animation
+     rejoue à chaque ouverture, sans rien à nettoyer derrière. */
   transform-origin:top right;
   animation:menu-ouvre .16s cubic-bezier(.2,.8,.3,1);
 }
@@ -268,203 +382,64 @@ input,textarea{
 }
 .menu hr{
   border:0;
-  border-top:1px solid rgba(150,195,220,.1);
+  border-top:1px solid var(--ui-trait);
   margin:5px 8px;
 }
 .entree{
   display:block;
-  position:relative;    /* pour le repere de la page courante */
+  position:relative;    /* pour le repère de la page courante */
   width:100%;
   text-align:left;
   text-decoration:none;
   font:inherit;
-  font-size:14px;
-  color:var(--os);
+  font-size:13px;
+  color:var(--ui);
   padding:9px 11px;
   border:0;
-  border-radius:8px;
+  border-radius:3px;
   background:transparent;
   cursor:pointer;
   box-sizing:border-box;
 }
-.entree:hover,.entree:focus-visible{background:rgba(120,190,225,.12)}
-.entree:focus-visible{outline:2px solid var(--plancton);outline-offset:-2px}
-/* L'entree de la page ou l'on est deja : gardee, pour que le menu ne
-   change pas de forme d'une page a l'autre, mais eteinte et marquee d'un
-   trait. Eteinte toute seule, elle se lisait comme une entree desactivee ;
-   le trait dit « c'est ici », ce qui n'est pas la meme chose. */
-.entree[aria-current="page"]{color:var(--brume)}
+.entree:hover,.entree:focus-visible{background:rgba(190,220,236,.08)}
+.entree:focus-visible{outline:2px solid var(--ui);outline-offset:-2px}
+/* L'entrée de la page où l'on est déjà : gardée, pour que le menu ne
+   change pas de forme d'une page à l'autre, mais éteinte et marquée d'un
+   trait. Éteinte toute seule, elle se lisait comme une entrée désactivée ;
+   le trait dit « c'est ici », ce qui n'est pas la même chose. */
+.entree[aria-current="page"]{color:var(--ui-dim)}
 .entree[aria-current="page"]::before{
   content:'';position:absolute;left:2px;top:50%;transform:translateY(-50%);
-  width:3px;height:15px;border-radius:999px;background:var(--plancton);
+  width:3px;height:15px;background:var(--c-abyss);
 }
-/* Se deconnecter : la seule entree qui ne mene nulle part mais defait
+/* Se déconnecter : la seule entrée qui ne mène nulle part mais défait
    quelque chose. Elle reste sobre au repos -- la teindre en permanence en
-   ferait le point le plus voyant d'un menu ou elle est le dernier recours
-   -- et ne se colore qu'au moment ou l'on s'y pose. */
+   ferait le point le plus voyant d'un menu où elle est le dernier recours
+   -- et ne se colore qu'au moment où l'on s'y pose. */
 .entree.sortie:hover,.entree.sortie:focus-visible{
-  color:var(--rouge);
-  background:rgba(232,106,106,.13);
+  color:var(--c-danger);
+  background:rgba(255,107,122,.13);
 }
 
-/* ---------- En-tête ---------- */
-.entete{
-  padding-bottom:34px;
-  margin-bottom:38px;
-  border-bottom:1px solid transparent;
-  border-image:linear-gradient(90deg,rgba(120,200,220,.34),rgba(120,200,220,.02)) 1;
-}
-.titre{
-  font-family:"Eczar",Georgia,serif;
-  font-weight:600;
-  font-size:clamp(50px,11vw,104px);
-  line-height:.94;
-  letter-spacing:.11em;
-  text-transform:uppercase;
-  margin:0;
-  background:linear-gradient(180deg,#EEF7FC 0%,#89B4CE 52%,#2E4E66 100%);
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-}
-/* Le logo, devant le titre. Sa hauteur suit celle du titre (même clamp, un
-   peu plus grand) : sur téléphone comme sur écran large, la méduse garde la
-   taille d'une lettre et demie. Elle flotte doucement, comme il se doit -
-   et ne bouge plus quand on a demandé moins d'animations (voir plus bas). */
-.titre-ligne{display:flex;align-items:center;gap:clamp(10px,2.4vw,22px)}
-.logo{
-  flex:none;
-  width:clamp(58px,13vw,124px);height:auto;
-  filter:drop-shadow(0 0 22px rgba(124,108,255,.38));
-  animation:flotte 7s ease-in-out infinite;
-}
-@keyframes flotte{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-5px)}
-}
-.sous-titre{
-  margin:14px 0 0;
-  max-width:46ch;
-  color:var(--brume);
-}
-
-/* ---------- Grille ---------- */
-.grille{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(264px,1fr));
-  gap:20px;
-  perspective:1400px;
-}
-
-/* ---------- Carte ---------- */
-.carte{
-  --accent:var(--plancton);
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  border-radius:var(--r);
-  background:linear-gradient(170deg,var(--carte),var(--carte-2));
-  border:1px solid rgba(150,195,220,.1);
-  box-shadow:0 10px 30px rgba(0,0,0,.5);
-  text-decoration:none;
-  color:inherit;
-  transform-style:preserve-3d;
-  transition:transform .4s cubic-bezier(.2,.8,.3,1), box-shadow .4s ease, border-color .35s ease;
-}
-.carte::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:linear-gradient(105deg,transparent 34%,rgba(190,230,245,.1) 47%,transparent 62%);
-  transform:translateX(-130%);
-  transition:transform .8s cubic-bezier(.2,.7,.3,1);
-}
-.carte:hover,.carte:focus-visible{
-  transform:translateY(-8px) rotateX(5deg) rotateY(-4deg);
-  border-color:color-mix(in srgb,var(--accent) 48%,transparent);
-  box-shadow:
-    0 26px 48px rgba(0,0,0,.6),
-    0 0 34px -6px color-mix(in srgb,var(--accent) 42%,transparent);
-}
-.carte:hover::after,.carte:focus-visible::after{transform:translateX(130%)}
-.carte:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
-
-.bandeau{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:15px 16px 14px;
-  background:linear-gradient(180deg,rgba(160,205,230,.07),rgba(160,205,230,.015));
-  border-bottom:1px solid rgba(0,0,0,.5);
-}
-.nom{
-  font-family:"Eczar",Georgia,serif;
-  font-size:18px;
-  font-weight:600;
-  line-height:1.15;
-  letter-spacing:-.01em;
-  margin:0;
-  flex:1;
-}
-.fleche{
-  flex:none;
-  color:var(--accent);
-  font-size:15px;
-  opacity:.6;
-  transition:transform .3s ease,opacity .3s ease;
-}
-.carte:hover .fleche{transform:translate(3px,-3px);opacity:1}
-
-.illu{
-  position:relative;
-  aspect-ratio:5/2.4;
-  display:grid;
-  place-items:center;
-  color:var(--accent);
-  background:
-    radial-gradient(120% 115% at 50% 128%, color-mix(in srgb,var(--accent) 26%,transparent), transparent 68%),
-    var(--creux);
-  border-bottom:1px solid rgba(0,0,0,.5);
-}
-.illu svg{
-  width:56px;
-  height:56px;
-  opacity:.95;
-  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 50%,transparent));
-  transition:filter .4s ease;
-}
-.carte:hover .illu svg{
-  filter:drop-shadow(0 0 20px color-mix(in srgb,var(--accent) 75%,transparent));
-}
-
-.corps{padding:15px 16px 17px}
-.texte{
-  margin:0;
-  font-size:13.5px;
-  color:#A9BCCC;
-}
-
-/* ---------- Projets masqués ---------- */
+/* ---------- Ce qu'on dit quand il n'y a rien ---------- */
 .note-masques{
-  margin:26px 0 0;
-  font-size:13px;
-  color:#586A7C;
+  margin:22px 0 0;
+  font-size:12.5px;
+  color:var(--ui-dim);
 }
 .vide{
   grid-column:1/-1;
   margin:0;
   padding:44px 20px;
   text-align:center;
-  color:var(--brume);
-  border:1px dashed rgba(150,195,220,.16);
-  border-radius:var(--r);
+  color:var(--ui-dim);
+  border:1px dashed var(--ui-trait);
+  border-radius:4px;
 }
 .lien{
   font:inherit;
   font-size:inherit;
-  color:var(--plancton);
+  color:#8FCBFF;
   background:none;
   border:0;
   padding:0;
@@ -472,9 +447,9 @@ input,textarea{
   text-decoration:underline;
   text-underline-offset:2px;
 }
-.lien:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+.lien:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
 
-/* ---------- Modales ---------- */
+/* ---------- Les fenêtres ---------- */
 .voile{
   position:fixed;
   inset:0;
@@ -483,8 +458,8 @@ input,textarea{
   align-items:center;
   justify-content:center;
   padding:22px;
-  /* opaque et sans flou : meme raison que pour le menu */
-  background:rgba(3,6,11,.82);
+  /* opaque et sans flou : même raison que pour le menu */
+  background:rgba(2,5,9,.86);
   overflow-y:auto;
 }
 .modale{
@@ -492,117 +467,122 @@ input,textarea{
   width:100%;
   max-width:420px;
   padding:26px 26px 28px;
-  border-radius:18px;
-  background:linear-gradient(170deg,#101C2C,#080F1A);
-  border:1px solid rgba(150,195,220,.16);
+  border-radius:4px;
+  background:linear-gradient(180deg,#0C1622,#04090F);
+  border:1px solid var(--ui-trait);
   box-shadow:0 30px 70px rgba(0,0,0,.7);
 }
 .titre-modale{
-  font-family:"Eczar",Georgia,serif;
-  font-size:23px;
+  font-family:var(--mono);
+  font-size:15px;
   font-weight:600;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--ui);
   margin:0 0 18px;
 }
 .explication{
   margin:0 0 16px;
-  font-size:13px;
-  color:var(--brume);
+  font-size:12.5px;
+  color:var(--ui-dim);
 }
 /* Une croix qui ferme est rouge, ici comme partout ailleurs sur le site :
-   c'est le seul bouton d'une fenetre qui annule ce qu'on y faisait, et il
-   se reconnait avant d'etre lu. Retenue au repos -- c'est une sortie, pas
-   un danger -- et franche au survol, quand la main est deja dessus. */
+   c'est le seul bouton d'une fenêtre qui annule ce qu'on y faisait, et il
+   se reconnaît avant d'être lu. Retenue au repos -- c'est une sortie, pas
+   un danger -- et franche au survol, quand la main est déjà dessus. */
 .fermer{
   position:absolute;
   top:14px;
   right:14px;
+  z-index:2;
   width:32px;
   height:32px;
   font-size:13px;
-  color:var(--rouge);
+  color:var(--c-danger);
   background:transparent;
-  border:1px solid rgba(232,106,106,.24);
-  border-radius:9px;
+  border:1px solid rgba(255,107,122,.26);
+  border-radius:4px;
   cursor:pointer;
 }
-.fermer:hover{color:#F6A9A9;border-color:rgba(232,106,106,.55);background:rgba(232,106,106,.12)}
-.fermer:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+.fermer:hover{color:#FFB3BB;border-color:rgba(255,107,122,.6);background:rgba(255,107,122,.12)}
+.fermer:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
 
 .onglets{
   display:flex;
   gap:4px;
   margin:0 40px 20px 0;
   padding:4px;
-  border-radius:11px;
-  background:rgba(3,8,15,.7);
+  border-radius:4px;
+  background:rgba(2,6,10,.8);
 }
 .onglet{
   flex:1;
   font:inherit;
-  font-size:13.5px;
-  color:var(--brume);
+  font-size:12.5px;
+  color:var(--ui-dim);
   padding:7px 10px;
   border:0;
-  border-radius:8px;
+  border-radius:3px;
   background:transparent;
   cursor:pointer;
   transition:color .2s ease,background .2s ease;
 }
 .onglet.actif{
-  color:var(--os);
-  background:rgba(120,190,225,.14);
+  color:var(--ui);
+  background:rgba(190,220,236,.12);
 }
-.onglet:focus-visible{outline:2px solid var(--plancton);outline-offset:-2px}
+.onglet:focus-visible{outline:2px solid var(--ui);outline-offset:-2px}
 
-/* ---------- Champs ---------- */
+/* ---------- Les champs ---------- */
 .champ{display:block;margin-bottom:15px}
 .champ > span{
   display:block;
-  font-size:12.5px;
-  letter-spacing:.02em;
-  color:var(--brume);
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ui-dim);
   margin-bottom:6px;
 }
-.champ > span em{font-style:normal;opacity:.65}
-/* Le champ qu'un formulaire exige, dit avant l'envoi. Dans la fenetre de
+.champ > span em{font-style:normal;opacity:.65;text-transform:none;letter-spacing:0}
+/* Le champ qu'un formulaire exige, dit avant l'envoi. Dans la fenêtre de
    suggestion c'est le seul : le projet a toujours une valeur, la nature du
-   message aussi -- l'etoile ne sert qu'a ne pas laisser le navigateur le
+   message aussi -- l'étoile ne sert qu'à ne pas laisser le navigateur le
    reprocher au moment du clic. */
-.champ > span .oblig{color:var(--rouge);margin-left:2px}
+.champ > span .oblig{color:var(--c-danger);margin-left:2px}
 .champ input,.champ textarea,.champ select{
   width:100%;
   font:inherit;
-  font-size:15px;
-  color:var(--os);
+  font-size:14px;
+  color:var(--ui);
   padding:10px 12px;
-  border-radius:10px;
-  border:1px solid rgba(150,195,220,.16);
-  background:rgba(3,8,15,.66);
+  border-radius:3px;
+  border:1px solid var(--ui-trait);
+  background:rgba(2,6,10,.82);
   transition:border-color .2s ease,box-shadow .2s ease;
 }
-/* Pas de poignee : le champ grandit tout seul avec le texte, de ces 96 px
-   jusqu'a son plafond, apres quoi c'est lui qui defile. Voir
-   static/commun/champs.js -- min-height est le plancher qu'il lit, max-height le
-   plafond, et les deux sont ici parce que c'est une decision de mise en
-   page et non de comportement. */
+/* Pas de poignée : le champ grandit tout seul avec le texte, de ces 96 px
+   jusqu'à son plafond, après quoi c'est lui qui défile. Voir
+   static/commun/champs.js -- min-height est le plancher qu'il lit,
+   max-height le plafond, et les deux sont ici parce que c'est une décision
+   de mise en page et non de comportement. */
 .champ textarea{resize:none;min-height:96px;max-height:340px;line-height:1.5}
 .champ input:focus,.champ textarea:focus,.champ select:focus{
   outline:none;
-  border-color:rgba(120,200,230,.55);
-  box-shadow:0 0 0 3px rgba(91,155,245,.16);
+  border-color:var(--ui-pale);
+  box-shadow:0 0 0 3px rgba(162,140,255,.16);
 }
 .champ small{
   display:block;
   margin-top:6px;
   font-size:11.5px;
   line-height:1.45;
-  color:#586A7C;
+  color:rgba(190,220,236,.4);
 }
 
 /* ---------- afficher / masquer un mot de passe ----------
-   Les deux yeux restent tout le temps dans le DOM, superposes au centre
-   du bouton : c'est l'opacite et une legere rotation qui les echangent,
-   pas un hidden qui coupe l'un pour faire apparaitre l'autre d'un coup. */
+   Les deux yeux restent tout le temps dans le DOM, superposés au centre
+   du bouton : c'est l'opacité et une légère rotation qui les échangent,
+   pas un hidden qui coupe l'un pour faire apparaître l'autre d'un coup. */
 .mdp-wrap{position:relative}
 .mdp-wrap input{padding-right:44px}
 .mdp-oeil{
@@ -615,18 +595,18 @@ input,textarea{
   padding:0;
   background:transparent;
   border:none;
-  border-radius:50%;
-  color:var(--brume);
+  border-radius:4px;
+  color:var(--ui-dim);
   cursor:pointer;
   display:grid;
   place-items:center;
   transition:color .18s ease,background .18s ease;
 }
-.mdp-oeil:hover{color:var(--os);background:rgba(150,195,220,.14)}
+.mdp-oeil:hover{color:var(--ui);background:rgba(190,220,236,.12)}
 .mdp-oeil:active{transform:translateY(-50%) scale(.88)}
-.mdp-oeil:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
-.mdp-oeil.on{color:var(--plancton)}
-.mdp-oeil.on:hover{background:rgba(91,155,245,.14)}
+.mdp-oeil:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
+.mdp-oeil.on{color:var(--c-apprendre)}
+.mdp-oeil.on:hover{background:rgba(162,140,255,.14)}
 .mdp-oeil svg{
   grid-area:1/1;
   transition:opacity .22s ease,transform .32s cubic-bezier(.34,1.56,.64,1);
@@ -644,51 +624,56 @@ input,textarea{
   align-items:center;
   gap:9px;
   margin:0 0 18px;
-  font-size:13px;
-  color:var(--brume);
+  font-size:12.5px;
+  color:var(--ui-dim);
   cursor:pointer;
 }
-.case input{width:16px;height:16px;accent-color:var(--plancton);flex:none}
+.case input{width:16px;height:16px;accent-color:var(--c-apprendre);flex:none}
 
+/* Le bouton qui valide : le dégradé des lueurs, seul aplat de couleur
+   d'une fenêtre -- c'est là qu'on finit. */
 .valider{
   width:100%;
   font:inherit;
-  font-size:15px;
-  font-weight:500;
-  color:#04121C;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--fond);
   padding:11px 16px;
   border:0;
-  border-radius:11px;
-  background:linear-gradient(180deg,#7FD6F2,#3E9DD0);
+  border-radius:4px;
+  background:var(--lueurs);
+  box-shadow:0 0 22px -8px rgba(185,166,255,.8);
   cursor:pointer;
   transition:filter .2s ease,transform .15s ease;
 }
-.valider:hover{filter:brightness(1.08)}
+.valider:hover{filter:brightness(1.1)}
 .valider:active{transform:translateY(1px)}
 .valider:disabled{opacity:.55;cursor:progress}
-.valider:focus-visible{outline:2px solid var(--plancton);outline-offset:3px}
-.lien-oubli{display:block;width:100%;margin-top:14px;font-size:13px;text-align:center}
+.valider:focus-visible{outline:2px solid var(--ui);outline-offset:3px}
+.lien-oubli{display:block;width:100%;margin-top:14px;font-size:12.5px;text-align:center}
 
 .erreur{
   margin:0 0 14px;
   padding:9px 12px;
-  font-size:13px;
-  color:#FFD9D9;
-  border-radius:9px;
-  border:1px solid rgba(232,106,106,.35);
-  background:rgba(232,106,106,.12);
+  font-size:12.5px;
+  color:#FFD9DD;
+  border-radius:3px;
+  border:1px solid rgba(255,107,122,.38);
+  background:rgba(255,107,122,.12);
 }
 
-/* Information, pas echec : les places du jour sont prises */
+/* Information, pas échec : les places du jour sont prises */
 .avis{
   margin:0 0 14px;
   padding:9px 12px;
-  font-size:13px;
+  font-size:12.5px;
   line-height:1.5;
-  color:#FBE6C5;
-  border-radius:9px;
-  border:1px solid rgba(232,163,74,.34);
-  background:rgba(232,163,74,.1);
+  color:#FFEFC5;
+  border-radius:3px;
+  border:1px solid rgba(255,203,82,.36);
+  background:rgba(255,203,82,.1);
 }
 
 /* ---------- Bascules de projets ---------- */
@@ -698,21 +683,21 @@ input,textarea{
   gap:12px;
   padding:11px 12px;
   margin-bottom:7px;
-  border-radius:11px;
-  border:1px solid rgba(150,195,220,.1);
-  background:rgba(3,8,15,.5);
+  border-radius:4px;
+  border:1px solid var(--ui-trait);
+  background:rgba(4,10,16,.62);
   cursor:pointer;
   transition:border-color .2s ease,background .2s ease;
 }
-.bascule:hover{border-color:rgba(150,195,220,.3)}
-.bascule input{width:17px;height:17px;accent-color:var(--plancton);flex:none}
+.bascule:hover{border-color:var(--ui-pale)}
+.bascule input{width:17px;height:17px;accent-color:var(--c-apprendre);flex:none}
 .bascule .pointe{
-  width:9px;height:9px;border-radius:50%;
-  background:var(--accent);
-  box-shadow:0 0 9px color-mix(in srgb,var(--accent) 70%,transparent);
+  width:9px;height:9px;border-radius:2px;
+  background:var(--cat);
+  box-shadow:0 0 9px color-mix(in srgb,var(--cat) 70%,transparent);
   flex:none;
 }
-.bascule .etiquette{font-size:14px}
+.bascule .etiquette{font-size:13px}
 .bascule:has(input:not(:checked)){opacity:.5}
 .bascule:has(input:not(:checked)) .pointe{box-shadow:none}
 
@@ -725,10 +710,10 @@ input,textarea{
   transform:translate(-50%,14px);
   max-width:min(90vw,440px);
   padding:11px 18px;
-  font-size:14px;
-  border-radius:11px;
-  background:#0E1B2B;
-  border:1px solid rgba(150,195,220,.2);
+  font-size:13px;
+  border-radius:4px;
+  background:#060C13;
+  border:1px solid var(--ui-trait);
   box-shadow:0 16px 40px rgba(0,0,0,.6);
   opacity:0;
   transition:opacity .25s ease,transform .25s ease;
@@ -736,26 +721,15 @@ input,textarea{
 }
 .toast.montre{opacity:1;transform:translate(-50%,0)}
 .toast.mauvais{
-  border-color:rgba(232,106,106,.45);
-  color:#FFD9D9;
-}
-
-/* ---------- Pied de page ---------- */
-.pied-page{
-  margin-top:52px;
-  padding-top:18px;
-  border-top:1px solid rgba(150,195,220,.08);
-  font-size:12.5px;
-  color:#586A7C;
-}
-.pied-page code{
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  color:var(--brume);
+  border-color:rgba(255,107,122,.45);
+  color:#FFD9DD;
 }
 
 @media (max-width:620px){
-  .enveloppe{padding:18px 18px 64px}
+  .enveloppe{padding:18px 18px 24px}
   .modale{padding:22px 20px 24px}
+  .page-entete{padding:18px}
+  .page-titre{letter-spacing:.22em}
 
   /* ---------- le téléphone ----------
      16 px dans tout ce qui se saisit : en dessous, iOS zoome sur le champ
@@ -763,8 +737,8 @@ input,textarea{
      clavier refermé. */
   .champ input,.champ textarea,.champ select{font-size:16px}
   /* Les boutons qu'on vise du pouce : 40 px, la taille d'un bout de doigt.
-     Le retour, la croix d'une fenêtre, l'oeil d'un mot de passe. */
-  .back{width:40px;height:40px;border-radius:11px}
+     Le retour, la croix d'une fenêtre, l'œil d'un mot de passe. */
+  .back{width:40px;height:40px}
   .fermer{width:38px;height:38px;top:12px;right:12px}
   .mdp-oeil{width:40px;height:40px;right:2px}
   .mdp-wrap input{padding-right:48px}
@@ -781,8 +755,4 @@ input,textarea{
 }
 @media (prefers-reduced-motion:reduce){
   *{transition-duration:.01ms !important;animation-duration:.01ms !important}
-  .carte:hover,.carte:focus-visible{transform:none}
-  .carte::after{display:none}
-  /* une boucle infinie ramenée à 0,01 ms tremblerait : on l'arrête */
-  .logo{animation:none}
 }

@@ -759,19 +759,97 @@ def _euros(centimes):
         return None
 
 
+# Le prix barre d'une edition en promotion, tel que Steam l'ecrit dans le
+# libelle de l'option d'achat : « Edition Deluxe - <span
+# class="discount_original_price">59,99€</span> 47,99€ ».
+_PRIX_BARRE = re.compile(r'discount_original_price"?>([^<]*)<')
+
+
+def _euros_texte(texte):
+    """« 59,99€ » ou « 1 299,00 € » en euros, ou None si rien n'est lisible.
+
+    La virgule comme le point peuvent separer les centimes : c'est la langue
+    demandee qui decide, et elle n'a pas a casser la lecture si elle change.
+    """
+    trouve = re.search(r"\d[\d\s\u00a0\u202f.,]*\d|\d", texte or "")
+    if not trouve:
+        return None
+    nombre = trouve.group(0)
+    decoupe = re.fullmatch(r"(.*)[.,](\d{2})", nombre)
+    entiers, centimes = (decoupe.group(1), decoupe.group(2)) if decoupe else (nombre, "0")
+    entiers = re.sub(r"\D", "", entiers)
+    return round(int(entiers or "0") + int(centimes) / 100, 2)
+
+
+def _tarif(plein, actuel, remise):
+    """Le tarif tel que le reste du module le lit.
+
+    Steam annonce parfois une remise sans baisser le prix affiche, et
+    l'inverse : on ne garde la promotion que si les deux concordent.
+    """
+    if actuel is None:
+        actuel = plein
+    if remise <= 0 or actuel >= plein:
+        actuel, remise = plein, 0
+    return {"plein": plein, "actuel": actuel, "remise": remise}
+
+
+def _editions(donnees):
+    """Le tarif de chaque edition qu'on peut acheter sur la page Steam.
+
+    Ce sont les options du bloc « Acheter » : le jeu seul, la Deluxe, la
+    Gold... price_overview ne parle que de la premiere, et Steam la met en
+    tete a sa guise -- pour Clair Obscur, c'est la Deluxe, si bien que la
+    colonne « Prix de base » recevait 59,99 € pour un jeu a 49,99 €.
+
+    Chaque option donne son prix du jour en centimes. Le prix fort, lui,
+    n'est ecrit que dans le libelle, barre, quand l'edition est en
+    promotion ; a defaut on le deduit de la remise. Les abonnements et les
+    licences gratuites (une demo, un week-end offert) ne sont pas des
+    editions du jeu.
+    """
+    editions = []
+    for groupe in donnees.get("package_groups") or []:
+        if str(groupe.get("is_recurring_subscription") or "").lower() == "true":
+            continue
+        for option in groupe.get("subs") or []:
+            if option.get("is_free_license"):
+                continue
+            actuel = _euros(option.get("price_in_cents_with_discount"))
+            if not actuel:
+                continue
+            pourcent = re.search(r"(\d+)\s*%", str(option.get("percent_savings_text") or ""))
+            remise = int(pourcent.group(1)) if pourcent else 0
+            barre = _PRIX_BARRE.search(str(option.get("option_text") or ""))
+            plein = _euros_texte(barre.group(1)) if barre else None
+            if not plein:
+                plein = round(actuel / (1 - remise / 100), 2) if 0 < remise < 100 else actuel
+            editions.append(_tarif(plein, actuel, remise))
+    return editions
+
+
 def tarif_steam(appid):
-    """Ce que Steam annonce aujourd'hui. Renvoie (tarif, souci).
+    """Ce que Steam annonce aujourd'hui pour la version de base. Renvoie
+    (tarif, souci).
 
         tarif = {"plein": 59.99, "actuel": 23.99, "remise": 60}
 
-    « plein » est le prix hors promotion (initial), « actuel » celui du jour
-    (final), et la remise le pourcentage. Les trois viennent du meme bloc
-    price_overview, dans la meme reponse : on ne lisait qu'initial alors que
-    les deux autres etaient deja la, sans un appel de plus.
+    « plein » est le prix hors promotion, « actuel » celui du jour, et la
+    remise le pourcentage.
+
+    La version de base est l'edition la moins chere au prix fort : le jeu
+    seul coute toujours moins que lui-meme accompagne de ses bonus. Au prix
+    fort et pas au prix du jour, parce qu'une Deluxe en promotion peut
+    passer sous le jeu seul vendu plein tarif (47,99 € contre 49,99 € pour
+    Clair Obscur, en octobre 2026) sans en devenir la version de base. Les
+    editions viennent de la meme reponse que price_overview, sans un appel
+    de plus ; price_overview ne sert plus que de repli, pour une page qui
+    ne liste aucune option d'achat.
 
     (None, None) veut dire que Steam n'annonce pas de prix pour ce pays :
-    jeu retire, precommande sans tarif, edition regionale... La case reste
-    vide, ce qui vaut mieux qu'un chiffre invente.
+    jeu retire, precommande sans tarif, edition regionale, jeu gratuit (la
+    reponse ne dit pas qu'il l'est)... La case reste vide, ce qui vaut
+    mieux qu'un chiffre invente.
     """
     if not re.fullmatch(r"\d+", appid or ""):
         return None, "identifiant Steam invalide"
@@ -782,7 +860,9 @@ def tarif_steam(appid):
 
     parametres = urllib.parse.urlencode({
         "appids": appid, "cc": PAYS, "l": "fr",
-        "filters": "price_overview,is_free",
+        # package_groups n'est renvoye que si packages est demande avec lui
+        # (verifie en octobre 2026), et is_free ne l'est jamais sous ce filtre
+        "filters": "price_overview,packages,package_groups",
     })
     _patiente("steam")
     brut, _, souci = _appelle(f"{STEAM_URL}?{parametres}", ENTETES_STEAM, service="steam")
@@ -798,27 +878,28 @@ def tarif_steam(appid):
     if not bloc.get("success") or not isinstance(donnees, dict):
         return None, None            # Steam connait l'appid mais ne dit rien
 
+    _PRIX[appid] = (tarif_de_base(donnees), time.time())
+    return _PRIX[appid][0], None
+
+
+def tarif_de_base(donnees):
+    """Le tarif de la version de base dans une reponse appdetails, ou None.
+
+    A part de tarif_steam pour se verifier sans reseau : c'est ici que se
+    decide quelle edition compte (voir tarif_steam).
+    """
+    editions = _editions(donnees)
+    if editions:
+        return min(editions, key=lambda e: (e["plein"], e["actuel"]))
     apercu = donnees.get("price_overview") or {}
     plein = _euros(apercu.get("initial"))
     if plein is None:
-        # un jeu gratuit n'a pas de price_overview du tout : 0, pas « inconnu »
-        tarif = {"plein": 0.0, "actuel": 0.0, "remise": 0} if donnees.get("is_free") else None
-    else:
-        actuel = _euros(apercu.get("final"))
-        if actuel is None:
-            actuel = plein
-        try:
-            remise = int(apercu.get("discount_percent") or 0)
-        except (TypeError, ValueError):
-            remise = 0
-        # Steam annonce parfois une remise sans baisser le prix affiche, et
-        # l'inverse : on ne garde la promotion que si les deux concordent
-        if remise <= 0 or actuel >= plein:
-            actuel, remise = plein, 0
-        tarif = {"plein": plein, "actuel": actuel, "remise": remise}
-
-    _PRIX[appid] = (tarif, time.time())
-    return tarif, None
+        return None
+    try:
+        remise = int(apercu.get("discount_percent") or 0)
+    except (TypeError, ValueError):
+        remise = 0
+    return _tarif(plein, _euros(apercu.get("final")), remise)
 
 
 def prix_steam(appid):
@@ -1408,6 +1489,133 @@ CHAMPS_PROPOSITION = ("id", "titre", "date", "iso", "nature",
                       "derive", "image", "apercu", "lien")
 
 
+def cible_jaquette(dossier, nom, id_igdb=None):
+    """Le fichier ou doit atterrir la jaquette, et son nom sans extension,
+    ou (None, None) si rien d'ecrivable n'en sort. L'identifiant IGDB prime
+    sur le nom quand on le connait -- voir cle_jaquette. Le nom vient souvent
+    du navigateur : on ne garde que des lettres, des chiffres et des tirets
+    bas, jamais un chemin."""
+    fichier = cle_jaquette(nom, id_igdb)
+    if dossier is None or not fichier or not re.fullmatch(r"[a-z0-9_]+", fichier):
+        return None, None
+    return Path(dossier) / (fichier + EXTENSION), fichier
+
+
+def rapport_maj(nom, sortie=None, id_igdb=None, veut_prix=False, veut_detail=False,
+                jaquettes="manquantes", dossier=None):
+    """Tout ce qu'IGDB sait d'un jeu deja enregistre. Renvoie un dict, la
+    reponse de /api/jeu/maj.
+
+    Une seule recherche IGDB sert aux deux besoins : identifier la fiche
+    (pour la date et le prix) et lister les jaquettes possibles. Le prix
+    coute deux appels de plus -- un a IGDB pour l'identifiant Steam, un a
+    Steam pour le tarif -- donc il ne part que s'il est demande.
+
+    Rien n'est ecrit ni telecharge ici : c'est un rapport. Le journal est
+    modifie par /api/journal/admin/lot, la jaquette par
+    /api/jaquette/choisir, et dans les deux cas apres un clic.
+
+    `dossier` est celui des jaquettes, par defaut celui que l'application a
+    donne au blueprint.
+    """
+    if dossier is None:
+        dossier = DOSSIER_JAQUETTES
+    nom = str(nom or "").strip()
+    cible, _fichier = cible_jaquette(dossier, nom, id_igdb)
+    # « inconnue » : le nom ne donne aucun nom de fichier ecrivable,
+    # donc la question de la jaquette ne se pose meme pas
+    if not cible:
+        jaquette = "inconnue"
+    else:
+        jaquette = "presente" if cible.is_file() else "absente"
+    if not nom:
+        return dict(etat="introuvable", jaquette=jaquette)
+
+    fiches, souci = toutes_les_fiches(nom)
+    if souci:
+        return dict(etat="injoignable", raison=souci, jaquette=jaquette)
+
+    # Un jeu deja rattache a une fiche n'a plus rien a deviner : c'est
+    # CETTE fiche, quoi que dise le nom. Sans ca, deux jeux au titre
+    # identique sortis la meme annee (« Kirby and the Forgotten Land »,
+    # le jeu et son edition) laissaient l'analyse retomber sur le
+    # mauvais a chaque passage, et proposer de defaire le choix fait a
+    # la main la fois d'avant. La fiche est cherchee dans les
+    # resultats du nom, puis demandee par identifiant si la recherche
+    # ne l'a pas remontee ; si IGDB ne la connait plus, on revient au
+    # rapprochement par le nom.
+    choix, surete = None, ""
+    try:
+        id_connu = int(id_igdb or 0)
+    except (TypeError, ValueError):
+        id_connu = 0
+    if id_connu:
+        choix = next((f for f in fiches if f["id"] == id_connu), None)
+        if not choix:
+            par_id, _souci_id = fiches_par_id([id_connu])
+            choix = par_id.get(id_connu)
+            if choix:
+                fiches = [choix] + fiches
+        if choix:
+            surete = "sure"
+
+    if not fiches:
+        return dict(etat="introuvable", jaquette=jaquette)
+    if not choix:
+        choix, surete = retenue_pour(fiches, _annee(sortie))
+
+    # les jaquettes possibles, celle de la fiche retenue en tete :
+    # c'est presque toujours la bonne, autant ne pas la faire
+    # chercher au milieu des autres
+    propositions = []
+    if jaquettes != "aucune":
+        propositions = _illustrees(fiches)
+        if choix and choix["image"]:
+            propositions = ([choix] + [f for f in propositions if f is not choix]
+                            )[:PROPOSITIONS_MAX]
+
+    valeur, appid, souci_prix = None, "", None
+    if veut_prix and choix:
+        valeur, appid, souci_prix = prix_du_jeu(choix["id"])
+
+    # La fiche detaillee sert au rattachement en masse : la page
+    # compare ces quatre champs a ce qu'elle a deja et n'envoie a
+    # l'ecriture que les jeux qui en manquent. L'appel remplit au
+    # passage le cache de detail_complet, si bien que l'ecriture
+    # qui suivra ne redemandera rien a IGDB.
+    #
+    # Le theme est du lot, et pas seulement les trois autres : la
+    # page le comparait deja, mais ne le recevait pas -- tout jeu
+    # ayant un theme se declarait donc a corriger a chaque analyse,
+    # indefiniment, puisque l'ecriture ne pouvait rien y changer.
+    fiche_detail = None
+    if veut_detail and choix:
+        complet, _souci_detail = detail_complet(choix["id"])
+        if complet:
+            fiche_detail = {cle: complet[cle] for cle in
+                            ("plateforme", "developpeur", "genres", "themes")}
+
+    return dict(
+        etat="ok",
+        jaquette=jaquette,
+        surete=surete,
+        detail=fiche_detail,
+        fiche={cle: choix[cle] for cle in
+               ("id", "titre", "date", "iso", "annee", "nature",
+                "derive", "image", "apercu", "lien")},
+        prix=valeur,
+        appid=appid,
+        # un prix injoignable n'annule pas la date : on le signale
+        # sans transformer toute la ligne en echec
+        prix_souci=souci_prix or "",
+        propositions=[
+            dict({cle: f[cle] for cle in CHAMPS_PROPOSITION},
+                 suggere=(i == 0 and len(propositions) > 1))
+            for i, f in enumerate(propositions)
+        ],
+    )
+
+
 # --------------------------------------------------------------------------
 #   Les deux routes
 # --------------------------------------------------------------------------
@@ -1446,10 +1654,7 @@ def blueprint_jaquettes(dossier, url_publique="/static/archive/Cover/", sur_jaqu
         page le connait -- voir cle_jaquette. Tout vient du navigateur : on
         ne garde que des lettres, des chiffres et des tirets bas, jamais un
         chemin."""
-        fichier = cle_jaquette(nom, id_igdb)
-        if not fichier or not re.fullmatch(r"[a-z0-9_]+", fichier):
-            return None, None
-        return dossier / (fichier + EXTENSION), fichier
+        return cible_jaquette(dossier, nom, id_igdb)
 
     def _protege(nom_route, travail):
         """Execute `travail()` et renvoie son resultat JSON. Si quoi que ce
@@ -1617,117 +1822,19 @@ def blueprint_jaquettes(dossier, url_publique="/static/archive/Cover/", sur_jaqu
     def rafraichir():
         """Tout ce qu'IGDB sait d'un jeu deja enregistre, en un appel.
 
-        Le menu des reglages passe ici pour chaque ligne du classeur. Une
-        seule recherche IGDB sert aux deux besoins : identifier la fiche
-        (pour la date et le prix) et lister les jaquettes possibles. Le
-        prix coute deux appels de plus -- un a IGDB pour l'identifiant
-        Steam, un a Steam pour le tarif -- donc il ne part que si la page
-        l'a demande.
-
-        Rien n'est ecrit ni telecharge ici : c'est un rapport. Le classeur
-        est modifie par Apps Script, la jaquette par /api/jaquette/choisir,
-        et dans les deux cas apres un clic.
+        Le menu des reglages passe ici pour chaque ligne du classeur ; le
+        travail lui-meme est dans rapport_maj, que l'entretien de nuit
+        (entretien.py) appelle aussi, sans requete ni navigateur.
         """
         def travail():
             donnees = request.get_json(silent=True) or {}
-            nom = str(donnees.get("nom") or "").strip()
-            veut_prix = bool(donnees.get("prix"))
-            veut_detail = bool(donnees.get("detail"))
-            jaquettes = str(donnees.get("jaquettes") or "manquantes")
-
-            cible, _fichier = _cible(nom, donnees.get("id_igdb"))
-            # « inconnue » : le nom ne donne aucun nom de fichier ecrivable,
-            # donc la question de la jaquette ne se pose meme pas
-            if not cible:
-                jaquette = "inconnue"
-            else:
-                jaquette = "presente" if cible.is_file() else "absente"
-            if not nom:
-                return jsonify(etat="introuvable", jaquette=jaquette)
-
-            fiches, souci = toutes_les_fiches(nom)
-            if souci:
-                return jsonify(etat="injoignable", raison=souci, jaquette=jaquette)
-
-            # Un jeu deja rattache a une fiche n'a plus rien a deviner : c'est
-            # CETTE fiche, quoi que dise le nom. Sans ca, deux jeux au titre
-            # identique sortis la meme annee (« Kirby and the Forgotten Land »,
-            # le jeu et son edition) laissaient l'analyse retomber sur le
-            # mauvais a chaque passage, et proposer de defaire le choix fait a
-            # la main la fois d'avant. La fiche est cherchee dans les
-            # resultats du nom, puis demandee par identifiant si la recherche
-            # ne l'a pas remontee ; si IGDB ne la connait plus, on revient au
-            # rapprochement par le nom.
-            choix, surete = None, ""
-            try:
-                id_connu = int(donnees.get("id_igdb") or 0)
-            except (TypeError, ValueError):
-                id_connu = 0
-            if id_connu:
-                choix = next((f for f in fiches if f["id"] == id_connu), None)
-                if not choix:
-                    par_id, _souci_id = fiches_par_id([id_connu])
-                    choix = par_id.get(id_connu)
-                    if choix:
-                        fiches = [choix] + fiches
-                if choix:
-                    surete = "sure"
-
-            if not fiches:
-                return jsonify(etat="introuvable", jaquette=jaquette)
-            if not choix:
-                choix, surete = retenue_pour(fiches, _annee(donnees.get("sortie")))
-
-            # les jaquettes possibles, celle de la fiche retenue en tete :
-            # c'est presque toujours la bonne, autant ne pas la faire
-            # chercher au milieu des autres
-            propositions = []
-            if jaquettes != "aucune":
-                propositions = _illustrees(fiches)
-                if choix and choix["image"]:
-                    propositions = ([choix] + [f for f in propositions if f is not choix]
-                                    )[:PROPOSITIONS_MAX]
-
-            valeur, appid, souci_prix = None, "", None
-            if veut_prix and choix:
-                valeur, appid, souci_prix = prix_du_jeu(choix["id"])
-
-            # La fiche detaillee sert au rattachement en masse : la page
-            # compare ces quatre champs a ce qu'elle a deja et n'envoie a
-            # l'ecriture que les jeux qui en manquent. L'appel remplit au
-            # passage le cache de detail_complet, si bien que l'ecriture
-            # qui suivra ne redemandera rien a IGDB.
-            #
-            # Le theme est du lot, et pas seulement les trois autres : la
-            # page le comparait deja, mais ne le recevait pas -- tout jeu
-            # ayant un theme se declarait donc a corriger a chaque analyse,
-            # indefiniment, puisque l'ecriture ne pouvait rien y changer.
-            fiche_detail = None
-            if veut_detail and choix:
-                complet, _souci_detail = detail_complet(choix["id"])
-                if complet:
-                    fiche_detail = {cle: complet[cle] for cle in
-                                    ("plateforme", "developpeur", "genres", "themes")}
-
-            return jsonify(
-                etat="ok",
-                jaquette=jaquette,
-                surete=surete,
-                detail=fiche_detail,
-                fiche={cle: choix[cle] for cle in
-                       ("id", "titre", "date", "iso", "annee", "nature",
-                        "derive", "image", "apercu", "lien")},
-                prix=valeur,
-                appid=appid,
-                # un prix injoignable n'annule pas la date : on le signale
-                # sans transformer toute la ligne en echec
-                prix_souci=souci_prix or "",
-                propositions=[
-                    dict({cle: f[cle] for cle in CHAMPS_PROPOSITION},
-                         suggere=(i == 0 and len(propositions) > 1))
-                    for i, f in enumerate(propositions)
-                ],
-            )
+            return jsonify(rapport_maj(
+                str(donnees.get("nom") or ""), donnees.get("sortie"),
+                donnees.get("id_igdb"),
+                veut_prix=bool(donnees.get("prix")),
+                veut_detail=bool(donnees.get("detail")),
+                jaquettes=str(donnees.get("jaquettes") or "manquantes"),
+                dossier=dossier))
         return _protege("maj", travail)
 
     @bp.route("/api/decouverte", methods=["POST"])

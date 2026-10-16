@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mini-Jeux / Quiz</title>
+<title>Mini-Jeux Vidéo</title>
 <!-- le logo du site : voir static/commun/logo/ -->
 <link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
 <link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
@@ -43,7 +43,7 @@
       <span>Retour à Abyss</span>
     </a>
     <div class="qz-marque">
-      <b>Mini-Jeux / Quiz</b>
+      <b>Mini-Jeux Vidéo</b>
       <span id="marqueSous"></span>
     </div>
     <!-- Le même bouton que sur l'Archive, jusqu'à l'identifiant : au-delà de
@@ -165,19 +165,14 @@ const EMBLEMES = {
     <rect x="5" y="5" width="16" height="16" rx="2.5"/><rect x="27" y="5" width="16" height="16" rx="2.5"/>
     <rect x="5" y="27" width="16" height="16" rx="2.5"/><rect x="27" y="27" width="16" height="16" rx="2.5"
       fill="currentColor" stroke="none"/></svg>`,
-  carte: `<svg class="qz-embleme" viewBox="0 0 48 48" fill="none" stroke="currentColor"
-    stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
-    <rect x="13" y="4" width="26" height="36" rx="3" transform="rotate(9 26 22)"/>
-    <rect x="7" y="8" width="26" height="36" rx="3"/>
-    <path d="M14 18h12M14 24h12M14 30h7"/></svg>`,
 };
 
-/* Deux familles, deux couleurs : l'or du site pour les jeux vidéo, le violet
-   du classeur de cartes pour Yu-Gi-Oh!. La couleur dit à quel projet un
-   mini-jeu appartient avant même qu'on ait lu son nom. */
+/* Une famille par couleur : l'or du site pour les jeux vidéo. Il y en a eu
+   une seconde, Yu-Gi-Oh!, en violet, tant que le Yu-Gi-Quiz se rangeait ici ;
+   il est devenu un projet à lui, avec sa tuile sur Abyss. La liste reste
+   pour la prochaine famille. */
 const FAMILLES = [
   { cle: "jv", nom: "Jeux Vidéos" },
-  { cle: "ygo", nom: "Yu-Gi-Oh!" },
 ];
 
 /* `cle` : ce qui se joue ici - la carte devient un bouton, et `lance` est la
@@ -196,12 +191,6 @@ const JEUX = [
   { famille: "jv", cle: "grille", embleme: "grille", nom: "Grille de connexions",
     texte: "Seize jeux, quatre groupes de quatre à retrouver : même studio, même année, un genre ou un mot en commun... Quatre erreurs et c'est perdu.",
     lance: lanceGrille },
-  /* Une page du site, et plus un serveur à part sur le port 5000 : d'où une
-     adresse relative, et plus de chevron ni de nouvel onglet. On y arrive
-     déjà connecté, sous le pseudo de son compte. */
-  { famille: "ygo", embleme: "carte", nom: "Yu-Gi-Quiz!",
-    texte: "Devine le nom d'une carte à partir de juste son artwork. Seul ou avec des amis.",
-    url: "/yugiquiz" },
 ];
 
 /* Le sous-titre du bandeau : le nom du mini-jeu en cours, ou rien. Le nom

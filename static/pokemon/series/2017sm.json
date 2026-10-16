@@ -1,0 +1,25 @@
+{
+  "id": "2017sm",
+  "nom": "Collection McDonald's 2017",
+  "bloc": "mc",
+  "date": "2017-08-03",
+  "officiel": 12,
+  "total": 12,
+  "sigle": "MCD17",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  "cartes": [
+    ["1", "Brindibou", "Sans rareté", "H", "P", 722],
+    ["2", "Larvibule", "Sans rareté", "H", "P", 736],
+    ["3", "Flamiaou", "Sans rareté", "H", "P", 725],
+    ["4", "Otaquin", "Sans rareté", "H", "P", 728],
+    ["5", "Pikachu", "Sans rareté", "H", "P", 25],
+    ["6", "Cosmog", "Sans rareté", "H", "P", 789],
+    ["7", "Crabagarre", "Sans rareté", "H", "P", 739],
+    ["8", "Miaouss d'Alola", "Sans rareté", "H", "P", 52],
+    ["9", "Taupiqueur d'Alola", "Sans rareté", "H", "P", 50],
+    ["10", "Bombydou", "Sans rareté", "H", "P", 742],
+    ["11", "Picassaut", "Sans rareté", "H", "P", 731],
+    ["12", "Manglouton", "Sans rareté", "H", "P", 734]
+  ]
+}

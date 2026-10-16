@@ -426,13 +426,20 @@ button.composant:hover{border-color:var(--encre-3)}
 
 /* ---------- 文法, la grammaire ----------
    Le japonais qu'on apprend dans la police au crayon, comme les kanas ; le
-   français autour, en texte courant. Les furigana en petit, à l'encre pâle :
-   on peut les cacher (html.sans-furigana) - un mot touché montre alors les
-   siens. */
+   français autour, en texte courant. Les furigana en petit, à l'encre pâle,
+   partout (html.furi-toutes), sauf sur les mots sus (html.furi-auto : le
+   groupe porte .su, ou le mot de la liseuse), ou nulle part
+   (html.furi-aucune). Masqués et non retirés : la ligne garde sa hauteur,
+   rien ne saute quand on change. Un mot touché montre les siens ; la
+   souris aussi, au survol. Le pupitre de la liseuse les montre toujours :
+   il est là pour dire comment se lit le mot. */
 ruby.f rt{font-family:var(--corps);font-size:.5em;color:var(--encre-3);letter-spacing:0}
-.sans-furigana ruby.f rt{visibility:hidden}
-.sans-furigana ruby.f:hover rt,.sans-furigana ruby.f.vu rt{visibility:visible}
-.sans-furigana ruby.f{cursor:help}
+.furi-aucune ruby.f rt,.furi-auto ruby.f.su rt,.furi-auto .ls-mot.su ruby.f rt{visibility:hidden}
+.furi-aucune ruby.f:hover rt,.furi-aucune ruby.f.vu rt,
+.furi-auto ruby.f.su:hover rt,.furi-auto ruby.f.su.vu rt,
+.pupitre .pp-mot ruby.f rt{visibility:visible}
+.furi-aucune ruby.f,.furi-auto ruby.f.su{cursor:help}
+.furi-reglage{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--encre-3)}
 
 .gr-barre{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 16px}
 
@@ -632,7 +639,8 @@ summary.gr-chapitre-tete::after{
   margin:22px 0 6px;font-family:var(--pinceau);font-size:23px;line-height:2.25;
   color:var(--encre);word-break:normal;line-break:strict;
 }
-.ls-texte ruby.f rt{visibility:visible;font-size:.48em}
+.ls-texte ruby.f rt{font-size:.48em}
+.ls-texte ruby.f,.ls-texte ruby.f.su{cursor:inherit}
 .ls-par{margin:0 0 .7em;text-indent:1em}
 .ls-dialogue{margin:0 0 .7em}
 .ls-replique{margin:0;display:grid;grid-template-columns:4.6em minmax(0,1fr);gap:0 14px}
@@ -649,18 +657,16 @@ summary.gr-chapitre-tete::after{
 .ls-traduite .ls-par{text-indent:0}
 .ls-traduite .ls-fr{display:block;margin:-.15em 0 .75em;font-family:var(--corps);font-size:14.5px;line-height:1.5;color:var(--encre-3)}
 .ls-traduite .ls-dit .ls-fr{margin-bottom:.5em}
-/* Les furigana : sauf sur les mots sus, ou nulle part. Masqués et non
-   retirés : la ligne garde sa hauteur, rien ne saute quand on change. Le
-   mot touché montre toujours les siens ; la souris aussi, au survol. */
-.furi-auto .ls-mot.su ruby.f rt,.furi-aucune ruby.f rt{visibility:hidden}
+/* Les furigana (voir la grammaire) : le mot touché montre toujours les
+   siens ; la souris aussi, au survol. */
 .ls-texte .ls-mot.choisi ruby.f rt{visibility:visible}
 @media (hover:hover){
   .ls-mot:hover{background:var(--ai-pale)}
   .ls-texte .ls-mot:hover ruby.f rt{visibility:visible}
 }
-.ls-aide{margin:0 0 26px;font-size:12.5px;color:var(--encre-3);text-align:center}
 
 .ls-questions,.ls-fin{margin-bottom:16px}
+.ls-questions{margin-top:28px}
 .ls-q-aide{margin:-8px 0 12px;font-size:13px;color:var(--encre-3)}
 .ls-q{margin:0;padding-left:20px;display:grid;gap:14px}
 .ls-q li::marker{color:var(--shu);font-family:var(--titre);font-weight:700}
@@ -698,6 +704,27 @@ summary.gr-chapitre-tete::after{
 .ls-liste{margin-top:6px}
 .ls-suite{margin:26px 0 0}
 .ls-suite [lang="ja"]{font-size:17px}
+
+/* La lecture libre : une phrase à la fois, en grand et au centre, dans
+   une hauteur fixe pour que le bouton de la suivante ne bouge pas d'une
+   phrase courte à une longue. Son sceau est indigo, pour ne pas se
+   confondre avec le prochain texte. */
+.lc-libre .lc-suivant-jp{color:var(--ai);border-color:var(--ai);
+  box-shadow:inset 0 0 0 2px var(--feuille),inset 0 0 0 3px var(--ai)}
+.ls-attente{margin:60px 0;text-align:center;color:var(--encre-3)}
+.ls-seule{
+  display:flex;flex-direction:column;justify-content:center;min-height:6em;margin:26px 0 22px;
+  font-size:clamp(24px,5.6vw,30px);text-align:center;
+}
+.ls-seule .ls-par{margin:0;text-indent:0}
+.ls-traduite.ls-seule .ls-fr{margin:.5em 0 0;font-size:15.5px}
+.ls-libre-suite{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin:0 0 6px}
+.ls-libre-suite .btn-lien{justify-self:end;white-space:nowrap}
+@media (max-width:520px){.ls-avant-mot{display:none}}
+.ls-libre-suite .btn{font-family:var(--titre)}
+.ls-source{margin:18px auto 0;max-width:60ch;font-size:12.5px;color:var(--encre-3);text-align:center}
+.ls-source a{color:inherit}
+.pp-relais{color:var(--encre-3);font-size:.9em}
 
 /* Le pupitre : en bas de l'écran, ce qu'on sait du mot touché, et de quoi
    écouter ou traduire sa phrase. Le texte garde de quoi défiler
@@ -1018,22 +1045,53 @@ body.pupitre-ouvert main{padding-bottom:52vh}
 .nv-resultats dd{margin:0;color:var(--encre-2);font-size:14.5px}
 
 /* ---------- 設定, les paramètres ----------
-   Une feuille par sujet, deux colonnes quand la place le permet. */
-.params{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:14px;align-items:start}
-.param .section-titre{margin-bottom:6px}
-.param-aide{margin:0 0 14px;max-width:62ch;font-size:13.5px;color:var(--encre-3)}
-.param-aide em{color:var(--encre-2)}
-.param-ligne{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
-.param-ligne .btn-son{padding:4px 11px 4px 9px;font-size:13px}
-.param-quota{display:inline-flex;align-items:center;gap:8px}
-.param-quota select{
-  padding:4px 8px;border-radius:6px;border:1px solid var(--filet-fort);background:var(--feuille);cursor:pointer;
+   Un panneau sous l'engrenage, comme le menu des autres projets ; en bas
+   de l'écran sur un téléphone. Trois groupes, et dans chacun une ligne par
+   réglage : son nom à gauche, le choix à droite, tous à la même place. */
+#reglagesBtn[aria-expanded="true"]{color:var(--encre);border-color:var(--filet-fort);background:var(--feuille)}
+/* Calé sur le bord droit de la colonne, et non sur le bouton, que la
+   suggestion suit de près. L'ancre est à part de la barre : au-delà de
+   1500 px, le retour à Abyss et la suggestion se placent sur l'en-tête
+   entier, et une barre positionnée les ramènerait dans la colonne. */
+.reglages-ancre{position:relative;height:0}
+.reglages{position:absolute;top:2px;right:22px;z-index:60}
+.rg-boite{
+  width:min(480px,calc(100vw - 32px));max-height:calc(100vh - 90px);overflow:auto;
+  background:var(--feuille);border:1px solid var(--filet-fort);border-radius:14px;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.45);padding:8px 18px 16px;
 }
-.param-nom{font-size:14px;color:var(--encre-2)}
-.param-champ{display:flex;align-items:center;justify-content:space-between;gap:8px 14px;flex-wrap:wrap;
-  padding:10px 0;border-top:1px solid var(--filet)}
-.param-champ:first-of-type{border-top:0;padding-top:0}
-.param-eteint .segment{opacity:.55}
+.rg-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 2px}
+.rg-titre{margin:0;display:flex;align-items:baseline;gap:10px;font-family:var(--titre);font-weight:700;font-size:20px}
+.rg-titre [lang="ja"]{color:var(--shu)}
+.rg-groupe{margin-top:14px}
+.rg-groupe-titre{
+  display:flex;align-items:baseline;gap:8px;margin:0 0 6px 2px;
+  font-size:13px;font-weight:500;color:var(--encre-2);letter-spacing:.02em;
+}
+.rg-groupe-titre [lang="ja"]{font-family:var(--titre);font-weight:700;color:var(--shu)}
+.rg-groupe-titre small{margin-left:auto;font-size:12px;font-weight:400;color:var(--encre-3)}
+.rg-ligne{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:48px;padding:7px 12px;background:var(--papier);border:1px solid var(--filet);border-top:0;
+}
+.rg-groupe-titre + .rg-ligne{border-top:1px solid var(--filet);border-radius:10px 10px 0 0}
+.rg-ligne:last-child{border-radius:0 0 10px 10px}
+.rg-groupe-titre + .rg-ligne:last-child{border-radius:10px}
+.rg-nom{font-size:14px;color:var(--encre);white-space:nowrap}
+.rg-nom small{margin-left:3px;font-size:12.5px;color:var(--encre-3)}
+.rg-eteinte .rg-nom{color:var(--encre-3)}
+.rg-eteinte .segment{opacity:.5}
+.rg-ligne .segment{flex:0 0 auto}
+.rg-ligne [data-rg^="quota-"]{min-width:2.5em;padding-left:6px;padding-right:6px;font-variant-numeric:tabular-nums}
+.rg-voix{display:flex;align-items:center;gap:8px}
+.rg-essai{
+  display:grid;place-items:center;width:32px;height:32px;padding:0;border-radius:99px;cursor:pointer;
+  border:1px solid color-mix(in srgb,var(--ai) 35%,transparent);background:var(--ai-pale);color:var(--ai);
+  transition:border-color .15s;
+}
+.rg-essai:hover{border-color:var(--ai)}
+.rg-essai svg{width:16px;height:16px}
+.rg-pied{margin:14px 0 0;text-align:center;font-size:12.5px;color:var(--encre-3)}
 
 /* ---------- le rōmaji ----------
    Le japonais en lettres latines (le réglage « Rōmaji ») : ses éléments
@@ -1044,9 +1102,9 @@ html [lang="ja-Latn"]{font-family:var(--titre);letter-spacing:normal}
 .romaji .ls-texte{line-height:1.9}
 .romaji .ls-qui{line-height:2.7}
 
-/* ---------- porte close, chargement, pied ---------- */
-.ferme{display:flex;flex-direction:column;align-items:center;text-align:center;padding:80px 0 40px;gap:4px}
-.ferme .tampon{margin-bottom:18px}
+/* ---------- porte d'entrée, chargement, pied ---------- */
+.porte{display:flex;flex-direction:column;align-items:center;text-align:center;padding:80px 0 40px;gap:4px}
+.porte .tampon{margin-bottom:18px}
 .chargement{text-align:center;padding:80px 0;font-family:var(--titre);color:var(--encre-3);letter-spacing:.2em}
 .erreur-page{margin:60px auto;max-width:520px;padding:14px 18px;border-radius:var(--r);background:var(--shu-pale);color:var(--shu)}
 .pied{position:relative;z-index:1;padding:20px 22px 34px;text-align:center;font-size:12px;color:var(--encre-3)}
@@ -1132,7 +1190,7 @@ html [lang="ja-Latn"]{font-family:var(--titre);letter-spacing:normal}
   .bilan{grid-template-columns:repeat(2,minmax(0,1fr))}
   .barre-kana{grid-template-columns:66px minmax(0,1fr) 54px;gap:8px}
   /* 16 px : en dessous, iOS zoome sur le champ dès qu'on y pose le doigt */
-  .sc-saisie,.sg-select,.sg-zone,.param-quota select,.recherche input{font-size:16px}
+  .sc-saisie,.sg-select,.sg-zone,.recherche input{font-size:16px}
   .kj-grille{grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:4px}
   .kj-glyphe{font-size:26px}
   .mt-liste{grid-template-columns:1fr}
@@ -1167,6 +1225,19 @@ html [lang="ja-Latn"]{font-family:var(--titre);letter-spacing:normal}
   .pp-phrase{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 14px;
     padding:10px 0 0;border-left:0;border-top:1px solid var(--filet)}
   .pp-fr{flex-basis:100%}
+  .reglages{position:fixed;inset:0;z-index:75;display:flex;align-items:flex-end;background:var(--voile)}
+  .rg-boite{
+    width:100%;max-height:92dvh;border-radius:16px 16px 0 0;border-bottom:0;
+    padding:6px 16px calc(18px + env(safe-area-inset-bottom));animation:monte .26s ease-out;
+  }
+  body.reglages-ouverts{overflow:hidden}
+  .rg-groupe{margin-top:10px}
+  .rg-ligne{min-height:44px;padding-top:5px;padding-bottom:5px}
+  /* trois choix trop longs pour tenir à côté de leur nom : dessous, sur
+     toute la largeur */
+  .rg-large{flex-direction:column;align-items:stretch;gap:6px;padding-top:9px;padding-bottom:9px}
+  .rg-large .segment{display:flex}
+  .rg-large .segment button{flex:1 1 auto}
   .sg-fond{padding:0;align-items:flex-end}
   .sg-boite{width:100%;max-height:92dvh;border-radius:16px 16px 0 0;border-bottom:none;
     animation:monte .26s cubic-bezier(.2,.8,.3,1)}
@@ -1188,7 +1259,6 @@ html [lang="ja-Latn"]{font-family:var(--titre);letter-spacing:normal}
   .fi-x,.sc-quitter{width:40px;height:40px}
   .btn-lien{padding:10px 4px}
   .btn-son{padding:9px 15px 9px 12px;font-size:14.5px}
-  .param-ligne .btn-son{padding:8px 13px 8px 11px;font-size:14px}
   .btn-petit{padding:9px 16px;font-size:14.5px}
   .pg-onglets button{padding:9px 13px 10px}
 }

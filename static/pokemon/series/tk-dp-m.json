@@ -1,0 +1,25 @@
+{
+  "id": "tk-dp-m",
+  "nom": "DP Kit dresseur (Manaphy)",
+  "bloc": "tk",
+  "date": "2007-09-01",
+  "officiel": 12,
+  "total": 12,
+  "sigle": "TK3M",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  "cartes": [
+    ["1", "Mustébouée", "Sans rareté", "N", "P", 418],
+    ["2", "Mustéflott", "Sans rareté", "N", "P", 419],
+    ["3", "Poissirène", "Sans rareté", "N", "P", 118],
+    ["4", "Manaphy", "Sans rareté", "H", "P", 490],
+    ["5", "Tiplouf", "Sans rareté", "N", "P", 393],
+    ["6", "Prinplouf", "Sans rareté", "N", "P", 394],
+    ["7", "Poissoroy", "Sans rareté", "N", "P", 119],
+    ["8", "Kaiminus", "Sans rareté", "N", "P", 158],
+    ["9", "Sombre Ball", "Sans rareté", "N", "D", null],
+    ["10", "Recherche d'énergie", "Sans rareté", "N", "D", null],
+    ["11", "Potion", "Sans rareté", "N", "D", null],
+    ["12", "Énergie Eau", "Sans rareté", "N", "E", null]
+  ]
+}

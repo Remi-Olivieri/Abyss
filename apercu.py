@@ -52,7 +52,7 @@ PAGES = {
     "/archive/feed": ("Social - Archive Jeux Vidéos",
                       "Les jeux que chacun vient de terminer, au fil des journaux."),
     "/collection": ("Collection Yu-Gi-Oh!", "Suivi de collection Yu-Gi-Oh!"),
-    "/quiz": ("Mini-Jeux / Quiz", "Deviner un jeu à sa jaquette, ranger des sorties"
+    "/quiz": ("Mini-Jeux Vidéo", "Deviner un jeu à sa jaquette, ranger des sorties"
                                   " dans l'ordre, trouver les liens d'une grille."),
     "/chainz": ("L'Atelier Chainz", "Le site du jeu vidéo Chainz."),
 }

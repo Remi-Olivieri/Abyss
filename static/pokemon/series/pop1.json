@@ -1,0 +1,30 @@
+{
+  "id": "pop1",
+  "nom": "POP Série 1",
+  "bloc": "pop",
+  "date": "2004-09-01",
+  "officiel": 17,
+  "total": 17,
+  "sigle": "P1",
+  "images_en": [],
+  "sans_image": [],
+  "cartes": [
+    ["1", "Braségali", "Rare", "NH", "P", 257],
+    ["2", "Métalosse", "Rare", "NH", "P", 376],
+    ["3", "Rayquaza", "Rare", "NH", "P", 384],
+    ["4", "Jungko", "Rare", "NH", "P", 254],
+    ["5", "Laggron", "Rare", "NH", "P", 260],
+    ["6", "Charmillon", "Peu commune", "N", "P", 267],
+    ["7", "Maskadra", "Peu commune", "N", "P", 284],
+    ["8", "Cornèbre", "Peu commune", "N", "P", 198],
+    ["9", "Ymphect", "Peu commune", "N", "P", 247],
+    ["10", "Chartor", "Peu commune", "N", "P", 324],
+    ["11", "Embrylex", "Commune", "N", "P", 246],
+    ["12", "Négapi", "Commune", "N", "P", 312],
+    ["13", "Posipi", "Commune", "N", "P", 311],
+    ["14", "Arakdo", "Commune", "N", "P", 283],
+    ["15", "Hélédelle", "Commune", "N", "P", 277],
+    ["16", "Armaldo ex", "Rare", "NH", "P", 348],
+    ["17", "Tyranocif ex", "Rare", "NH", "P", 248]
+  ]
+}

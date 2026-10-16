@@ -34,6 +34,7 @@ import re
 from flask import Blueprint, request
 
 import comptes
+import entretien
 import jaquettes
 import social
 from comptes import Refus, actuel, corps, cx, echec, maintenant, reponse
@@ -1083,6 +1084,10 @@ def jeux_du_site():
     `pseudo` accompagne chaque jeu : la relecture affiche de qui est la
     ligne qu'elle propose de corriger. Sans lui, trois « Elden Ring » de
     suite ne se distinguent pas.
+
+    `nuit` dit ou en est l'analyse de nuit (voir entretien.py) : de quand
+    date son dernier rapport, et si une analyse tourne. Le rapport lui-meme
+    est sur la route suivante, lu seulement si on choisit de le relire.
     """
     admin_ou_refus()
     lignes = cx().execute(
@@ -1091,7 +1096,20 @@ def jeux_du_site():
         " JOIN utilisateur u ON u.id = p.utilisateur_id"
         " WHERE p.projet = ?"
         " ORDER BY u.pseudo, jeu.periode, jeu.rang, jeu.id", (PROJET,)).fetchall()
-    return reponse({"ok": True, "jeux": [pour_igdb(l) for l in lignes]})
+    return reponse({"ok": True, "jeux": [pour_igdb(l) for l in lignes],
+                    "nuit": entretien.etat()})
+
+
+@blueprint_journal.get("/admin/nuit")
+def rapport_de_nuit():
+    """Le rapport de la derniere analyse de nuit, tel qu'entretien.py l'a ecrit.
+
+    Les reponses d'IGDB jeu par jeu, et non les ecarts : la page les compare
+    elle-meme a la base telle qu'elle est en l'ouvrant (voir entretien.py).
+    `rapport` vaut null tant qu'aucune nuit n'est passee.
+    """
+    admin_ou_refus()
+    return reponse({"ok": True, "rapport": entretien.rapport()})
 
 
 # Ce qu'une mise a jour generale a le droit de reecrire, et rien d'autre :

@@ -1219,7 +1219,7 @@ L'objet prend alors の : {漢字|かんじ}**の**{読|よ}み{方|かた}, la 
 - カレーの[{作|つく}り{方|かた}<{作|つく}る>]を{母|はは}に{習|なら}いました。 | Ma mère m'a appris à faire le curry.
 - {駅|えき}への{行|い}き[{方|かた}]がわかりません。 | Je ne sais pas comment aller à la gare.
 - この{機械|きかい}の[{使|つか}い{方|かた}<{使|つか}う>]は{簡単|かんたん}です。 | Cette machine est simple à utiliser.
-- {日本語|にほんご}の{勉強|べんきょう}の[{仕方|しかた}]を{知|し}りたいです。 | J'aimerais savoir comment étudier le japonais.
+- {日本語|にほんご}の{勉強|べんきょう}の[{仕方|しかた}<する>]を{知|し}りたいです。 | J'aimerais savoir comment étudier le japonais.
 
 ## hajimeru
 titre: 〜{始|はじ}める・〜{終|お}わる・〜{続|つづ}ける
@@ -1494,7 +1494,7 @@ Le **langage honorifique** (sonkeigo) élève la personne dont on parle : on l'e
 - {社長|しゃちょう}は{今|いま}、{会議室|かいぎしつ}に[いらっしゃいます<いる>]。 | Le PDG est en salle de réunion.
 - {先生|せんせい}、{何|なに}を[{召|め}し{上|あ}がります<{食|た}べる>]か。 | Monsieur le professeur, que désirez-vous manger ?
 - {部長|ぶちょう}はそう[おっしゃいました<{言|い}う>]。 | C'est ce qu'a dit le chef de service.
-- この{本|ほん}をご{存|ぞん}[じ]ですか。 | Connaissez-vous ce livre ?
+- この{本|ほん}を[ご{存|ぞん}じ<{知|し}っている>]ですか。 | Connaissez-vous ce livre ?
 - {週末|しゅうまつ}は{何|なに}を[なさいます<する>]か。 | Que faites-vous ce week-end ?
 
 ## o-ni-naru

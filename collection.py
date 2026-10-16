@@ -73,9 +73,11 @@ COULEUR_DEFAUT = "#A086B7"
 # l'outil qui le remplit.
 CARTES_MAXI = 20000        # par page : garde-fou contre un import qui s'emballe
 
-# Un tome du classeur : 30 pages de 18 pochettes, comme PAGES_PAR_CLASSEUR et
-# PER_PAGE cote page. Une carte ajoutee au bout d'un tome plein ouvre le
-# suivant, exactement comme l'import l'a fait pour Fusion et Xyz.
+# Un tome du classeur en base : 30 pages de 18 pochettes. Une carte ajoutee
+# au bout d'un tome plein ouvre le suivant, exactement comme l'import l'a
+# fait pour Fusion et Xyz. Ce n'est plus qu'un ordre de rangement : la page
+# met les tomes bout a bout et les recoupe au format de l'onglet (voir
+# relie() cote page, et « le format » plus bas).
 CARTES_PAR_CLASSEUR = 30 * 18
 
 
@@ -139,6 +141,7 @@ NOM_FICHIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}\.[A-Za-z0-9]{1,5}$")
 _illustrations = None      # nom normalise -> nom de fichier ('12345678.jpg')
 _raretes = None            # nom normalise -> [raretes parues]
 _anglais = None            # (nom exact, nom normalise) -> [noms anglais]
+_catalogue = None          # toutes les cartes du jeu qui ont un artwork
 _verrou = threading.Lock()
 
 
@@ -208,10 +211,11 @@ def oublie_illustrations() -> None:
     complete les noms et refait les raretes parues (voir ecrit() dans
     cartes.py), et les trois se lisent des memes fichiers.
     """
-    global _illustrations, _raretes, _anglais
+    global _illustrations, _raretes, _anglais, _catalogue
     _illustrations = None
     _raretes = None
     _anglais = None
+    _catalogue = None
 
 
 # --- les raretes parues ----------------------------------------------------
@@ -593,6 +597,7 @@ def contenu(page, u) -> dict:
             "key": f["cle"],
             "label": f["label"],
             "color": couleur_sure(f["couleur"]),
+            "format": format_de(f),
             "classeurs": [{"n": n, "cards": tomes[n]} for n in sorted(tomes)]
                          or [{"n": 1, "cards": []}],
         })
@@ -690,6 +695,194 @@ def ajoute(page, famille, nom):
 
 
 # --------------------------------------------------------------------------
+#   Les cartes favorites
+# --------------------------------------------------------------------------
+# Trois cartes choisies dans les reglages du classeur, parmi toutes celles
+# du jeu et pas seulement celles qu'on possede : une favorite est une carte
+# qu'on aime, pas une carte qu'on a. L'accueil d'Abyss les montre en
+# eventail sur la vignette de la Collection (voir accueil.py).
+#
+# Rangees par passcode et non par nom : c'est par lui que l'artwork se
+# retrouve, deux impressions d'une meme carte n'ont pas la meme image, et un
+# nom peut encore etre corrige par une mise a jour du stock.
+FAVORITES_MAXI = 3
+RECHERCHE_MAXI = 24        # les propositions sous le champ de recherche
+PASSCODE = re.compile(r"^\d{1,10}$")
+
+
+def _construit_catalogue() -> dict:
+    """Les cartes du jeu qui ont un artwork : une liste pour chercher, et un
+    index par passcode pour retrouver une favorite.
+
+    Une carte sans fichier n'y entre pas : la choisir donnerait une vignette
+    vide sur l'accueil. Meme lecture que _construit_index, mais par passcode
+    -- l'index des illustrations, lui, ne garde qu'un fichier par nom.
+    """
+    vide = {"liste": [], "index": {}}
+    if not DOSSIER_CARTES or not FICHIER_NOMS:
+        return vide
+    try:
+        with open(FICHIER_NOMS, encoding="utf-8") as f:
+            noms = json.load(f)
+        fichiers = {}
+        for f in os.listdir(DOSSIER_CARTES):
+            base, point, ext = f.rpartition(".")
+            if point and base not in fichiers:
+                fichiers[base] = f
+    except OSError:
+        return vide
+    if not isinstance(noms, dict):
+        return vide
+    liste, index = [], {}
+    for passcode, nom in noms.items():
+        fichier = fichiers.get(str(passcode))
+        if not nom or not fichier:
+            continue
+        liste.append((str(passcode), nom, normalise_nom(nom), fichier))
+        index[str(passcode)] = (nom, fichier)
+    return {"liste": liste, "index": index}
+
+
+def catalogue() -> dict:
+    """Le catalogue, construit au premier besoin, sous le meme verrou que
+    les illustrations."""
+    global _catalogue
+    if _catalogue is None:
+        with _verrou:
+            if _catalogue is None:
+                _catalogue = _construit_catalogue()
+    return _catalogue
+
+
+def cherche(texte) -> list:
+    """Les cartes dont le nom contient tous les mots tapes, les plus proches
+    d'abord : le nom exact, puis ceux qui commencent par la saisie, puis
+    les autres -- et a rang egal, les plus courts. Accents, casse et
+    ponctuation ne comptent pas (meme cle que les illustrations)."""
+    mots = normalise_nom(texte).split()
+    if not mots:
+        return []
+    saisie = " ".join(mots)
+    trouvees = []
+    for passcode, nom, cle, fichier in catalogue()["liste"]:
+        if all(m in cle for m in mots):
+            rang = 0 if cle == saisie else 1 if cle.startswith(saisie) else 2
+            trouvees.append((rang, len(cle), cle, passcode, nom, fichier))
+    trouvees.sort()
+    return [{"passcode": p, "nom": n, "fichier": f}
+            for _, _, _, p, n, f in trouvees[:RECHERCHE_MAXI]]
+
+
+def favorites(page) -> list:
+    """Les favorites d'un classeur, dans l'ordre choisi, avec nom et fichier.
+
+    Une carte qui n'est plus au catalogue -- artwork retire du fonds -- est
+    sautee plutot que de laisser un trou dans l'eventail.
+    """
+    try:
+        codes = json.loads(page["favorites"] or "[]")
+    except (ValueError, TypeError, IndexError, KeyError):
+        codes = []
+    index = catalogue()["index"]
+    sortie = []
+    for p in codes if isinstance(codes, list) else []:
+        c = index.get(str(p))
+        if c is not None:
+            sortie.append({"passcode": str(p), "nom": c[0], "fichier": c[1]})
+    return sortie[:FAVORITES_MAXI]
+
+
+def enregistre_favorites(page, codes) -> None:
+    """Remplace les favorites du classeur. Une liste vide les retire toutes.
+
+    Les doublons sont ignores, l'ordre est garde : c'est celui de l'eventail,
+    de gauche a droite.
+    """
+    if not isinstance(codes, list):
+        raise Refus("format", "Les favorites attendent une liste de cartes.", 400)
+    index = catalogue()["index"]
+    propres = []
+    for p in codes:
+        p = str(p).strip()
+        if not PASSCODE.match(p) or p not in index:
+            raise Refus("carte", "Cette carte n'est pas dans le catalogue.", 400)
+        if p not in propres:
+            propres.append(p)
+    if len(propres) > FAVORITES_MAXI:
+        raise Refus("trop", f"{FAVORITES_MAXI} cartes favorites au plus.", 400)
+    c = cx()
+    with c:
+        c.execute("UPDATE page SET favorites = ? WHERE id = ?",
+                  (json.dumps(propres) if propres else None, page["id"]))
+
+
+# --------------------------------------------------------------------------
+#   Le format
+# --------------------------------------------------------------------------
+# Combien de pochettes par face, en colonnes et en rangees, et combien de
+# pages (recto verso) par tome : de quoi faire du classeur a l'ecran celui
+# que son proprietaire a sur l'etagere. Vu de tous -- un visiteur feuillette
+# le classeur tel qu'il est vraiment -- et regle par lui seul.
+#
+# Un format par onglet, et non pour tout le classeur : les Fusion peuvent
+# tenir dans un classeur de neuf pochettes et les Lien dans un de quatre.
+#
+# Rien d'autre ne bouge en base : les cartes gardent leur tome et leur rang,
+# qui ne disent plus que l'ordre. C'est la page qui les recoupe.
+FORMAT_DEFAUT = {"colonnes": 3, "rangees": 3, "pages": 30}
+FORMAT_BORNES = {"colonnes": (2, 4), "rangees": (2, 4), "pages": (5, 100)}
+FORMAT_MOTS = {"colonnes": "colonnes", "rangees": "rangées", "pages": "pages"}
+
+
+def _dans_les_bornes(cle, v) -> bool:
+    bas, haut = FORMAT_BORNES[cle]
+    # bool est un int pour Python : True ne doit pas valoir une colonne
+    return isinstance(v, int) and not isinstance(v, bool) and bas <= v <= haut
+
+
+def format_de(famille) -> dict:
+    """Le format d'un onglet, complet. Ce qui manque ou sort des bornes --
+    une base ecrite a la main, une version future -- retombe sur le defaut."""
+    try:
+        f = json.loads(famille["format"] or "null")
+    except (ValueError, TypeError, IndexError, KeyError):
+        f = None
+    sortie = dict(FORMAT_DEFAUT)
+    if isinstance(f, dict):
+        for cle in FORMAT_BORNES:
+            if _dans_les_bornes(cle, f.get(cle)):
+                sortie[cle] = f[cle]
+    return sortie
+
+
+def famille_a_moi(page, cle):
+    """L'onglet `cle` de ce classeur. Meme refus pour « n'existe pas » et
+    « appartient a quelqu'un d'autre », comme carte_a_moi."""
+    f = cx().execute("SELECT * FROM famille WHERE page_id = ? AND cle = ?",
+                     (page["id"], cle if isinstance(cle, str) else "")).fetchone()
+    if f is None:
+        raise Refus("introuvable", "Cet onglet n'est pas dans ton classeur.", 404)
+    return f
+
+
+def enregistre_format(famille, d) -> dict:
+    """Remplace le format d'un onglet. Les trois valeurs sont exigees : un
+    format a moitie donne ne dit pas ce qu'on veut du reste. Le format par
+    defaut s'enregistre comme NULL, comme s'il n'avait jamais ete touche."""
+    propre = {}
+    for cle, (bas, haut) in FORMAT_BORNES.items():
+        v = d.get(cle)
+        if not _dans_les_bornes(cle, v):
+            raise Refus(cle, f"Entre {bas} et {haut} {FORMAT_MOTS[cle]}.", 400)
+        propre[cle] = v
+    c = cx()
+    with c:
+        c.execute("UPDATE famille SET format = ? WHERE id = ?",
+                  (None if propre == FORMAT_DEFAUT else json.dumps(propre), famille["id"]))
+    return propre
+
+
+# --------------------------------------------------------------------------
 #   Les routes
 # --------------------------------------------------------------------------
 blueprint_collection = Blueprint("collection", __name__, url_prefix="/api/collection")
@@ -745,6 +938,50 @@ def creer():
         return echec("connexion", "Connecte-toi sur Abyss pour creer ton classeur.", 401)
     page = ma_page(u) or cree_page(u)
     return reponse(contenu(page, u), 201)
+
+
+# Les trois routes des favorites sont declarees avant /<pseudo> : Werkzeug
+# fait de toute facon passer une regle en dur devant une regle a variable,
+# et « catalogue » et « favorites » sont des pseudos reserves (voir
+# comptes.RESERVES), mais l'ordre de lecture dit la meme chose.
+@blueprint_collection.get("/catalogue")
+def chercher_cartes():
+    """Toutes les cartes du jeu dont le nom ressemble a ?q=. Ouverte a tous,
+    comme le fonds : ce n'est que le catalogue, rien de ce que chacun a."""
+    texte = (request.args.get("q") or "")[:80]
+    return reponse({"ok": True, "cartes": cherche(texte), "vignettes": URL_VIGNETTES})
+
+
+@blueprint_collection.get("/favorites")
+def lire_favorites():
+    _, page = ma_page_ou_refus()
+    return reponse({"ok": True, "cartes": favorites(page), "vignettes": URL_VIGNETTES})
+
+
+@blueprint_collection.put("/favorites")
+def poser_favorites():
+    u, page = ma_page_ou_refus()
+    enregistre_favorites(page, corps().get("cartes"))
+    return reponse({"ok": True, "cartes": favorites(ma_page(u)),
+                    "vignettes": URL_VIGNETTES})
+
+
+@blueprint_collection.put("/format")
+def poser_format():
+    """Le format d'un onglet de mon classeur. { cle, colonnes, rangees, pages }
+
+    L'onglet est designe par sa cle dans le corps, et non dans l'adresse :
+    elle vient de l'import, rien ne dit qu'elle ne porte pas de « / ».
+
+    En PUT seulement : la lecture passe par le classeur lui-meme, dont
+    chaque onglet porte son format. « format » n'a donc pas a etre un
+    pseudo reserve, un compte de ce nom garderait son classeur en GET.
+    """
+    _, page = ma_page_ou_refus()
+    d = corps()
+    famille = famille_a_moi(page, d.get("cle"))
+    return reponse({"ok": True, "cle": famille["cle"],
+                    "format": enregistre_format(famille, d)})
 
 
 @blueprint_collection.get("/<pseudo>")

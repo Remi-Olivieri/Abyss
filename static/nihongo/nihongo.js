@@ -143,19 +143,10 @@
   /* =====================================================================
      Thème : le papier le jour, l'encre la nuit
      ===================================================================== */
-  function themeActuel() {
-    return document.documentElement.getAttribute("data-theme") === "nuit" ? "nuit" : "jour";
-  }
-  function majBoutonTheme() {
-    const b = $("themeBtn");
-    if (!b) return;
-    const nuit = themeActuel() === "nuit";
-    b.setAttribute("aria-label", nuit ? "Passer au thème clair" : "Passer au thème sombre");
-    b.querySelector("span").textContent = nuit ? "昼" : "夜";
-  }
-  /* Le thème choisi sur cet appareil : « jour », « nuit », ou « systeme » -
-     celui de l'appareil, qui suit ses changements (voir la tête de
-     nihongo.html, qui le pose avant le premier affichage). */
+  /* Le thème choisi sur cet appareil, dans les paramètres : « jour »,
+     « nuit », ou « systeme » - celui de l'appareil, qui suit ses
+     changements (voir la tête de nihongo.html, qui le pose avant le
+     premier affichage). */
   const NUIT_SYSTEME = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
   function choixTheme() {
     const t = Pref.lit("theme", null);
@@ -165,16 +156,8 @@
     const c = choixTheme();
     document.documentElement.setAttribute("data-theme",
       c !== "systeme" ? c : NUIT_SYSTEME && NUIT_SYSTEME.matches ? "nuit" : "jour");
-    majBoutonTheme();
   }
   if (NUIT_SYSTEME && NUIT_SYSTEME.addEventListener) NUIT_SYSTEME.addEventListener("change", appliqueTheme);
-  $("themeBtn").addEventListener("click", () => {
-    Pref.ecrit("theme", themeActuel() === "nuit" ? "jour" : "nuit");
-    appliqueTheme();
-    // la page des paramètres montre le thème choisi
-    if (ETAT && rubrique() === "parametres") rend();
-  });
-  majBoutonTheme();
 
   /* =====================================================================
      La voix
@@ -304,6 +287,8 @@
     function ditPhrase(son, texte, surEchec, o) {
       o = o || {};
       arrete();
+      // une phrase de la lecture libre n'a pas de fichier
+      if (!son) { parleAppareil(texte, surEchec, o.fin); return; }
       joue(son, ordre(o.voix), () => parleAppareil(texte, surEchec, o.fin), o.fin);
     }
 
@@ -473,6 +458,19 @@
       Mots.TOUS.forEach((m) => HOMOGRAPHES.set(m.m, (HOMOGRAPHES.get(m.m) || 0) + 1));
     }
     return it.kanjis && HOMOGRAPHES.get(it.m) > 1;
+  }
+  /* Une lecture juste, mais pas celle du mot demandé : celle d'un mot qui
+     s'écrit pareil (人 se lit じん en suffixe), ou une lecture du kanji d'un
+     mot qui n'est que lui (ニン pour 人, qui seul se lit ひと). Pas une
+     erreur de lecture : la carte le dit, et laisse un autre essai. */
+  function autreLecture(it, tape) {
+    const kanas = Mots.compareLecture(Mots.versKana(tape, true));
+    const lit = (kana, p) => Mots.compareLecture(kana) === kanas || commeEcrit(tape, [lectureEcrite(kana, p)]);
+    const mot = Mots.TOUS.find((m) => m !== it && m.m === it.m && m.l.some((l) => lit(l, m.p)));
+    if (mot) return { mot };
+    const k = [...it.m].length === 1 && Kanji.PAR_CAR.get(it.m);
+    // た.べる : seul, le kanji ne porte que ce qui précède le point
+    return k && [...k.on, ...k.kun].some((r) => lit(r.split(".")[0])) ? { kanji: k } : null;
   }
   /* Un sens tapé : celui d'un kanji vaut pour le mot qu'il forme à lui
      seul, et inversement (下 : « au-dessous », ou « dessous, en bas »
@@ -898,14 +896,16 @@
   }
 
   /* La saisie d'une lecture : le rōmaji se change en kanas à mesure qu'on
-     tape (voir Mots.versKana). Pas pendant une composition : le clavier
-     japonais d'un téléphone fait déjà ce travail. Ni quand la page est en
-     rōmaji : la réponse s'écrit comme on la lit. */
-  function saisieKana(input) {
+     tape (voir Mots.versKana) - en katakanas avec `kata`, pour un mot qui
+     s'écrit ainsi (« beddo » : ベッド). Pas pendant une composition : le
+     clavier japonais d'un téléphone fait déjà ce travail. Ni quand la page
+     est en rōmaji : la réponse s'écrit comme on la lit. */
+  function saisieKana(input, kata) {
     let compose = false;
+    if (kata) input.dataset.kata = "1";
     const convertit = () => {
       if (compose || input.readOnly || romaji()) return;
-      const v = Mots.versKana(input.value);
+      const v = Mots.versKana(input.value, false, !!kata);
       if (v !== input.value) input.value = v;
     };
     input.addEventListener("compositionstart", () => { compose = true; });
@@ -915,7 +915,7 @@
   /* La réponse validée : en kanas, sauf en rōmaji, où elle reste comme on
      l'a tapée - les corrections la changent elles-mêmes en kanas. */
   function valideSaisie(input) {
-    if (!romaji()) input.value = Mots.versKana(input.value, true);
+    if (!romaji()) input.value = Mots.versKana(input.value, true, input.dataset.kata === "1");
     return input.value.trim();
   }
   /* En rōmaji, une réponse tapée comme la page l'écrit (tōkyō, toukyou ou
@@ -933,7 +933,23 @@
      <span lang="ja">, pour avoir sa police. */
   const RUBI = /\{([^{}|]+)\|([^{}|]+)\}/g;
   const JAPONAIS = /(?:\{[^{}|]+\|[^{}|]+\}|[ぁ-ゖァ-ヺー〜々・「」『』。、？！（）]|[㐀-鿿])+/g;
-  const enRubis = (s) => s.replace(RUBI, (m, base, lu) => `<ruby class="f">${base}<rt>${lu}</rt></ruby>`);
+  const enRubis = (s) => s.replace(RUBI, (m, base, lu) =>
+    `<ruby class="f${rubiSu(base, lu) ? " su" : ""}">${base}<rt>${lu}</rt></ruby>`);
+  /* Un groupe qui est un mot su à la lecture ({学生|がくせい}, quand la carte
+     « lire » de 学生 tient : voir motSu) perd ses furigana en mode « sauf
+     les mots sus », comme dans les textes. */
+  let MOTS_PAR_ECRIT = null;
+  function rubiSu(base, lu) {
+    if (!ETAT || !Mots.TOUS.length) return false;
+    if (!MOTS_PAR_ECRIT) {
+      MOTS_PAR_ECRIT = new Map();
+      Mots.TOUS.forEach((it) => it.l.forEach((l) => {
+        const cle = `${it.m}|${l}`;
+        MOTS_PAR_ECRIT.set(cle, [...(MOTS_PAR_ECRIT.get(cle) || []), it]);
+      }));
+    }
+    return (MOTS_PAR_ECRIT.get(`${base}|${lu}`) || []).some((it) => niveauDe(it, "lire") >= 2);
+  }
   /* Du japonais seul : une phrase, un motif. */
   function rubis(texte) {
     return enRubis(echappe(texte));
@@ -1057,34 +1073,52 @@
     Voix.ditPhrase(ex.son, Grammaire.surface(Grammaire.phrase(ex)), () => toast(SANS_VOIX, true));
   }
 
-  /* Les furigana : montrés, ou cachés - un mot touché (ou survolé) montre
-     alors les siens. Réglé sur cet appareil, pour toute la grammaire. */
+  /* Les furigana, un seul réglage pour la grammaire et les textes (sur cet
+     appareil) : partout ; sauf sur les mots déjà sus à la lecture, si bien
+     qu'ils s'effacent à mesure qu'on apprend ; ou nulle part. Un mot touché
+     (ou survolé) montre toujours les siens. */
+  const MODES_FURIGANA = [["toutes", "Partout"], ["auto", "Sauf les mots sus"], ["aucune", "Nulle part"]];
+  const estModeFurigana = (f) => MODES_FURIGANA.some(([m]) => m === f);
   function furigana() {
-    return Pref.lit("furigana", true) !== false;
+    const f = Pref.lit("furigana", null);
+    if (estModeFurigana(f)) return f;
+    // il y en avait deux : oui ou non pour la grammaire, un mode pour les
+    // textes - le mode des textes l'emporte
+    const l = Pref.lit("furiganaLecture", null);
+    if (estModeFurigana(l)) return l;
+    return f === false ? "aucune" : "auto";
   }
   function appliqueFurigana() {
-    document.documentElement.classList.toggle("sans-furigana", !furigana());
+    const f = furigana();
+    MODES_FURIGANA.forEach(([m]) => document.documentElement.classList.toggle(`furi-${m}`, m === f));
   }
-  /* `toujours` : même en rōmaji, où il n'y a pas de furigana à montrer (la
-     page des paramètres). */
-  function reglageFurigana(toujours) {
-    if (romaji() && !toujours) return "";
+  function segmentFurigana() {
     return `<div class="segment segment-petit" role="radiogroup" aria-label="Furigana">
-      <button type="button" role="radio" data-furigana="1" aria-checked="${furigana()}">Furigana</button>
-      <button type="button" role="radio" data-furigana="0" aria-checked="${!furigana()}">Sans</button>
+      ${MODES_FURIGANA.map(([m, nom]) => `<button type="button" role="radio" data-furi="${m}"
+        aria-checked="${m === furigana()}">${nom}</button>`).join("")}
     </div>`;
   }
+  /* La bascule de la grammaire, sous la main ; rien en rōmaji, où il n'y a
+     pas de kanjis. */
+  function reglageFurigana() {
+    if (romaji()) return "";
+    return `<div class="furi-reglage"><span>Furigana</span>${segmentFurigana()}</div>`;
+  }
+  /* Où qu'on le change (la page, le panneau des paramètres), les bascules
+     à l'écran le suivent. */
+  function choisitFurigana(mode) {
+    Pref.ecrit("furigana", mode);
+    Pref.efface("furiganaLecture");
+    appliqueFurigana();
+    document.querySelectorAll("[data-furi]").forEach((x) => x.setAttribute("aria-checked", String(x.dataset.furi === mode)));
+  }
   function brancheFurigana(racine) {
-    racine.querySelectorAll("[data-furigana]").forEach((b) => b.addEventListener("click", () => {
-      Pref.ecrit("furigana", b.dataset.furigana === "1");
-      appliqueFurigana();
-      racine.querySelectorAll("[data-furigana]").forEach((x) => x.setAttribute("aria-checked", String(x === b)));
-    }));
+    racine.querySelectorAll("[data-furi]").forEach((b) => b.addEventListener("click", () => choisitFurigana(b.dataset.furi)));
   }
   document.addEventListener("click", (e) => {
     const r = e.target.closest && e.target.closest("ruby.f");
-    // la liseuse a ses propres furigana (voir furiganaLecture)
-    if (r && !furigana() && !r.closest(".ls-texte")) r.classList.toggle("vu");
+    // dans la liseuse, c'est le mot touché qui montre les siens
+    if (r && furigana() !== "toutes" && !r.closest(".ls-texte")) r.classList.toggle("vu");
   });
 
   /* =====================================================================
@@ -1098,7 +1132,6 @@
     lecture: vueLecture,
     grammaire: vueGrammaire,
     progres: vueProgres,
-    parametres: vueParametres,
   };
 
   function rubrique() {
@@ -1692,7 +1725,9 @@
   /* La lecture d'un mot à kanjis : 食べる -> たべる. Le rōmaji devient des
      kanas pendant la frappe ; toutes les lectures du mot sont acceptées
      (今日 : きょう ou こんにち). Le mot reste en kanjis même quand la page
-     est en rōmaji : c'est eux qu'on apprend à lire. */
+     est en rōmaji : c'est eux qu'on apprend à lire. Une autre lecture de
+     ce qui est écrit (じん pour 人, quand on attendait ひと) n'est pas une
+     erreur : on le dit, et on laisse un autre essai - un seul. */
   function rendLireMot(e) {
     const it = e.item;
     $("scScene").innerHTML = `
@@ -1713,14 +1748,28 @@
     const saisie = $("scSaisie");
     saisieKana(saisie);
     saisie.focus();
-    let repondu = false;
+    let repondu = false, autreVue = false;
     $("scForm").addEventListener("submit", (ev) => {
       ev.preventDefault();
       if (repondu) { suivante(); return; }
-      repondu = true;
       const tape = valideSaisie(saisie);
       const lectures = it.l.map((l) => lectureEcrite(l, it.p));
       const juste = !!tape && (Mots.accepteLecture(it, tape) || commeEcrit(tape, lectures));
+      if (tape && !juste && !autreVue) {
+        const autre = autreLecture(it, tape);
+        if (autre) {
+          autreVue = true;
+          const ecrit = `<span lang="ja">${echappe(it.m)}</span>`, lu = `« <span lang="ja">${echappe(tape)}</span> »`;
+          $("scRetour").innerHTML = autre.mot
+            ? `${ecrit} se lit bien ${lu}, mais au sens de « ${sensMotHtml(autre.mot, 2)} ».
+               Ici, c'est « ${sensMotHtml(it, 2)} » : encore un essai.`
+            : `${lu} est bien une lecture du kanji ${ecrit}, mais pas celle du mot qu'il forme seul : encore un essai.`;
+          saisie.value = "";
+          saisie.focus();
+          return;
+        }
+      }
+      repondu = true;
       saisie.readOnly = true;
       saisie.classList.add(juste ? "juste" : "faux");
       const lu = `<span lang="ja">${echappe(it.m)}</span> se lit « <strong lang="ja">${lectures.map(echappe).join(
@@ -1770,7 +1819,9 @@
         </div>
       </div>`;
     const saisie = $("scSaisie");
-    saisieKana(saisie);
+    // ベッド se tape en katakanas : « beddo » ne donne pas べっど ; けしゴム,
+    // à moitié en hiraganas, reste en hiraganas
+    saisieKana(saisie, /[ァ-ヺ]/.test(it.l[0]) && !/[ぁ-ゖ]/.test(it.l[0]));
     saisie.focus();
     let repondu = false, enAttente = false, indices = 0, synonymeVu = false;
     function continuer() {
@@ -2068,7 +2119,7 @@
       <div class="carte-seance sc-fin">
         <div class="tampon" aria-hidden="true"><span lang="ja">済</span></div>
         <h2 class="sc-fin-titre" lang="ja">${romaji() ? "Otsukaresama deshita" : "お疲れさまでした"}</h2>
-        <p class="sc-fin-trad">${romaji() ? "" : "<em>otsukaresama deshita</em> — "}« merci pour cet effort »</p>
+        <p class="sc-fin-trad">${romaji() ? "" : "<em>otsukaresama deshita</em> "}« merci pour cet effort »</p>
         <dl class="bilan">
           <div><dt>Réponses</dt><dd>${SEANCE.notees}</dd></div>
           <div><dt>Réponses justes</dt><dd>${precision} %</dd></div>
@@ -2111,6 +2162,7 @@
   $("scQuitter").addEventListener("click", quitteSeance);
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
+    if (!$("reglages").hidden) { fermeReglages(true); return; }
     if (!$("fiche").hidden) { fermeFiche(); return; }
     if (!$("seance").hidden) { quitteSeance(); return; }
     if ($("pupitre") && !$("pupitre").hidden) fermePupitre();
@@ -2907,22 +2959,8 @@
      les points de grammaire qui l'expliquent, et s'il est déjà appris -
      sinon, on peut le demander, et il viendra à la prochaine séance.
      Chaque phrase s'écoute, seule ou à la suite ; dans un dialogue, chacun
-     parle avec sa voix.
-
-     Les furigana, au choix (sur cet appareil) : partout ; sauf sur les mots
-     déjà sus à la lecture, si bien qu'ils s'effacent à mesure qu'on
-     apprend ; ou nulle part, un mot touché montrant alors les siens. */
-  const MODES_FURIGANA = [["toutes", "Partout"], ["auto", "Sauf les mots sus"], ["aucune", "Nulle part"]];
-  function furiganaLecture() {
-    const f = Pref.lit("furiganaLecture", "auto");
-    return MODES_FURIGANA.some(([m]) => m === f) ? f : "auto";
-  }
-  function segmentFuriganaLecture(mode) {
-    return `<div class="segment segment-petit" role="radiogroup" aria-label="Furigana des textes">
-      ${MODES_FURIGANA.map(([m, nom]) => `<button type="button" role="radio" data-furi="${m}"
-        aria-checked="${m === mode}">${nom}</button>`).join("")}
-    </div>`;
-  }
+     parle avec sa voix. Les furigana suivent le réglage de toute la page
+     (voir furigana) : la liseuse en garde la bascule sous la main. */
 
   /* Ce que le serveur sait des textes lus. Un serveur pas encore redémarré
      depuis l'arrivée de la lecture n'en dit rien. */
@@ -2972,9 +3010,35 @@
     return (m && Lecture.PAR_NOM.get(m[1])) || null;
   }
 
+  /* La lecture libre : « ?libre=5&k=12 », la treizième phrase du N5. Chaque
+     appareil avance dans l'ordre des phrases (mêlées à la fabrication) et
+     reprend au début une fois au bout. */
+  function prochainLibre(n) {
+    const k = +Pref.lit(`phraseLibre${n}`, 0);
+    return Number.isInteger(k) && k >= 0 && k < Lecture.phrasesLibres(n) ? k : 0;
+  }
+  function ouvreLibre(n) {
+    va("lecture", `?libre=${n}&k=${prochainLibre(n)}`);
+  }
+  /* D'une phrase à l'autre : la même page, sans entrée de plus dans
+     l'historique - le retour ramène à la liste. */
+  function phraseLibre(n, k) {
+    history.replaceState(null, "", `/nihongo/lecture?libre=${n}&k=${k}`);
+    rend();
+  }
+  function libreDemande() {
+    const m = /[?&]libre=([1-5])(?:&k=(\d+))?/.exec(location.search);
+    const n = m ? +m[1] : 0;
+    if (!Lecture.phrasesLibres(n)) return null;
+    const k = m[2] === undefined ? prochainLibre(n) : +m[2];
+    return k < Lecture.phrasesLibres(n) ? { n, k } : null;
+  }
+
   function vueLecture(vue) {
-    const t = texteDemande();
-    if (t) liseuse(vue, t);
+    const libre = libreDemande();
+    const t = !libre && texteDemande();
+    if (libre) liseuseLibre(vue, libre.n, libre.k);
+    else if (t) liseuse(vue, t);
     else listeTextes(vue);
   }
 
@@ -3026,8 +3090,23 @@
     }));
   }
 
+  /* La lecture libre du niveau choisi, sous la barre des niveaux. */
+  function libreHtml(n) {
+    const total = Lecture.phrasesLibres(n);
+    if (!total) return "";
+    return `
+      <section class="feuille lc-suivant lc-libre">
+        <span class="lc-suivant-jp" lang="ja" aria-hidden="true">多</span>
+        <div class="lc-suivant-texte">
+          <p class="lc-sur">Lecture libre · N${n} · ${total.toLocaleString("fr-FR")} phrases</p>
+          <h2 class="lc-suivant-titre"><span lang="ja">多読</span><span class="lc-suivant-fr">Lire, simplement</span></h2>
+        </div>
+        <button type="button" class="btn btn-grand" id="lcLibre">読む <span>Lire</span></button>
+      </section>`;
+  }
+
   function listeTextes(vue) {
-    const niveaux = Lecture.NIVEAUX;
+    const niveaux = Lecture.niveaux();
     const suivant = texteSuivant();
     const avenir = texteAVenir();
     const defaut = avenir ? avenir.n : niveaux[0];
@@ -3047,11 +3126,15 @@
         <div class="segment" role="radiogroup" aria-label="Niveau du JLPT">
           ${niveaux.map((x) => `<button type="button" role="radio" data-niveau="${x}" aria-checked="${x === n}">N${x}</button>`).join("")}
         </div>
-        <p class="kana-bilan"><strong>${lus}</strong> / ${pluriel(duNiveau.length, "texte")} lu${duNiveau.length > 1 ? "s" : ""}</p>
+        ${duNiveau.length ? `<p class="kana-bilan"><strong>${lus}</strong> / ${pluriel(duNiveau.length, "texte")}
+          lu${duNiveau.length > 1 ? "s" : ""}</p>` : ""}
       </div>
-      <ol class="lc-grille">${duNiveau.map(carteTexte).join("")}</ol>`;
+      ${libreHtml(n)}
+      ${duNiveau.length ? `<ol class="lc-grille">${duNiveau.map(carteTexte).join("")}</ol>` : ""}`;
 
     brancheALire(vue);
+    const libre = $("lcLibre");
+    if (libre) libre.addEventListener("click", () => ouvreLibre(n));
     const apprendre = $("lcApprendre");
     if (apprendre) {
       apprendre.addEventListener("click", async () => {
@@ -3070,10 +3153,13 @@
       Pref.ecrit("niveauLecture", +b.dataset.niveau);
       rend();
     }));
-    vue.querySelector(".lc-grille").addEventListener("click", (e) => {
-      const b = e.target.closest(".lc-carte");
-      if (b) ouvreTexte(Lecture.PAR_NOM.get(b.dataset.nom));
-    });
+    const grille = vue.querySelector(".lc-grille");
+    if (grille) {
+      grille.addEventListener("click", (e) => {
+        const b = e.target.closest(".lc-carte");
+        if (b) ouvreTexte(Lecture.PAR_NOM.get(b.dataset.nom));
+      });
+    }
   }
 
   function carteTexte(t) {
@@ -3099,7 +3185,6 @@
   let LISEUSE = null;            // { t, debut, ecoute, minuteur }
 
   function liseuse(vue, t) {
-    const mode = furiganaLecture();
     const traduite = Pref.lit("traductionLecture", false) === true;
     const duNiveau = Lecture.TEXTES.filter((x) => x.n === t.n);
     const i = Lecture.TEXTES.indexOf(t);
@@ -3117,18 +3202,8 @@
           <p class="ls-titre-fr">${echappe(t.fr)}</p>
           <p class="ls-intro">${texteHtml(t.intro)}</p>
         </header>
-        <div class="ls-outils">
-          ${romaji() ? "" : `<div class="ls-outil">
-            <span class="ls-outil-nom">Furigana</span>
-            ${segmentFuriganaLecture(mode)}
-          </div>`}
-          <div class="ls-outil">
-            <button type="button" class="ls-bascule" id="lsTrad" aria-pressed="${traduite}">Traduction</button>
-            <button type="button" class="btn-son" id="lsEcoute">${ICONE_SON}<span>Tout écouter</span></button>
-          </div>
-        </div>
-        <div class="ls-texte furi-${mode}${traduite ? " ls-traduite" : ""}" id="lsTexte" lang="ja">${corpsTexte(t)}</div>
-        <p class="ls-aide">Touche un mot : sa lecture, son sens, sa forme. Les flèches passent d'un mot à l'autre.</p>
+        ${outilsHtml(traduite)}
+        <div class="ls-texte${traduite ? " ls-traduite" : ""}" id="lsTexte" lang="ja">${corpsTexte(t)}</div>
         ${questionsHtml(t)}
         <section class="feuille ls-fin" id="lsFin">${finHtml(t)}</section>
         <details class="ls-mots" id="lsMots">${motsDuTexteHtml(t)}</details>
@@ -3139,16 +3214,36 @@
       </article>
       <div class="pupitre" id="pupitre" role="dialog" aria-label="Le mot touché" hidden></div>`;
 
+    brancheLiseuse(vue, t);
+    brancheQuestions(t);
+    brancheFin(t);
+    brancheMotsDuTexte(t);
+    brancheALire(vue.querySelector(".ls-suite"));
+  }
+
+  /* `ecoute` : ce que dit le bouton d'écoute au repos. */
+  function outilsHtml(traduite, ecoute = "Tout écouter") {
+    return `
+        <div class="ls-outils">
+          ${romaji() ? "" : `<div class="ls-outil">
+            <span class="ls-outil-nom">Furigana</span>
+            ${segmentFurigana()}
+          </div>`}
+          <div class="ls-outil">
+            <button type="button" class="ls-bascule" id="lsTrad" aria-pressed="${traduite}">Traduction</button>
+            <button type="button" class="btn-son" id="lsEcoute" data-repos="${ecoute}">${ICONE_SON}<span>${ecoute}</span></button>
+          </div>
+        </div>`;
+  }
+
+  /* Le retour à la liste, les outils, et les mots qui se touchent. */
+  function brancheLiseuse(vue, t) {
     const texte = $("lsTexte");
     $("lsRetour").addEventListener("click", () => {
       Pref.ecrit("niveauLecture", t.n);
       va("lecture");
     });
-    vue.querySelectorAll("[data-furi]").forEach((b) => b.addEventListener("click", () => {
-      Pref.ecrit("furiganaLecture", b.dataset.furi);
-      MODES_FURIGANA.forEach(([m]) => texte.classList.toggle(`furi-${m}`, m === b.dataset.furi));
-      vue.querySelectorAll("[data-furi]").forEach((x) => x.setAttribute("aria-checked", String(x === b)));
-    }));
+    brancheFurigana(vue);
     $("lsTrad").addEventListener("click", () => {
       const oui = !texte.classList.contains("ls-traduite");
       texte.classList.toggle("ls-traduite", oui);
@@ -3171,13 +3266,81 @@
         ouvrePupitre(mot);
       }
     });
-    brancheQuestions(t);
-    brancheFin(t);
-    brancheMotsDuTexte(t);
-    brancheALire(vue.querySelector(".ls-suite"));
   }
 
+  /* ---------- la lecture libre ----------
+     Une phrase de Tatoeba à la fois, en grand : la liseuse, sans questions
+     ni fin à cocher, et la phrase suivante dessous. Le paquet d'une phrase
+     arrive du serveur : le temps qu'il arrive, on a pu aller ailleurs
+     (ATTENTE). La suivante est demandée d'avance. */
+  let ATTENTE = 0;
+  async function liseuseLibre(vue, n, k) {
+    const jeton = ++ATTENTE, total = Lecture.phrasesLibres(n);
+    // pas de « ça arrive » pour un paquet déjà là : il clignoterait
+    const lent = setTimeout(() => {
+      if (jeton === ATTENTE) vue.innerHTML = `<article class="ls"><p class="ls-attente">La phrase arrive…</p></article>`;
+    }, 200);
+    let t;
+    try {
+      t = await Lecture.phraseLibre(n, k);
+    } catch (e) {
+      clearTimeout(lent);
+      if (jeton !== ATTENTE) return;
+      vue.innerHTML = `<article class="ls">
+        <nav class="ls-nav"><button type="button" class="btn-lien" id="lsRetour">← Les textes du N${n}</button></nav>
+        <p class="ls-attente">${echappe(e.message)}</p></article>`;
+      $("lsRetour").addEventListener("click", () => {
+        Pref.ecrit("niveauLecture", n);
+        va("lecture");
+      });
+      return;
+    }
+    clearTimeout(lent);
+    if (jeton !== ATTENTE) return;
+    const suivante = (k + 1) % total;
+    Pref.ecrit(`phraseLibre${n}`, suivante);
+    const traduite = Pref.lit("traductionLecture", false) === true;
+    LISEUSE = { t, debut: Date.now(), ecoute: false, minuteur: null };
+    vue.innerHTML = `
+      <article class="ls ls-libre">
+        <nav class="ls-nav">
+          <button type="button" class="btn-lien" id="lsRetour">← Les textes du N${n}</button>
+          <span>${(k + 1).toLocaleString("fr-FR")} / ${total.toLocaleString("fr-FR")}</span>
+        </nav>
+        <header class="ls-tete">
+          <h1 class="ls-titre" lang="ja">多読</h1>
+          <p class="ls-titre-fr">Lecture libre · N${n}</p>
+        </header>
+        ${outilsHtml(traduite, "Écouter")}
+        <div class="ls-texte ls-seule${traduite ? " ls-traduite" : ""}" id="lsTexte" lang="ja">${corpsTexte(t)}</div>
+        <nav class="ls-libre-suite">
+          ${k ? `<button type="button" class="btn-lien" id="lsAvant" aria-label="Phrase précédente">←
+            <span class="ls-avant-mot">Précédente</span></button>` : "<span></span>"}
+          <button type="button" class="btn btn-grand" id="lsApres">次 <span>Phrase suivante</span></button>
+        </nav>
+        <p class="ls-source">Phrases et traductions de <a href="https://tatoeba.org/fr" target="_blank" rel="noopener">Tatoeba</a>
+          (CC BY 2.0 FR), certaines traduites depuis l'anglais.</p>
+      </article>
+      <div class="pupitre" id="pupitre" role="dialog" aria-label="Le mot touché" hidden></div>`;
+    brancheLiseuse(vue, t);
+    $("lsApres").addEventListener("click", () => phraseLibre(n, suivante));
+    if (k) $("lsAvant").addEventListener("click", () => phraseLibre(n, k - 1));
+    Lecture.phraseLibre(n, suivante).catch(() => {});
+  }
+
+  /* Sans mot touché, les flèches passent d'une phrase à l'autre. */
+  document.addEventListener("keydown", (e) => {
+    if (!LISEUSE || LISEUSE.t.type !== "libre" || LISEUSE.choisi) return;
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    if (!$("fiche").hidden || (e.target.closest && e.target.closest("input, select, textarea"))) return;
+    const b = $(e.key === "ArrowRight" ? "lsApres" : "lsAvant");
+    if (!b) return;
+    e.preventDefault();
+    b.click();
+  });
+
   function quitteLiseuse() {
+    ATTENTE++;
     if (!LISEUSE) return;
     arreteEcoute();
     fermePupitre();
@@ -3414,8 +3577,11 @@
         <div class="pp-phrase">
           <button type="button" class="btn-son" id="ppPhrase">${ICONE_SON}<span>La phrase</span></button>
           <button type="button" class="btn-lien" id="ppTrad">Sa traduction</button>
+          ${ph.id ? `<a class="btn-lien" href="https://tatoeba.org/fr/sentences/show/${ph.id}" target="_blank"
+            rel="noopener">Sur Tatoeba</a>` : ""}
           ${gramHtml(ph.g, "Dans cette phrase")}
-          <p class="pp-fr" id="ppFr" hidden>${echappe(ph.fr)}</p>
+          <p class="pp-fr" id="ppFr" hidden>${echappe(ph.fr)}${ph.relais
+            ? ` <span class="pp-relais">(traduite depuis l'anglais)</span>` : ""}</p>
         </div>
       </div>`;
   }
@@ -3523,7 +3689,7 @@
 
   function majBoutonEcoute() {
     const b = $("lsEcoute");
-    if (b) b.querySelector("span").textContent = LISEUSE && LISEUSE.ecoute ? "Arrêter" : "Tout écouter";
+    if (b) b.querySelector("span").textContent = LISEUSE && LISEUSE.ecoute ? "Arrêter" : b.dataset.repos;
   }
 
   function ecouteTout(depuis) {
@@ -4157,101 +4323,65 @@
   /* =====================================================================
      設定 - Les paramètres
      =====================================================================
-     Tout ce qui se règle, au même endroit : ce que la séance fait
-     découvrir, la voix, l'écriture, l'aide à la lecture, le thème. Sur cet
-     appareil, comme le reste des réglages ; un choix compte dès qu'on le
-     fait. La liseuse et les fiches de grammaire gardent leurs bascules sous
-     la main : ce sont les mêmes réglages. */
-  const THEMES = [["systeme", "Comme l'appareil"], ["jour", "Clair"], ["nuit", "Sombre"]];
+     Un panneau sous l'engrenage de l'en-tête, comme ailleurs sur Abyss (en
+     bas de l'écran sur un téléphone). Tout ce qui se règle, au même
+     endroit, sur cet appareil comme le reste des réglages. Un choix compte
+     dès qu'on le fait, et ce qui est à l'écran le suit sans attendre : la
+     page du jour ses quotas, la liseuse ses furigana. La liseuse et les
+     fiches de grammaire gardent leurs bascules sous la main : ce sont les
+     mêmes réglages. */
+  const THEMES = [["systeme", "Auto"], ["jour", "Clair"], ["nuit", "Sombre"]];
 
-  function vueParametres(vue) {
-    const segment = (nom, cle, choix, actuel) => `<div class="segment segment-petit" role="radiogroup" aria-label="${nom}">
-      ${choix.map(([v, libelle]) => `<button type="button" role="radio" data-${cle}="${v}"
-        aria-checked="${v === actuel}">${libelle}</button>`).join("")}</div>`;
-    const quotaHtml = (type, nom) => `
-      <label class="param-quota"><span class="param-nom">${nom}</span>
-        <select data-quota="${type}">${QUOTAS[type].choix.map((n) =>
-          `<option value="${n}"${n === quota(type) ? " selected" : ""}>${n}</option>`).join("")}</select>
-      </label>`;
-    const traduite = Pref.lit("traductionLecture", false) === true;
-
-    vue.innerHTML = `
-      <header class="rubrique-tete">
-        <h1 class="titre"><span class="titre-jp" lang="ja">設定</span><span class="titre-fr">Les paramètres</span></h1>
-        <p class="chapeau">Réglés sur cet appareil : un autre garde les siens. Tes cartes et tes progrès, eux, te
-          suivent partout.</p>
-      </header>
-
-      <div class="params">
-        <section class="feuille param">
-          <h2 class="section-titre"><span lang="ja">新規</span> Nouveaux par jour</h2>
-          <p class="param-aide">Ce que la séance du jour fait découvrir, en plus des révisions. Les mots demandés en
-            lisant passent en plus, ${DEMANDES_PAR_JOUR} par jour au plus.</p>
-          <div class="param-ligne">
-            ${quotaHtml("kana", "Kanas")}${quotaHtml("kanji", "Kanjis")}${quotaHtml("mot", "Mots")}
-          </div>
-        </section>
-
-        <section class="feuille param">
-          <h2 class="section-titre"><span lang="ja">声</span> La voix</h2>
-          <p class="param-aide">Celle qui dit les kanas, les mots et les phrases. Dans un dialogue, chacun parle avec la
-            sienne ; « Les deux » les alterne partout ailleurs.</p>
-          <div class="param-ligne">
-            ${segment("Voix", "voix", VOIX_CHOIX.map((v) => [v.id, v.nom]), Voix.choix())}
-            ${boutonSon("essaiVoix", "Essayer")}
-          </div>
-        </section>
-
-        <section class="feuille param">
-          <h2 class="section-titre"><span lang="ja">文字</span> L'écriture</h2>
-          <p class="param-aide">En rōmaji, les mots, les phrases et les textes s'écrivent en lettres latines :
-            <em>Tōkyō ni sunde imasu.</em> Les kanas et les kanjis gardent leur écriture là où c'est elle qu'on
-            apprend : leurs tableaux, leurs cartes, la lecture d'un mot en kanjis, le test de niveau.</p>
-          <div class="param-ligne">
-            ${segment("Écriture", "ecriture", [["kanas", "Kanas et kanjis"], ["romaji", "Rōmaji"]], romaji() ? "romaji" : "kanas")}
-          </div>
-        </section>
-
-        <section class="feuille param">
-          <h2 class="section-titre"><span lang="ja">読</span> L'aide à la lecture</h2>
-          <p class="param-aide">Les furigana, la lecture en petit au-dessus des kanjis : ${romaji()
-            ? "sans effet en rōmaji, où il n'y a pas de kanjis."
-            : "cachés, un mot touché montre toujours les siens."}</p>
-          <div class="param-champ${romaji() ? " param-eteint" : ""}">
-            <span class="param-nom">Furigana de la grammaire</span>${reglageFurigana(true)}
-          </div>
-          <div class="param-champ${romaji() ? " param-eteint" : ""}">
-            <span class="param-nom">Furigana des textes</span>${segmentFuriganaLecture(furiganaLecture())}
-          </div>
-          <div class="param-champ">
-            <span class="param-nom">Traduction des textes</span>
-            ${segment("Traduction des textes", "traduction", [["0", "Cachée"], ["1", "Sous chaque phrase"]], traduite ? "1" : "0")}
-          </div>
-        </section>
-
-        <section class="feuille param">
-          <h2 class="section-titre"><span lang="ja">色</span> Le thème</h2>
-          <p class="param-aide">Le papier le jour, l'encre la nuit. Le bouton en haut de la page passe de l'un à
-            l'autre.</p>
-          <div class="param-ligne">${segment("Thème", "choix-theme", THEMES, choixTheme())}</div>
-        </section>
+  function reglagesHtml() {
+    const segment = (cle, nom, choix, actuel) => `<div class="segment segment-petit" role="radiogroup" aria-label="${nom}">
+      ${choix.map(([v, libelle]) => `<button type="button" role="radio" data-rg="${cle}" data-v="${v}"
+        aria-checked="${String(v) === String(actuel)}">${libelle}</button>`).join("")}</div>`;
+    // `classes` : rg-eteinte (sans effet pour l'instant), rg-large (les
+    // choix passent dessous sur un téléphone)
+    const ligne = (nom, precision, controle, classes) => `
+      <div class="rg-ligne${classes ? " " + classes : ""}">
+        <span class="rg-nom">${nom}${precision ? ` <small>${precision}</small>` : ""}</span>${controle}
       </div>`;
+    const ligneQuota = (type, nom) => ligne(nom, "", segment(`quota-${type}`, `${nom} nouveaux par jour`,
+      QUOTAS[type].choix.map((n) => [n, n]), quota(type)));
+    const groupe = (jp, nom, lignes, note) => `
+      <section class="rg-groupe">
+        <h3 class="rg-groupe-titre"><span lang="ja">${jp}</span> ${nom}${note ? ` <small>${note}</small>` : ""}</h3>
+        ${lignes}
+      </section>`;
+    const ro = romaji();
+    return `
+      <div class="rg-boite" role="dialog" aria-labelledby="rgTitre">
+        <div class="rg-tete">
+          <h2 class="rg-titre" id="rgTitre"><span lang="ja">設定</span> Paramètres</h2>
+          <button type="button" class="fi-x" id="rgX" aria-label="Fermer les paramètres">&times;</button>
+        </div>
+        ${groupe("新規", "Nouveaux par jour", ligneQuota("kana", "Kanas") + ligneQuota("kanji", "Kanjis") + ligneQuota("mot", "Mots"))}
+        ${groupe("読", "Lecture", ligne("Écriture", "", segment("ecriture", "Écriture",
+            [["kanas", "Kanas et kanjis"], ["romaji", "Rōmaji"]], ro ? "romaji" : "kanas"))
+          + ligne("Furigana", "", segment("furi", "Furigana", MODES_FURIGANA, furigana()),
+            ro ? "rg-large rg-eteinte" : "rg-large")
+          + ligne("Traduction", "textes", segment("traduction", "Traduction des textes",
+            [["0", "Cachée"], ["1", "Affichée"]], Pref.lit("traductionLecture", false) === true ? "1" : "0")),
+          ro ? "pas de furigana en rōmaji" : "")}
+        ${groupe("一般", "Général", ligne("Voix", "", `<div class="rg-voix">
+            ${segment("voix", "Voix", VOIX_CHOIX.map((v) => [v.id, v.nom]), Voix.choix())}
+            <button type="button" class="rg-essai" id="rgEssai" aria-label="Écouter la voix">${ICONE_SON}</button>
+          </div>`)
+          + ligne("Thème", "", segment("theme", "Thème", THEMES, choixTheme())))}
+        <p class="rg-pied">Réglés sur cet appareil.</p>
+      </div>`;
+  }
 
-    // un groupe de boutons : celui qu'on touche devient le choix
-    const coche = (cle, b) => vue.querySelectorAll(`[data-${cle}]`)
-      .forEach((x) => x.setAttribute("aria-checked", String(x === b)));
-    vue.querySelectorAll("select[data-quota]").forEach((s) => s.addEventListener("change", () => {
-      Pref.ecrit(QUOTAS[s.dataset.quota].pref, +s.value);
-    }));
-    // choisir une voix la fait entendre : c'est la seule façon de choisir
-    vue.querySelectorAll("[data-voix]").forEach((b) => b.addEventListener("click", () => {
-      Pref.ecrit("voix", b.dataset.voix);
-      coche("voix", b);
-      dire(PHRASE_ESSAI);
-    }));
-    $("essaiVoix").addEventListener("click", () => dire(PHRASE_ESSAI));
-    vue.querySelectorAll("[data-ecriture]").forEach((b) => b.addEventListener("click", async () => {
-      const oui = b.dataset.ecriture === "romaji";
+  /* Ce que fait chaque choix. Ce qui est à l'écran suit : les bascules de
+     la page qui règlent la même chose, la liseuse. */
+  const REGLE = {
+    quota(v, type) {
+      Pref.ecrit(QUOTAS[type].pref, +v);
+      if (rubrique() === "") rend();           // la séance du jour change
+    },
+    async ecriture(v) {
+      const oui = v === "romaji";
       if (oui === romaji()) return;
       if (oui) {
         try { await chargeRomaji(); } catch (e) { toast(`${e.message} Les phrases s'écrivent sans espaces.`, true); }
@@ -4260,36 +4390,81 @@
       Pref.ecrit("romaji", oui);
       appliqueRomaji();
       rend();
-    }));
-    brancheFurigana(vue);
-    vue.querySelectorAll("[data-furi]").forEach((b) => b.addEventListener("click", () => {
-      Pref.ecrit("furiganaLecture", b.dataset.furi);
-      coche("furi", b);
-    }));
-    vue.querySelectorAll("[data-traduction]").forEach((b) => b.addEventListener("click", () => {
-      Pref.ecrit("traductionLecture", b.dataset.traduction === "1");
-      coche("traduction", b);
-    }));
-    vue.querySelectorAll("[data-choix-theme]").forEach((b) => b.addEventListener("click", () => {
-      if (b.dataset.choixTheme === "systeme") Pref.efface("theme");
-      else Pref.ecrit("theme", b.dataset.choixTheme);
+      // les furigana s'éteignent ou se rallument dans le panneau
+      $("reglages").innerHTML = reglagesHtml();
+      $("reglages").querySelector('[data-rg="ecriture"][aria-checked="true"]').focus();
+    },
+    furi: choisitFurigana,
+    traduction(v) {
+      const oui = v === "1";
+      Pref.ecrit("traductionLecture", oui);
+      if ($("lsTexte")) $("lsTexte").classList.toggle("ls-traduite", oui);
+      if ($("lsTrad")) $("lsTrad").setAttribute("aria-pressed", String(oui));
+    },
+    // choisir une voix la fait entendre : c'est la seule façon de choisir
+    voix(v) {
+      Pref.ecrit("voix", v);
+      dire(PHRASE_ESSAI);
+    },
+    theme(v) {
+      if (v === "systeme") Pref.efface("theme");
+      else Pref.ecrit("theme", v);
       appliqueTheme();
-      coche("choix-theme", b);
-    }));
+    },
+  };
+
+  function ouvreReglages() {
+    $("reglages").innerHTML = reglagesHtml();
+    $("reglages").hidden = false;
+    $("reglagesBtn").setAttribute("aria-expanded", "true");
+    document.body.classList.add("reglages-ouverts");
+    $("rgX").focus();
   }
+  function fermeReglages(rendFocus) {
+    if ($("reglages").hidden) return;
+    $("reglages").hidden = true;
+    $("reglages").innerHTML = "";
+    $("reglagesBtn").setAttribute("aria-expanded", "false");
+    document.body.classList.remove("reglages-ouverts");
+    if (rendFocus) $("reglagesBtn").focus();
+  }
+  $("reglagesBtn").addEventListener("click", () => {
+    if ($("reglages").hidden) ouvreReglages();
+    else fermeReglages();
+  });
+  $("reglages").addEventListener("click", (e) => {
+    // le fond, autour du panneau, sur un téléphone
+    if (e.target === $("reglages") || e.target.closest("#rgX")) { fermeReglages(true); return; }
+    if (e.target.closest("#rgEssai")) { dire(PHRASE_ESSAI); return; }
+    const b = e.target.closest("[data-rg]");
+    if (!b || b.getAttribute("aria-checked") === "true") return;
+    $("reglages").querySelectorAll(`[data-rg="${b.dataset.rg}"]`)
+      .forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+    const q = /^quota-(.+)$/.exec(b.dataset.rg);
+    if (q) REGLE.quota(b.dataset.v, q[1]);
+    else REGLE[b.dataset.rg](b.dataset.v);
+  });
+  // un clic ailleurs le referme, comme le menu de l'engrenage ailleurs sur
+  // Abyss ; à l'appui et non au clic, pour que ce clic serve aussi à ce
+  // qu'il vise (un onglet, un bouton de la page)
+  document.addEventListener("pointerdown", (e) => {
+    if (!$("reglages").hidden && !e.target.closest("#reglages, #reglagesBtn")) fermeReglages();
+  });
 
   /* =====================================================================
      Démarrage
      ===================================================================== */
-  function vueFermee(vue) {
+  /* Pas connecté : la matière est la même pour tous, mais la progression
+     est à chacun, et il n'y a rien à montrer sans elle. */
+  function vueConnexion(vue) {
     $("onglets").hidden = true;
     vue.innerHTML = `
-      <section class="ferme">
-        <div class="tampon tampon-pose" aria-hidden="true"><span lang="ja">工</span></div>
-        <h1 class="salut" lang="ja">工事中</h1>
-        <p class="salut-trad"><em>kōjichū</em> — en travaux</p>
-        <p>Ce coin d'Abyss n'est pas encore ouvert.</p>
-        <p><a class="btn" href="/abyss">Retour à Abyss</a></p>
+      <section class="porte">
+        <div class="tampon tampon-pose" aria-hidden="true"><span lang="ja">入</span></div>
+        <h1 class="salut" lang="ja">ようこそ</h1>
+        <p class="salut-trad"><em>yōkoso</em> « bienvenue »</p>
+        <p>Connecte-toi pour commencer à apprendre le japonais chaque jour.</p>
+        <p><a class="btn" href="/abyss?connexion=1">Se connecter sur Abyss</a></p>
       </section>`;
   }
 
@@ -4307,16 +4482,21 @@
       await Promise.all([chargeEtat(), Kanji.charge(), Mots.charge(), Grammaire.charge(),
                          Lecture.charge(), transcrits]);
     } catch (e) {
-      if (e.statut === 404) { vueFermee(vue); return; }
+      if (e.statut === 401) { vueConnexion(vue); return; }
       vue.innerHTML = `<p class="erreur-page">Impossible de charger la page : ${echappe(e.message)}</p>`;
       return;
     }
     $("onglets").hidden = false;
+    $("reglagesBtn").hidden = false;
     if (window.Suggestion) {
       $("suggBtn").hidden = false;
       Suggestion.branche({ bouton: "suggBtn", projet: "nihongo" });
     }
+    // l'ancienne page des paramètres : celle du jour, le panneau ouvert
+    const parametres = /^\/nihongo\/parametres\/?$/.test(location.pathname);
+    if (parametres) history.replaceState(null, "", "/nihongo");
     rend();
+    if (parametres) ouvreReglages();
     // les traits du jour arrivent pendant qu'on lit la page, pas au premier
     // clic
     const plan = planDuJour();

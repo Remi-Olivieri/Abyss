@@ -30,6 +30,10 @@
 # faut retrouver (un seul trou par phrase) : [は/が] accepte les deux ;
 # [{食|た}べます<{食|た}べる>] demande 食べます et montre 食べる dans le
 # trou. Une réponse se tape en kanas : pas de kanji sans furigana dedans.
+# Le trou porte sur la grammaire du point, jamais sur un mot à connaître :
+# le motif lui-même ({高|たか}[い]{山|やま}, {町|まち}[の{前|まえ}に<{前|まえ}>]),
+# ou un mot à mettre en forme, que le trou montre. Une phrase dont le trou
+# est un adjectif ou un nom à deviner est une carte de vocabulaire.
 # Cinq exemples par point, trois au moins : chaque révision en prend un
 # autre. La page dit chaque phrase d'une voix fabriquée (nihongo.py voix).
 #
@@ -574,12 +578,12 @@ Les positions sont des noms, reliés à leur repère par **の**, puis suivis de
 | {近|ちか}く | près de
 | {右|みぎ}・{左|ひだり} | à droite, à gauche
 
-- {机|つくえ}の[{上|うえ}]に{本|ほん}があります。 | Il y a un livre sur le bureau.
-- {猫|ねこ}はベッドの[{下|した}]にいます。 | Le chat est sous le lit.
-- かばんの[{中|なか}]に{何|なに}がありますか。 | Qu'y a-t-il dans le sac ?
-- {銀行|ぎんこう}は{郵便局|ゆうびんきょく}の[{隣|となり}]です。 | La banque est à côté de la poste.
-- {学校|がっこう}の[{前|まえ}]に{本屋|ほんや}があります。 | Il y a une librairie devant l'école.
-- {家|いえ}の[{後|うし}ろ]に{山|やま}があります。 | Il y a une montagne derrière la maison.
+- {机|つくえ}[の{上|うえ}に<{上|うえ}>]{本|ほん}があります。 | Il y a un livre sur le bureau.
+- {猫|ねこ}はベッド[の{下|した}に<{下|した}>]います。 | Le chat est sous le lit.
+- かばん[の{中|なか}に<{中|なか}>]{何|なに}がありますか。 | Qu'y a-t-il dans le sac ?
+- {銀行|ぎんこう}は{郵便局|ゆうびんきょく}[の{隣|となり}<{隣|となり}>]です。 | La banque est à côté de la poste.
+- {学校|がっこう}[の{前|まえ}に<{前|まえ}>]{本屋|ほんや}があります。 | Il y a une librairie devant l'école.
+- {家|いえ}[の{後|うし}ろに<{後|うし}ろ>]{山|やま}があります。 | Il y a une montagne derrière la maison.
 
 ## adj-i
 titre: 〜い (les adjectifs en い)
@@ -591,13 +595,13 @@ Les adjectifs japonais se rangent en deux familles. Ceux de la première finisse
 
 Ils se placent tels quels devant le nom - {高|たか}い{山|やま}, une haute montagne - ou en fin de phrase, suivis de です : この{山|やま}は{高|たか}いです.
 
-> L'adjectif japonais se conjugue comme un verbe (négation, passé) : c'est son い final qui change, comme le montrent les fiches suivantes.
+> L'adjectif japonais se conjugue comme un verbe : c'est son い final qui change. {高|たか}い → {高|たか}**くない** (pas haut), {高|たか}**かった** (c'était haut). Deux fiches y reviennent plus loin : 〜くないです pour la négation, 〜かったです pour le passé.
 
-- {富士山|ふじさん}は[{高|たか}い]{山|やま}です。 | Le mont Fuji est une haute montagne.
-- このラーメンは[おいしい]です。 | Ces ramen sont délicieux.
-- {今日|きょう}は[{暑|あつ}い]ですね。 | Il fait chaud aujourd'hui, hein.
-- [{新|あたら}しい]{車|くるま}を{買|か}いました。 | J'ai acheté une nouvelle voiture.
-- この{部屋|へや}は[{広|ひろ}い]です。 | Cette pièce est spacieuse.
+- {富士山|ふじさん}は{高|たか}[い]{山|やま}です。 | Le mont Fuji est une haute montagne.
+- このラーメンはおいしい[です]。 | Ces ramen sont délicieux.
+- {今日|きょう}は{暑|あつ}[い]ですね。 | Il fait chaud aujourd'hui, hein.
+- {新|あたら}し[い]{車|くるま}を{買|か}いました。 | J'ai acheté une nouvelle voiture.
+- この{部屋|へや}は{広|ひろ}い[です]。 | Cette pièce est spacieuse.
 
 ## adj-na
 titre: 〜な (les adjectifs en な)
@@ -617,7 +621,7 @@ Devant un nom, ils prennent **な** : {静|しず}か**な**{町|まち}, une vi
 - {田中|たなか}さんは{親切|しんせつ}[な]{人|ひと}です。 | M. Tanaka est quelqu'un de gentil.
 - ここは{有名|ゆうめい}[な]レストランです。 | C'est un restaurant célèbre.
 - {大切|たいせつ}[な]{話|はなし}があります。 | J'ai quelque chose d'important à vous dire.
-- {夜|よる}の{公園|こうえん}は[{静|しず}か]です。 | Le parc, la nuit, est calme.
+- {夜|よる}の{公園|こうえん}は{静|しず}か[です]。 | Le parc, la nuit, est calme.
 
 ## adj-neg
 titre: 〜くないです・〜じゃありません
@@ -849,7 +853,7 @@ Pour demander : くだものの{中|なか}**で**、{何|なに}が**いちば�
 
 - {富士山|ふじさん}は{日本|にほん}[で]いちばん{高|たか}い{山|やま}です。 | Le mont Fuji est la plus haute montagne du Japon.
 - {家族|かぞく}の{中|なか}で、{父|ちち}が[いちばん]{背|せ}が{高|たか}いです。 | Dans la famille, c'est mon père le plus grand.
-- {一年|いちねん}で[いつ]がいちばん{好|す}きですか。 | Quel moment de l'année préférez-vous ?
+- {一年|いちねん}でいつ[が]いちばん{好|す}きですか。 | Quel moment de l'année préférez-vous ?
 - クラス[で]だれがいちばん{歌|うた}が{上手|じょうず}ですか。 | Qui chante le mieux de la classe ?
 - スポーツの{中|なか}で、サッカーが[いちばん]{好|す}きです。 | Parmi les sports, c'est le football que je préfère.
 

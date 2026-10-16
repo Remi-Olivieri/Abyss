@@ -105,7 +105,9 @@ PAGES = {
     "/archive/feed": "Social",
     "/collection": "Collection Yu-Gi-Oh!",
     "/collection/<pseudo>": "Collection Yu-Gi-Oh! - classeur partagé",
-    "/quiz": "Mini-Jeux / Quiz",
+    "/pokemon": "Collection Pokémon",
+    "/pokemon/<pseudo>": "Collection Pokémon - collection partagée",
+    "/quiz": "Mini-Jeux Vidéo",
     "/chainz": "L'Atelier Chainz",
     "/nihongo": "Nihongo",
     "/nihongo/<rubrique>": "Nihongo",
@@ -330,6 +332,9 @@ GESTES = {
     # ---- le classeur ----
     ("POST", "/api/collection"):                       ("classeur", True, lambda x: "a créé son classeur"),
     ("PUT", "/api/collection/carte/<int:carte_id>"):   ("classeur", True, _carte),
+    ("PUT", "/api/collection/favorites"):              ("classeur", True, lambda x:
+        "a choisi ses cartes favorites" if x.corps.get("cartes")
+        else "a retiré ses cartes favorites"),
     # ---- les mini-jeux ----
     **{("GET", regle): ("quiz", True, lambda x: f"a lancé une partie de {QUIZ[x.regle]}")
        for regle in QUIZ},

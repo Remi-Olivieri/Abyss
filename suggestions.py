@@ -46,12 +46,16 @@ SECTIONS = {
     "abyss": "Abyss",
     "jeux-videos": "Archive Jeux Vidéos",
     "collection": "Collection Yu-Gi-Oh!",
-    "quiz": "Mini-Jeux / Quiz",
+    "quiz": "Mini-Jeux Vidéo",
     # Pas encore de section dans le fichier : la premiere suggestion la cree
     # a la fin (voir ajoute_au_fichier), donc apres le quiz -- d'ou sa place.
     "chainz": "L'Atelier Chainz",
     # meme chose : sa section nait avec sa premiere suggestion
     "nihongo": "Nihongo",
+    # sorti des mini-jeux pour devenir un projet a part : meme chose
+    "yugiquiz": "Yu-Gi-Quiz!",
+    # meme chose, pour la collection Pokemon
+    "pokemon": "Collection Pokémon",
 }
 
 # Les projets qu'on ne propose qu'a l'administration : un projet pas encore
@@ -61,11 +65,11 @@ SECTIONS = {
 # Le quiz y a figure tant que ses jeux n'etaient pas finis ; il en est
 # sorti le jour ou sa tuile est devenue visible de tous -- l'y laisser
 # revenait a refuser un rapport de bug sur la seule page ou l'on peut en
-# trouver. Nihongo y entre pour la meme raison a l'envers : il est en
-# chantier, sa tuile ne s'affiche que pour l'administration.
+# trouver. Nihongo y a figure pour la meme raison, et en est sorti de meme
+# a son ouverture. La collection Pokemon y est, le temps de son chantier.
 #
 # static/commun/suggestion.js porte la meme liste sous le nom `reserve`.
-RESERVEES = ("nihongo",)
+RESERVEES = ("pokemon",)
 
 GENRES = ("suggestion", "bug")
 

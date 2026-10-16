@@ -1,0 +1,31 @@
+{
+  "id": "det1",
+  "nom": "Détective Pikachu",
+  "bloc": "sm",
+  "date": "2019-03-29",
+  "officiel": 18,
+  "total": 18,
+  "sigle": "DET",
+  "images_en": ["1", "10", "11", "12", "13", "14", "15", "16", "17", "18", "2", "3", "4", "5", "6", "7", "8", "9"],
+  "sans_image": [],
+  "cartes": [
+    ["1", "Bulbizarre", "Commune", "N", "P", 1],
+    ["2", "Ludicolo", "Rare", "N", "P", 272],
+    ["3", "Spododo", "Commune", "N", "P", 755],
+    ["4", "Salamèche", "Commune", "N", "P", 4],
+    ["5", "Dracaufeu", "Ultra rare", "N", "P", 6],
+    ["6", "Arcanin", "Rare", "N", "P", 59],
+    ["7", "Psykokwak", "Commune", "N", "P", 54],
+    ["8", "Magicarpe", "Commune", "N", "P", 129],
+    ["9", "Amphinobi", "Ultra rare", "N", "P", 658],
+    ["10", "Détective Pikachu", "Rare", "N", "P", 25],
+    ["11", "M. Mime", "Rare", "N", "P", 122],
+    ["12", "Mewtwo", "Ultra rare", "N", "P", 150],
+    ["13", "Mackogneur", "Rare", "N", "P", 68],
+    ["14", "Rondoudou", "Commune", "N", "P", 39],
+    ["15", "Snubbull", "Commune", "N", "P", 209],
+    ["16", "Excelangue", "Commune", "N", "P", 108],
+    ["17", "Métamorph", "Ultra rare", "N", "P", 132],
+    ["18", "Monaflèmit", "Rare", "N", "P", 289]
+  ]
+}

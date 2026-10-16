@@ -63,6 +63,9 @@
         <span class="led"></span>&#9881;
       </button>
       <div class="menu" id="menu" hidden role="menu">
+        <!-- Sur son propre classeur seulement : voir majVerrou. -->
+        <button class="menu-item" id="favBtn" role="menuitem" hidden>Cartes favorites</button>
+        <button class="menu-item" id="formatBtn" role="menuitem" hidden>Personnaliser</button>
         <button class="menu-item" id="exportBtn" role="menuitem">Exporter&#8230;</button>
         <!-- Il n'y a plus de mode éditeur à déverrouiller : le serveur dit
              `write: true` quand le classeur affiché est celui du visiteur
@@ -229,7 +232,20 @@ const el = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-const PER_PAGE = 18, PER_FACE = 9, PAGES_PAR_CLASSEUR = 30;
+/* Le format d'un classeur : des pochettes en colonnes et en rangées sur
+   chaque face, deux faces par page, tant de pages par tome. Ce sont les
+   réglages de son propriétaire, pour que le classeur à l'écran soit celui
+   qu'il a en main : « page 12, emplacement 4 » doit tomber sur la même
+   pochette des deux côtés. Un par onglet - les Fusion ne tiennent pas
+   forcément dans le même classeur que les Lien - porté par l'onglet
+   lui-même (t.format), et vérifié une fois pour toutes par applyData().
+   Sans onglet désigné, c'est celui qu'on regarde. */
+const FORMAT_DEFAUT = { colonnes: 3, rangees: 3, pages: 30 };
+const FORMAT_BORNES = { colonnes: [2, 4], rangees: [2, 4], pages: [5, 100] };
+const fmt = t => (t || T()).format || FORMAT_DEFAUT;
+const parFace = t => fmt(t).colonnes * fmt(t).rangees;
+const parPage = t => 2 * parFace(t);
+const parClasseur = t => parPage(t) * fmt(t).pages;
 const RARETES = [
   ['C','Commune'], ['R','Rare'], ['SR','Super'], ['UR','Ultra'], ['SE','Secrète'],
   ['CR','Collector'], ['ULTI','Ultimate'], ['G','Gold'], ['GSE','Gold Secrète'],
@@ -308,7 +324,7 @@ const S = { t:0, c:0, spread:0, sel:null, hit:null, pose:null, zoom:false, zt:0,
 
 const T = () => DATA.types[S.t] || { label:'', color:'#A086B7', classeurs:[] };
 const C = () => T().classeurs[S.c] || { n:1, cards:[] };
-const sheets = () => Math.max(PAGES_PAR_CLASSEUR, Math.ceil(C().cards.length / PER_PAGE));
+const sheets = () => Math.max(fmt().pages, Math.ceil(C().cards.length / parPage()));
 const narrow = () => matchMedia('(max-width:900px)').matches;
 const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -321,12 +337,13 @@ const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const COULEUR = /^(#[0-9a-f]{3,8}|rgba?\([0-9\s.,%/]+\)|[a-z]{3,20})$/i;
 const couleurSure = c => (typeof c === 'string' && COULEUR.test(c.trim())) ? c.trim() : '#A086B7';
 
-/* emplacement : page + face + numéro de 1 à 9 */
-function pos(i){
-  const k = i % PER_PAGE;
-  return { page: Math.floor(i / PER_PAGE) + 1,
-           face: k < PER_FACE ? 'recto' : 'verso',
-           slot: k % PER_FACE + 1 };
+/* emplacement : page + face + numéro dans la face, au format de l'onglet `t` */
+function pos(i, t){
+  const pp = parPage(t), pf = parFace(t);
+  const k = i % pp;
+  return { page: Math.floor(i / pp) + 1,
+           face: k < pf ? 'recto' : 'verso',
+           slot: k % pf + 1 };
 }
 
 /* ---------------- ce qui dormait dans le navigateur ----------------
@@ -509,9 +526,11 @@ function applyData(d, frais){
   DATA.types.forEach(t => {
     t.classeurs = (Array.isArray(t.classeurs) ? t.classeurs : [])
       .filter(c => c && Array.isArray(c.cards));
+    t.format = formatSur(t.format);
   });
   DATA.images = DATA.images || '/static/yugioh/Cards/';
   DATA.vignettes = DATA.vignettes || '/collection/vignette/';
+  relie();
   CAN_WRITE = DATA.write === true;
   S.t = Math.max(0, Math.min(S.t, DATA.types.length - 1));
   S.c = Math.max(0, Math.min(S.c, T().classeurs.length - 1));
@@ -520,6 +539,38 @@ function applyData(d, frais){
   majVerrou();
   setSync(frais ? 'live' : 'stale',
           frais ? (CAN_WRITE ? 'modifiable' : 'lecture seule') : 'actualisation...');
+}
+
+/* Un format reçu du serveur, ou d'un cache plus ancien que lui : chaque
+   valeur hors bornes retombe sur celle par défaut, plutôt que de dessiner
+   un classeur d'une colonne ou de mille pages. */
+function formatSur(f){
+  const sortie = Object.assign({}, FORMAT_DEFAUT);
+  if (!f || typeof f !== 'object') return sortie;
+  Object.keys(FORMAT_BORNES).forEach(k => {
+    const v = f[k], b = FORMAT_BORNES[k];
+    if (Number.isInteger(v) && v >= b[0] && v <= b[1]) sortie[k] = v;
+  });
+  return sortie;
+}
+
+/* Les tomes, recoupés au format de chaque onglet. La base range une famille
+   en tomes de 540 cartes ; ici ils ne servent plus qu'à donner l'ordre : on
+   met les cartes bout à bout et on les redistribue par classeurs de la
+   taille choisie. Au format par défaut, c'est exactement le découpage de la
+   base. Rejouable sans dégât sur un classeur déjà recoupé - le cache en
+   garde un. */
+function relie(){
+  DATA.types.forEach(t => {
+    const place = parClasseur(t);
+    const toutes = [];
+    t.classeurs.forEach(c => { for (const x of c.cards) toutes.push(x); });
+    const tomes = [];
+    for (let k = 0; k < toutes.length; k += place){
+      tomes.push({ n: tomes.length + 1, cards: toutes.slice(k, k + place) });
+    }
+    t.classeurs = tomes.length ? tomes : [{ n: 1, cards: [] }];
+  });
 }
 
 async function charger(opts){
@@ -737,6 +788,10 @@ function majVerrou(){
      panne. */
   el('homeBtn').hidden = !MOI.pseudo || CAN_WRITE;
   el('unlock').hidden = CAN_WRITE;
+  /* les favorites sont un réglage de son classeur à soi, pas de celui qu'on
+     regarde */
+  el('favBtn').hidden = !CAN_WRITE;
+  el('formatBtn').hidden = !CAN_WRITE;
   el('unlock').textContent = !MOI.connecte ? 'Se connecter sur Abyss'
     : MOI.pseudo ? 'Ouvrir mon classeur' : 'Créer mon classeur';
   /* les boutons d'écriture dépendent du verrou, pas de la carte ouverte :
@@ -988,29 +1043,44 @@ function renderMeter(){
 }
 function renderClasseurs(){
   const cs = T().classeurs;
+  /* Un petit format coupe une famille en dix classeurs ou plus : le mot ne
+     s'écrit alors qu'une fois, devant les numéros, comme sur téléphone. */
+  el('classeurs').classList.toggle('serres', cs.length > 4);
   el('classeurs').innerHTML = cs.length < 2 ? '' :
     /* Le mot dans un <span> : sur téléphone la barre du bas ne l'écrit
        qu'une fois, devant les numéros (voir .cl-mot dans collection.css). */
     cs.map((c, i) => '<button data-c="' + i + '" aria-pressed="' + (i === S.c)
       + '" aria-label="Classeur ' + c.n + '"><span class="cl-mot">Classeur </span>'
       + c.n + '</button>').join('');
+  /* Sur téléphone la rangée défile : le classeur ouvert y est ramené au
+     milieu, sinon le dixième s'ouvrait hors de vue. Sans effet quand tout
+     tient. */
+  const barre = el('classeurs'), ouvert = barre.querySelector('[aria-pressed="true"]');
+  if (ouvert){
+    const a = ouvert.getBoundingClientRect(), b = barre.getBoundingClientRect();
+    barre.scrollLeft += (a.left + a.width / 2) - (b.left + b.width / 2);
+  }
 }
 
 /* ---------------- dimensionnement : le classeur remplit l'écran ---------------- */
 function fit(){
   const st = el('stage');
   if (!st || el('app').hidden) return;
+  /* le format est celui de l'onglet : render() repasse ici à chaque
+     changement d'onglet, et la grille prend ses colonnes */
+  const cols = fmt().colonnes, rangs = fmt().rangees;
+  document.documentElement.style.setProperty('--cols', cols);
   const gap = 8, pad = 13, head = 28, marge = 6;
   let ch;
   if (narrow()){
-    const cw = (st.clientWidth - 2 * gap - 2 * pad - marge) / 3;
+    const cw = (st.clientWidth - (cols - 1) * gap - 2 * pad - marge) / cols;
     ch = cw * 86 / 59;
   } else {
     const bar = el('topbar') ? el('topbar').offsetHeight : 0;
     const dispoW = st.clientWidth - 2 * (38 + 10) - 20 - marge;   // flèches + reliure
     const dispoH = st.clientHeight - bar - marge;
-    const parLargeur = ((dispoW / 2 - 2 * pad - 2 * gap) / 3) * 86 / 59;
-    const parHauteur = (dispoH - 2 * pad - head - 2 * gap) / 3;
+    const parLargeur = ((dispoW / 2 - 2 * pad - (cols - 1) * gap) / cols) * 86 / 59;
+    const parHauteur = (dispoH - 2 * pad - head - (rangs - 1) * gap) / rangs;
     ch = Math.min(parLargeur, parHauteur);
   }
   ch = Math.max(72, Math.floor(ch));
@@ -1036,7 +1106,7 @@ function slotHTML(i, col){
   if (S.zoom && S.sel === i && S.t === S.zt && S.c === S.zc) cls.push('sortie');
   if (S.hit && S.hit.c === S.c && S.hit.i === i) cls.push('hit');
   if (S.pose && S.pose.c === S.c && S.pose.i === i) cls.push('pose');
-  /* décalage du reflet : les neuf pochettes d'une face ne clignotent pas ensemble */
+  /* décalage du reflet : les pochettes d'une face ne clignotent pas ensemble */
   return '<button class="' + cls.join(' ') + '" style="--c:' + couleurSure(col)
     + ';--d:' + ((i * 7) % 9 * 0.62).toFixed(2) + 's" data-i="' + i + '">'
     + art
@@ -1049,28 +1119,16 @@ function majSlot(i){
   const s = slotEl(i);
   if (s) s.outerHTML = slotHTML(i);
 }
-function majFace(){
-  const pages = el('binder').querySelectorAll('.page');
-  for (let k = 0; k < pages.length; k++){
-    const c = pages[k].querySelector('.cnt');
-    if (c) c.textContent = pages[k].querySelectorAll('.slot.owned').length + '/9';
-  }
-}
 
 function faceHTML(sheet, face){
   const side = face === 'recto' ? 'r' : 'l';
   if (sheet < 1 || sheet > sheets()) return '<div class="page ' + side + ' cover"></div>';
-  const cards = C().cards, col = couleurSure(T().color);
-  const start = (sheet - 1) * PER_PAGE + (face === 'recto' ? 0 : PER_FACE);
-  let slots = '', pleines = 0;
-  for (let j = 0; j < PER_FACE; j++){
-    const i = start + j;
-    if (cards[i] && cards[i][RAR]) pleines++;
-    slots += slotHTML(i, col);
-  }
+  const col = couleurSure(T().color);
+  const start = (sheet - 1) * parPage() + (face === 'recto' ? 0 : parFace());
+  let slots = '';
+  for (let j = 0; j < parFace(); j++) slots += slotHTML(start + j, col);
   return '<div class="page ' + side + '">'
-    + '<div class="face"><span class="pg">Page ' + sheet + '</span>'
-    + '<span class="cnt">' + pleines + '/9</span></div>'
+    + '<div class="face"><span class="pg">Page ' + sheet + '</span></div>'
     + '<div class="grid">' + slots + '</div></div>';
 }
 const SPINE = '<div class="spine">' + '<i class="ring"></i>'.repeat(4) + '</div>';
@@ -1445,7 +1503,7 @@ function fermer(insertion){
       S.pose = { c:z.c, i:z.i };
       setTimeout(() => { S.pose = null; }, 700);
     }
-    majSlot(z.i); majFace();
+    majSlot(z.i);
   };
   const a = animSortie(z.box, dst, z.rect, owned);
   a.onfinish = fini;
@@ -1524,7 +1582,7 @@ el('pSave').onclick = async () => {
   el('pSave').disabled = false;
   renderMeter();
   if (ok && !avait){ fermer(true); return; }   // ajout : la carte se glisse dans la pochette
-  majPanel(S.sel); majGrandeCarte(); majSlot(S.sel); majFace();
+  majPanel(S.sel); majGrandeCarte(); majSlot(S.sel);
 };
 el('pDel').onclick = async () => {
   if (S.sel === null) return;
@@ -1534,7 +1592,7 @@ el('pDel').onclick = async () => {
   await poser(card, null, null);
   el('pDel').disabled = false;
   renderMeter();
-  majPanel(S.sel); majGrandeCarte(); majSlot(S.sel); majFace();  // la carte reste en main
+  majPanel(S.sel); majGrandeCarte(); majSlot(S.sel);  // la carte reste en main
 };
 el('pClose').onclick = () => fermer();
 el('scrim').onclick = () => fermer();
@@ -1761,7 +1819,7 @@ const LIBELLE_ETAT = { 3:'Bon', 2:'Moyen', 1:'Mauvais' };
    l'emplacement -- les memes quatre nombres que le panneau affiche sous son
    nom, et sous les memes noms. */
 function carteAplat(t, classeur, card, i){
-  const o = pos(i);
+  const o = pos(i, t);
   return {
     famille: t.label, nom: card[NOM],
     rarete: card[RAR] || '', etat: LIBELLE_ETAT[card[ETAT]] || '',
@@ -1895,6 +1953,308 @@ function celluleCSV(v){
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 el('exportBtn').onclick = ouvrirExport;
+
+/* =========================================================
+   Les cartes favorites
+
+   Trois cartes choisies parmi toutes celles du jeu -- pas seulement celles
+   du classeur : une favorite est une carte qu'on aime, pas une carte qu'on
+   a. L'accueil d'Abyss les montre en éventail sur la vignette de la
+   Collection, de gauche à droite dans l'ordre des trois places ; sans
+   elles, il montre les siennes.
+
+   La recherche se fait côté serveur (/api/collection/catalogue) : le
+   catalogue entier pèse 570 Ko, et la page n'en a jamais besoin que de
+   vingt-quatre lignes à la fois. Rien n'est écrit avant « Enregistrer ».
+   ========================================================= */
+const FAV_MAXI = 3;
+const FAV = { cartes: [], vignettes: '/collection/vignette/', minuteur: null, jeton: 0 };
+
+async function apiFav(chemin, corps){
+  const r = await fetch('/api/collection' + chemin, corps ? {
+    method: 'PUT', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(corps),
+  } : { credentials: 'same-origin' });
+  const d = await r.json().catch(() => null);
+  if (!r.ok || !d || !d.ok) throw new Error((d && d.message) || 'http ' + r.status);
+  if (d.vignettes) FAV.vignettes = d.vignettes;
+  return d;
+}
+
+function vignetteFav(c){
+  return '<img src="' + esc(FAV.vignettes + c.fichier) + '" alt="" loading="lazy" decoding="async">';
+}
+
+async function ouvrirFavorites(){
+  closeMenu();
+  FAV.cartes = [];
+  ouvrirModale(
+    '<h2>Cartes favorites</h2>'
+    + '<div class="fav-places" id="favPlaces"></div>'
+    + '<input class="fav-champ" id="favChamp" type="search" autocomplete="off" spellcheck="false"'
+    + ' placeholder="Chercher une carte…" aria-label="Chercher une carte du jeu">'
+    + '<div class="fav-resultats" id="favResultats"></div>'
+    + '<div class="row"><button class="act ghost" id="favAnnuler">Annuler</button>'
+    + '<button class="act" id="favGo">Enregistrer</button></div>');
+  el('favAnnuler').onclick = fermerModale;
+  el('favGo').onclick = enregistrerFavorites;
+  el('favChamp').addEventListener('input', () => {
+    clearTimeout(FAV.minuteur);
+    FAV.minuteur = setTimeout(chercherFavorites, 250);
+  });
+  dessinePlaces();
+  dessineResultats(null);
+  el('favChamp').focus();
+  try {
+    const d = await apiFav('/favorites');
+    FAV.cartes = d.cartes || [];
+    if (el('favPlaces')) dessinePlaces();
+  } catch (e) {
+    toast('Favorites illisibles : ' + e.message, true);
+  }
+}
+
+/* Les trois places : la carte, ou un emplacement vide qui dit son rang. */
+function dessinePlaces(){
+  const zone = el('favPlaces');
+  if (!zone) return;
+  let html = '';
+  for (let i = 0; i < FAV_MAXI; i++){
+    const c = FAV.cartes[i];
+    html += c
+      ? '<div class="fav-place pleine">' + vignetteFav(c)
+        + '<span class="fav-nom">' + esc(c.nom) + '</span>'
+        + '<button type="button" class="fav-retirer" data-i="' + i + '" aria-label="Retirer '
+        + esc(c.nom) + '">&#10005;</button></div>'
+      : '<div class="fav-place"><span class="fav-rang">' + (i + 1) + '</span></div>';
+  }
+  zone.innerHTML = html;
+  zone.querySelectorAll('.fav-retirer').forEach(b => b.onclick = () => {
+    FAV.cartes.splice(+b.dataset.i, 1);
+    dessinePlaces();
+    marqueResultats();
+  });
+}
+
+async function chercherFavorites(){
+  const q = el('favChamp') ? el('favChamp').value.trim() : '';
+  const jeton = ++FAV.jeton;
+  if (q.length < 2){ dessineResultats(null); return; }
+  try {
+    const d = await apiFav('/catalogue?q=' + encodeURIComponent(q));
+    if (jeton === FAV.jeton) dessineResultats(d.cartes || []);   // pas une réponse en retard
+  } catch (e) {
+    if (jeton === FAV.jeton) el('favResultats').innerHTML =
+      '<p class="fav-info">La recherche n\'a pas répondu.</p>';
+  }
+}
+
+function dessineResultats(cartes){
+  const zone = el('favResultats');
+  if (!zone) return;
+  if (cartes === null){ zone.innerHTML = ''; return; }
+  if (!cartes.length){
+    zone.innerHTML = '<p class="fav-info">Aucune carte ne porte ce nom.</p>';
+    return;
+  }
+  zone.innerHTML = cartes.map(c =>
+    '<button type="button" class="fav-carte" data-passcode="' + esc(c.passcode) + '">'
+    + vignetteFav(c) + '<span>' + esc(c.nom) + '</span></button>').join('');
+  zone.querySelectorAll('.fav-carte').forEach((b, i) => b.onclick = () => choisirFavorite(cartes[i]));
+  marqueResultats();
+}
+
+/* Une carte déjà choisie se voit dans les résultats : un second clic la
+   retire, plutôt que de la poser deux fois. */
+function marqueResultats(){
+  const choisies = new Set(FAV.cartes.map(c => c.passcode));
+  document.querySelectorAll('#favResultats .fav-carte').forEach(b =>
+    b.classList.toggle('on', choisies.has(b.dataset.passcode)));
+}
+
+function choisirFavorite(c){
+  const i = FAV.cartes.findIndex(x => x.passcode === c.passcode);
+  if (i >= 0) FAV.cartes.splice(i, 1);
+  else if (FAV.cartes.length >= FAV_MAXI){
+    toast('Trois favorites au plus : retires-en une avant.', true);
+    return;
+  } else FAV.cartes.push(c);
+  dessinePlaces();
+  marqueResultats();
+}
+
+async function enregistrerFavorites(){
+  const b = el('favGo');
+  b.disabled = true;
+  try {
+    await apiFav('/favorites', { cartes: FAV.cartes.map(c => c.passcode) });
+    fermerModale();
+    toast(FAV.cartes.length ? 'Favorites enregistrées.' : 'Favorites retirées.');
+  } catch (e) {
+    toast('Pas enregistrées : ' + e.message, true);
+    b.disabled = false;
+  }
+}
+el('favBtn').onclick = ouvrirFavorites;
+
+/* =========================================================
+   Le format du classeur
+
+   Combien de pochettes par face, en colonnes et en rangées, et combien de
+   pages par classeur : de quoi faire du classeur à l'écran celui qu'on a
+   sur l'étagère. Il se règle onglet par onglet, sur celui qu'on regarde.
+   L'aperçu de la double-page suit les choix, et la ligne du bas dit ce
+   qu'ils donnent.
+
+   Rien ne bouge en base : les cartes gardent leur ordre, seule la mise en
+   page change (voir relie()). Réglé par le propriétaire, vu de tous - un
+   visiteur feuillette le classeur tel qu'il est vraiment.
+   ========================================================= */
+const FMT = { choix: null, cle: null };
+const borneFormat = (k, v) => Math.max(FORMAT_BORNES[k][0], Math.min(FORMAT_BORNES[k][1], v));
+
+function ouvrirFormat(){
+  closeMenu();
+  if (!DATA.types.length) return;
+  FMT.choix = Object.assign({}, fmt());
+  FMT.cle = T().key;
+  const bascule = (k, titre) => {
+    let boutons = '';
+    for (let v = FORMAT_BORNES[k][0]; v <= FORMAT_BORNES[k][1]; v++){
+      boutons += '<button type="button" class="exp-btn" data-v="' + v + '">' + v + '</button>';
+    }
+    return '<div class="fmt-axe"><span class="fmt-mot">' + titre + '</span>'
+      + '<div class="exp-format" role="group" aria-label="' + titre + '" data-k="' + k + '">'
+      + boutons + '</div></div>';
+  };
+  ouvrirModale(
+    '<h2>Personnaliser le classeur ' + esc(T().label) + '</h2>'
+    + '<div class="fmt-apercu" id="fmtApercu" aria-hidden="true"></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Pochettes par face</span></div>'
+    +   '<div class="fmt-axes">' + bascule('colonnes', 'Colonnes')
+    +   bascule('rangees', 'Rangées') + '</div></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Pages</span><span class="exp-note">recto verso</span></div>'
+    +   '<div class="fmt-pages">'
+    +     '<button type="button" class="fmt-pas" data-pas="-1" aria-label="Une page de moins">&minus;</button>'
+    +     '<input id="fmtPages" type="number" inputmode="numeric" min="' + FORMAT_BORNES.pages[0]
+    +     '" max="' + FORMAT_BORNES.pages[1] + '" aria-label="Nombre de pages">'
+    +     '<button type="button" class="fmt-pas" data-pas="1" aria-label="Une page de plus">+</button>'
+    +   '</div></div>'
+    + '<p class="exp-info" id="fmtInfo"></p>'
+    + '<div class="row"><button class="act ghost" id="fmtAnnuler">Annuler</button>'
+    + '<button class="act" id="fmtGo">Enregistrer</button></div>');
+
+  const b = el('sheetbox'), champ = el('fmtPages');
+  el('fmtAnnuler').onclick = fermerModale;
+  el('fmtGo').onclick = enregistrerFormat;
+  b.querySelectorAll('.fmt-axe .exp-format').forEach(g =>
+    g.querySelectorAll('.exp-btn').forEach(x => x.onclick = () => {
+      FMT.choix[g.dataset.k] = +x.dataset.v;
+      dessineFormat();
+    }));
+  /* Pendant la frappe, seul un nombre dans les bornes compte : « 1 » en
+     route vers « 12 » ne doit pas faire sauter l'aperçu à cinq pages. Le
+     champ est remis d'aplomb en le quittant. */
+  champ.value = FMT.choix.pages;
+  champ.addEventListener('input', () => {
+    const v = parseInt(champ.value, 10);
+    if (v === borneFormat('pages', v)){ FMT.choix.pages = v; dessineFormat(); }
+  });
+  champ.addEventListener('change', () => {
+    const v = parseInt(champ.value, 10);
+    if (!isNaN(v)) FMT.choix.pages = borneFormat('pages', v);
+    champ.value = FMT.choix.pages;
+    dessineFormat();
+  });
+  champ.addEventListener('keydown', e => { if (e.key === 'Enter') champ.blur(); });
+  b.querySelectorAll('.fmt-pas').forEach(x => x.onclick = () => {
+    FMT.choix.pages = borneFormat('pages', FMT.choix.pages + Number(x.dataset.pas));
+    champ.value = FMT.choix.pages;
+    dessineFormat();
+  });
+  dessineFormat();
+}
+
+function dessineFormat(){
+  const f = FMT.choix, b = el('sheetbox');
+  if (!f || !el('fmtApercu')) return;
+  b.querySelectorAll('.fmt-axe .exp-format').forEach(g =>
+    g.querySelectorAll('.exp-btn').forEach(x => {
+      const on = +x.dataset.v === f[g.dataset.k];
+      x.classList.toggle('on', on);
+      x.setAttribute('aria-pressed', on);
+    }));
+  b.querySelectorAll('.fmt-pas').forEach(x => {
+    x.disabled = borneFormat('pages', f.pages + Number(x.dataset.pas)) === f.pages;
+  });
+  /* Une hauteur fixe pour les pochettes d'une face, quel que soit le nombre
+     de rangées : l'aperçu ne fait pas sauter la fenêtre d'un choix à
+     l'autre, et chaque pochette garde les proportions d'une carte. */
+  const haut = 78, ecart = 3;
+  const h = (haut - (f.rangees - 1) * ecart) / f.rangees;
+  const a = el('fmtApercu');
+  a.style.setProperty('--fc', f.colonnes);
+  a.style.setProperty('--fh', h.toFixed(2) + 'px');
+  a.style.setProperty('--fw', (h * 59 / 86).toFixed(2) + 'px');
+  const face = '<div class="fmt-face">' + '<i></i>'.repeat(f.colonnes * f.rangees) + '</div>';
+  a.innerHTML = face + '<span class="fmt-dos"></span>' + face;
+  const place = 2 * f.colonnes * f.rangees * f.pages;
+  const tomes = Math.max(1, Math.ceil(
+    T().classeurs.reduce((a, c) => a + c.cards.length, 0) / place));
+  el('fmtInfo').innerHTML = '<b>' + place.toLocaleString('fr-FR') + '</b> cartes par classeur, soit <b>'
+    + tomes + '</b> classeur' + (tomes > 1 ? 's' : '');
+}
+
+async function enregistrerFormat(){
+  const f = FMT.choix;
+  const t = DATA.types.find(x => x.key === FMT.cle);
+  if (!t || Object.keys(FORMAT_DEFAUT).every(k => f[k] === fmt(t)[k])){ fermerModale(); return; }
+  const b = el('fmtGo');
+  b.disabled = true;
+  let d = null, pourquoi = '';
+  try {
+    const r = await fetch('/api/collection/format', {
+      method: 'PUT', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ cle: t.key }, f)),
+    });
+    d = await r.json().catch(() => null);
+    if (!r.ok || !d || !d.ok) pourquoi = (d && d.message) || 'réponse HTTP ' + r.status;
+  } catch(e){ pourquoi = 'serveur injoignable'; }
+  if (pourquoi){
+    toast('Pas enregistré : ' + pourquoi, true);
+    b.disabled = false;
+    return;
+  }
+  fermerModale();
+  reformate(t, formatSur(d.format));
+  toast('Format enregistré.');
+}
+
+/* L'onglet repris à son nouveau format, à la même carte : la première
+   pochette de la double-page affichée reste sous les yeux, où que le
+   nouveau découpage l'envoie. Les tomes sont tous pleins sauf le dernier
+   (voir relie()), d'où le rang de la carte tiré du seul numéro de tome. */
+function reformate(t, f){
+  landFlip(); fermerNet();
+  const ici = t === T();
+  const debut = S.spread === 0 ? 0 : (S.spread - 1) * parPage(t) + parFace(t);
+  const rang = S.c * parClasseur(t) + debut;
+  t.format = f;
+  relie();
+  if (ici){
+    S.c = Math.min(Math.floor(rang / parClasseur(t)), t.classeurs.length - 1);
+    const o = pos(rang - S.c * parClasseur(t), t);
+    S.spread = Math.min(sheets(), o.face === 'recto' ? o.page - 1 : o.page);
+  }
+  S.hit = null; S.pose = null;
+  ecrireCache(source().url, DATA);
+  redrawAll();
+}
+el('formatBtn').onclick = ouvrirFormat;
 
 /* ---------------- la liste de souhaits Cardmarket ----------------
    Cardmarket prend une decklist collée en texte : une carte par ligne, la

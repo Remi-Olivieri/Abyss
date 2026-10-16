@@ -1,0 +1,23 @@
+{
+  "id": "tk-ex-latio",
+  "nom": "EX Kit dresseur (Latios)",
+  "bloc": "tk",
+  "date": "2004-07-01",
+  "officiel": 10,
+  "total": 10,
+  "sigle": "TK1O",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+  "cartes": [
+    ["1", "Dynavolt", "Sans rareté", "N", "P", 309],
+    ["2", "Latios", "Sans rareté", "H", "P", 381],
+    ["3", "Linéon", "Sans rareté", "N", "P", 264],
+    ["4", "Magnéti", "Sans rareté", "N", "P", 81],
+    ["5", "Magnéton", "Sans rareté", "N", "P", 82],
+    ["6", "Pikachu", "Sans rareté", "N", "P", 25],
+    ["7", "Zigzaton", "Sans rareté", "N", "P", 263],
+    ["8", "Potion", "Sans rareté", "N", "D", null],
+    ["9", "Recherche d'énergie", "Sans rareté", "N", "D", null],
+    ["10", "Énergie Électrique", "Sans rareté", "N", "E", null]
+  ]
+}

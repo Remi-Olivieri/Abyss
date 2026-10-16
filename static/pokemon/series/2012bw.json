@@ -1,0 +1,25 @@
+{
+  "id": "2012bw",
+  "nom": "Collection McDonald's 2012",
+  "bloc": "mc",
+  "date": "2012-06-15",
+  "officiel": 12,
+  "total": 12,
+  "sigle": "MCD12",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  "cartes": [
+    ["1", "Lianaja", "Sans rareté", "H", "P", 496],
+    ["2", "Feuillajou", "Sans rareté", "H", "P", 511],
+    ["3", "Crabicoque", "Sans rareté", "H", "P", 557],
+    ["4", "Grotichon", "Sans rareté", "H", "P", 499],
+    ["5", "Mateloutre", "Sans rareté", "H", "P", 502],
+    ["6", "Emolga", "Sans rareté", "H", "P", 587],
+    ["7", "Chovsourir", "Sans rareté", "H", "P", 527],
+    ["8", "Rototaupe", "Sans rareté", "H", "P", 529],
+    ["9", "Chacripan", "Sans rareté", "H", "P", 509],
+    ["10", "Baggiguane", "Sans rareté", "H", "P", 559],
+    ["11", "Clic", "Sans rareté", "H", "P", 600],
+    ["12", "Coupenotte", "Sans rareté", "H", "P", 610]
+  ]
+}

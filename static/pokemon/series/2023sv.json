@@ -1,0 +1,28 @@
+{
+  "id": "2023sv",
+  "nom": "Collection McDonald's 2023",
+  "bloc": "mc",
+  "date": "2023-08-01",
+  "officiel": 15,
+  "total": 15,
+  "sigle": "MCD23",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
+  "cartes": [
+    ["1", "Poussacha", "Sans rareté", "H", "P", 906],
+    ["2", "Chochodile", "Sans rareté", "H", "P", 909],
+    ["3", "Coiffeton", "Sans rareté", "H", "P", 912],
+    ["4", "Piétacé", "Sans rareté", "N", "P", 974],
+    ["5", "Balbalèze", "Sans rareté", "H", "P", 975],
+    ["6", "Pikachu", "Sans rareté", "H", "P", 25],
+    ["7", "Pohm", "Sans rareté", "N", "P", 921],
+    ["8", "Fulgulairo", "Sans rareté", "N", "P", 941],
+    ["9", "Flotillon", "Sans rareté", "N", "P", 955],
+    ["10", "Dunaconda", "Sans rareté", "N", "P", 844],
+    ["11", "Craparoi", "Sans rareté", "H", "P", 950],
+    ["12", "Leuphorie", "Sans rareté", "N", "P", 242],
+    ["13", "Compagnol", "Sans rareté", "N", "P", 924],
+    ["14", "Motorizard", "Sans rareté", "N", "P", 967],
+    ["15", "Kirlia", "Sans rareté", "N", "P", 281]
+  ]
+}

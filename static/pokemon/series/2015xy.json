@@ -1,0 +1,25 @@
+{
+  "id": "2015xy",
+  "nom": "Collection McDonald's 2015",
+  "bloc": "mc",
+  "date": "2015-11-27",
+  "officiel": 12,
+  "total": 12,
+  "sigle": "MCD15",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  "cartes": [
+    ["1", "Arcko", "Sans rareté", "H", "P", 252],
+    ["2", "Nénupiot", "Sans rareté", "H", "P", 270],
+    ["3", "Poussifeu", "Sans rareté", "H", "P", 255],
+    ["4", "Stari", "Sans rareté", "H", "P", 120],
+    ["5", "Gobou", "Sans rareté", "H", "P", 258],
+    ["6", "Pikachu", "Sans rareté", "H", "P", 25],
+    ["7", "Dynavolt", "Sans rareté", "H", "P", 309],
+    ["8", "Rhinocorne", "Sans rareté", "H", "P", 111],
+    ["9", "Méditikka", "Sans rareté", "H", "P", 307],
+    ["10", "Marill", "Sans rareté", "H", "P", 183],
+    ["11", "Zigzaton", "Sans rareté", "H", "P", 263],
+    ["12", "Skitty", "Sans rareté", "H", "P", 300]
+  ]
+}

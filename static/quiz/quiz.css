@@ -234,11 +234,11 @@ html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
   text-transform:uppercase;color:var(--muted);
 }
 /* Chaque famille pose sa couleur une fois ; tout ce qui est dedans la lit
-   dans --fam, y compris les cartes. Le violet du classeur de cartes reste :
-   il dit a quel projet un jeu appartient avant qu'on ait lu son nom, et
-   c'est une information, pas une decoration. */
+   dans --fam, y compris les cartes. La couleur dit a quelle famille un jeu
+   appartient avant qu'on ait lu son nom : une information, pas une
+   decoration. (Le violet de Yu-Gi-Oh! est parti avec le Yu-Gi-Quiz, devenu
+   un projet a part.) */
 .qz-fam.jv{--fam:var(--gold);--fam-trait:rgba(201,168,76,.45);--fam-doux:rgba(201,168,76,.1)}
-.qz-fam.ygo{--fam:#C6A0E0;--fam-trait:rgba(198,160,224,.45);--fam-doux:rgba(198,160,224,.12)}
 
 /* =======================================================================
    Une carte de jeu
@@ -252,9 +252,10 @@ html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
 .qz-menu{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(262px,1fr))}
 .qz-jeu{
   position:relative;display:block;width:100%;text-align:left;overflow:hidden;
-  /* Yu-Gi-Quiz est une carte-lien, et archive.css donne aux liens la couleur
-     or et le souligne du navigateur : toute la carte se retrouvait soulignee,
-     titre et texte compris. Une carte n'est pas un mot dans une phrase. */
+  /* Une carte-lien (le Yu-Gi-Quiz en a ete une) : archive.css donne aux
+     liens la couleur or et le souligne du navigateur, et toute la carte se
+     retrouvait soulignee, titre et texte compris. Une carte n'est pas un
+     mot dans une phrase. */
   text-decoration:none;color:inherit;
   min-height:180px;padding:22px 24px 24px;border-radius:16px;
   border:1px solid var(--line-strong);
@@ -306,9 +307,9 @@ html{scrollbar-color:color-mix(in srgb,var(--gold) 55%,transparent) #07060E}
   text-transform:uppercase;color:var(--fam);
 }
 /* Le chevron des liens qui sortent du site : on doit le savoir avant de
-   cliquer, pas apres. Plus aucune carte ne le porte depuis que Yu-Gi-Quiz
-   est une page d'ici - la regle reste pour le premier lien qui repartira
-   vraiment ailleurs. */
+   cliquer, pas apres. Plus aucune carte ne le porte depuis que le
+   Yu-Gi-Quiz est une page d'ici - la regle reste pour le premier lien qui
+   repartira vraiment ailleurs. */
 .qz-jeu .qz-sort{
   position:absolute;top:18px;right:20px;color:var(--muted);font-size:13px;
   transition:color .18s,transform .18s;

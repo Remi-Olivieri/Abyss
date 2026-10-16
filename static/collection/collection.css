@@ -5,6 +5,9 @@
   /* les bioluminescences d'Abyss, pour les lumieres du fond */
   --algue:#4FDDAE; --plancton:#6BA6FF; --meduse:#EE6FAE;
   --cw:104px; --ch:152px; --gap:8px; --pad:13px;
+  /* les colonnes de pochettes d'une face : le format de l'onglet, posé par
+     fit() dans la page */
+  --cols:3;
   /* fait afficher en sombre les widgets natifs : listes déroulantes, ascenseurs… */
   color-scheme:dark;
 }
@@ -145,7 +148,7 @@ main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 22px 12
    Voir la section « gestes du doigt » dans templates/collection/collection.html. */
 .binder{position:relative;display:flex;perspective:3000px;width:max-content;max-width:100%;
   touch-action:pan-y}
-.page{flex:0 0 auto;width:calc(3 * var(--cw) + 2 * var(--gap) + 2 * var(--pad));
+.page{flex:0 0 auto;width:calc(var(--cols) * var(--cw) + (var(--cols) - 1) * var(--gap) + 2 * var(--pad));
   background:linear-gradient(150deg,#2A2331,#211B28);
   border:1px solid var(--edge);padding:var(--pad);position:relative;
   -webkit-backface-visibility:hidden;backface-visibility:hidden;isolation:isolate}
@@ -158,7 +161,7 @@ main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 22px 12
 .ring{width:11px;height:11px;border-radius:50%;border:1.5px solid #5A5166;background:#1A1520;
   box-shadow:inset 0 1px 0 #ffffff1a}
 
-.grid{display:grid;grid-template-columns:repeat(3,var(--cw));gap:var(--gap);justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(var(--cols),var(--cw));gap:var(--gap);justify-content:center}
 .slot{position:relative;width:var(--cw);height:var(--ch);border-radius:6px;background:var(--sleeve-in);
   border:1px solid #ffffff0d;overflow:hidden;display:flex;flex-direction:column;
   justify-content:flex-end;padding:6px;text-align:left;transition:transform .16s,border-color .16s}
@@ -170,7 +173,7 @@ main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 22px 12
 .slot.art .nm{display:none}
 /* pochette vide : la carte existe dans la collection mais pas dans le classeur */
 .slot.miss{background:#00000042;border-style:dashed;border-color:#ffffff12}
-.slot.miss .nm{opacity:.72;transition:opacity .16s;font-size:calc(var(--cw) / 11);color:var(--ink-dim)}
+.slot.miss .nm{opacity:.72;transition:opacity .16s;font-size:min(calc(var(--cw) / 11),15px);color:var(--ink-dim)}
 .slot.miss::after{content:"+";position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);
   font-family:'Bricolage Grotesque';font-weight:700;font-size:calc(var(--cw) / 4);color:#ffffff26;
   transition:color .16s;z-index:2}
@@ -182,7 +185,9 @@ main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 22px 12
 .slot.sortie .art,.slot.sortie .rar,.slot.sortie .nm{opacity:0}
 .slot.sortie{background:#00000042}
 .slot.sortie::after{display:none}
-.slot .nm{font-size:calc(var(--cw) / 10.5);line-height:1.25;font-weight:500;color:var(--ink-dim);position:relative;z-index:2;
+/* plafonné : au format 2 x 2, une pochette fait deux cents pixels de large
+   et le nom s'y écrivait en titre */
+.slot .nm{font-size:min(calc(var(--cw) / 10.5),15px);line-height:1.25;font-weight:500;color:var(--ink-dim);position:relative;z-index:2;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .slot .rar{position:absolute;top:5px;right:5px;font-family:'DM Mono';font-size:calc(var(--cw) / 12);font-weight:500;
   padding:2px 5px;border-radius:3px;background:#000000c4;color:#fff;letter-spacing:.04em;z-index:4}
@@ -197,7 +202,6 @@ main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 22px 12
 
 .face{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;gap:8px;height:19px}
 .face .pg{font-family:'Bricolage Grotesque';font-weight:700;font-size:14px;letter-spacing:-.02em}
-.face .cnt{font-family:'DM Mono';font-size:10.5px;color:var(--ink-faint)}
 
 /* la charnière est au centre exact de la reliure (50%), pas au bord de la page droite.
    Les deux faces sont décalées de 10px (demi-reliure) pour retomber au pixel près. */
@@ -214,6 +218,14 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
   color:var(--ink-dim);border:1px solid var(--edge)}
 .classeurs button[aria-pressed="true"]{background:var(--accent);color:#17121D;border-color:var(--accent)}
 .jump{display:flex;align-items:center;gap:7px;font-family:'DM Mono';font-size:12px;color:var(--ink-dim)}
+/* Beaucoup de classeurs, quand le format est petit : « Classeur » ne s'écrit
+   qu'une fois, devant les numéros, comme sur téléphone (plus bas). */
+@media (min-width:641px){
+  .classeurs.serres{align-items:center;flex-wrap:wrap;justify-content:center}
+  .classeurs.serres::before{content:"Classeur";margin-right:3px;font-family:'DM Mono';font-size:11px;
+    color:var(--ink-dim)}
+  .classeurs.serres .cl-mot{display:none}
+}
 .jump input{width:56px;padding:5px 8px;border-radius:6px;background:#0000004d;border:1px solid var(--edge);
   color:var(--ink);font-family:'DM Mono';font-size:12px;text-align:center;-moz-appearance:textfield}
 .jump input::-webkit-outer-spin-button,.jump input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -338,6 +350,68 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
 /* Trois formats au lieu de deux : sur un telephone la bascule passe a la
    ligne plutot que de deborder de la fenetre. */
 .exp-quel{flex-wrap:wrap}
+
+/* ---------------- les cartes favorites ----------------
+   Trois places en haut, le champ de recherche, puis les cartes trouvees en
+   petites vignettes : un clic pose la carte dans la premiere place libre,
+   un second l'en retire. */
+.sheetbox:has(.fav-places){width:min(560px,100%)}
+.fav-places{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 14px}
+.fav-place{position:relative;display:grid;place-items:center;aspect-ratio:813/1185;
+  border-radius:8px;border:1px dashed var(--edge);background:#00000038;overflow:hidden}
+.fav-place.pleine{border:1px solid var(--accent);box-shadow:0 0 18px -6px var(--accent)}
+.fav-place img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.fav-rang{font-family:'DM Mono';font-size:22px;color:var(--ink-faint)}
+.fav-nom{position:absolute;left:0;right:0;bottom:0;padding:18px 7px 6px;font-size:11px;
+  line-height:1.3;color:var(--ink);background:linear-gradient(transparent,#000000d9);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fav-retirer{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:6px;
+  display:grid;place-items:center;font-size:11px;color:#FFB4B4;background:#000000b3;
+  border:1px solid #E86A6A66}
+.fav-retirer:hover{background:#E86A6A33}
+.fav-champ{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--edge);
+  background:#00000047;color:var(--ink);font-size:14px}
+.fav-champ:focus{outline:none;border-color:var(--accent)}
+.fav-resultats{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px;
+  margin-top:10px;max-height:min(40vh,330px);overflow-y:auto;padding:2px;
+  scrollbar-width:thin;scrollbar-color:var(--edge) transparent}
+.fav-carte{display:flex;flex-direction:column;gap:5px;padding:5px;border-radius:8px;
+  border:1px solid transparent;text-align:left;transition:.15s}
+.fav-carte:hover{border-color:var(--edge);background:#ffffff0a}
+.fav-carte.on{border-color:var(--accent);background:#B39AE31f}
+.fav-carte img{width:100%;aspect-ratio:813/1185;object-fit:cover;border-radius:4px;background:#00000047}
+.fav-carte span{font-size:11px;line-height:1.3;color:var(--ink-dim);overflow-wrap:anywhere}
+.fav-resultats:empty{display:none}
+.fav-info{grid-column:1/-1;margin:6px 0 0 !important;text-align:center;font-size:12.5px;color:var(--ink-faint)}
+
+/* ---------------- le format du classeur ----------------
+   L'aperçu de la double-page en haut, qui suit les choix ; dessous, les
+   colonnes et les rangées côte à côte, puis le nombre de pages. */
+.fmt-apercu{display:flex;justify-content:center;margin:14px 0 2px}
+.fmt-face{display:grid;grid-template-columns:repeat(var(--fc),var(--fw));grid-auto-rows:var(--fh);
+  gap:3px;padding:7px;background:#00000038;border:1px solid var(--edge)}
+.fmt-face:first-child{border-radius:8px 3px 3px 8px;border-right:none}
+.fmt-face:last-child{border-radius:3px 8px 8px 3px;border-left:none}
+.fmt-face i{border-radius:2px;border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);
+  background:color-mix(in srgb,var(--accent) 16%,transparent);transition:background .15s}
+.fmt-dos{width:9px;background:linear-gradient(90deg,#00000066,#ffffff17 50%,#00000066);
+  border-top:1px solid var(--edge);border-bottom:1px solid var(--edge)}
+.fmt-axes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fmt-axe{display:flex;flex-direction:column;gap:7px;min-width:0}
+.fmt-mot{font-size:12px;color:var(--ink-dim)}
+.fmt-axe .exp-format{display:flex;align-self:stretch}
+.fmt-axe .exp-btn{flex:1 1 0}
+.fmt-pages{display:flex;align-items:center;gap:8px}
+.fmt-pas{flex:0 0 auto;width:40px;height:38px;border-radius:9px;border:1px solid var(--edge);
+  background:#00000047;color:var(--ink-dim);font-size:18px;line-height:1;transition:.15s}
+.fmt-pas:hover:not(:disabled){color:var(--ink);border-color:var(--accent)}
+.fmt-pas:disabled{opacity:.35;cursor:default}
+/* 16 px : en dessous, iOS zoome sur le champ dès qu'on y pose le doigt. */
+#fmtPages{flex:1 1 auto;min-width:0;height:38px;padding:0 10px;border-radius:9px;
+  border:1px solid var(--edge);background:#00000047;color:var(--ink);
+  font-family:'DM Mono';font-size:16px;text-align:center;-moz-appearance:textfield}
+#fmtPages:focus{outline:none;border-color:var(--accent)}
+#fmtPages::-webkit-outer-spin-button,#fmtPages::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
 /* ---------------- la liste de souhaits Cardmarket ----------------
    Une tuile par liste de cent cinquante, cochee une fois copiee, et le
@@ -827,7 +901,7 @@ body.sansreflets .foil{display:none}
   .page.l,.page.r{border-radius:var(--r);border:1px solid var(--edge)}
   .page.cover{display:none}
   .spine{display:none}
-  .grid{grid-template-columns:repeat(3,1fr)}
+  .grid{grid-template-columns:repeat(var(--cols),1fr)}
   .slot{width:auto;height:auto;aspect-ratio:59/86}
   h1{font-size:19px}
   .search{width:100%}
@@ -1051,7 +1125,6 @@ h1{
   .meter .bar{flex:1 1 auto;width:auto}
   .face{margin-bottom:10px}
   .face .pg{font-size:15px}
-  .face .cnt{font-size:11.5px}
 
   /* ---------- la barre du bas : tourner les pages sous le pouce ----------
      Les deux flèches quittent les côtés du classeur pour ses deux bouts ;

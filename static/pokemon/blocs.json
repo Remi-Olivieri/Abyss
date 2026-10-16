@@ -1,0 +1,317 @@
+{
+  "blocs": [
+    {
+      "id": "base",
+      "nom": "Base",
+      "date": "1999-01-09",
+      "series": [
+        "base1",
+        "base2",
+        "basep",
+        "wp",
+        "base3",
+        "base5"
+      ]
+    },
+    {
+      "id": "misc",
+      "nom": "Autre",
+      "date": "2000-02-01",
+      "series": [
+        "jumbo"
+      ]
+    },
+    {
+      "id": "neo",
+      "nom": "Neo",
+      "date": "2000-12-16",
+      "series": [
+        "neo1",
+        "neo2",
+        "neo3",
+        "neo4"
+      ]
+    },
+    {
+      "id": "ecard",
+      "nom": "e-cards",
+      "date": "2002-09-15",
+      "series": [
+        "ecard1",
+        "ecard2"
+      ]
+    },
+    {
+      "id": "ex",
+      "nom": "EX",
+      "date": "2003-07-01",
+      "series": [
+        "ex1",
+        "ex2",
+        "ex3",
+        "ex4",
+        "ex5",
+        "ex6",
+        "ex8",
+        "ex9",
+        "ex10",
+        "exu",
+        "ex11",
+        "ex12",
+        "ex13",
+        "ex14",
+        "ex15",
+        "ex16"
+      ]
+    },
+    {
+      "id": "pop",
+      "nom": "POP",
+      "date": "2003-10-01",
+      "series": [
+        "np",
+        "pop1",
+        "pop2",
+        "pop3",
+        "pop4",
+        "pop7",
+        "pop9"
+      ]
+    },
+    {
+      "id": "tk",
+      "nom": "Kits du dresseur",
+      "date": "2004-07-01",
+      "series": [
+        "tk-ex-latio",
+        "tk-ex-latia",
+        "tk-ex-m",
+        "tk-ex-p",
+        "tk-dp-m",
+        "tk-dp-l",
+        "tk-hs-g",
+        "tk-hs-r",
+        "tk-bw-z",
+        "tk-bw-e",
+        "tk-xy-n",
+        "tk-xy-sy",
+        "tk-xy-w",
+        "tk-xy-b",
+        "tk-xy-latio",
+        "tk-xy-latia",
+        "tk-xy-p",
+        "tk-xy-su",
+        "tk-sm-r",
+        "tk-sm-l"
+      ]
+    },
+    {
+      "id": "dp",
+      "nom": "Diamant & Perle",
+      "date": "2007-05-01",
+      "series": [
+        "dp1",
+        "dpp",
+        "dp2",
+        "dp3",
+        "dp4",
+        "dp5",
+        "dp6",
+        "dp7"
+      ]
+    },
+    {
+      "id": "pl",
+      "nom": "Platine",
+      "date": "2009-02-11",
+      "series": [
+        "pl1",
+        "pl2",
+        "pl3"
+      ]
+    },
+    {
+      "id": "hgss",
+      "nom": "HeartGold SoulSilver",
+      "date": "2010-02-10",
+      "series": [
+        "hgss1",
+        "hgssp",
+        "hgss2",
+        "hgss3",
+        "hgss4"
+      ]
+    },
+    {
+      "id": "col",
+      "nom": "L'appel des Légendes",
+      "date": "2011-02-09",
+      "series": [
+        "col1"
+      ]
+    },
+    {
+      "id": "bw",
+      "nom": "Noir & Blanc",
+      "date": "2011-04-25",
+      "series": [
+        "bw1",
+        "bwp",
+        "bw2",
+        "bw3",
+        "bw4",
+        "bw5",
+        "bw6",
+        "dv1",
+        "bw7",
+        "bw8",
+        "bw9",
+        "bw10",
+        "rc"
+      ]
+    },
+    {
+      "id": "mc",
+      "nom": "Collection McDonald's",
+      "date": "2011-06-17",
+      "series": [
+        "2011bw",
+        "2012bw",
+        "2013bw",
+        "2014xy",
+        "2015xy",
+        "2016xy",
+        "2017sm",
+        "2018sm-fr",
+        "2019sm-fr",
+        "2021swsh",
+        "2022swsh",
+        "2023sv",
+        "2024sv"
+      ]
+    },
+    {
+      "id": "xy",
+      "nom": "XY",
+      "date": "2013-10-12",
+      "series": [
+        "xyp",
+        "xy0",
+        "xya",
+        "xy1",
+        "xy2",
+        "xy3",
+        "xy4",
+        "xy5",
+        "dc1",
+        "xy6",
+        "xy7",
+        "xy8",
+        "xy9",
+        "g1",
+        "xy10",
+        "xy11",
+        "xy12"
+      ]
+    },
+    {
+      "id": "sm",
+      "nom": "Soleil et Lune",
+      "date": "2017-02-03",
+      "series": [
+        "sm1",
+        "smp",
+        "sm2",
+        "sm3",
+        "sm3.5",
+        "sm4",
+        "sm5",
+        "sm6",
+        "sm7",
+        "sm7.5",
+        "sm8",
+        "sm9",
+        "det1",
+        "sm10",
+        "sm11",
+        "sma",
+        "sm115",
+        "sm12"
+      ]
+    },
+    {
+      "id": "swsh",
+      "nom": "Épée et Bouclier",
+      "date": "2019-11-15",
+      "series": [
+        "swshp",
+        "swsh1",
+        "swsh2",
+        "swsh3",
+        "swsh3.5",
+        "swsh4",
+        "swsh4.5",
+        "swsh4.5sv",
+        "swsh5",
+        "swsh6",
+        "swsh7",
+        "cel25cc",
+        "cel25",
+        "swsh8",
+        "swsh9",
+        "swsh9tg",
+        "swsh10",
+        "swsh10tg",
+        "swsh10.5",
+        "swsh11tg",
+        "swsh11",
+        "swsh12",
+        "swsh12tg",
+        "swsh12.5",
+        "swsh12.5gg"
+      ]
+    },
+    {
+      "id": "sv",
+      "nom": "Écarlate et Violet",
+      "date": "2023-03-31",
+      "series": [
+        "svp",
+        "sve",
+        "sv01",
+        "sv02",
+        "sv03",
+        "sv03.5",
+        "sv04",
+        "sv04.5",
+        "sv05",
+        "sv06",
+        "sv06.5",
+        "sv07",
+        "sv08",
+        "sv08.5",
+        "sv09",
+        "sv10",
+        "sv10.5b",
+        "sv10.5w"
+      ]
+    },
+    {
+      "id": "me",
+      "nom": "Méga-Évolution",
+      "date": "2025-09-25",
+      "series": [
+        "mee",
+        "me01",
+        "mep",
+        "me02",
+        "me02.5",
+        "me03",
+        "me04",
+        "me05",
+        "30th",
+        "30th-c"
+      ]
+    }
+  ]
+}

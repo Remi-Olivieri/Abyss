@@ -5,10 +5,9 @@ app.py branche ce fichier en une ligne :
 
     app.register_blueprint(nihongo.branche(STATIQUE / "nihongo"))
 
-Le projet est en chantier, donc reserve a l'administration : la tuile ne
-s'affiche que pour elle (voir `admin: true` dans abyss/accueil.html), et
-toutes les routes de ce module repondent 404 aux autres -- la meme parade
-que cartes.py.
+La page est ouverte a tous, mais chacun y a sa propre progression : toutes
+les routes de ce module demandent un compte, et repondent 401 a qui n'est
+pas connecte (voir compte_requis).
 
 Ce que le serveur garde, et ce qu'il ne garde pas
 -------------------------------------------------
@@ -80,9 +79,16 @@ Les fichiers
     static/nihongo/grammaire.json          les points de grammaire, N5 a N1
     static/nihongo/romaji.json             la grammaire et les textes en romaji,
                                            pour qui regle la page ainsi
+    static/nihongo/libre/n5-0.json ...     la lecture libre : les phrases de
+                                           Tatoeba, par paquets de 250
+                                           (hors du depot, voir « La lecture
+                                           libre »)
     matiere/vocabulaire-fr.tsv             les sens francais des mots
     matiere/grammaire-n5.txt ... -n1.txt   la grammaire : explications et
                                            phrases d'exemple
+    matiere/lecture-n5.txt ... -n1.txt     les textes a lire, et leur glossaire
+    matiere/lecture-mots.tsv               (les mots hors des listes du JLPT)
+    matiere/libre-mots.tsv                 le glossaire de la lecture libre
     (matiere/ : des sources ecrites a la main, et non des produits)
 
 Les traits sont des chemins SVG de KanjiVG, dans l'ordre. La page les
@@ -93,8 +99,9 @@ fabrication tout chemin que la page ne saurait pas lire.
 
     venv/bin/python nihongo.py matiere     # refait tous les fichiers
 
-Les sources sont telechargees une fois dans donnees/nihongo/ (une vingtaine
-de Mo, jamais servis) ; refaire les fichiers prend une dizaine de secondes.
+Les sources sont telechargees une fois dans donnees/nihongo/ (une
+quarantaine de Mo, jamais servis) ; refaire les fichiers prend une vingtaine
+de secondes, deux minutes de plus quand la lecture libre est a refaire.
 """
 
 from __future__ import annotations
@@ -394,20 +401,19 @@ def branche(dossier) -> Blueprint:
 
 
 @blueprint_nihongo.before_request
-def reserve():
-    """Reserve a l'administration tant que le projet est en chantier.
+def compte_requis():
+    """Un compte, puisque chacun a sa propre progression.
 
     Le controle est ici et non route par route, comme dans cartes.py : un
-    oubli en ajoutant la prochaine route ne pardonnerait pas. Le jour de
-    l'ouverture, c'est cette fonction qu'on assouplit -- un compte suffira,
-    puisque chacun a sa propre progression.
+    oubli en ajoutant la prochaine route ne pardonnerait pas. Le projet a
+    ete reserve a l'administration tant qu'il etait en chantier ; il est
+    ouvert depuis octobre 2026.
     """
     if request.method in ("POST", "PUT", "PATCH") \
             and (request.mimetype or "") != "application/json":
         return echec("format", "Les ecritures attendent du JSON.", 415)
-    u = actuel()
-    if u is None or not u["admin"]:
-        return echec("introuvable", "Page inconnue.", 404)
+    if actuel() is None:
+        return echec("connexion", "Connecte-toi sur Abyss pour apprendre le japonais.", 401)
     return None
 
 
@@ -544,9 +550,13 @@ def demande():
 #   - le vocabulaire du JLPT : les listes de Jonathan Waller (CC BY), que
 #     yomitan-jlpt-vocab (CC BY-SA 4.0) a rattachees mot par mot a leur
 #     entree de JMdict. Leurs sens francais sont traduits a la main, dans
-#     matiere/vocabulaire-fr.tsv (voir « Le vocabulaire »).
+#     matiere/vocabulaire-fr.tsv (voir « Le vocabulaire ») ;
+#   - Tatoeba (CC BY 2.0 FR) : des phrases japonaises traduites par des
+#     benevoles, leurs furigana, et qui les a ecrites (voir « La lecture
+#     libre »). Ses exports changent chaque semaine ; on garde le premier.
 VOCABULAIRE_JLPT = ("https://raw.githubusercontent.com/stephenmk/yomitan-jlpt-vocab/"
                     "b062d4e38c4bdd0950ae1d4ec55f04b176182e03/original_data/n{}.csv")
+TATOEBA = "https://downloads.tatoeba.org/exports/"
 SOURCES = {
     "kanjivg.xml.gz": KANJIVG,
     "kanjidic2.xml.gz": "http://www.edrdg.org/kanjidic/kanjidic2.xml.gz",
@@ -555,6 +565,15 @@ SOURCES = {
     "jmdict-fre.json.tgz": ("https://github.com/scriptin/jmdict-simplified/releases/download/"
                             "3.6.2+20260928191014/jmdict-fre-3.6.2+20260928191014.json.tgz"),
     **{f"vocabulaire-n{n}.csv": VOCABULAIRE_JLPT.format(n) for n in range(1, 6)},
+    **{f"tatoeba-{nom}": TATOEBA + chemin for nom, chemin in (
+        ("jpn.tsv.bz2", "per_language/jpn/jpn_sentences_detailed.tsv.bz2"),
+        ("furigana.tsv.bz2", "per_language/jpn/jpn_transcriptions.tsv.bz2"),
+        ("etiquettes.tsv.bz2", "per_language/jpn/jpn_tags.tsv.bz2"),
+        ("jpn-fra.tsv.bz2", "per_language/jpn/jpn-fra_links.tsv.bz2"),
+        ("jpn-eng.tsv.bz2", "per_language/jpn/jpn-eng_links.tsv.bz2"),
+        ("eng-fra.tsv.bz2", "per_language/eng/eng-fra_links.tsv.bz2"),
+        ("fra.tsv.bz2", "per_language/fra/fra_sentences.tsv.bz2"),
+        ("langues.tar.bz2", "user_languages.tar.bz2"))},
 }
 KVG = "{http://kanjivg.tagaini.net}"
 MOTS_PAR_KANJI = 3
@@ -770,6 +789,12 @@ SENS_DES_CLES = {
 # question « que veut dire ce kanji ? ».
 PAS_UN_SENS = re.compile(r"\(no\.? ?\d+\)|^\(kokuji\)$")
 
+# Les sens francais de KANJIDIC qu'on remplace : l'ordre y met parfois en
+# tete un mot que plus personne n'emploie (« myriade » pour 万).
+SENS_CORRIGES = {
+    "万": ["dix mille", "myriade"],
+}
+
 
 def lit_kanjidic() -> dict:
     racine = ET.fromstring(gzip.decompress(source("kanjidic2.xml.gz").read_bytes()))
@@ -789,6 +814,7 @@ def lit_kanjidic() -> dict:
                     kun.append(r.text)
         misc = c.find("misc")
         entier = lambda balise: int(misc.findtext(balise)) if misc.findtext(balise) else None
+        fr = SENS_CORRIGES.get(c.findtext("literal"), fr)
         kd[c.findtext("literal")] = {"fr": fr, "en": en, "on": on, "kun": kun,
                                      "g": entier("grade"), "t": entier("stroke_count"),
                                      "f": entier("freq")}
@@ -1871,6 +1897,28 @@ PARTICULES = {
     "に足る": ("digne de, qui mérite de", ["ni-taru"]),
     "までもない": ("inutile de, il va sans dire", ["made-mo-nai"]),
     "きらい": ("(〜きらいがある) avoir une fâcheuse tendance à", ["kirai-ga-aru"]),
+    # celles de la langue parlee, que les phrases de Tatoeba emploient (voir
+    # « La lecture libre »)
+    "なあ": ("(fin de phrase) une exclamation, ou l'on pense tout haut", []),
+    "かしら": ("je me demande si… (plutôt au féminin)", []),
+    "とも": ("au moins, au plus tard (少なくとも, 遅くとも) ; bien sûr (いいとも)", []),
+    "なんか": ("(à l'oral) des choses comme… : minimise ce qui précède", ["nante"]),
+    "ちゃ": ("(à l'oral) ては contracté : 〜ちゃだめ, il ne faut pas…", ["te-wa-ikenai"]),
+    "じゃ": ("(à l'oral) では : avec, dans (ce cas) ; quant à", []),
+    "ば": ("si (une condition) : ならば, であれば", ["ba"]),
+    "きり": ("seulement, rien que (二人きり : à deux, seuls)", []),
+    "やら": ("(〜やら〜やら) entre autres ; (何やら) je ne sais quoi", []),
+    "すら": ("même (à l'écrit, comme さえ)", []),
+    "じゃん": ("(à l'oral) n'est-ce pas ! tu vois bien", []),
+    "っけ": ("(fin de phrase) déjà ? : on cherche à se rappeler", []),
+    "ばっかり": ("(à l'oral) rien que, seulement (ばかり)", ["bakari"]),
+    "ぜ": ("(fin de phrase, au masculin) une affirmation qui entraîne", []),
+    "もん": ("(fin de phrase, à l'oral) parce que… (c'est comme ça)", []),
+    "たって": ("(à l'oral) même si (〜ても)", ["te-mo"]),
+    "しも": ("(必ずしも, 誰しも) renforce ce qui précède", []),
+    "にて": ("(à l'écrit) à, en, par (comme で)", []),
+    "い": ("(à l'oral, au masculin) adoucit une question : 〜かい, 〜だい", []),
+    "らしい": ("il paraît, on dirait (〜らしい)", ["rashii"]),
 }
 
 
@@ -1899,6 +1947,8 @@ def _cle_particule(p):
         return "けど"
     if t == "くらい":
         return "ぐらい"
+    t = {"なぁ": "なあ", "なー": "なあ", "ねえ": "ね", "ねぇ": "ね", "程": "ほど", "ばっか": "ばっかり",
+         "もの": "もん"}.get(t, t)
     return t if t in PARTICULES else None
 
 
@@ -1989,6 +2039,8 @@ def _forme(unite):
                 elif p["cform"].startswith("仮定形") and (not suivant or suivant["dic"] == "ば") \
                         or p["t"] in ("なきゃ", "なくちゃ"):
                     marque("obligation : il faut (〜なければならない)", "nakereba")
+                elif p["t"] == "なく" and suivant and suivant["t"] in ("ちゃ", "ちゃあ"):
+                    marque("obligation : il faut (〜なくちゃ, à l'oral)", "nakya")
                 elif any(m.startswith("obligation") for m in marques):
                     pass                       # なりません : la negation de l'obligation
                 elif p["t"] == "なく" and suivant and suivant["dic"] == "て" \
@@ -2020,6 +2072,14 @@ def _forme(unite):
                     pass
             elif d == "ちゃう":
                 marque("〜てしまう", "te-shimau")
+            elif p["norm"] == "てる":
+                marque("〜ている (à l'oral : 〜てる)", "te-iru")
+            elif d in ("とく", "どく"):
+                marque("〜ておく (à l'oral : 〜とく)", "te-oku")
+            elif d in ("てく", "でく"):
+                marque("〜ていく (à l'oral : 〜てく)", "te-iku-kuru")
+            elif d == "たがる":
+                marque("envie, chez un autre (〜たがる)", "tai", "garu")
             elif sorte == "文語助動詞-ム":
                 marque("intention, supposition (〜ん, écrit)")
             elif sorte == "文語助動詞-ベシ":
@@ -2062,7 +2122,13 @@ def _forme(unite):
                     marque("même si (〜ても)", "te-mo")
             elif d == "は" and precedent["dic"] in ("て", "で") or d in ("ては", "では"):
                 if suivant and (suivant["dic"] in ("いける", "なる") or suivant["pos"] == "bloc"):
-                    marque("interdiction (〜てはいけない)", "te-wa-ikenai")
+                    if any(x["ctype"] == "助動詞-ナイ" and x["t"] == "なく" for x in suite[:k]):
+                        marque("obligation : il faut (〜なくてはならない)", "nakereba")
+                    else:
+                        marque("interdiction (〜てはいけない)", "te-wa-ikenai")
+            elif d in ("ちゃ", "じゃ") and p["pos2"] == "接続助詞":
+                if not any(m.startswith("obligation") for m in marques):
+                    marque("〜ては (à l'oral : 〜ちゃ)", "te-wa-ikenai")
             elif d == "ば":
                 if precedent["ctype"] != "助動詞-ナイ":
                     marque("condition (〜ば)", "ba")
@@ -2203,7 +2269,10 @@ class Analyseur:
     """Decoupe une phrase en mots et relie chacun a ce qui l'explique (voir
     « La lecture » plus haut)."""
 
-    def __init__(self, vocabulaire, glossaire, points=()):
+    def __init__(self, vocabulaire, glossaire, points=(), graphies=None):
+        """`graphies` : {graphie: [indices dans le vocabulaire]}, d'autres
+        graphies de mots du vocabulaire (事 pour こと, voir
+        graphies_en_kanjis)."""
         try:
             from sudachipy import Dictionary, SplitMode
         except ImportError:
@@ -2217,8 +2286,22 @@ class Analyseur:
         for i, m in enumerate(vocabulaire):
             for g in {m["m"], m.get("a") or m["m"]}:
                 self._vocab.setdefault(g, []).append(i)
+        for g, indices in (graphies or {}).items():
+            self._vocab.setdefault(g, []).extend(i for i in indices if i not in self._vocab[g])
         for i, e in enumerate(glossaire):
             self._gloss.setdefault(e["m"], []).append(i)
+        # les mots par lecture, pour une graphie que le vocabulaire n'a pas
+        # (voir _relie) : la parcourir en entier coutait 95 % de l'analyse
+        self._par_lecture = {}
+        for i, m in enumerate(vocabulaire):
+            for l in m["l"]:
+                self._par_lecture.setdefault(_compare(l), []).append(i)
+        # les verbes par premier kanji : 行った se lit いった (行く) ou
+        # おこなった (行う), voir _relie
+        self._verbes = {}
+        for i, m in enumerate(vocabulaire):
+            if _cjk(m["m"][0]) and any(p.startswith(("v5", "v1")) for p in m.get("p", [])):
+                self._verbes.setdefault(m["m"][0], []).append(i)
         # le radical (forme en -masu) de chaque verbe : 取る -> (取り, とり)
         self._radicaux = {}
         for sorte, liste in (("v", vocabulaire), ("x", glossaire)):
@@ -2336,7 +2419,11 @@ class Analyseur:
             return False
         flexion = seq[0]["pos"] in ("動詞", "形容詞", "形状詞") \
             and all(p["pos"] in ("助動詞", "助詞", "動詞", "形容詞") for p in seq[1:])
-        if (flexion or any(p["pos"] == "助詞" for p in seq[1:])) and not figee:
+        # どうして (pourquoi), un adverbe -- sauf suivi de ce qui en fait
+        # どう + して : どうしていいか, どうしてもらう
+        adverbe = all("adv" in e.get("p", []) for _, _, e in entrees) and seq[-1]["dic"] in ("て", "で") \
+            and not (suivant and (suivant["dic"] in APRES_TE or suivant["dic"] in ("いい", "良い", "よい", "も", "は")))
+        if (flexion or any(p["pos"] == "助詞" for p in seq[1:])) and not figee and not adverbe:
             return False
         return True
 
@@ -2371,9 +2458,11 @@ class Analyseur:
         while i < len(morceaux):
             p = morceaux[i]
             j = i + 1
-            # かな, よね : deux particules qui n'en font qu'une
+            # かな, よね : deux particules qui n'en font qu'une -- pas と + も,
+            # し + も, に + て, qui restent deux (三百年とも言われる : と, puis も)
             if p["pos"] == "助詞" and j < len(morceaux) and morceaux[j]["pos"] == "助詞" \
-                    and p["t"] + morceaux[j]["t"] in PARTICULES and p["t"] not in ("の", "ん"):
+                    and p["t"] + morceaux[j]["t"] in PARTICULES and p["t"] not in ("の", "ん") \
+                    and p["t"] + morceaux[j]["t"] not in ("とも", "しも", "にて"):
                 q = morceaux[j]
                 unites.append([{**p, "e": q["e"], "t": p["t"] + q["t"], "pos2": q["pos2"],
                                 "x": (p["x"][0] + q["x"][0], p["x"][1] + q["x"][1])}])
@@ -2477,7 +2566,8 @@ class Analyseur:
                             break      # 行くです n'existe pas : c'est autre chose (行くでしょう)
                         j += 1
                     elif q["pos"] == "助詞" and (q["pos2"] == "接続助詞" or q["dic"] in ("たり", "だり")) \
-                            and q["dic"] in ("て", "で", "ば", "ながら", "たり", "だり", "つつ", "ては", "では") \
+                            and q["dic"] in ("て", "で", "ば", "ながら", "たり", "だり", "つつ", "ては", "では",
+                                             "ちゃ", "じゃ") \
                             and not copule:
                         j += 1
                     elif q["dic"] == "ある" and avant["dic"] == "つつ":
@@ -2617,6 +2707,14 @@ class Analyseur:
             if trouve:
                 tete["potentiel"] = True
                 return {trouve[0]: trouve[1]}
+        # 行った (いった), 通った (とおった) : l'analyseur y voit souvent 行う,
+        # 通う ; les furigana disent de quel verbe il s'agit
+        if conjugue and _cjk(tete["t"][0]):
+            for i in self._verbes.get(tete["t"][0], []):
+                m = self.vocabulaire[i]
+                lecture = self._lecture_du_lemme(tete, m["m"])
+                if lecture and _compare(lecture) in {_compare(l) for l in m["l"]}:
+                    return {"v": i}
         nombre = sens_du_nombre(tete["t"]) if _nombre(tete["t"][:1]) is not None \
             or tete["t"].startswith("何") else None
         if nombre:
@@ -2639,8 +2737,9 @@ class Analyseur:
         # lit pareil et contient les memes kanjis
         if not conjugue and any(_cjk(c) for c in tete["t"]):
             kanjis = {c for c in tete["t"] if _cjk(c)}
-            for i, m in enumerate(self.vocabulaire):
-                if _compare(lu) in {_compare(l) for l in m["l"]} and kanjis <= set(m["m"] + m.get("a", "")):
+            for i in self._par_lecture.get(_compare(lu), []):
+                m = self.vocabulaire[i]
+                if kanjis <= set(m["m"] + m.get("a", "")):
                     return {"v": i}
         return None
 
@@ -2733,6 +2832,10 @@ class Analyseur:
                     mot.update(lien)
                     if "x" in lien:
                         self.servis.add(lien["x"])
+                if tete.get("potentiel") and len(unite) == 1 and tete["cform"].startswith("連用形") \
+                        and (not unites or unites[0][0]["t"] in ("。", "！", "!", "」", "よ")):
+                    # 行け。 : l'imperatif de 行く, que l'analyseur lit 行ける
+                    tete["potentiel"], tete["cform"] = False, "命令形"
                 if tete.get("teki"):
                     mot["f"] = "+ 的 : « -ique », un adjectif en な fait d'un nom"
                     if len(unite) > 1:
@@ -2948,6 +3051,238 @@ def construit_lecture(fichiers=None, vocabulaire=None, glossaire=None, points=No
             "glossaire": [{k: v for k, v in e.items() if v} for e in glossaire],
             "particules": {k: {"fr": PARTICULES[k][0], "g": [g for g in PARTICULES[k][1] if g in analyseur.points]}
                            for k in sorted(analyseur.particules)}}
+
+
+# --------------------------------------------------------------------------
+#   La lecture libre
+# --------------------------------------------------------------------------
+# Lire en continu, en plus des textes ecrits pour le site : les phrases de
+# Tatoeba (tatoeba.org, CC BY 2.0 FR), une base de phrases traduites par des
+# benevoles. La page les sert une a une, au niveau qu'on choisit, dans un
+# ordre mele une fois pour toutes ; chaque mot s'y touche comme dans les
+# textes. Ce sont des phrases sans lien entre elles.
+#
+# Une phrase de Tatoeba n'entre que si :
+#   - elle a une traduction francaise : la sienne, ou a defaut celle de sa
+#     traduction anglaise (`relais` : le sens a pu glisser en route) ;
+#   - Tatoeba donne des furigana a chacun de ses kanjis (relus par un membre
+#     pour pres d'une phrase sur deux, devines par son outil pour les
+#     autres) et ses kanjis sont tous du JLPT ;
+#   - aucune etiquette ne la dit douteuse, ni d'une autre langue que celle
+#     d'aujourd'hui (ETIQUETTES_ECARTEES) ;
+#   - l'analyseur de la lecture explique chacun de ses mots, au besoin par
+#     le glossaire de matiere/libre-mots.tsv : les prenoms de Tatoeba (Tom
+#     en tete) et des mots courants que les listes du JLPT n'ont pas. Une
+#     phrase qu'il ne comprend pas est laissee de cote, jamais devinee.
+#
+# Son niveau est celui du plus difficile de ses mots, de ses kanjis et de ses
+# points de grammaire. Au plus LIBRE_MAXI phrases par niveau, les plus sures
+# d'abord : traduites directement, aux furigana relus, ecrites par quelqu'un
+# dont le japonais est la langue.
+#
+# Les phrases vont dans static/nihongo/libre/, par paquets que la page
+# demande un a un ; le reste -- combien de phrases par niveau, le glossaire,
+# les particules -- dans lecture.json, sous « libre ». Trier
+# 120 000 phrases prend une minute ou deux : la fabrication garde son
+# resultat (donnees/nihongo/libre.json) et ne le refait que si ce dont il
+# depend a change (signature_libre).
+LIBRE = "libre"                # le dossier des paquets, sous static/nihongo/
+GLOSSAIRE_LIBRE = BASE / "matiere" / "libre-mots.tsv"
+CACHE_LIBRE = DOSSIER_CACHE / "libre.json"
+LIBRE_MAXI = 5000              # phrases par niveau, plus d'une annee de lecture
+PHRASES_PAR_PAQUET = 250       # une trentaine de Ko une fois compresses
+SIGNES_LIBRE = (4, 70)         # une phrase, pas un paragraphe
+ETIQUETTES_ECARTEES = {
+    "@needs native check", "@change", "@check translation", "@wrong transliteration", "@delete",
+    "@possible copyright infringement", "not a sentence", "ambiguous", "false", "comment on sentence",
+    "Classical Japanese (Bungo)", "old kana", "archaic", "old-fashioned", "dialectal", "Kansai dialect",
+}
+_FURIGANA_TATOEBA = re.compile(r"\[([^\[\]|]+)\|([^\[\]]*)\]")
+
+
+def _tsv(nom):
+    """Les lignes d'un export de Tatoeba, en champs."""
+    import bz2
+    with bz2.open(source(nom), "rt", encoding="utf-8") as f:
+        for ligne in f:
+            yield ligne.rstrip("\n").split("\t")
+
+
+def balise_tatoeba(transcription) -> str:
+    """Les furigana de Tatoeba dans le balisage du site :
+    « [場所|ば|しょ] » -> « {場所|ばしょ} ». Un chiffre n'en a pas (« [2|] »)."""
+    def remplace(m):
+        lu = m.group(2).replace("|", "")
+        return f"{{{m.group(1)}|{lu}}}" if lu else m.group(1)
+    return _FURIGANA_TATOEBA.sub(remplace, transcription)
+
+
+def phrases_tatoeba() -> list:
+    """Les phrases japonaises de Tatoeba qui ont une traduction francaise et
+    des furigana : [{id, jp (en balisage), fr, relais, sure}], `sure` de 0 a
+    3 (traduite directement, furigana relus, ecrite par un Japonais)."""
+    import tarfile
+    ecartees = {i for i, e in _tsv("tatoeba-etiquettes.tsv.bz2") if e in ETIQUETTES_ECARTEES}
+    with tarfile.open(source("tatoeba-langues.tar.bz2")) as archive:
+        membre = next(m for m in archive if m.name.endswith(".csv"))
+        lignes = (l.decode("utf-8").rstrip("\n").split("\t") for l in archive.extractfile(membre))
+        japonais = {c[2] for c in lignes if len(c) > 2 and c[0] == "jpn" and c[1] == "5"}
+    phrases = {c[0]: (c[2], c[3]) for c in _tsv("tatoeba-jpn.tsv.bz2")
+               if len(c) > 3 and c[0] not in ecartees}
+
+    def liens(nom):
+        sortie = {}
+        for a, b in _tsv(nom):
+            sortie.setdefault(a, []).append(b)
+        return {a: sorted(bs, key=int) for a, bs in sortie.items()}
+    directes, anglais, vers_fr = liens("tatoeba-jpn-fra.tsv.bz2"), liens("tatoeba-jpn-eng.tsv.bz2"), \
+        liens("tatoeba-eng-fra.tsv.bz2")
+    francais = {}                  # id japonais -> (id francais, relais)
+    for i in phrases:
+        if i in directes:
+            francais[i] = (directes[i][0], 0)
+        else:
+            relais = next((vers_fr[e][0] for e in anglais.get(i, []) if e in vers_fr), None)
+            if relais:
+                francais[i] = (relais, 1)
+    voulus = {f for f, _ in francais.values()}
+    textes_fr = {c[0]: c[2] for c in _tsv("tatoeba-fra.tsv.bz2") if c[0] in voulus}
+
+    sortie = []
+    for c in _tsv("tatoeba-furigana.tsv.bz2"):
+        i = c[0]
+        if i not in francais or len(c) < 5 or francais[i][0] not in textes_fr:
+            continue
+        texte, auteur = phrases[i]
+        jp = balise_tatoeba(c[4])
+        if surface(jp) != texte:       # des furigana d'une version d'avant
+            continue
+        f, relais = francais[i]
+        sortie.append({"id": int(i), "jp": jp, "fr": textes_fr[f], "relais": relais,
+                       "sure": (not relais) + bool(c[3]) + (auteur in japonais)})
+    return sorted(sortie, key=lambda p: p["id"])
+
+
+def graphies_en_kanjis(vocabulaire) -> dict:
+    """{graphie: [indices]} : les graphies en kanjis des mots que le
+    vocabulaire ecrit en kanas sans en donner d'autre (こと, ください) --
+    celles de leur entree JMdict, hors des graphies a eviter. Tatoeba ecrit
+    souvent 事 et 下さい."""
+    kanas = {(seq, kana) for _, seq, kana, ecrit, _ in lit_listes_vocabulaire() if not ecrit}
+    entrees = lit_jmdict({seq for seq, _ in kanas})
+    indices = {}
+    for i, m in enumerate(vocabulaire):
+        if "a" not in m and not any(_cjk(c) for c in m["m"]):
+            indices.setdefault(m["m"], i)
+    sortie = {}
+    for seq, kana in sorted(kanas):
+        i, e = indices.get(kana), entrees.get(seq)
+        if i is None or not e:
+            continue
+        for k in _graphies(e, kana):
+            if not set(k["inf"]) & GRAPHIES_A_EVITER and i not in sortie.get(k["m"], []):
+                sortie.setdefault(k["m"], []).append(i)
+    return sortie
+
+
+def signature_libre(vocabulaire, points, glossaire, kanjis) -> str:
+    """L'empreinte de ce dont depend la lecture libre : le vocabulaire (les
+    phrases le citent par son rang), la grammaire, les glossaires, les
+    niveaux des kanjis, les exports de Tatoeba et le code de l'analyse --
+    tout ce qui va de « La lecture » a « Le romaji » dans ce fichier."""
+    code = Path(__file__).read_text(encoding="utf-8")
+    code = code[code.index("#   La lecture\n"):code.index("#   Le romaji\n")]
+    exports = sorted((nom, source(nom).stat().st_size) for nom in SOURCES if nom.startswith("tatoeba-"))
+    libre = GLOSSAIRE_LIBRE.read_text(encoding="utf-8") if GLOSSAIRE_LIBRE.is_file() else ""
+    tout = json.dumps([[(m["m"], m["l"], m.get("a"), m.get("p"), m["n"]) for m in vocabulaire],
+                       [(p["nom"], p["n"]) for p in points], glossaire, libre, sorted(kanjis.items()),
+                       exports, code], ensure_ascii=False)
+    return hashlib.sha1(tout.encode()).hexdigest()
+
+
+def construit_libre(vocabulaire, points, glossaire, kanjis) -> tuple:
+    """-> (ce qu'en dit lecture.json, {nom du paquet: ses phrases}).
+
+    `points` : les points de grammaire ({nom, n}) ; `glossaire` : celui des
+    textes, que le glossaire de la lecture libre prolonge -- un mot `x` des
+    phrases est le rang d'une entree dans les deux mis bout a bout ;
+    `kanjis` : {kanji: niveau}."""
+    propre = lit_glossaire(GLOSSAIRE_LIBRE)
+    deja = {(e["m"], _hira(e["l"])) for e in glossaire}
+    doublons = [e["m"] for e in propre if (e["m"], _hira(e["l"])) in deja]
+    if doublons:
+        raise ErreurLecture(f"{GLOSSAIRE_LIBRE.name} : deja dans {GLOSSAIRE.name} : {' '.join(doublons)}")
+    niveau_point = {p["nom"]: p["n"] for p in points}
+    analyseur = Analyseur(vocabulaire, glossaire + propre, niveau_point, graphies_en_kanjis(vocabulaire))
+    par_niveau, vues, refus = {n: [] for n in (5, 4, 3, 2, 1)}, set(), 0
+    for ph in phrases_tatoeba():
+        texte = surface(ph["jp"])
+        if texte in vues or not SIGNES_LIBRE[0] <= len(texte) <= SIGNES_LIBRE[1] \
+                or any(_cjk(c) and c not in kanjis for c in texte):
+            continue
+        try:
+            _verifie_rubis(ph["jp"], ph["id"], ErreurLecture)
+            mots, fautes = analyseur.analyse(ph["jp"], ph["id"])
+        except Exception:              # une phrase que l'analyseur ne sait pas lire
+            refus += 1
+            continue
+        if fautes:
+            continue
+        vues.add(texte)
+        pleins = [m for m in mots if isinstance(m, dict)]
+        niveaux = [kanjis[c] for c in texte if _cjk(c)] \
+            + [vocabulaire[m["v"]]["n"] for m in pleins if "v" in m] \
+            + [niveau_point[g] for m in pleins for g in m.get("g", [])]
+        phrase = {"m": mots, "fr": ph["fr"], "id": ph["id"]}
+        if ph["relais"]:
+            phrase["relais"] = 1
+        par_niveau[min(niveaux, default=5)].append((ph["sure"], phrase))
+
+    print("  lecture libre : " + ", ".join(f"N{n} {len(l)} phrases" for n, l in par_niveau.items())
+          + f" (au plus {LIBRE_MAXI} par niveau)")
+    paquets, combien, particules = {}, {}, set()
+    for n, liste in par_niveau.items():
+        hasard = random.Random(f"libre-{n}")
+        hasard.shuffle(liste)
+        gardees = [p for _, p in sorted(liste, key=lambda x: -x[0])[:LIBRE_MAXI]]
+        hasard.shuffle(gardees)
+        combien[n] = len(gardees)
+        for k in range(0, len(gardees), PHRASES_PAR_PAQUET):
+            paquets[f"n{n}-{k // PHRASES_PAR_PAQUET}"] = gardees[k:k + PHRASES_PAR_PAQUET]
+        particules |= {m["k"] for p in gardees for m in p["m"] if isinstance(m, dict) and "k" in m}
+    if refus:
+        print(f"  lecture libre : {refus} phrase(s) que l'analyseur n'a pas su lire")
+    resume = {"phrases": combien, "paquet": PHRASES_PAR_PAQUET,
+              "glossaire": [{k: v for k, v in e.items() if v} for e in propre],
+              "particules": {k: {"fr": PARTICULES[k][0], "g": [g for g in PARTICULES[k][1] if g in niveau_point]}
+                             for k in sorted(particules)}}
+    return resume, paquets
+
+
+def ecrit_libre(dossier, vocabulaire, points, glossaire) -> dict:
+    """Ecrit les paquets de la lecture libre dans dossier/libre/, s'ils ne
+    sont pas a jour, et rend ce qu'en dit lecture.json (avec `version`, que
+    porte chaque paquet : la page sait ainsi qu'il va avec le reste)."""
+    kanjis = niveaux_jlpt()
+    signature = signature_libre(vocabulaire, points, glossaire, kanjis)
+    cible = Path(dossier) / LIBRE
+    try:
+        garde = json.loads(CACHE_LIBRE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        garde = {}
+    if garde.get("signature") == signature and all((cible / f"{nom}.json").is_file() for nom in garde["paquets"]):
+        return garde["resume"]
+    resume, paquets = construit_libre(vocabulaire, points, glossaire, kanjis)
+    resume["version"] = signature[:12]
+    if cible.is_dir():
+        for vieux in cible.glob("*.json"):
+            vieux.unlink()
+    for nom, phrases in paquets.items():
+        _ecrit(cible / f"{nom}.json", {"version": resume["version"], "phrases": phrases})
+    CACHE_LIBRE.parent.mkdir(parents=True, exist_ok=True)
+    CACHE_LIBRE.write_text(json.dumps({"signature": signature, "resume": resume, "paquets": sorted(paquets)},
+                                      ensure_ascii=False), encoding="utf-8")
+    return resume
 
 
 # --------------------------------------------------------------------------
@@ -3291,11 +3626,13 @@ def ecrit_matiere(dossier=None) -> list:
     try:
         lecture = construit_lecture(vocabulaire=vocabulaire,
                                     points=[p["nom"] for p in grammaire["points"]])
+        lecture["libre"] = ecrit_libre(dossier, vocabulaire, grammaire["points"], lit_glossaire())
     except ErreurLecture as e:
         raise SystemExit(f"Lecture : {e}") from None
     ecrits.append(_ecrit(dossier / "lecture.json", {
         "source": "Ecrite pour Nihongo (matiere/lecture-n5.txt a lecture-n1.txt), "
-                  "decoupee en mots par SudachiPy (Apache 2.0)",
+                  "decoupee en mots par SudachiPy (Apache 2.0) ; la lecture libre : les phrases "
+                  "de Tatoeba (tatoeba.org, CC BY 2.0 FR)",
         **lecture}))
 
     ecrits.append(_ecrit(dossier / "romaji.json", {

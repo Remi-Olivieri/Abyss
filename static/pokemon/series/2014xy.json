@@ -1,0 +1,25 @@
+{
+  "id": "2014xy",
+  "nom": "Collection McDonald's 2014",
+  "bloc": "mc",
+  "date": "2014-05-23",
+  "officiel": 12,
+  "total": 12,
+  "sigle": "MCD14",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  "cartes": [
+    ["1", "Aspicot", "Sans rareté", "H", "P", 13],
+    ["2", "Marisson", "Sans rareté", "H", "P", 650],
+    ["3", "Feunnec", "Sans rareté", "H", "P", 653],
+    ["4", "Grenousse", "Sans rareté", "H", "P", 656],
+    ["5", "Pikachu", "Sans rareté", "H", "P", 25],
+    ["6", "Sepiatop", "Sans rareté", "H", "P", 686],
+    ["7", "Monorpale", "Sans rareté", "H", "P", 679],
+    ["8", "Snubbull", "Sans rareté", "H", "P", 209],
+    ["9", "Sucroquin", "Sans rareté", "H", "P", 684],
+    ["10", "Sapereau", "Sans rareté", "H", "P", 659],
+    ["11", "Passerouge", "Sans rareté", "H", "P", 661],
+    ["12", "Couafarel", "Sans rareté", "H", "P", 676]
+  ]
+}

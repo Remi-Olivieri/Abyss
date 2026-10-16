@@ -1,0 +1,28 @@
+{
+  "id": "2022swsh",
+  "nom": "Collection McDonald's 2022",
+  "bloc": "mc",
+  "date": "2022-08-03",
+  "officiel": 15,
+  "total": 15,
+  "sigle": "MCD22",
+  "images_en": [],
+  "sans_image": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"],
+  "cartes": [
+    ["1", "Coxy", "Sans rareté", "H", "P", 165],
+    ["2", "Brindibou", "Sans rareté", "H", "P", 722],
+    ["3", "Tournicoton", "Sans rareté", "H", "P", 829],
+    ["4", "Caninos", "Sans rareté", "H", "P", 58],
+    ["5", "Victini", "Sans rareté", "H", "P", 494],
+    ["6", "Lokhlass", "Sans rareté", "H", "P", 131],
+    ["7", "Pikachu", "Sans rareté", "H", "P", 25],
+    ["8", "Loupio", "Sans rareté", "H", "P", 170],
+    ["9", "Lainergie", "Sans rareté", "H", "P", 180],
+    ["10", "Anchwatt", "Sans rareté", "H", "P", 602],
+    ["11", "Bombydou", "Sans rareté", "H", "P", 742],
+    ["12", "Chelours", "Sans rareté", "H", "P", 760],
+    ["13", "Pandarbare", "Sans rareté", "H", "P", 675],
+    ["14", "Draïeul", "Sans rareté", "H", "P", 780],
+    ["15", "Queulorior", "Sans rareté", "H", "P", 235]
+  ]
+}

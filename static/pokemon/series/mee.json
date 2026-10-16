@@ -1,0 +1,29 @@
+{
+  "id": "mee",
+  "nom": "Méga-Évolution Énergie",
+  "bloc": "me",
+  "date": "2025-09-25",
+  "officiel": 16,
+  "total": 16,
+  "sigle": "MEE",
+  "images_en": [],
+  "sans_image": ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016"],
+  "cartes": [
+    ["001", "Énergie Plante", "Commune", "NR", "E", null],
+    ["002", "Énergie Feu", "Commune", "NR", "E", null],
+    ["003", "Énergie Eau", "Commune", "NR", "E", null],
+    ["004", "Énergie Electrik", "Commune", "NR", "E", null],
+    ["005", "Énergie Psy", "Commune", "NR", "E", null],
+    ["006", "Énergie Combat", "Commune", "NR", "E", null],
+    ["007", "Énergie Obscurité", "Commune", "NR", "E", null],
+    ["008", "Énergie Métal", "Commune", "NR", "E", null],
+    ["009", "Énergie Plante de base", "Commune", "H", "E", null],
+    ["010", "Énergie Feu de base", "Commune", "H", "E", null],
+    ["011", "Énergie Eau de base", "Commune", "H", "E", null],
+    ["012", "Énergie Electrik de base", "Commune", "H", "E", null],
+    ["013", "Énergie Psy de base", "Commune", "H", "E", null],
+    ["014", "Énergie Combat de base", "Commune", "H", "E", null],
+    ["015", "Énergie Obscurité de base", "Commune", "H", "E", null],
+    ["016", "Énergie Métal de base", "Commune", "H", "E", null]
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "pop9",
+  "nom": "POP Série 9",
+  "bloc": "pop",
+  "date": "2009-03-01",
+  "officiel": 17,
+  "total": 17,
+  "sigle": "P9",
+  "images_en": [],
+  "sans_image": [],
+  "cartes": [
+    ["1", "Carchacrok", "Rare", "N", "P", 445],
+    ["2", "Manaphy", "Rare", "NH", "P", 490],
+    ["3", "Raichu", "Rare", "NR", "P", 26],
+    ["4", "Regigigas", "Rare", "NH", "P", 486],
+    ["5", "Motisma", "Rare", "NH", "P", 479],
+    ["6", "Mustébouée", "Peu commune", "N", "P", 418],
+    ["7", "Cradopaud", "Peu commune", "N", "P", 453],
+    ["8", "Carmache", "Peu commune", "N", "P", 444],
+    ["9", "Lockpin", "Peu commune", "NH", "P", 428],
+    ["10", "Pachirisu", "Peu commune", "N", "P", 417],
+    ["11", "Pichu", "Peu commune", "N", "P", 172],
+    ["12", "Laporeille", "Commune", "N", "P", 427],
+    ["13", "Ouisticram", "Commune", "N", "P", 390],
+    ["14", "Griknot", "Commune", "N", "P", 443],
+    ["15", "Pikachu", "Commune", "N", "P", 25],
+    ["16", "Tiplouf", "Commune", "N", "P", 393],
+    ["17", "Tortipouss", "Commune", "N", "P", 387]
+  ]
+}

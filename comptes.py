@@ -99,7 +99,7 @@ FENETRE_INSCRIPTIONS = timedelta(hours=24)
 
 # Les identifiants de projets masquables. Ils doivent correspondre aux `id`
 # du tableau PROJETS dans abyss/accueil.html.
-PROJETS = ("jeux-videos", "collection", "chainz", "quiz", "nihongo")
+PROJETS = ("jeux-videos", "collection", "pokemon", "chainz", "quiz", "nihongo", "yugiquiz")
 
 # 3 a 20 caracteres, ni tiret ni souligne aux extremites : le pseudo finira
 # dans une URL (/jeux-videos/jokrem), autant qu'il reste lisible.
@@ -108,9 +108,10 @@ MOTIF_PSEUDO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{1,18}[A-Za-z0-9]$")
 # Ces mots occuperaient un segment d'URL deja pris : un compte nomme "api"
 # rendrait /jeux-videos/api ambigu.
 RESERVES = {
-    "abyss", "admin", "api", "archive", "cartes", "collection", "compte",
-    "connexion", "cover", "deconnexion", "feed", "inscription", "index",
-    "jaquettes", "jeux-videos", "login", "moi", "nihongo", "profil", "quiz",
+    "abyss", "accueil", "admin", "api", "archive", "cartes", "catalogue",
+    "collection", "compte", "connexion", "cover", "deconnexion", "favorites",
+    "feed", "inscription", "index",
+    "jaquettes", "jeux-videos", "login", "moi", "nihongo", "pokemon", "profil", "quiz",
     "reinitialiser", "social", "static", "templates", "www", "yugiquiz",
 }
 
@@ -733,6 +734,71 @@ CREATE TABLE nihongo_demande(
 ALTER TABLE nihongo_jour ADD COLUMN lectures INTEGER NOT NULL DEFAULT 0;
 """
 
+# Les trois cartes favorites d'un classeur, choisies dans ses reglages parmi
+# toutes les cartes du jeu : une liste JSON de passcodes, dans l'ordre choisi.
+# L'accueil d'Abyss les montre en eventail (voir collection.favorites et
+# accueil.py). Sur la page du classeur, et non sur le compte : c'est un
+# reglage du classeur, qui part avec lui.
+FAVORITES = """
+ALTER TABLE page ADD COLUMN favorites TEXT;
+"""
+
+# Le format du classeur : pochettes par face, en colonnes et en rangees, et
+# pages par tome -- celui que son proprietaire a en main. Un objet JSON,
+# NULL pour le format par defaut (voir collection.format_de). Pose d'abord
+# sur la page, pour tout le classeur ; deplace sur les familles par la
+# migration suivante.
+FORMAT_CLASSEUR = """
+ALTER TABLE page ADD COLUMN format TEXT;
+"""
+
+# Un format par onglet : on ne range pas forcement les Fusion dans le meme
+# classeur que les Lien. Celui que la page portait passe a chacune de ses
+# familles -- c'est ce qu'elles affichaient -- puis la colonne de la page
+# disparait, pour qu'il n'y ait qu'un endroit ou le lire.
+FORMAT_PAR_FAMILLE = """
+ALTER TABLE famille ADD COLUMN format TEXT;
+UPDATE famille SET format = (SELECT p.format FROM page p WHERE p.id = famille.page_id);
+ALTER TABLE page DROP COLUMN format;
+"""
+
+# Migration 30 : la collection Pokemon. Voir pokemon.py.
+#
+# Le catalogue -- les blocs, les series, leurs cartes -- n'est pas en base :
+# c'est une matiere du site, ecrite sous static/pokemon/ par la mise a jour
+# du stock (voir pokemon_stock.py), comme les noms des cartes Yu-Gi-Oh. La
+# base ne garde que ce qui est a chacun.
+#
+# `pokemon_carte` : une ligne par version possedee. Une carte Pokemon parait
+# souvent en plusieurs versions -- normale et reverse pour presque toutes les
+# communes, holo et reverse pour les rares -- et chacune se range a part :
+# avoir la normale ne dit rien de la reverse. Une ligne presente = possedee,
+# il n'y a pas de pochette vide a tenir comme dans le classeur Yu-Gi-Oh, ou
+# chaque classeur recopie les deux mille pochettes du moule. La carte est
+# designee par sa serie et son numero dans la serie (le « localId » de
+# TCGdex), qui ne bougent jamais.
+#
+# `pokemon_format` : le classeur a l'ecran, serie par serie -- pochettes par
+# face, pages, une pochette par version ou non. La serie vide porte le
+# format de toutes celles qui n'en ont pas a elles.
+POKEMON = """
+CREATE TABLE pokemon_carte(
+  page_id  INTEGER NOT NULL REFERENCES page(id) ON DELETE CASCADE,
+  serie    TEXT NOT NULL,               -- 'sv01' : la serie (le « set » de TCGdex)
+  carte    TEXT NOT NULL,               -- '001' : son numero dans la serie
+  version  TEXT NOT NULL,               -- 'N' normale, 'R' reverse, 'H' holo...
+  maj_le   TEXT NOT NULL,
+  PRIMARY KEY (page_id, serie, carte, version)
+);
+
+CREATE TABLE pokemon_format(
+  page_id  INTEGER NOT NULL REFERENCES page(id) ON DELETE CASCADE,
+  serie    TEXT NOT NULL,               -- '' : le format par defaut
+  format   TEXT NOT NULL,               -- un objet JSON, voir pokemon.format_de
+  PRIMARY KEY (page_id, serie)
+);
+"""
+
 # Les couleurs qu'on peut choisir, 5 x 5, rangees par teinte : du jaune au
 # rouge, du rose au violet, du bleu au vert, puis quelques douces et les
 # neutres. Des couleurs franches et bien distinctes -- une premiere palette
@@ -757,7 +823,8 @@ MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
               SUGGESTIONS_VUES, MONITORING, QUIZ_SOURCE, THEMES_JEU,
               CLASSEUR, SOCIAL, DISCUSSION, FIL, SPOILER, FIL_VU,
               ALERTES_SORTIE, COULEUR, PRESENCE, VISITE_HUMAINE,
-              NIHONGO, NIHONGO_LECTURE]
+              NIHONGO, NIHONGO_LECTURE, FAVORITES, FORMAT_CLASSEUR,
+              FORMAT_PAR_FAMILLE, POKEMON]
 
 _local = threading.local()
 

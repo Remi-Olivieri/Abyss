@@ -5,7 +5,9 @@
 
    Cinq étapes : ce qu'on veut mettre à jour, l'analyse jeu par jeu, la
    relecture de ce qui va changer, l'écriture par paquets, puis les
-   jaquettes une par une.
+   jaquettes une par une. L'analyse peut aussi venir du serveur, qui la
+   fait seul chaque nuit (voir entretien.py) : on passe alors directement
+   à la relecture.
 
    C'est le seul module qui écrit en masse dans le classeur, d'où sa
    prudence : rien ne part sans avoir été montré.
@@ -71,6 +73,10 @@ const IGD = {
   echecs: [],
   opts: {dates:true, prix:true, jaquettes:true, detail:true, tout:false},
   passes: 0,       // les jeux déjà complets, que l'analyse n'a pas interrogés
+  nuit: null,      // où en est l'analyse de nuit, lu avec la base (voir entretien.py)
+  source: '',      // 'nuit' quand la relecture vient du rapport de nuit
+  rapportNuit: null, // son début et sa fin, pour le dire en tête de relecture
+  horsRapport: 0,  // les lignes ajoutées ou modifiées depuis ce rapport
 };
 
 const SURETE = {
@@ -104,6 +110,7 @@ function ouvrirIgdb(){
   IGD.stop = false;
   IGD.lignes = []; IGD.file = []; IGD.fi = 0; IGD.ecrit = false; IGD.filtre = false;
   IGD.avance = null;
+  IGD.source = ''; IGD.rapportNuit = null; IGD.horsRapport = 0;
   /* Les cinq compteurs, et pas quatre : `detail` manquait ici alors que le
      bilan l'affiche. L'écriture le remettait à zéro au passage, ce qui
      masquait l'oubli - sauf quand il n'y a rien à écrire et qu'on va
@@ -138,6 +145,7 @@ async function igdbOuvreReglages(){
   try{
     const d = await envoiBrut('GET', '/api/journal/admin/jeux');
     IGD.site = d.jeux || [];
+    IGD.nuit = d.nuit || null;
   }catch(e){ souci = e.message || 'erreur inconnue'; }
   if(jeton !== IGD.jeton) return;        // fermée pendant la lecture
   /* Sans cette liste il n'y a plus rien à proposer : les journaux, leurs
@@ -330,6 +338,84 @@ function igdbJournaux(){
 }
 const igdbPluriel = n => n > 1 ? 'x' : '';
 
+/* ---------- l'analyse de la nuit ----------
+   Chaque nuit à minuit, le serveur fait seul l'analyse de toute la base,
+   jeux complets compris (voir entretien.py), et garde ce qu'IGDB et Steam
+   ont répondu. Le matin, il ne reste qu'à relire et écrire : c'est donc la
+   première chose que la fenêtre propose, avant les réglages de l'analyse
+   à la main. */
+function igdbQuand(iso){
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  return d.toLocaleString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris'});
+}
+function igdbDuree(debut, fin){
+  const min = Math.round((new Date(fin) - new Date(debut)) / 60000);
+  return isNaN(min) ? '' : (min < 1 ? "moins d'une minute" : `${min} min`);
+}
+function igdbNuitHTML(){
+  const n = IGD.nuit || {};
+  const r = n.rapport, c = n.en_cours;
+  const enCours = suite => c ? `<p class="igdb-note">Une analyse tourne sur le serveur : <b>${
+    c.fait} / ${c.total}</b> jeux. ${suite}</p>` : '';
+  if(r) return `<div class="igdb-nuit">
+      <p class="igdb-info">Analyse de la nuit : <b>${r.jeux} jeu${igdbPluriel(r.jeux)}</b> vérifié${
+        r.jeux > 1 ? 's' : ''} le ${esc(igdbQuand(r.debut))}${
+        r.fin ? ` (${esc(igdbDuree(r.debut, r.fin))})` : ''}.</p>
+      <button class="cta auto" id="igdb_nuit">Relire l'analyse de la nuit</button>
+      ${enCours('Son rapport remplacera celui-ci à la fin.')}
+    </div>`;
+  if(c) return `<div class="igdb-nuit">${enCours('Le rapport sera prêt à la fin.')}</div>`;
+  return '<p class="igdb-note igdb-nuit-rien">Pas encore d\'analyse de nuit : le serveur en fait une chaque nuit à minuit.</p>';
+}
+/* Le rapport de nuit, comparé à la base telle qu'elle est maintenant.
+
+   Le serveur ne garde que les réponses d'IGDB, jamais les écarts : c'est
+   igdbRapport, celui de l'analyse à la main, qui les calcule ici, contre
+   les valeurs lues à l'ouverture. Un jeu corrigé dans la matinée n'a donc
+   plus rien à proposer, et une ligne renommée ou rattachée à une autre
+   fiche depuis minuit est écartée : la réponse ne la décrit plus.
+
+   Une ligne sans fiche à minuit, rattachée depuis à celle-là même que la
+   nuit avait trouvée, reste la même : c'est ce que fait l'écriture de ce
+   rapport, et la relire ne doit pas la compter parmi les « modifiées ». */
+function igdbMemeLigne(g, s, data){
+  if(s.id_igdb) return g.idIgdb === s.id_igdb;
+  if(g.idIgdb) return !!(data.fiche && g.idIgdb === data.fiche.id);
+  return g.name === s.nom && (g.release || '') === (s.sortie || '');
+}
+async function igdbNuit(){
+  const jeton = ++IGD.jeton;
+  igdbEntete('Lecture du rapport');
+  igdbCorps().innerHTML = "<p class=\"igdb-info\">Lecture de l'analyse de la nuit...</p>";
+  let r = null, souci = '';
+  try{
+    const d = await envoiBrut('GET', '/api/journal/admin/nuit');
+    r = d.rapport;
+  }catch(e){ souci = e.message || 'erreur inconnue'; }
+  if(jeton !== IGD.jeton) return;        // fermée pendant la lecture
+  if(souci || !r){
+    toast(souci ? `Rapport illisible - ${souci}` : "Pas encore d'analyse de nuit.", true);
+    igdbReglages();
+    return;
+  }
+  IGD.opts = {dates:true, prix:true, jaquettes:true, detail:true, tout:true};
+  IGD.source = 'nuit';
+  IGD.rapportNuit = {debut: r.debut, fin: r.fin};
+  IGD.passes = 0;
+  IGD.horsRapport = 0;
+  IGD.lignes = [];
+  const jeux = r.jeux || {}, reponses = r.reponses || [];
+  (IGD.site || []).forEach(g=>{
+    const s = jeux[g.id];
+    const data = s && reponses[s.r];
+    if(!data || !igdbMemeLigne(g, s, data)){ IGD.horsRapport++; return; }
+    IGD.lignes.push(igdbRapport(g, data, 'nuit' + s.r));
+  });
+  igdbRevue();
+}
+
 function igdbReglages(){
   IGD.etape = 'reglages';
   igdbEntete('Mise à jour depuis IGDB');
@@ -344,6 +430,7 @@ function igdbReglages(){
   }
   const total = (IGD.site || []).length;
   igdbCorps().innerHTML = `
+    ${igdbNuitHTML()}
     <div class="fgrid">
       <label class="fld full"><u>Journal</u>
         <select id="igdb_qui">
@@ -389,6 +476,7 @@ function igdbReglages(){
   };
   $('igdb_qui').onchange = majOnglets;
   majOnglets();
+  if($('igdb_nuit')) $('igdb_nuit').onclick = igdbNuit;
 
   $('igdb_annuler').onclick = fermerIgdb;
   $('igdb_go').onclick = ()=>{
@@ -487,6 +575,8 @@ async function igdbAnalyse(){
   const jeton = ++IGD.jeton;
   IGD.etape = 'analyse';
   IGD.stop = false;
+  IGD.source = '';
+  IGD.horsRapport = 0;
   IGD.lignes = [];
   IGD.t0 = Date.now();
   igdbEntete('Analyse en cours');
@@ -504,10 +594,18 @@ async function igdbAnalyse(){
   const total = aInterroger.length;
   /* Le même jeu revient d'un journal à l'autre : sur toute la base, « Elden
      Ring » c'est douze lignes et une seule question à IGDB. La réponse est
-     donc gardée le temps de l'analyse, sous le couple (nom, date connue) -
-     le couple et pas le nom seul, parce que c'est la date qui départage
-     « Doom » de 1993 de celui de 2016, et que deux lignes qui ne la donnent
-     pas pareil n'ont aucune raison de tomber sur la même fiche.
+     donc gardée le temps de l'analyse.
+
+     Sous l'identifiant IGDB quand la ligne en a un : /api/jeu/maj suit
+     alors cette fiche quoi que disent le nom et la date, et c'est aussi
+     sous lui que le serveur range la jaquette (voir cle_jaquette dans
+     jaquettes.py). Deux journaux qui notent la même fiche avec deux dates
+     différentes - l'un à jour, l'autre pas - ne font donc qu'une question.
+
+     Sans identifiant, sous le couple (nom, date connue) - le couple et pas
+     le nom seul, parce que c'est la date qui départage « Doom » de 1993 de
+     celui de 2016, et que deux lignes qui ne la donnent pas pareil n'ont
+     aucune raison de tomber sur la même fiche.
 
      Les échecs ne sont pas gardés : une coupure réseau sur une ligne n'est
      pas une réponse sur ce jeu, et la suivante mérite sa chance. */
@@ -517,10 +615,7 @@ async function igdbAnalyse(){
     if(IGD.stop) break;                  // interrompu : on garde ce qu'on a
     const g = aInterroger[i];
     igdbAvance(i, total, g.name);
-    // l'identifiant fait partie de la clé : c'est lui qui décide sous quel
-    // nom de fichier le serveur va chercher la jaquette, donc deux lignes
-    // qui ne le portent pas pareil n'ont pas la même réponse
-    const cle = norm(g.name) + '|' + (g.release || '') + '|' + (g.idIgdb || '');
+    const cle = g.idIgdb ? 'id' + g.idIgdb : norm(g.name) + '|' + (g.release || '');
     let data = vues.get(cle);
     if(!data){
       try{
@@ -546,7 +641,7 @@ async function igdbAnalyse(){
       if(data.etat === 'ok' || data.etat === 'introuvable') vues.set(cle, data);
     }
     if(jeton !== IGD.jeton) return;
-    IGD.lignes.push(igdbRapport(g, data));
+    IGD.lignes.push(igdbRapport(g, data, cle));
   }
   if(jeton !== IGD.jeton) return;
   igdbAvance(IGD.lignes.length, total, '');
@@ -554,10 +649,13 @@ async function igdbAnalyse(){
 }
 
 /* Ce qu'on retient d'un jeu : les écarts, et rien d'autre. Une valeur
-   identique n'est pas un changement - la liste ne montrerait que du bruit. */
-function igdbRapport(g, data){
+   identique n'est pas un changement - la liste ne montrerait que du bruit.
+   `cle` désigne la question posée à IGDB : plusieurs lignes la partagent, et
+   c'est en les comptant qu'on sait combien de jeux ont été analysés. */
+function igdbRapport(g, data, cle){
   const l = {
     g: g,
+    cle: cle,
     etat: data.etat || 'injoignable',
     raison: data.raison || '',
     fiche: data.fiche || null,
@@ -666,20 +764,70 @@ function igdbDelta(titre, avant, apres){
     <span class="igdb-fl">→</span>
     <b class="igdb-ap">${esc(apres)}</b></span>`;
 }
-function igdbLigneHTML(l, i){
-  const f = l.fiche;
+/* ---------- un jeu, une ligne ----------
+   « Clair Obscur » tenu par deux personnes, c'était deux lignes identiques
+   à relire et à cocher l'une après l'autre. Les lignes qui tombent sur la
+   même fiche IGDB n'en font plus qu'une : une seule case, et l'écriture
+   part dans chaque journal concerné.
+
+   La fiche seule suffit quand le rapprochement est sûr - c'est le même
+   jeu, quel que soit le titre que chacun lui a donné. Sinon le titre fait
+   partie de la clé : deux noms différents rapprochés de la même fiche par
+   simple ressemblance sont deux paris, à vérifier chacun. Le degré de
+   sûreté aussi, pour que la ligne arrive cochée ou non d'un seul tenant.
+
+   Seules les lignes qui ont quelque chose à écrire se regroupent : un
+   journal déjà à jour n'est ni montré ni réécrit. Chaque ligne garde ses
+   propres écarts - l'un a la mauvaise date, l'autre aussi le mauvais prix -
+   et c'est ligne par ligne que l'écriture les envoie (igdbCharge). */
+function igdbCleGroupe(l){
+  return l.fiche.id + '|' + l.surete + (l.surete === 'sure' ? '' : '|' + norm(l.g.name));
+}
+function igdbGroupes(lignes){
+  const par = new Map();
+  lignes.forEach(l=>{
+    const cle = igdbCleGroupe(l);
+    if(!par.has(cle)) par.set(cle, []);
+    par.get(cle).push(l);
+  });
+  const groupes = [...par.values()];
+  /* Une seule case pour tout le groupe. Deux groupes peuvent se rejoindre
+     après « Changer de jeu », l'un coché, l'autre pas : la case dit alors
+     oui, et le dit pour toutes ses lignes, pour que ce qui part soit bien
+     ce qu'elle montre. */
+  groupes.forEach(gr=>{
+    const coche = gr.some(l => l.coche);
+    gr.forEach(l=>{ l.coche = coche; });
+  });
+  return groupes;
+}
+/* Ce qu'il y avait avant, ligne par ligne : une seule valeur si tous les
+   journaux disaient la même chose, sinon chacune, séparées d'une barre. */
+function igdbAvants(lignes, lire){
+  return [...new Set(lignes.map(lire))].join(' / ');
+}
+function igdbOu(gr){
+  const ou = gr.map(x => x.g.pseudo ? x.g.pseudo + ' · ' + x.g.bucket : x.g.bucket);
+  return ou.length > 3 ? ou.slice(0, 3).join(', ') + ` +${ou.length - 3}` : ou.join(', ');
+}
+function igdbLigneHTML(gr, i){
+  const l = gr[0], f = l.fiche;
   const meme = norm(f.titre) === norm(l.g.name);
+  const dates = gr.filter(x => x.date), prix = gr.filter(x => x.prix);
+  const detail = (gr.find(x => x.detail) || {}).detail;
   return `<label class="igdb-ligne">
     <input type="checkbox" data-i="${i}"${l.coche ? ' checked' : ''}>
     <span class="igdb-corps">
-      <b class="igdb-nom">${esc(l.g.name)} <em>${esc(
-        l.g.pseudo ? l.g.pseudo + ' · ' + l.g.bucket : l.g.bucket)}</em></b>
+      <b class="igdb-nom">${esc(l.g.name)} <em>${esc(igdbOu(gr))}</em></b>
       <span class="igdb-match">${meme ? '' : esc(f.titre) + ' · '}${esc(f.date || 'date inconnue')} <i
         class="igdb-tag ${l.surete}">${esc(SURETE[l.surete] || '')}</i></span>
-      ${l.date ? igdbDelta('Date', l.date.avant ? dateFmt(l.date.avant) : 'aucune', dateFmt(l.date.apres)) : ''}
-      ${l.prix ? igdbDelta('Prix', money(l.prix.avant), money(l.prix.apres)) : ''}
-      ${l.detail ? `<span class="igdb-delta"><u>Fiche</u>
-        <b class="igdb-ap">${esc([l.detail.developpeur, l.detail.genres, l.detail.themes].filter(Boolean).join(' · ') || 'plateforme, genres et thèmes')}</b></span>` : ''}
+      ${dates.length ? igdbDelta('Date',
+        igdbAvants(dates, x => x.date.avant ? dateFmt(x.date.avant) : 'aucune'),
+        dateFmt(dates[0].date.apres)) : ''}
+      ${prix.length ? igdbDelta('Prix',
+        igdbAvants(prix, x => money(x.prix.avant)), money(prix[0].prix.apres)) : ''}
+      ${detail ? `<span class="igdb-delta"><u>Fiche</u>
+        <b class="igdb-ap">${esc([detail.developpeur, detail.genres, detail.themes].filter(Boolean).join(' · ') || 'plateforme, genres et thèmes')}</b></span>` : ''}
     </span>
     ${l.surete === 'sure' ? '' :
       `<button type="button" class="igdb-fiche-btn" data-corr="${i}">Changer de jeu</button>`}
@@ -696,61 +844,70 @@ function igdbAVerifier(l){
 function igdbRevue(){
   IGD.etape = 'revue';
   IGD.file = igdbFileJaquettes();
-  const avec  = IGD.lignes.filter(igdbAChanger);
-  const rates = IGD.lignes.filter(l => l.etat !== 'ok');
-  const flous = avec.filter(igdbAVerifier);
+  const groupes = igdbGroupes(IGD.lignes.filter(igdbAChanger));
+  const rates = igdbRates();
+  const flous = groupes.filter(gr => igdbAVerifier(gr[0]));
   // le filtre ne survit pas à une liste qui n'a plus rien de douteux : il
   // laisserait une liste vide sans que rien ne dise pourquoi
   if(!flous.length) IGD.filtre = false;
-  igdbEntete('Ce qui va changer');
+  igdbEntete(IGD.source === 'nuit' ? 'Analyse de la nuit' : 'Ce qui va changer');
 
+  // les jeux et non les lignes : douze « Elden Ring » sont une seule question
+  const nJeux = new Set(IGD.lignes.map(l => l.cle)).size;
   const nJaq = IGD.file.length;
+  const hors = IGD.horsRapport;
   igdbCorps().innerHTML = `
     <p class="igdb-info">
-      <b>${IGD.lignes.length}</b> jeu${IGD.lignes.length > 1 ? 'x' : ''} analysé${IGD.lignes.length > 1 ? 's' : ''} :
-      <b>${avec.length}</b> à corriger${flous.length ? `, dont <b>${flous.length}</b> à vérifier` : ''}${
+      ${IGD.source === 'nuit' && IGD.rapportNuit ? `Faite le ${esc(igdbQuand(IGD.rapportNuit.debut))}, comparée à la base telle qu'elle est maintenant. ` : ''}
+      <b>${nJeux}</b> jeu${igdbPluriel(nJeux)} analysé${nJeux > 1 ? 's' : ''} :
+      <b>${groupes.length}</b> à corriger${flous.length ? `, dont <b>${flous.length}</b> à vérifier` : ''}${
         nJaq ? `, <b>${nJaq}</b> jaquette${nJaq > 1 ? 's' : ''} à proposer` : ''}.${
         IGD.passes ? ` <b>${IGD.passes}</b> jeu${igdbPluriel(IGD.passes)} déjà complet${
-          IGD.passes > 1 ? 's' : ''}, non interrogé${IGD.passes > 1 ? 's' : ''}.` : ''}
-      ${avec.length ? `Seules les cellules « Date de sortie », « Prix de base »${
+          IGD.passes > 1 ? 's' : ''}, non interrogé${IGD.passes > 1 ? 's' : ''}.` : ''}${
+        hors ? ` <b>${hors}</b> ligne${hors > 1 ? 's' : ''} ajoutée${hors > 1 ? 's' : ''} ou modifiée${
+          hors > 1 ? 's' : ''} depuis n'y figure${hors > 1 ? 'nt' : ''} pas.` : ''}
+      ${groupes.length ? `Seules les cellules « Date de sortie », « Prix de base »${
         IGD.opts.detail ? ' et la fiche détaillée (plateforme, développeur, genres, thèmes)' : ''} sont touchées.` : ''}
     </p>
     ${flous.length ? `<label class="fld fcheck igdb-filtre">
       <input type="checkbox" id="igdb_flous"${IGD.filtre ? ' checked' : ''}>
       <span>N'afficher que les ${flous.length} jeu${igdbPluriel(flous.length)} à vérifier</span></label>` : ''}
-    ${avec.length
-      ? `<div class="igdb-liste">${avec.map((l,i)=>
-          (!IGD.filtre || igdbAVerifier(l)) ? igdbLigneHTML(l, i) : '').join('')}</div>`
+    ${groupes.length
+      ? `<div class="igdb-liste">${groupes.map((gr,i)=>
+          (!IGD.filtre || igdbAVerifier(gr[0])) ? igdbLigneHTML(gr, i) : '').join('')}</div>`
       : `<p class="igdb-note">Rien à corriger${nJaq ? ' - il reste les jaquettes.' : " : tout est déjà à jour."}</p>`}
     ${rates.length ? `<details class="igdb-repli">
       <summary>${rates.length} jeu${rates.length > 1 ? 'x' : ''} sans réponse d'IGDB</summary>
-      ${igdbMotifsHTML(rates)}
-      <ul>${rates.map(l=>`<li>${esc(l.g.name)}${l.g.pseudo ? ` <em>${esc(l.g.pseudo)}</em>` : ''} <i>- ${esc(motifLigne(l))}</i></li>`).join('')}</ul>
+      ${igdbMotifsHTML(rates.map(gr => gr[0]))}
+      <ul>${rates.map(gr=>{
+        const qui = [...new Set(gr.map(l => l.g.pseudo).filter(Boolean))].join(', ');
+        return `<li>${esc(gr[0].g.name)}${qui ? ` <em>${esc(qui)}</em>` : ''} <i>- ${esc(motifLigne(gr[0]))}</i></li>`;
+      }).join('')}</ul>
     </details>` : ''}
     <div class="frow">
-      ${avec.length ? `<button class="ghost" id="igdb_tous">Cocher ${IGD.filtre ? 'la liste' : 'tout'}</button>
+      ${groupes.length ? `<button class="ghost" id="igdb_tous">Cocher ${IGD.filtre ? 'la liste' : 'tout'}</button>
         <button class="ghost" id="igdb_aucun">Décocher ${IGD.filtre ? 'la liste' : 'tout'}</button>` : ''}
       <span class="spacer"></span>
       <button class="ghost" id="igdb_annuler">Annuler</button>
       <button class="cta auto" id="igdb_ok"></button>
     </div>`;
 
-  /* data-i pointe dans `avec`, pas dans IGD.lignes : c'est la liste des jeux
-     à corriger qui est indexée. Elle n'est pas forcément affichée en entier -
-     le filtre peut n'en montrer qu'une partie - mais l'index, lui, reste
-     celui de `avec` : une case cochée doit désigner le même jeu que le
-     filtre soit mis ou non. */
+  /* data-i pointe dans `groupes`, pas dans IGD.lignes : c'est la liste des
+     jeux à corriger qui est indexée, un groupe par jeu. Elle n'est pas
+     forcément affichée en entier - le filtre peut n'en montrer qu'une
+     partie - mais l'index, lui, reste celui de `groupes` : une case cochée
+     doit désigner le même jeu que le filtre soit mis ou non. Cocher un jeu
+     coche chacune de ses lignes, dans chaque journal. */
+  const pose = (c, v)=>{ c.checked = v; groupes[+c.dataset.i].forEach(l=>{ l.coche = v; }); };
   igdbCorps().querySelectorAll('.igdb-ligne input').forEach(c=>{
-    c.onchange = ()=>{ avec[+c.dataset.i].coche = c.checked; igdbBouton(); };
+    c.onchange = ()=>{ pose(c, c.checked); igdbBouton(); };
   });
   /* Cocher ce qui est SOUS LES YEUX, et non tout le rapport : filtrer sur
      les jeux à vérifier puis « Décocher la liste » écarte d'un geste tout ce
      dont on n'est pas sûr, en laissant passer le reste. C'est justement la
      raison d'être du filtre, et c'est pourquoi les deux boutons changent de
      nom quand il est mis. */
-  const cocher = v => igdbCorps().querySelectorAll('.igdb-ligne input').forEach(c=>{
-    c.checked = v; avec[+c.dataset.i].coche = v;
-  });
+  const cocher = v => igdbCorps().querySelectorAll('.igdb-ligne input').forEach(c => pose(c, v));
   if($('igdb_flous')) $('igdb_flous').onchange = e=>{
     IGD.filtre = e.target.checked;
     igdbRevue();               // la liste se redessine, les cases gardent leur état
@@ -760,7 +917,7 @@ function igdbRevue(){
   igdbCorps().querySelectorAll('.igdb-fiche-btn').forEach(b=>{
     b.onclick = e=>{
       e.preventDefault(); e.stopPropagation();
-      corrigeFiche(avec[+b.dataset.corr]);
+      corrigeFiche(groupes[+b.dataset.corr]);
     };
   });
   if($('igdb_tous'))  $('igdb_tous').onclick  = ()=>{ cocher(true);  igdbBouton(); };
@@ -772,6 +929,17 @@ function igdbRevue(){
     else fermerIgdb();
   };
   igdbBouton();
+}
+/* Les jeux restés sans réponse, une entrée par question posée : le même
+   jeu raté dans trois journaux est un seul échec, pas trois. */
+function igdbRates(){
+  const par = new Map();
+  IGD.lignes.forEach(l=>{
+    if(l.etat === 'ok') return;
+    if(!par.has(l.cle)) par.set(l.cle, []);
+    par.get(l.cle).push(l);
+  });
+  return [...par.values()];
 }
 /* Pourquoi une ligne n'a rien donné. « Aucune fiche trouvée » veut dire
    qu'IGDB a répondu mais ne connaît pas ce titre ; tout le reste est une
@@ -804,8 +972,11 @@ function igdbMotifsHTML(rates){
    ça ailleurs : on la réutilise telle quelle, titres et dates affichés.
 
    La fiche retenue est celle qui sera écrite : c'est son identifiant qui
-   part, et le serveur en tire plateforme, développeur et genres. */
-async function corrigeFiche(l, terme){
+   part, et le serveur en tire plateforme, développeur et genres. Elle vaut
+   pour toutes les lignes du jeu (voir igdbGroupes) : c'est le même titre
+   rapproché de la même fiche, il se trompait partout pareil. */
+async function corrigeFiche(gr, terme){
+  const l = gr[0];
   const cherche = terme || l.g.name;
   let data;
   try{ data = await api('/api/jeu/suggestions', {nom: cherche}); }
@@ -817,31 +988,40 @@ async function corrigeFiche(l, terme){
   }
   if(!jeux.length) toast(`Rien trouvé pour « ${cherche} »`, true);
   openJaq(l.g.name, jeux, choix=>{
-    l.fiche = choix;
-    l.surete = 'sure';              // choisi à la main : plus rien à deviner
-    l.rattache = true;              // l'identifiant part, options ou pas
-    /* on repart du choix : la date suit la fiche, et les trois colonnes
-       seront relues côté serveur à partir de l'identifiant */
-    l.date = (IGD.opts.dates && choix.iso && choix.iso !== (l.g.release || ''))
-      ? {avant: l.g.release || '', apres: choix.iso} : null;
-    if(IGD.opts.detail) l.detail = {plateforme: null, developpeur: null, genres: null, themes: null};
-    l.coche = igdbAChanger(l);
+    gr.forEach(x=>{
+      x.fiche = choix;
+      x.surete = 'sure';            // choisi à la main : plus rien à deviner
+      x.rattache = true;            // l'identifiant part, options ou pas
+      /* on repart du choix : la date suit la fiche, et les trois colonnes
+         seront relues côté serveur à partir de l'identifiant. Le prix, lui,
+         était celui de la fiche écartée : il ne part pas, la prochaine
+         analyse demandera celui de la bonne. */
+      x.date = (IGD.opts.dates && choix.iso && choix.iso !== (x.g.release || ''))
+        ? {avant: x.g.release || '', apres: choix.iso} : null;
+      x.prix = null;
+      if(IGD.opts.detail) x.detail = {plateforme: null, developpeur: null, genres: null, themes: null};
+      x.coche = igdbAChanger(x);
+    });
     igdbRevue();                    // la liste se redessine avec le nouveau choix
   }, null, {
     titre: `Quel jeu est « ${l.g.name} » ?`,
     terme: cherche,
-    surRecherche: t => corrigeFiche(l, t),
+    surRecherche: t => corrigeFiche(gr, t),
   });
 }
 
 /* Le bouton principal dit ce qu'il va faire, et il change à chaque case
-   décochée : « Écrire 12 lignes », puis « Passer aux jaquettes », puis
-   « Fermer » quand il ne reste plus rien. */
+   décochée : « Écrire 12 jeux (15 lignes) », puis « Voir les jaquettes »,
+   puis « Fermer » quand il ne reste plus rien. Les lignes entre
+   parenthèses quand un jeu est dans plusieurs journaux : c'est ce que
+   l'écriture va réellement toucher. */
 function igdbBouton(){
   const b = $('igdb_ok');
   if(!b) return;
-  const n = IGD.lignes.filter(l => l.coche && igdbAChanger(l)).length;
-  if(n) b.textContent = `Écrire ${n} ligne${n > 1 ? 's' : ''}`;
+  const lignes = IGD.lignes.filter(l => l.coche && igdbAChanger(l));
+  const n = lignes.length;
+  const jeux = new Set(lignes.map(igdbCleGroupe)).size;
+  if(n) b.textContent = `Écrire ${jeux} jeu${igdbPluriel(jeux)}` + (n > jeux ? ` (${n} lignes)` : '');
   else if(IGD.file.length) b.textContent = `Voir les ${IGD.file.length} jaquette${IGD.file.length > 1 ? 's' : ''}`;
   else b.textContent = 'Fermer';
 }

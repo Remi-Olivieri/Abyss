@@ -112,8 +112,10 @@
      « n' » ん, « - » le trait des voyelles longues ー, « ti » ティ. Le n suit le rōmaji
      des dictionnaires : « minna » みんな, « konnichiwa » こんにちわ, « kon'ya »
      こんや. Un n qui termine la saisie attend la lettre suivante, sauf une
-     fois la réponse validée (`fin`), où il devient ん. Les kanas tapés
-     directement (clavier japonais du téléphone) passent tels quels. */
+     fois la réponse validée (`fin`), où il devient ん. Avec `kata`, ce qui
+     vient du rōmaji s'écrit en katakanas : « beddo » donne ベッド, pour un
+     mot qui s'écrit ainsi. Les kanas tapés directement (clavier japonais
+     du téléphone) passent tels quels. */
   const SYLLABES = (function () {
     const t = {};
     const ligne = (cons, kanas) => ["a", "i", "u", "e", "o"].forEach((v, i) => {
@@ -152,7 +154,8 @@
   const CONSONNE = /^[bcdfghjklmpqrstvwxz]$/;          // sans n ni y
   const VOYELLE_OU_Y = /^[aiueoy]$/;
 
-  function versKana(texte, fin) {
+  function versKana(texte, fin, kata) {
+    const k = kata ? versKata : (x) => x;
     // une voyelle longue tapée comme la page l'écrit en rōmaji (tōkyō) : la
     // voyelle et le trait qui l'allonge
     const s = String(texte || "").normalize("NFKC").replace(/[’`´]/g, "'").toLowerCase()
@@ -169,22 +172,22 @@
           const encore = s[i + 2] || "";
           if (!encore && !fin) { sortie += s.slice(i); break; }       // « konn… » : on attend
           // « minna » : ん, et le second n ouvre な ; « konn » + consonne : ん
-          sortie += "ん";
+          sortie += k("ん");
           i += VOYELLE_OU_Y.test(encore) ? 1 : 2;
           continue;
         }
-        if (apres || fin) { sortie += "ん"; i++; continue; }
+        if (apres || fin) { sortie += k("ん"); i++; continue; }
         sortie += c; i++; continue;                                    // un n final : on attend
       }
       // une consonne doublée : っ (« kko », « tte », « tch »)
       if (CONSONNE.test(c) && (apres === c || (c === "t" && apres === "c"))) {
-        sortie += "っ"; i++; continue;
+        sortie += k("っ"); i++; continue;
       }
       let trouve = false;
       for (let n = Math.min(PLUS_LONGUE, s.length - i); n >= 1; n--) {
         const morceau = s.slice(i, i + n);
         if (Object.prototype.hasOwnProperty.call(SYLLABES, morceau)) {
-          sortie += SYLLABES[morceau]; i += n; trouve = true; break;
+          sortie += k(SYLLABES[morceau]); i += n; trouve = true; break;
         }
       }
       if (!trouve) { sortie += c; i++; }   // une syllabe pas finie (« ky », « ts »)
@@ -194,6 +197,9 @@
 
   function versHira(s) {
     return String(s || "").replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+  }
+  function versKata(s) {
+    return String(s || "").replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
   }
 
   /* Une lecture, pour comparer : en hiraganas, sans espaces, et le trait

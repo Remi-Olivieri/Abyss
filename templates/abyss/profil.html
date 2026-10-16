@@ -10,35 +10,23 @@
 <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/abyss/abyss.css">
 <style>
   /* cette barre-ci porte un retour à gauche en plus du compte à droite */
   .barre{justify-content:space-between}
-  .carte-profil{
-    padding:26px 26px 28px;
-    margin-bottom:22px;
-    border-radius:18px;
-    background:linear-gradient(170deg,#101C2C,#080F1A);
-    border:1px solid rgba(150,195,220,.16);
-  }
-  .carte-profil h2{
-    font-family:"Eczar",Georgia,serif;
-    font-size:20px;
-    font-weight:600;
-    margin:0 0 6px;
-  }
-  .carte-profil .champ:last-of-type{margin-bottom:18px}
+  .panneau .champ:last-of-type{margin-bottom:18px}
+  .notifications{--cat:var(--c-collection)}
   #gate{max-width:46ch}
 
   /* ---------- bannière ---------- */
   .banniere{
     position:relative;overflow:hidden;
-    padding:32px 30px;margin-bottom:22px;border-radius:20px;
-    border:1px solid rgba(150,195,220,.18);
+    padding:30px 28px;margin-bottom:22px;
+    border:1px solid var(--ui-trait);
     background:
-      radial-gradient(620px 280px at 12% -25%, rgba(120,200,230,.24), transparent 70%),
-      linear-gradient(160deg,#132238,#080F1A 68%);
+      radial-gradient(620px 280px at 12% -25%, rgba(162,140,255,.2), transparent 70%),
+      linear-gradient(180deg,#0E1A28,#04090F 70%);
   }
   .banniere-corps{
     position:relative;z-index:1;
@@ -46,19 +34,19 @@
   }
   .banniere-avatar-col{display:flex;flex-direction:column;align-items:center;gap:7px;flex:none}
   .banniere-avatar{
-    position:relative;width:88px;height:88px;border-radius:50%;overflow:hidden;
-    background:rgba(3,8,15,.66);border:2px solid rgba(150,195,220,.3);
+    position:relative;width:88px;height:88px;border-radius:6px;overflow:hidden;
+    background:rgba(2,6,10,.66);border:2px solid var(--ui-pale);
     box-shadow:0 10px 28px rgba(0,0,0,.4);
   }
   .banniere-avatar .avatar-apercu{width:100%;height:100%;object-fit:cover}
   .banniere-avatar .avatar-vide{
     position:absolute;inset:0;
-    background:linear-gradient(160deg,rgba(120,200,230,.22),transparent 70%);
+    background:linear-gradient(160deg,rgba(162,140,255,.22),transparent 70%);
   }
   .avatar-changer{
     position:absolute;inset:auto 0 0 0;height:26px;
     display:flex;align-items:center;justify-content:center;
-    background:rgba(3,6,11,.78);color:#DCE8F0;cursor:pointer;
+    background:rgba(3,7,11,.78);color:var(--ui);cursor:pointer;
     opacity:0;transition:opacity .2s ease;
   }
   .banniere-avatar:hover .avatar-changer,
@@ -66,10 +54,11 @@
   .avatar-retirer{font-size:12px}
   .banniere-info{flex:1 1 220px;min-width:0}
   .banniere-pseudo{
-    display:block;margin:0;font-family:"Eczar",Georgia,serif;font-size:30px;
-    font-weight:600;line-height:1.15;
+    display:block;margin:0;font-size:26px;font-weight:600;
+    letter-spacing:.1em;line-height:1.15;color:var(--ui);
   }
-  .banniere-email{display:block;margin-top:5px;color:var(--brume);font-size:13.5px}
+  .banniere-email{display:block;margin-top:5px;color:var(--ui-dim);font-size:12.5px}
+  .banniere-email::before{content:"> "}
   .banniere-actions{display:flex;flex-wrap:wrap;gap:10px}
 
   /* L'alerte de sortie reprend la bascule des projets, sans son sens : là-bas
@@ -91,72 +80,75 @@
   .banniere-fond::after{
     content:'';position:absolute;inset:0;
     background:
-      linear-gradient(100deg,rgba(6,12,20,.94) 22%,rgba(6,12,20,.55) 62%,rgba(6,12,20,.35)),
-      linear-gradient(to top,rgba(6,12,20,.8),transparent 55%);
+      linear-gradient(100deg,rgba(4,9,15,.94) 22%,rgba(4,9,15,.55) 62%,rgba(4,9,15,.35)),
+      linear-gradient(to top,rgba(4,9,15,.8),transparent 55%);
   }
-  .banniere-vide{color:var(--brume);font-size:12.5px;margin:10px 0 0}
+  .banniere-vide{color:var(--ui-dim);font-size:12.5px;margin:10px 0 0}
 
   /* ---------- choisir une bannière ---------- */
   .modale.large{max-width:760px}
   .ban-onglets{display:flex;gap:8px;margin-bottom:16px}
   .ban-onglet{
-    flex:1;font:inherit;font-size:14px;padding:9px 12px;border-radius:10px;
-    color:var(--brume);border:1px solid rgba(150,195,220,.16);
-    background:rgba(3,8,15,.66);cursor:pointer;
+    flex:1;font:inherit;font-size:13px;padding:9px 12px;border-radius:4px;
+    color:var(--ui-dim);border:1px solid var(--ui-trait);
+    background:rgba(2,6,10,.8);cursor:pointer;
     transition:border-color .2s ease,color .2s ease,background .2s ease;
   }
-  .ban-onglet:hover{color:var(--os)}
+  .ban-onglet:hover{color:var(--ui)}
   .ban-onglet.actif{
-    color:var(--os);border-color:rgba(120,200,230,.55);background:rgba(120,200,230,.10);
+    color:var(--ui);border-color:var(--ui-pale);background:rgba(190,220,236,.1);
   }
   .ban-grille{
     display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
     gap:10px;max-height:min(52vh,420px);overflow-y:auto;padding:2px;
     /* la barre de défilement du reste du site : fine et sombre */
-    scrollbar-width:thin;scrollbar-color:rgba(150,195,220,.25) transparent;
+    scrollbar-width:thin;scrollbar-color:rgba(190,220,236,.25) transparent;
   }
   .ban-choix{
-    position:relative;display:block;padding:0;border-radius:10px;overflow:hidden;
-    border:1px solid rgba(150,195,220,.16);background:rgba(3,8,15,.66);
+    position:relative;display:block;padding:0;border-radius:4px;overflow:hidden;
+    border:1px solid var(--ui-trait);background:rgba(2,6,10,.8);
     cursor:pointer;aspect-ratio:16/9;
     transition:border-color .2s ease,transform .15s ease;
   }
   .ban-choix img{width:100%;height:100%;object-fit:cover;display:block}
-  .ban-choix:hover{border-color:rgba(120,200,230,.55);transform:translateY(-2px)}
-  .ban-choix:focus-visible{outline:2px solid var(--plancton);outline-offset:2px}
+  .ban-choix:hover{border-color:var(--ui-pale);transform:translateY(-2px)}
+  .ban-choix:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
   .ban-choix b{
     position:absolute;inset:auto 0 0 0;padding:14px 8px 6px;
-    font:inherit;font-size:11.5px;font-weight:500;color:#DCE8F0;text-align:left;
-    background:linear-gradient(to top,rgba(3,6,11,.92),transparent);
+    font:inherit;font-size:11.5px;font-weight:500;color:var(--ui);text-align:left;
+    background:linear-gradient(to top,rgba(3,7,11,.92),transparent);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
-  .ban-etat{color:var(--brume);font-size:13px;padding:26px 4px;text-align:center}
+  .ban-etat{color:var(--ui-dim);font-size:12.5px;padding:26px 4px;text-align:center}
   .ban-pied{display:flex;gap:10px;align-items:center;margin-top:16px}
   .ban-pied .valider{margin:0}
 
   /* ---------- supprimer le compte ----------
      Tout en bas, et en rouge : on ne tombe pas dessus par hasard, mais on
      ne le cherche pas non plus. */
-  .zone-danger{
-    margin-top:40px;
-    border-color:rgba(232,106,106,.35);
-    background:linear-gradient(170deg,#1E1016,#0E0A10);
+  .danger{
+    --cat:var(--c-danger);
+    margin-top:34px;
+    background:linear-gradient(180deg,rgba(40,10,16,.6),rgba(12,4,8,.82));
   }
-  .zone-danger h2{color:var(--rouge)}
   .supprimer{
     width:100%;margin-top:14px;
-    font:inherit;font-size:16px;font-weight:600;letter-spacing:.02em;
-    color:#fff;padding:14px 18px;border:0;border-radius:12px;
-    background:linear-gradient(180deg,#E86A6A,#B83737);
-    box-shadow:0 10px 26px -12px rgba(232,106,106,.7);
+    font:inherit;font-size:13.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+    color:#fff;padding:14px 18px;border:0;border-radius:4px;
+    background:linear-gradient(180deg,#FF6B7A,#C23849);
+    box-shadow:0 10px 26px -12px rgba(255,107,122,.7);
     cursor:pointer;transition:filter .2s ease,transform .15s ease;
   }
   .supprimer:hover{filter:brightness(1.1)}
   .supprimer:active{transform:translateY(1px)}
   .supprimer:disabled{opacity:.45;cursor:not-allowed;filter:none}
-  .supprimer:focus-visible{outline:2px solid var(--rouge);outline-offset:3px}
-  .suppr-liste{margin:0 0 16px;padding-left:20px;color:var(--brume);font-size:13.5px;line-height:1.6}
+  .supprimer:focus-visible{outline:2px solid var(--c-danger);outline-offset:3px}
+  .suppr-liste{margin:0 0 16px;padding-left:20px;color:var(--ui-dim);font-size:13px;line-height:1.6}
 
+  @media (max-width:620px){
+    .banniere{padding:24px 20px}
+    .banniere-pseudo{font-size:22px}
+  }
 </style>
 </head>
 <body>
@@ -174,7 +166,7 @@
   </div>
 
   <main id="corps" hidden>
-    <section class="banniere" id="banniere">
+    <section class="banniere equerres" id="banniere">
       <div class="banniere-fond" id="banniereFond" hidden></div>
       <div class="banniere-corps">
         <div class="banniere-avatar-col">
@@ -203,8 +195,8 @@
       <p class="erreur" id="avatarErr" hidden></p>
     </section>
 
-    <section class="carte-profil">
-      <h2>Projets affichés</h2>
+    <section class="panneau">
+      <h2 class="etiquette-panneau">Projets affichés</h2>
       <p class="explication">Décoche ceux que tu ne veux pas voir sur Abyss.</p>
       <div id="listeProjets"></div>
     </section>
@@ -212,8 +204,8 @@
     <!-- Le mail de la veille d'une sortie. Éteint par défaut, et grisé tant
          qu'il n'y a pas d'adresse où l'envoyer - la phrase sous la case dit
          pourquoi, plutôt que de laisser deviner. Voir alertes.py. -->
-    <section class="carte-profil">
-      <h2>Notifications</h2>
+    <section class="panneau notifications">
+      <h2 class="etiquette-panneau">Notifications</h2>
       <label class="bascule alerte" id="alerteLigne">
         <input type="checkbox" id="alerteSortie">
         <span class="etiquette">M'envoyer un e-mail la veille de la sortie d'un jeu de ma wishlist</span>
@@ -221,14 +213,24 @@
       <p class="explication alerte-sans-mail" id="alerteSansMail" hidden>Ajoute une adresse e-mail pour activer cette option.</p>
     </section>
 
-    <section class="carte-profil zone-danger">
-      <h2>Supprimer mon compte</h2>
+    <section class="panneau danger">
+      <h2 class="etiquette-panneau">Supprimer mon compte</h2>
       <p class="explication">Ton compte, ton journal, ton classeur et tout ce que tu as écrit disparaissent définitivement.</p>
       <button type="button" class="supprimer" id="btnSupprimer">Supprimer mon compte</button>
     </section>
 
   </main>
 
+  <div id="gate" hidden>
+    <p class="explication">Connecte-toi pour voir ton profil.</p>
+    <a class="lien" href="/abyss">Retour à Abyss</a>
+  </div>
+
+</div>
+
+<!-- Les fenêtres, hors de .enveloppe : elle grandit sur ordinateur, une
+     fenêtre aussi (voir le zoom dans abyss.css), et une fenêtre posée
+     dedans grandirait deux fois. -->
   <!-- ---------- Supprimer le compte ---------- -->
   <div class="voile" id="mSupprimer" hidden>
     <div class="modale" role="dialog" aria-modal="true" aria-labelledby="titreSuppr">
@@ -331,13 +333,6 @@
     </div>
   </div>
 
-  <div id="gate" hidden>
-    <p class="explication">Connecte-toi pour voir ton profil.</p>
-    <a class="lien" href="/abyss">Retour à Abyss</a>
-  </div>
-
-</div>
-
 <div class="toast" id="toast" hidden></div>
 
 <!-- le battement de presence : voir static/commun/presence.js -->
@@ -348,12 +343,15 @@
 <script src="/static/commun/compte.js"></script>
 <script>
 /* La liste des projets masquables : la meme qu'abyss/accueil.html, juste ce qu'il
-   faut pour dessiner la case a cocher de chacun - id, nom, accent. */
+   faut pour dessiner la case a cocher de chacun - id, nom, et `cat`, la
+   couleur de sa categorie sur l'accueil, pour qu'un projet se reconnaisse
+   d'une page a l'autre. */
 const PROJETS = [
-    { id: "jeux-videos", nom: "Jeux Vidéos", accent: "var(--algue)" },
-    { id: "collection", nom: "Collection Yu-Gi-Oh!", accent: "var(--luciole)" },
-    { id: "chainz", nom: "L'Atelier Chainz", accent: "var(--meduse)" },
-    { id: "quiz", nom: "Yu-Gi-Quiz!", accent: "var(--plancton)" },
+    { id: "jeux-videos", nom: "Jeux Vidéos", cat: "var(--c-jeux)" },
+    { id: "collection", nom: "Collection Yu-Gi-Oh!", cat: "var(--c-collection)" },
+    { id: "chainz", nom: "L'Atelier Chainz", cat: "var(--c-jeux)" },
+    { id: "quiz", nom: "Mini-Jeux Vidéo", cat: "var(--c-minijeux)" },
+    { id: "yugiquiz", nom: "Yu-Gi-Quiz!", cat: "var(--c-minijeux)" },
 ];
 
 const echappe = (s) => String(s).replace(/[&<>"']/g, (c) =>
@@ -610,7 +608,7 @@ function dessineListeProjets() {
     <label class="bascule">
       <input type="checkbox" data-projet="${echappe(p.id)}"
              ${MOI.masques.indexOf(p.id) < 0 ? "checked" : ""}>
-      <span class="pointe" style="--accent:${p.accent}" aria-hidden="true"></span>
+      <span class="pointe" style="--cat:${p.cat}" aria-hidden="true"></span>
       <span class="etiquette">${echappe(p.nom)}</span>
     </label>`).join("");
 
