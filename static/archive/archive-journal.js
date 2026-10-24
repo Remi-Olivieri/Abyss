@@ -252,7 +252,7 @@ function applyData(data, frais){
    le journal entier relu : la page se repose dessus au lieu de recoller à la
    main ce qu'elle vient d'envoyer. */
 async function envoyer(methode, chemin, charge){
-  if(!CAN_WRITE) throw new Error('lecture seule : connecte-toi sur Abyss');
+  if(!CAN_WRITE) throw new Error('lecture seule : connecte-toi sur Abyss');
   return envoiBrut(methode, chemin, charge);
 }
 /* Le même envoi, sans le garde-fou : CAN_WRITE dit « le classeur affiché est
@@ -355,8 +355,9 @@ function majMoi(){
      redira à chaque classeur ouvert, mais l'administration qui arrive sur
      l'écran d'accueil - sans journal ouvert, donc sans majVerrou - doit
      pouvoir l'ouvrir quand même : c'est de la base qu'il s'agit, pas d'un
-     classeur en particulier. */
-  document.getElementById('igdbBtn').hidden = !MOI.admin;
+     classeur en particulier. Il ne se montre que s'il reste à corriger :
+     voir igdbVerifieUneFois dans archive-igdb.js. */
+  igdbVerifieUneFois();
   /* Les deux déclencheurs du menu d'identité, dont un seul se montre : ma
      pastille quand j'ai un compte, le nom du site sinon. La barre ne peut
      pas rester nue, et le menu ne peut pas dépendre du fait d'en avoir un -
@@ -517,7 +518,7 @@ function showGate(erreur, refus){
     ? 'Ce journal ne peut pas être ouvert'
     : (s ? 'Ce journal ne répond pas' : 'Aucun journal configuré');
   document.getElementById('gMsg').textContent = refus ? ''
-    : (s ? `Adresse interrogée : ${s.url}`
+    : (s ? `Adresse interrogée : ${s.url}`
          : "Ajoute l'adresse de ton script Apps Script dans le tableau SOURCES, tout en haut du fichier.");
   const box = document.getElementById('gErr');
   box.hidden = !erreur;
@@ -742,7 +743,7 @@ function majVerrou(){
      est donc réservée à l'administration. Le serveur le redit à chacune de
      ses routes (voir /admin dans journal.py) - ici on évite seulement de
      montrer une porte qui ne s'ouvrira pas. */
-  document.getElementById('igdbBtn').hidden = !MOI.admin;
+  majBoutonIgdb();
   document.getElementById('unlock').textContent =
     MOI.connecte ? 'Ouvrir mon journal' : 'Se connecter sur Abyss';
 }

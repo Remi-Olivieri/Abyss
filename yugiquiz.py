@@ -41,14 +41,16 @@ reprend pas trois jours plus tard.
 
 from pathlib import Path
 
-from flask import (Blueprint, jsonify, redirect, render_template, request,
-                   send_from_directory, session, url_for)
+from flask import (Blueprint, Response, jsonify, redirect, render_template,
+                   request, send_from_directory, session, url_for)
 from flask_socketio import emit, join_room, leave_room
 import os
 import random
 import threading
 import time
 import datetime
+import gzip
+import hashlib
 import json
 import unicodedata
 import re
@@ -229,11 +231,25 @@ def pseudo_libre(voulu):
     return voulu
 
 
+# Les ligatures ne se decomposent pas en NFD : sans cette table, « Aqua
+# Chœur » devenait « aqua ch ur », et qui tapait « Aqua Choeur » avait faux.
+# Cent quarante cartes ont un œ. La page de jeu applique la meme table a ses
+# suggestions (voir `norme` dans jeu.html).
+LIGATURES = str.maketrans({"œ": "oe", "æ": "ae", "ø": "o", "ß": "ss"})
+
+
 def normalize(text):
-    text = text.lower()
+    """Le nom tel qu'on le compare : sans casse, accents ni ponctuation.
+
+    La ponctuation devient UN espace, et non un espace par signe : « Cellule
+    "A" » donnait « cellule  a », deux espaces, et « Cellule A » tape au
+    clavier etait refuse. Deux mille trois cents noms etaient dans ce cas,
+    justes seulement si l'on recopiait leurs guillemets et leurs tirets.
+    """
+    text = text.lower().translate(LIGATURES)
     text = unicodedata.normalize("NFD", text)
     text = "".join(c for c in text if unicodedata.category(c) != "Mn")
-    text = re.sub(r"[^a-z0-9 ]", " ", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text)
     return text.strip()
 
 def recharge() -> None:
@@ -253,7 +269,7 @@ def recharge() -> None:
     suivante prend la nouvelle.
     """
     global cards_fr, cards_en, cards_views
-    global list_cards, list_cards_set, id_to_name_fr, CARD_POOLS, CARD_INDEX
+    global list_cards, list_cards_set, id_to_name_fr, CARD_POOLS, NOMS
 
     with open(STATIC / "yugioh" / "cartes-fr.json", encoding="utf-8") as f:
         cards_fr = json.load(f)
@@ -282,16 +298,26 @@ def recharge() -> None:
             ]
         CARD_POOLS[diff] = pool if pool else list(id_to_name_fr.keys())
 
-    CARD_INDEX = []
-    for card_id, nom_fr in cards_fr.items():
-        if not nom_fr:
+    # Les noms que la page propose en suggestion, ceux des cartes les plus
+    # vues d'abord : a pertinence egale, la carte qu'on cherche est plus
+    # souvent celle que tout le monde connait. Un nom par carte -- quatre noms
+    # francais sont portes par deux passcodes, une seule ligne suffit a les
+    # proposer.
+    vus = set()
+    noms = []
+    for card_id in sorted((cid for cid, nom in cards_fr.items() if nom),
+                          key=lambda cid: -cards_views.get(cards_en.get(cid, ""), 0)):
+        nom_fr = cards_fr[card_id]
+        if nom_fr in vus:
             continue
-        nom_en = cards_en.get(str(card_id), "")
-        CARD_INDEX.append({
-            "fr_norm": normalize(nom_fr),
-            "en_norm": normalize(nom_en),
-            "display": nom_fr,
-        })
+        vus.add(nom_fr)
+        noms.append([nom_fr, cards_en.get(card_id) or ""])
+    brut = json.dumps(noms, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    NOMS = {
+        "brut": brut,
+        "gzip": gzip.compress(brut, 6),
+        "etag": hashlib.sha1(brut).hexdigest()[:20],
+    }
 
 
 recharge()
@@ -354,14 +380,22 @@ def cancel_launch_timer(room_id):
         return True
 
 
-def tire_carte(vivier, sauf=None):
-    """Une carte du vivier, jamais celle qu'on vient de montrer."""
-    if sauf is not None and len(vivier) > 1:
-        while True:
-            choix = random.choice(vivier)
-            if choix != sauf:
-                return choix
-    return random.choice(vivier)
+def pioche(gs):
+    """La carte d'apres, prise sur un paquet battu une fois pour la partie.
+
+    Le tirage se faisait avec remise, en evitant seulement la carte d'avant :
+    sur les 3 284 cartes du vivier Facile, une partie d'une cinquantaine de
+    cartes avait une chance sur trois de remontrer une carte deja vue -- et
+    plus le vivier est petit, plus c'etait sur. Le paquet ne se rebat qu'une
+    fois epuise, sans commencer par la carte qu'on vient de tirer.
+    """
+    if not gs["paquet"]:
+        paquet = random.sample(gs["card_pool"], len(gs["card_pool"]))
+        derniere = gs.get("next_id")
+        if len(paquet) > 1 and paquet[-1] == derniere:
+            paquet[0], paquet[-1] = paquet[-1], paquet[0]
+        gs["paquet"] = paquet
+    return gs["paquet"].pop()
 
 
 def jeton_pour(gs, card_id):
@@ -393,12 +427,9 @@ def start_game(room_id):
             return
 
         room["status"] = "in_game"
-        current = tire_carte(card_pool)
         gs = {
-            "current_id": current,
-            "next_id": tire_carte(card_pool, current),
-            "current_name": id_to_name_fr[current],
             "card_pool": card_pool,
+            "paquet": [],
             "date_last": datetime.datetime.now(),
             "scores": {p["pseudo"]: 0 for p in room["players"]},
             "time": room["time"],
@@ -410,6 +441,9 @@ def start_game(room_id):
             "revele": False,
             "jetons": {},
         }
+        gs["current_id"] = pioche(gs)
+        gs["next_id"] = pioche(gs)
+        gs["current_name"] = id_to_name_fr[gs["current_id"]]
         game_states[room_id] = gs
         gs["jeton_courant"] = jeton_pour(gs, gs["current_id"])
         gs["jeton_suivant"] = jeton_pour(gs, gs["next_id"])
@@ -472,17 +506,48 @@ def carte_suivante(room_id):
     gs = game_states[room_id]
     gs["current_id"] = gs["next_id"]
     gs["current_name"] = id_to_name_fr[gs["current_id"]]
-    gs["next_id"] = tire_carte(gs["card_pool"], gs["current_id"])
+    gs["next_id"] = pioche(gs)
     gs["date_last"] = datetime.datetime.now()
     gs["revele"] = False
     gs["reponses"] = {}
     gs["locked_players"] = set()
     # les jetons de la manche passee ne designent plus rien : les garder
-    # ferait grossir la partie d'une entree par carte jusqu'a la fin
-    gs["jetons"] = {}
-    gs["jeton_courant"] = jeton_pour(gs, gs["current_id"])
+    # ferait grossir la partie d'une entree par carte jusqu'a la fin. Sauf
+    # celui de la carte qui arrive : c'est sous lui que les pages l'ont
+    # prechargee, et un jeton neuf les obligeait a la telecharger une
+    # seconde fois, carte cachee, au debut du chrono.
+    gs["jeton_courant"] = gs["jeton_suivant"]
+    gs["jetons"] = {gs["jeton_courant"]: gs["current_id"]}
     gs["jeton_suivant"] = jeton_pour(gs, gs["next_id"])
-    socketio.emit('nouvelle_image', {'OK': True}, room=room_id)
+    # Les jetons partent avec l'annonce : la page n'a plus a les redemander
+    # a /carte avant de montrer la carte, et la suivante se precharge tout
+    # de suite. Ce sont ceux que /carte donne a chaque membre de la salle --
+    # le message ne va qu'a elle.
+    socketio.emit('nouvelle_image', {'jeton': gs["jeton_courant"],
+                                     'jeton_suivant': gs["jeton_suivant"]},
+                  room=room_id)
+
+
+def revele_si_complet(room_id):
+    """Tout le monde a repondu : la manche se revele sans attendre le chrono.
+
+    On reculait date_last et game_loop revelait a son battement suivant,
+    jusqu'a un quart de seconde plus tard -- le temps qu'on sentait passer
+    en jouant seul, entre la touche Entree et la carte. La revelation part
+    maintenant d'ici ; date_last recule toujours, pour que l'affichage de la
+    reponse dure ses DUREE_REVELATION a partir de maintenant.
+
+    A appeler sous VERROU.
+    """
+    room = rooms.get(room_id)
+    gs = game_states.get(room_id)
+    if not room or not gs or gs['revele']:
+        return
+    if not all(p['pseudo'] in gs['reponses'] for p in room['players']):
+        return
+    gs['date_last'] = (datetime.datetime.now()
+                       - datetime.timedelta(seconds=gs['time'] + DELAI_GRACE))
+    revele_manche(room_id)
 
 
 def game_loop(room_id):
@@ -568,7 +633,7 @@ def prend_pseudo():
     if not voulu:
         brut = (demande.get('pseudo') or '').strip()
         return jsonify({'ok': False, 'message':
-            "Ce pseudo est celui d'un compte Abyss : connecte-toi plutot."
+            "Ce pseudo est celui d'un compte Abyss : connecte-toi plutot."
             if comptes.par_pseudo(brut) is not None else
             "Un pseudo de 1 a 20 caracteres, lettres, chiffres, tiret, "
             "souligne ou espace."}), 400
@@ -670,23 +735,32 @@ def get_remaining_time(room_id):
         return jsonify({'rtime': gs['time'] - ecoule})
 
 
-@blueprint_api.get('/completion')
-def autocomplete():
-    # 13 000 cartes parcourues par appel : pas de quoi laisser n'importe qui
-    # le demander en boucle sans meme jouer
+@blueprint_api.get('/noms')
+def noms_des_cartes():
+    """Tous les noms, francais et anglais, pour les suggestions de la page.
+
+    Les suggestions se demandaient au serveur, une requete par pause dans la
+    frappe : 180 ms d'attente, puis l'aller-retour, puis quatorze mille
+    cartes parcourues ici. Une reponse validee au clavier partait souvent
+    avant que la liste arrive -- la fleche du bas ne trouvait rien a choisir.
+    La page charge maintenant la liste une fois et cherche elle-meme.
+
+    Rien qui aide a tricher : des noms seuls, sans passcode, que
+    static/yugioh/ publie deja. Compressee ici, parce que nginx ne compresse
+    pas ce qu'il relaie (pas de gzip_proxied) : 700 Ko en clair, 220 en gzip.
+    L'ETag la garde en cache tant qu'aucune serie n'est entree (recharge).
+    """
     if not pseudo_courant():
         return jsonify([]), 401
-    query = normalize(request.args.get("q", ""))
-    if len(query) < 2:
-        return jsonify([])
-    words = query.split()
-    results = []
-    for card in CARD_INDEX:
-        if all(w in card["fr_norm"] or w in card["en_norm"] for w in words):
-            results.append(card["display"])
-            if len(results) >= 25:
-                break
-    return jsonify(results)
+    compresse = "gzip" in request.accept_encodings
+    reponse = Response(NOMS["gzip"] if compresse else NOMS["brut"],
+                       mimetype="application/json")
+    if compresse:
+        reponse.headers["Content-Encoding"] = "gzip"
+    reponse.headers["Vary"] = "Accept-Encoding"
+    reponse.headers["Cache-Control"] = "private, no-cache"
+    reponse.set_etag(NOMS["etag"] + ("-gz" if compresse else ""))
+    return reponse.make_conditional(request)
 
 
 @blueprint_api.get('/ma-salle')
@@ -898,11 +972,9 @@ def handle_user_answer(data):
         gs['locked_players'].add(pseudo)
         socketio.emit('playerLocked', {'pseudo': pseudo}, room=room_id)
 
-        # tout le monde a repondu : inutile de laisser tourner le chrono dans
-        # le vide, on recule date_last et game_loop revele au prochain battement
-        if all(p['pseudo'] in gs['reponses'] for p in room['players']):
-            gs['date_last'] = (datetime.datetime.now()
-                               - datetime.timedelta(seconds=gs['time'] + DELAI_GRACE))
+        # tout le monde a repondu : inutile de laisser tourner le chrono
+        # dans le vide
+        revele_si_complet(room_id)
 
 @sur('checkPlayers')
 def check_players(data=None):
@@ -1060,9 +1132,7 @@ def _retire(room_id, pseudo, sid=None):
         }, room=room_id)
         # celui qui part peut etre le dernier qu'on attendait : sans ce
         # rappel, la manche allait au bout du chrono pour personne
-        if gs and not gs['revele'] and all(p['pseudo'] in gs['reponses'] for p in room['players']):
-            gs['date_last'] = (datetime.datetime.now()
-                               - datetime.timedelta(seconds=gs['time'] + DELAI_GRACE))
+        revele_si_complet(room_id)
     else:
         cancel_launch_timer(room_id)
         socketio.emit('countdownCancelled', {'roomId': room_id}, room=room_id)

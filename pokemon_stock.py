@@ -173,6 +173,9 @@ def branche() -> Blueprint:
 # --------------------------------------------------------------------------
 #   Parler a TCGdex
 # --------------------------------------------------------------------------
+ABSENT = "TCGdex ne connait pas cette adresse"
+
+
 def _json(adresse, requete=None):
     """(donnees, souci). `requete` : une requete GraphQL, envoyee en POST."""
     jaquettes._patiente("tcgdex")
@@ -181,7 +184,7 @@ def _json(adresse, requete=None):
         adresse, ENTETES_GRAPHQL if requete else ENTETES, corps_brut, MAX_JSON + 1,
         service="tcgdex")
     if souci:
-        return None, ("TCGdex ne connait pas cette adresse" if souci == "absent" else souci)
+        return None, (ABSENT if souci == "absent" else souci)
     if not brut or len(brut) > MAX_JSON:
         return None, "reponse vide ou trop lourde de TCGdex"
     try:
@@ -197,6 +200,79 @@ def _json(adresse, requete=None):
 
 def _quote(v) -> str:
     return urllib.parse.quote(str(v), safe="")
+
+
+# --------------------------------------------------------------------------
+#   Cardmarket
+# --------------------------------------------------------------------------
+# La carte ouverte en grand mene a sa page Cardmarket. TCGdex connait le
+# numero du produit chez Cardmarket, et Cardmarket ouvre un produit par son
+# numero -- c'est le lien que fait Scryfall :
+#
+#     https://www.cardmarket.com/fr/Pokemon/Products?idProduct=702298
+#
+# Ce numero n'est que dans la fiche d'une carte, une requete par carte : le
+# GraphQL ne l'a pas. Vingt mille requetes de plus pour le stock entier,
+# contre une seule quand quelqu'un le demande -- il est donc lu a la
+# demande, et garde en memoire. La fiche anglaise d'abord : elle porte le
+# meme numero que la francaise, plus le nom anglais, de quoi chercher quand
+# le numero manque. La francaise ne sert qu'a une carte qui n'existe qu'en
+# francais.
+#
+# TCGdex se trompe parfois de produit et pointe une autre rarete de la meme
+# carte (tcgdex/cards-database#2325) : le lien mene alors a la bonne carte,
+# mais a la mauvaise impression. Le numero ne peut pas etre verifie d'ici,
+# Cardmarket refuse les robots.
+CARDMARKET = "https://www.cardmarket.com/fr/Pokemon"
+# Les offres en francais seulement, comme pour Yu-Gi-Oh (voir EN_FRANCAIS
+# dans collection.py) : 2 est le francais pour Cardmarket.
+EN_FRANCAIS = {"language": 2}
+# Une carte sans numero est redemandee au bout d'une heure : TCGdex ajoute
+# les prix d'une serie quelques jours apres sa sortie.
+OUBLI_CARDMARKET = 3600
+_cardmarket = {}        # id TCGdex -> (quand, numero du produit, nom anglais)
+
+
+def produit_cardmarket(cle):
+    """(numero du produit chez Cardmarket, nom anglais) de la carte `cle`
+    (« sv01-001 »), chacun None quand TCGdex ne le dit pas.
+
+    Rien n'est garde si TCGdex n'a pas repondu : la prochaine demande le
+    retente, plutot que d'attendre une heure.
+    """
+    deja = _cardmarket.get(cle)
+    if deja and (deja[1] or time.time() - deja[0] < OUBLI_CARDMARKET):
+        return deja[1], deja[2]
+    for langue in ("en", "fr"):
+        fiche, souci = _json(f"{API}/{langue}/cards/{_quote(cle)}")
+        if souci == ABSENT:
+            continue
+        if souci or not isinstance(fiche, dict):
+            return None, None
+        prix = fiche.get("pricing") if isinstance(fiche.get("pricing"), dict) else {}
+        cm = prix.get("cardmarket") if isinstance(prix.get("cardmarket"), dict) else {}
+        n = cm.get("idProduct")
+        produit = n if isinstance(n, int) and not isinstance(n, bool) and n > 0 else None
+        nom = fiche.get("name") if langue == "en" else None
+        anglais = (nom.strip() or None) if isinstance(nom, str) else None
+        _cardmarket[cle] = (time.time(), produit, anglais)
+        return produit, anglais
+    return None, None
+
+
+def adresse_cardmarket(cle, nom="") -> str:
+    """La page Cardmarket de la carte `cle`. Sans numero de produit, une
+    recherche sur son nom -- l'anglais si TCGdex le donne, `nom` sinon --
+    plutot qu'une erreur."""
+    produit, anglais = produit_cardmarket(cle)
+    if produit:
+        return CARDMARKET + "/Products?" + urllib.parse.urlencode(
+            {"idProduct": produit, **EN_FRANCAIS})
+    cherche = anglais or " ".join(str(nom or "").split())
+    if not cherche:
+        return CARDMARKET
+    return CARDMARKET + "/Products/Search?" + urllib.parse.urlencode(
+        {"searchString": cherche, **EN_FRANCAIS})
 
 
 def disponibles(force=False):
@@ -277,10 +353,15 @@ def _categorie(c) -> str:
 
 
 def _dex(c):
+    """Le numero du Pokemon au Pokedex ; la liste des numeros pour une carte
+    qui en montre plusieurs (« Pikachu et Zekrom GX ») ; None pour un
+    Dresseur ou une Energie. Voir pokemon.numeros_de, qui lit les deux."""
     d = c.get("dexId") if isinstance(c, dict) else None
-    if isinstance(d, list) and d and isinstance(d[0], int):
-        return d[0]
-    return None
+    nums = [x for x in d if isinstance(x, int) and not isinstance(x, bool)] \
+        if isinstance(d, list) else []
+    if not nums:
+        return None
+    return nums[0] if len(nums) == 1 else nums
 
 
 def lit_serie(sid):
@@ -745,7 +826,7 @@ def telecharger():
     propres = []
     for sid in ids:
         if not isinstance(sid, str) or sid not in connues:
-            raise Refus("serie", f"Serie inconnue de TCGdex : {sid}.")
+            raise Refus("serie", f"Serie inconnue de TCGdex : {sid}.")
         if sid not in propres:
             propres.append(sid)
     return reponse({"ok": True, "chantier": lance(propres)})

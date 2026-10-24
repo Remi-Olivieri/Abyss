@@ -15,6 +15,7 @@ un seul compte : `app.py` branche chaque projet comme un blueprint.
 | **Yu-Gi-Quiz** — deviner une carte à son artwork | `/yugiquiz` | `yugiquiz.py` | `yugiquiz/` | `yugiquiz/` |
 | **Chainz** — le site du jeu | `/chainz` | *(page seule)* | `chainz/` | `chainz/` |
 | **Nihongo** — le japonais, un peu chaque jour | `/nihongo` | `nihongo.py` | `nihongo/` | `nihongo/` |
+| **Yu-Gi-Oh! Survivor** : un survivor au tour par tour *(en chantier, admin seul)* | `/survivor` | `survivor.py` | `survivor/` | `survivor/` |
 
 ## Où vit quoi
 
@@ -22,20 +23,24 @@ un seul compte : `app.py` branche chaque projet comme un blueprint.
 static/
 ├── commun/       ce que plusieurs projets chargent : compte.js, champs.js,
 │                 gestes.js, neige.js, presence.js, suggestion.js, polices/,
-│                 vendor/, logo/ (la méduse : favicon, icônes, en-tête)
+│                 vendor/, logo/ (la méduse : favicon, icônes, en-tête),
+│                 manifest.webmanifest (le site installable sur téléphone)
 ├── Avatars/      les photos de profil        (Bannieres/ : pas encore)
 ├── abyss/        abyss.css (le dessin de toutes les pages d'Abyss),
 │                 accueil.css
 ├── archive/      archive.css, social.css, archive-*.js · Cover/
-├── quiz/         quiz.css            (jaquettes : voir archive/Cover/)
+├── quiz/         quiz.css, quiz.js   (jaquettes : voir archive/Cover/)
 ├── yugioh/       cartes-fr.json, cartes-en.json, cartes-vues.json,
 │                 cartes-rarity.json, cartes-ignorees.json ·
 │                 Cards/ CardsCropped/
-├── collection/   collection.css              (cartes : voir yugioh/)
-├── pokemon/      pokemon.css · blocs.json, series/<serie>.json (le catalogue,
+├── collection/   collection.css, collection.js (cartes : voir yugioh/)
+├── pokemon/      pokemon.css, pokemon.js · blocs.json, series/<serie>.json (le catalogue,
 │                 écrit par pokemon_stock.py depuis TCGdex) ·
 │                 Cartes/<bloc>/<serie>/ Vignettes/<bloc>/<serie>/ Logos/
 ├── yugiquiz/     yugiquiz.css, commun.js     (cartes : voir yugioh/)
+├── survivor/     survivor.css, survivor.js, moteur.js (les règles, sans DOM) ·
+│                 cartes.json (écrit par survivor.py depuis le catalogue
+│                 ygoprodeck) · art/ (les vignettes, hors du dépôt)
 ├── chainz/       cartes.json, images.json, art/{old,new}/
 └── nihongo/      nihongo.css, nihongo.js, kana.js, kanji.js, mots.js,
                   grammaire.js, lecture.js, trace.js, romaji.js, traces-kana.json,
@@ -101,8 +106,9 @@ Deux exceptions qui **servent** au lieu de rediriger :
 
 ```sh
 venv/bin/python app.py            # http://127.0.0.1:8000/abyss
-venv/bin/python -m unittest tests  # 478 tests
+venv/bin/python -m unittest tests  # 513 tests
 venv/bin/python nihongo.py matiere # refait les JSON de static/nihongo/
+venv/bin/python survivor.py        # refait static/survivor/cartes.json et ses vignettes
 ```
 
 Les JSON de Nihongo sont versionnés : on ne les refait que si une source
@@ -143,6 +149,7 @@ cd donnees/nihongo/voicevox      # le téléchargeur « download-linux-x64 » de
 cd - && nice venv/bin/python nihongo.py voix   # ~4 h par voix, niveau par niveau ; reprend où il s'arrête
 ```
 
-En ligne : `gunicorn -k gthread -w 1 --threads 8 app:app`. **Un seul worker** —
+En ligne : `gunicorn -k gthread -w 1 --threads 64 app:app`. **Un seul worker** —
 les salles du Yu-Gi-Quiz vivent en mémoire, deux workers ne verraient pas les
-mêmes.
+mêmes. **64 fils et pas 8** : chaque onglet connecté (Archive, fil, Yu-Gi-Quiz)
+garde un fil pour son temps réel, et à 8 onglets le site ne répondait plus.

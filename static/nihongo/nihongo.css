@@ -78,6 +78,9 @@
 
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+/* Un titre sur deux lignes se coupe au milieu, et ne laisse pas un mot
+   seul sur la seconde. */
+h1,h2,h3{text-wrap:balance}
 html{scrollbar-gutter:stable}
 [hidden]{display:none !important}
 body{
@@ -218,7 +221,10 @@ main{position:relative;z-index:1;padding-bottom:64px;min-height:60vh}
 .accueil-tete{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:38px 0 26px}
 .date{margin:0;color:var(--encre-3);font-size:13.5px}
 .date [lang="ja"]{font-family:var(--titre);color:var(--encre-2)}
-.salut{margin:6px 0 0;font-family:var(--titre);font-weight:700;font-size:clamp(32px,6vw,52px);line-height:1.15;letter-spacing:.04em}
+.salut{margin:6px 0 0;font-family:var(--titre);font-weight:700;font-size:clamp(32px,6vw,52px);line-height:1.15;letter-spacing:.04em;
+  /* おはようございます ne tient pas sur un téléphone : coupé entre ses deux
+     mots (auto-phrase, Chrome) plutôt qu'avant son dernier kana */
+  word-break:auto-phrase}
 .salut-trad{margin:6px 0 0;color:var(--encre-2)}
 /* « Un peu chaque jour », à la verticale : le sens où le japonais s'écrit
    d'abord. Un liseré vermillon, comme la marge d'un cahier. */
@@ -852,6 +858,15 @@ body.pupitre-ouvert main{padding-bottom:52vh}
 .fi-retour{margin:0;min-height:1.6em;font-size:14px;color:var(--encre-2);text-align:center}
 .fi-nav{display:flex;justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid var(--filet)}
 .fi-nav [lang="ja"]{font-family:var(--pinceau);font-size:18px}
+.fi-nav-cache{display:none}
+
+/* De mémoire, la case prend toute la fiche : le caractère, sa démonstration,
+   ses mots disparaissent, et les voisins se nomment sans se montrer. */
+.fi-memoire .fi-corps,.fi-memoire .fi-mots,.fi-memoire .fi-nav [lang="ja"]{display:none}
+.fi-memoire .fi-nav-cache{display:inline}
+.fi-memoire .fi-pratique{margin-top:12px;padding-top:0;border-top:0;gap:14px}
+.fi-memoire .fi-trace{width:min(100%,340px)}
+.fi-consigne{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;margin-top:6px}
 
 /* ---------- la séance ----------
    Par-dessus tout : une chose à la fois, rien d'autre à l'écran. */
@@ -868,6 +883,19 @@ body.pupitre-ouvert main{padding-bottom:52vh}
   font-size:22px;line-height:1;cursor:pointer;color:var(--encre-2);flex:0 0 auto;
 }
 .sc-quitter:hover{color:var(--shu);border-color:var(--shu)}
+/* Quitter en plein milieu se demande, par-dessus la carte et la barre */
+.sc-confirme{
+  position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:var(--voile);
+}
+.sc-confirme-boite{
+  width:min(420px,100%);padding:22px 24px 18px;text-align:center;
+  background:var(--feuille);border:1px solid var(--filet);border-radius:14px;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.45);animation:monte .2s ease-out;
+}
+.sc-confirme-titre{margin:0 0 8px;font-family:var(--titre);font-weight:700;font-size:22px}
+.sc-confirme-texte{margin:0;color:var(--encre-2);font-size:15px;line-height:1.5}
+.sc-confirme .sc-actions{margin-top:16px}
 .sc-jauge{flex:1;height:6px;border-radius:99px;background:var(--papier-creux);overflow:hidden}
 .sc-jauge i{display:block;height:100%;width:0;background:var(--shu);border-radius:99px;transition:width .35s ease}
 .sc-compte{font-size:13px;color:var(--encre-3);min-width:52px;text-align:right;font-variant-numeric:tabular-nums}

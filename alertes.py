@@ -140,25 +140,25 @@ def _jeu_html(nom, cid, largeur):
 
 def _mail(pseudo, jeux, jour_iso):
     """(sujet, texte, html, images) pour une personne et ses jeux du
-    lendemain. images : [(cid, octets JPEG)], voir comptes.envoie_mail."""
+    lendemain. images : [(cid, octets JPEG)], voir comptes.envoie_mail."""
     quand = _date_fr(jour_iso)
     noms = [nom for _, nom, _ in jeux]
     journal = f"{SITE}/archive/{pseudo}"
     profil = f"{SITE}/abyss/profil"
     if len(noms) == 1:
-        sujet = f"« {noms[0]} » sort demain"
-        annonce = f"Un jeu de ta wishlist sort demain ({quand}) :"
+        sujet = f"« {noms[0]} » sort demain"
+        annonce = f"Un jeu de ta wishlist sort demain ({quand}) :"
     else:
         sujet = f"{len(noms)} jeux de ta wishlist sortent demain"
-        annonce = f"{len(noms)} jeux de ta wishlist sortent demain ({quand}) :"
+        annonce = f"{len(noms)} jeux de ta wishlist sortent demain ({quand}) :"
 
     texte = (
         f"Bonjour {pseudo},\n\n"
         f"{annonce}\n"
         + "".join(f"- {nom}\n" for nom in noms)
-        + f"\nTon journal : {journal}\n\n"
+        + f"\nTon journal : {journal}\n\n"
         "Tu reçois ce mail parce que tu as activé l'alerte de sortie dans les "
-        f"paramètres de ton compte. Pour ne plus le recevoir : {profil}\n"
+        f"paramètres de ton compte. Pour ne plus le recevoir : {profil}\n"
         "Abyss - jokrem.fr\n"
     )
 

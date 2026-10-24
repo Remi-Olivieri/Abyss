@@ -15,6 +15,8 @@ static/pokemon/Logos/
 static/nihongo/voix/
 # Les phrases de la lecture libre : refaites depuis Tatoeba par nihongo.py matiere, ~5 Mo.
 static/nihongo/libre/
+# Les vignettes de Yu-Gi-Oh! Survivor : refaites depuis yugioh/CardsCropped/ par survivor.py.
+static/survivor/art/
 recuperation/
 
 # La base et sa cle : jamais versionnees, jamais servies.

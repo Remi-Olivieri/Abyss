@@ -1263,6 +1263,95 @@ def _renomme(index, ancien, nouveau) -> int:
     return len(ids)
 
 
+# --- les noms corriges a la main --------------------------------------------
+# cartes-fr.json se corrige aussi a la main, la carte sous les yeux : « Dragon
+# Celeste Ascention » est en verite le « Dragon de l'Ascension Celeste ». Le
+# classeur, lui, ne connait que le nom range dans la pochette. Sans suite,
+# elle garde donc la faute ET perd son illustration : l'index de
+# collection.py ne trouve plus l'ancien nom dans le fichier.
+#
+# Le fichier ne dit pas ce qui a change : il faut se souvenir de ce qu'il
+# disait la fois d'avant. Ce releve vit dans la base, avec les pochettes
+# qu'il decrit -- une sauvegarde restauree repart avec le releve de son
+# epoque, et les tests, qui ont leur base jetable, ne touchent pas a celui du
+# site.
+#
+# Il n'est refait qu'au demarrage, jamais par ecrit() : une mise a jour du
+# stock relit cartes-fr.json tel quel, correction a la main comprise. Si elle
+# refaisait le releve, elle avalerait cette correction sans la faire suivre.
+RELEVE_NOMS = "noms_cartes_fr"
+
+
+def suit_les_renommages() -> int:
+    """Fait suivre les pochettes des noms changes dans cartes-fr.json depuis
+    le demarrage precedent. Rend combien. Appele par app.py au demarrage.
+
+    Rien ne bouge quand le changement est ambigu -- mieux vaut une pochette
+    qui garde un ancien nom qu'une pochette qui change de carte :
+
+      - l'ancien nom est encore porte par une autre carte. Deux impressions
+        d'une meme carte ont deux passcodes, et on n'en a corrige qu'une : la
+        pochette garde une illustration, et rien ne dit de laquelle des deux
+        cartes il s'agit. Ca ecarte aussi deux noms echanges ou passes en chaine ;
+      - deux cartes qui portaient le meme nom en ont pris deux differents.
+
+    Le tout premier demarrage n'a pas de releve : il le prend, sans renommer.
+    """
+    if FICHIER_FR is None:
+        return 0
+    noms = _lit(FICHIER_FR, {})
+    if not noms:
+        # absent ou illisible : en faire le releve ferait oublier tous les noms
+        return 0
+    c = cx()
+    ligne = c.execute("SELECT valeur FROM reglage WHERE cle = ?",
+                      (RELEVE_NOMS,)).fetchone()
+    try:
+        avant = json.loads(ligne["valeur"]) if ligne else None
+    except ValueError:
+        avant = None
+    if avant == noms:
+        return 0
+
+    renommees = 0
+    with c:
+        if isinstance(avant, dict):
+            # nom normalise -> les noms qui y repondent aujourd'hui
+            portes = {}
+            for nom in noms.values():
+                if nom:
+                    portes.setdefault(collection.normalise_nom(nom), set()).add(nom)
+            # ancien nom normalise -> (l'ancien nom, les nouveaux)
+            changes = {}
+            for cid, ancien in avant.items():
+                nouveau = noms.get(cid)
+                if ancien and nouveau and ancien != nouveau:
+                    cle = collection.normalise_nom(ancien)
+                    changes.setdefault(cle, (ancien, set()))[1].add(nouveau)
+            index = _pochettes_par_nom() if changes else {}
+            for cle, (ancien, nouveaux) in changes.items():
+                if not index.get(cle):
+                    continue                     # aucune pochette ne le porte
+                if len(nouveaux) > 1:
+                    print(f"cartes : « {ancien} » est devenu plusieurs noms, "
+                          "pochettes laissées telles quelles", flush=True)
+                    continue
+                nouveau = next(iter(nouveaux))
+                if portes.get(cle, set()) - {nouveau}:
+                    print(f"cartes : « {ancien} » est encore porté par une autre "
+                          "carte, pochettes laissées telles quelles", flush=True)
+                    continue
+                n = _renomme(index, ancien, nouveau)
+                print(f"cartes : « {ancien} » -> « {nouveau} », "
+                      f"{n} pochette{'s' if n > 1 else ''}", flush=True)
+                renommees += n
+        c.execute("INSERT INTO reglage(cle, valeur) VALUES(?, ?)"
+                  " ON CONFLICT(cle) DO UPDATE SET valeur = excluded.valeur",
+                  (RELEVE_NOMS, json.dumps(noms, ensure_ascii=False,
+                                           separators=(",", ":"))))
+    return renommees
+
+
 def pose_pochettes(nom, cle) -> int:
     """Ajoute cette carte au bout de cet onglet, dans tous les classeurs.
 

@@ -90,7 +90,7 @@
     let i = 0, cmd = null, x = 0, y = 0, ctrl = null;
     const nombres = (n) => {
       const morceau = jetons.slice(i, i + n);
-      if (morceau.length < n || morceau.some((v) => !NOMBRE.test(v))) throw new Error("chemin tronqué : " + d);
+      if (morceau.length < n || morceau.some((v) => !NOMBRE.test(v))) throw new Error("chemin tronqué : " + d);
       i += n;
       return morceau.map(Number);
     };
@@ -103,7 +103,7 @@
     };
     while (i < jetons.length) {
       if (!NOMBRE.test(jetons[i])) cmd = jetons[i++];
-      else if (cmd === null) throw new Error("chemin sans commande : " + d);
+      else if (cmd === null) throw new Error("chemin sans commande : " + d);
       const rel = cmd === cmd.toLowerCase(), c = cmd.toUpperCase();
       if (c === "M" || c === "L") {
         const [a, b] = nombres(2);
@@ -126,7 +126,7 @@
         ctrl = [x2, y2];
         x = x3; y = y3;
       } else {
-        throw new Error("commande " + cmd + " non gérée : " + d);
+        throw new Error("commande " + cmd + " non gérée : " + d);
       }
     }
     return points;
@@ -272,11 +272,24 @@
     forme: "Ce n'est pas ce trait-là.",
     sens: "Bonne forme, mais dans l'autre sens.",
     place: "Bonne forme, mais pas au bon endroit.",
-    ordre: "Bon trait, mais pas encore : l'ordre compte.",
+    ordre: "Bon trait, mais pas encore : l'ordre compte.",
     deja: "Celui-là est déjà tracé.",
   };
 
   /* ---------- la case ---------- */
+  /* Le trait qu'on est en train de tracer, quelle que soit la case : Échap
+     l'abandonne (voir abandonne dans monte). Une seule à la fois, on ne
+     trace pas dans deux cases de la même main. Écouté sur window et en
+     capture : Échap ferme aussi la fiche et quitte la séance (voir
+     nihongo.js), et c'est le trait seul qu'on veut effacer. */
+  let enCours = null;
+  window.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !enCours) return;
+    enCours();
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
+
   function noeud(nom, attrs, parent) {
     const e = document.createElementNS(NS, nom);
     for (const k in attrs) e.setAttribute(k, attrs[k]);
@@ -459,6 +472,21 @@
       const r = svg.getBoundingClientRect();
       return [(e.clientX - r.left) / r.width * TAILLE, (e.clientY - r.top) / r.height * TAILLE];
     }
+    function lache() {
+      actif = null;
+      if (enCours === abandonne) enCours = null;
+    }
+    /* Le trait en cours, effacé avant d'être jugé : Échap, ou le clic droit
+       pendant que le gauche trace encore. On sent souvent qu'un trait part
+       mal avant d'avoir levé le doigt ; le lâcher le comptait comme une
+       faute, et deux fautes font apparaître le modèle. Le doigt reste posé,
+       mais ne trace plus rien jusqu'au prochain appui. */
+    function abandonne() {
+      if (!actif) return;
+      try { svg.releasePointerCapture(actif.id); } catch (err) { /* déjà relâché */ }
+      lache();
+      encre.setAttribute("d", "");
+    }
     svg.addEventListener("pointerdown", (e) => {
       if (fini || opt.mode === "demo" || (e.pointerType === "mouse" && e.button !== 0)) return;
       e.preventDefault();
@@ -467,11 +495,16 @@
       try { svg.setPointerCapture(e.pointerId); } catch (err) { /* déjà relâché */ }
       jetonRate++;
       encre.classList.remove("tr-rate");
-      actif = { id: e.pointerId, points: [coord(e)] };
+      actif = { id: e.pointerId, souris: e.pointerType === "mouse", points: [coord(e)] };
+      enCours = abandonne;
       encre.setAttribute("d", chemin(actif.points));
     });
     svg.addEventListener("pointermove", (e) => {
       if (!actif || e.pointerId !== actif.id) return;
+      /* Un second bouton enfoncé pendant le trait n'ouvre pas de nouvel
+         appui : il arrive ici, dans un mouvement dont `button` le nomme.
+         Le 2, c'est le droit - et le bouton du stylet. */
+      if (e.button === 2) { abandonne(); return; }
       const serie = typeof e.getCoalescedEvents === "function" ? e.getCoalescedEvents() : [];
       (serie.length ? serie : [e]).forEach((ev) => actif.points.push(coord(ev)));
       encre.setAttribute("d", chemin(actif.points));
@@ -479,13 +512,20 @@
     svg.addEventListener("pointerup", (e) => {
       if (!actif || e.pointerId !== actif.id) return;
       const points = actif.points;
-      actif = null;
+      lache();
       evalue(points);
     });
     svg.addEventListener("pointercancel", (e) => {
       if (!actif || e.pointerId !== actif.id) return;
-      actif = null;
+      lache();
       encre.setAttribute("d", "");
+    });
+    /* Le menu du clic droit n'a rien à offrir sur la case. Un appui long au
+       doigt l'ouvre aussi, sur Android : celui-là ne doit rien effacer -
+       qui trace lentement s'arrête parfois au milieu d'un trait. */
+    svg.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      if (actif && actif.souris) abandonne();
     });
 
     recommence();
@@ -495,7 +535,7 @@
       anime,
       montreIndice,
       mode(m) { opt.mode = m; recommence(); },
-      detruit() { arreteAnimations(); hote.innerHTML = ""; },
+      detruit() { abandonne(); arreteAnimations(); hote.innerHTML = ""; },
       get fini() { return fini; },
     };
   }

@@ -8,6 +8,7 @@
 <link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
 <link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
+<link rel="manifest" href="/static/commun/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -234,8 +235,8 @@
   <!-- ---------- Supprimer le compte ---------- -->
   <div class="voile" id="mSupprimer" hidden>
     <div class="modale" role="dialog" aria-modal="true" aria-labelledby="titreSuppr">
-      <h2 class="titre-modale" id="titreSuppr">Supprimer ton compte ?</h2>
-      <p class="explication">C'est définitif : rien ne pourra être récupéré. Seront effacés :</p>
+      <h2 class="titre-modale" id="titreSuppr">Supprimer ton compte ?</h2>
+      <p class="explication">C'est définitif : rien ne pourra être récupéré. Seront effacés :</p>
       <ul class="suppr-liste">
         <li>ton journal de jeux vidéo et ton classeur Yu-Gi-Oh!</li>
         <li>tes commentaires, tes j'aime et tes notifications</li>
@@ -293,7 +294,7 @@
       </div>
 
       <div id="panFichier" hidden>
-        <p class="explication">Format conseillé : <b>1500 × 500</b> (3:1), 3 Mo maximum.
+        <p class="explication">Format conseillé : <b>1500 × 500</b> (3:1), 3 Mo maximum.
           Une image d'un autre format n'est pas refusée, elle sera recadrée.</p>
         <label class="champ">
           <span>Ton image</span>
@@ -632,7 +633,7 @@ async function enregistreMasques() {
   } catch (err) {
     MOI.masques = avant;          // le serveur n'a pas suivi : on revient
     dessineListeProjets();
-    toast("Réglage non enregistré : " + err.message, true);
+    toast("Réglage non enregistré : " + err.message, true);
   }
 }
 
@@ -682,7 +683,7 @@ el("alerteSortie").addEventListener("change", async () => {
     MOI.utilisateur = data.utilisateur;
     toast(voulu ? "Alerte de sortie activée." : "Alerte de sortie désactivée.");
   } catch (err) {
-    toast("Réglage non enregistré : " + err.message, true);
+    toast("Réglage non enregistré : " + err.message, true);
   }
   dessineAlertes();          // le serveur fait foi, y compris quand il a refusé
 });

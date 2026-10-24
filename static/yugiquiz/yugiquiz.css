@@ -18,6 +18,9 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100%; }
+/* Un titre sur deux lignes se coupe au milieu, et ne laisse pas un mot
+   seul sur la seconde. */
+h1, h2, h3 { text-wrap: balance; }
 
 body {
   min-height: 100vh;
@@ -784,6 +787,16 @@ img {
   transition: transform 0.5s;
 }
 
+/* L'artwork à deviner : carré, agrandi une fois posé (.zoomed). Sa
+   taille était écrite en style en ligne par la page, ce qui passait
+   par-dessus les règles du téléphone et de l'écran bas : la carte
+   y gardait ses 70vh et débordait. Ce sont maintenant des classes. */
+.card.artwork { width: 40vh; height: 40vh; }
+
+/* Entre deux manches, le temps que l'image arrive : rien plutôt que
+   la carte d'avant, qui porte son nom. */
+.card.cachee { visibility: hidden; }
+
 .card__glare {
   position: absolute;
   top: 0; left: 0;
@@ -897,10 +910,22 @@ img {
 
 #suggestions li:last-child { border-bottom: none; }
 
-#suggestions li:hover,
+/* Pas de :hover : la souris surligne en déplaçant la ligne active, la
+   même que les flèches. Avec les deux, on voyait deux lignes allumées
+   et l'on ne savait pas laquelle Entrée prendrait. */
 #suggestions li.active {
-  background: rgba(201,168,76,.1);
+  background: rgba(201,168,76,.14);
   color: var(--gold-light);
+  box-shadow: inset 2px 0 0 var(--gold);
+}
+
+/* Le nom anglais, quand c'est par lui que la carte a été trouvée. */
+.suggestion-en {
+  display: block;
+  font-size: .72rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-top: .1rem;
 }
 
 /* Nom de la carte révélé */
@@ -924,8 +949,15 @@ img {
     transition: filter .2s;
 }
 
-#title-leave:hover {
+#title-leave:hover,
+#title-leave:focus-visible {
     filter: drop-shadow(0 0 28px rgba(255,215,0,.8)) brightness(1.2);
+}
+
+#title-leave:focus-visible {
+    outline: 1px solid var(--gold);
+    outline-offset: 4px;
+    border-radius: 4px;
 }
 
 #leave-overlay {
@@ -1640,13 +1672,13 @@ select.create-input option {
   /* La carte prend la hauteur qui reste et jamais plus que la largeur :
      70vh la faisait déborder des deux côtés d'un écran étroit. */
   .card { height: min(52dvh, 128vw); max-width: 100%; }
+  .card.artwork { width: min(40dvh, 82vw); height: min(40dvh, 82vw); }
   .zoom-effect.zoomed { transform: scale(1.12); }
   .input-section { width: 100%; }
   #image_name { font-size: 1.05rem; margin-top: .35rem; }
   #suggestions { max-height: min(200px, 34dvh); }
   #suggestions li { padding: .75rem 1rem; }
 }
-
 /* La connexion et le lobby défilent quand ils ne tiennent pas dans la
    fenêtre. <body> coupait tout ce qui dépassait : sur un téléphone tenu
    en paysage - 390 px de haut - le bas de « Créer une salle » et son
@@ -1672,6 +1704,7 @@ body:not(:has(#players-list)) { overflow-x: hidden; overflow-y: auto; }
   .timer-label { font-size: .72rem; }
   .timer-bar { height: 8px; }
   .card { height: calc(100dvh - 205px); min-height: 110px; }
+  .card.artwork { width: calc((100dvh - 205px) / 1.15); height: calc((100dvh - 205px) / 1.15); }
   .zoom-effect.zoomed { transform: scale(1.15); }
   #image_name { font-size: 1rem; margin-top: .2rem; }
   .user-input { padding: .6rem 1rem; }

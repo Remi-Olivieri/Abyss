@@ -441,6 +441,10 @@ def etat():
         "SELECT jour, revisions, justes, secondes, lectures FROM nihongo_jour"
         " WHERE utilisateur_id = ? AND jour >= ? ORDER BY jour", (u["id"], depuis))]
     return reponse({"ok": True, "maintenant": _iso(maintenant),
+                    # a qui est cette progression : une seance laissee en
+                    # plein milieu est gardee par l'appareil, et ne doit pas
+                    # reprendre sous un autre compte (voir sauveSeance)
+                    "moi": u["id"],
                     "jour": aujourd_hui.isoformat(),
                     # le debut du jour d'apprentissage : ce qui a ete cree
                     # depuis est nouveau d'aujourd'hui
@@ -738,6 +742,38 @@ def _ecrit(cible: Path, charge) -> Path:
     return cible
 
 
+# La typographie du francais : une espace insecable devant les deux-points et
+# a l'interieur des guillemets, une fine insecable devant ? ! et ;. Sans
+# elles, un ecran etroit coupe la ligne juste avant le signe, qui se retrouve
+# seul en tete de la suivante. matiere/ s'ecrit avec des espaces ordinaires,
+# plus simples a taper ; elles sont posees ici, a la publication (voir
+# ecrit_matiere). Un caractere pour un autre : les positions dans le texte ne
+# bougent pas. Le japonais n'est pas touche, sa ponctuation n'a pas d'espace.
+FINE, INSECABLE = " ", " "
+_TYPOGRAPHIE = (
+    (re.compile(r"(?<!\s) ([?!;])(?=[\s\"'”)\]<»?!.]|$)"), FINE + r"\1"),
+    (re.compile(r"(?<!\s) :(?=\s|$|<)"), INSECABLE + ":"),
+    (re.compile(r"« "), "«" + INSECABLE),
+    (re.compile(r"(?<!\s) »"), INSECABLE + "»"),
+)
+
+
+def typographie(valeur):
+    """`valeur` avec ses espaces insecables, chaines, listes et dicts compris
+    (les cles restent telles quelles)."""
+    if isinstance(valeur, str):
+        for motif, par in _TYPOGRAPHIE:
+            valeur = motif.sub(par, valeur)
+        return valeur
+    if isinstance(valeur, list):
+        return [typographie(v) for v in valeur]
+    if isinstance(valeur, tuple):
+        return tuple(typographie(v) for v in valeur)
+    if isinstance(valeur, dict):
+        return {k: typographie(v) for k, v in valeur.items()}
+    return valeur
+
+
 # --------------------------------------------------------------------------
 #   Les kanjis
 # --------------------------------------------------------------------------
@@ -780,6 +816,8 @@ SENS_DES_CLES = {
     "开": "ouvrir", "畐": "plein", "氺": "eau", "亦": "aussi", "⺦": "main gauche",
     "冓": "assembler", "侖": "ordre", "禺": "singe", "韋": "cuir", "爰": "tirer",
     "𢦏": "couper", "卆": "soldat", "䍃": "vase",
+    # seul, 酉 est le Coq du calendrier ; dans 酒, 酔 ou 酢, c'est la jarre
+    "酉": "jarre de saké",
 }
 
 
@@ -793,7 +831,28 @@ PAS_UN_SENS = re.compile(r"\(no\.? ?\d+\)|^\(kokuji\)$")
 # tete un mot que plus personne n'emploie (« myriade » pour 万).
 SENS_CORRIGES = {
     "万": ["dix mille", "myriade"],
+    # « serpent » est le sens de 巳, son voisin du calendrier : 己 n'a de
+    # commun avec lui que sa place parmi les troncs celestes (CALENDRIER)
+    "己": ["soi"],
 }
+
+# Les sens calendaires de KANJIDIC : branche terrestre, tronc celeste, et
+# l'heure et le point cardinal qui vont avec. 子 arrivait au N5 avec « signe
+# de la 1ere branche terrestre, signe du Rat (zodiaque), 23 h a 01 h, Nord
+# (0°) » derriere « enfant » : rien qu'on croisera dans un texte, et autant
+# de reponses acceptees pour rien. Le signe du zodiaque lui-meme ne tombe
+# que s'il reste autre chose (voir sans_calendrier) : 巳, 丑 ou 寅 n'ont que
+# lui.
+CALENDRIER = re.compile(
+    r"branche terrestre|tronc c[ée]leste|calendar sign|sign of (the )?chinese zodiac"
+    r"|^\d+( h)? à \d+ h|heures du matin|^\d+ ?[AP]M ?- ?\d+ ?[AP]M$|^\d+-\d+ ?[AP]M$"
+    r"|^(nord|sud|est|ouest) \(\d+°\)$", re.I)
+ZODIAQUE = re.compile(r"zodiaque|^sign of the ", re.I)
+
+
+def sans_calendrier(sens: list) -> list:
+    garde = [s for s in sens if not CALENDRIER.search(s)]
+    return [s for s in garde if not ZODIAQUE.search(s)] or garde
 
 
 def lit_kanjidic() -> dict:
@@ -814,8 +873,8 @@ def lit_kanjidic() -> dict:
                     kun.append(r.text)
         misc = c.find("misc")
         entier = lambda balise: int(misc.findtext(balise)) if misc.findtext(balise) else None
-        fr = SENS_CORRIGES.get(c.findtext("literal"), fr)
-        kd[c.findtext("literal")] = {"fr": fr, "en": en, "on": on, "kun": kun,
+        fr = SENS_CORRIGES.get(c.findtext("literal"), sans_calendrier(fr))
+        kd[c.findtext("literal")] = {"fr": fr, "en": sans_calendrier(en), "on": on, "kun": kun,
                                      "g": entier("grade"), "t": entier("stroke_count"),
                                      "f": entier("freq")}
     return kd
@@ -3273,6 +3332,8 @@ def ecrit_libre(dossier, vocabulaire, points, glossaire) -> dict:
     if garde.get("signature") == signature and all((cible / f"{nom}.json").is_file() for nom in garde["paquets"]):
         return garde["resume"]
     resume, paquets = construit_libre(vocabulaire, points, glossaire, kanjis)
+    # les traductions de Tatoeba et les gloses, comme le reste (voir typographie)
+    resume, paquets = typographie(resume), typographie(paquets)
     resume["version"] = signature[:12]
     if cible.is_dir():
         for vieux in cible.glob("*.json"):
@@ -3598,7 +3659,11 @@ def construit_romaji(grammaire, lecture) -> dict:
 
 
 def ecrit_matiere(dossier=None) -> list:
-    """Refait tous les fichiers de static/nihongo/ qui viennent des sources."""
+    """Refait tous les fichiers de static/nihongo/ qui viennent des sources.
+
+    Le texte francais part avec ses espaces insecables (voir typographie) :
+    chaque fichier publie est `typographie(construit_...())`, et c'est ce que
+    les tests « a jour » comparent."""
     dossier = Path(dossier or STATIQUE)
     ecrits = []
     kana = extrait(catalogue(), kanas())
@@ -3609,14 +3674,14 @@ def ecrit_matiere(dossier=None) -> list:
         "source": ATTRIBUTION, "taille": 109,
         "traces": {c: v["traits"] for c, v in kana.items()}}))
 
-    vocabulaire = construit_vocabulaire()
+    vocabulaire = typographie(construit_vocabulaire())
     ecrits.append(_ecrit(dossier / "vocabulaire.json", {
         "source": "Listes du JLPT de Jonathan Waller (CC BY), rattachees a JMdict par "
                   "yomitan-jlpt-vocab (CC BY-SA 4.0) ; JMdict (EDRDG, CC BY-SA 4.0)",
         "mots": vocabulaire}))
 
     try:
-        grammaire = construit_grammaire()
+        grammaire = typographie(construit_grammaire())
     except ErreurGrammaire as e:
         raise SystemExit(f"Grammaire : {e}") from None
     ecrits.append(_ecrit(dossier / "grammaire.json", {
@@ -3624,8 +3689,8 @@ def ecrit_matiere(dossier=None) -> list:
         **grammaire}))
 
     try:
-        lecture = construit_lecture(vocabulaire=vocabulaire,
-                                    points=[p["nom"] for p in grammaire["points"]])
+        lecture = typographie(construit_lecture(vocabulaire=vocabulaire,
+                                                points=[p["nom"] for p in grammaire["points"]]))
         lecture["libre"] = ecrit_libre(dossier, vocabulaire, grammaire["points"], lit_glossaire())
     except ErreurLecture as e:
         raise SystemExit(f"Lecture : {e}") from None
@@ -3641,6 +3706,7 @@ def ecrit_matiere(dossier=None) -> list:
 
     traduits ={(m["m"], l): m["fr"] for m in vocabulaire if m["fr"] for l in m["l"][:1]}
     liste, traces = construit_kanjis(traduits)
+    liste = typographie(liste)
     ecrits.append(_ecrit(dossier / "kanji.json", {
         "source": "KANJIDIC2 et JMdict (EDRDG, CC BY-SA 4.0), niveaux JLPT de "
                   "Jonathan Waller (via kanji-data, MIT), traductions de jmdict-simplified",

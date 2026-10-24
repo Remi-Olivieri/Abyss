@@ -5,11 +5,10 @@ app.py branche ce fichier en une ligne, comme le classeur Yu-Gi-Oh :
 
     app.register_blueprint(pokemon.branche(STATIQUE / "pokemon"))
 
-Le projet est en chantier, donc reserve a l'administration : la tuile ne
-s'affiche que pour elle (voir `admin: true` dans abyss/accueil.html), et
-toute l'API repond 404 au reste du monde (voir reserve). La page, elle, est
-servie a tous -- c'est l'API qui refuse, comme pour Nihongo avant son
-ouverture.
+Ouverte a tous depuis le 16/10/2026, apres un chantier reserve a
+l'administration : une collection publique se lit sans compte, chacun
+n'ecrit que dans la sienne. Le stock, qui remplit le catalogue de tout le
+monde, reste a l'administration (voir pokemon_stock.py).
 
 Les mots
 --------
@@ -22,8 +21,10 @@ Ceux de la page, et non ceux de TCGdex, d'ou viennent les cartes :
   - une **carte** est un numero dans une serie (« 001 », « TG12 ») -- le
     `localId` de TCGdex ;
   - une **version** est une impression de cette carte : normale, reverse,
-    holo, 1re edition, promo W. Presque toutes les communes existent en
-    normale ET en reverse, et chacune se possede a part.
+    holo, 1re edition, promo W. La collection n'en suit que deux : la carte
+    elle-meme, et sa reverse quand elle en a une (voir versions_de).
+    Presque toutes les communes existent en normale ET en reverse, et
+    chacune se possede a part.
 
 Ce qui vit ou
 -------------
@@ -33,6 +34,8 @@ pokemon_stock.py) sous static/pokemon/ :
 
     blocs.json                 l'ordre des blocs et des series
     series/<serie>.json        les cartes d'une serie
+    pokedex.json               le nom de chaque Pokemon, par numero (voir
+                               « le Pokedex » plus bas)
     Cartes/<bloc>/<serie>/     les images en grand  (hors du depot)
     Vignettes/<bloc>/<serie>/  les memes, a la taille d'une pochette
     Logos/<serie>.webp         le logo de chaque serie
@@ -45,14 +48,16 @@ recopier pour chaque compte comme dans le classeur Yu-Gi-Oh.
 
 from __future__ import annotations
 
+import bisect
 import json
 import os
 import re
 import threading
 import unicodedata
+from collections import Counter
 from pathlib import Path
 
-from flask import Blueprint, request
+from flask import Blueprint, redirect, request
 
 import comptes
 from comptes import Refus, actuel, corps, cx, echec, maintenant, reponse
@@ -112,7 +117,7 @@ def chemins() -> dict:
     exactement la ou ce module lit."""
     d = DOSSIER or Path("static/pokemon")
     return {"blocs": d / "blocs.json", "series": d / "series", "cartes": d / "Cartes",
-            "vignettes": d / "Vignettes", "logos": d / "Logos"}
+            "vignettes": d / "Vignettes", "logos": d / "Logos", "pokedex": d / "pokedex.json"}
 
 
 def normalise(v) -> str:
@@ -167,7 +172,12 @@ def _construit() -> dict:
     c = chemins()
     brut = _lit(c["blocs"], {})
     logos = _presentes(c["logos"])
+    officiels = [str(n) for n in _lit(c["pokedex"], {}).get("pokemon") or []]
+    par_nom = {}
+    for n, nom in enumerate(officiels, 1):
+        par_nom.setdefault(normalise(nom), n)
     blocs, series, index, liste = [], {}, {}, []
+    pokedex = {}
     for b in brut.get("blocs") or []:
         if not isinstance(b, dict) or not IDENTIFIANT.match(str(b.get("id") or "")):
             continue
@@ -199,10 +209,14 @@ def _construit() -> dict:
             for i, l in enumerate(cartes):
                 index[f"{sid}-{l[0]}"] = (sid, i)
                 liste.append((normalise(l[1]), sid, i))
+                for n in numeros_de(l, par_nom):
+                    pokedex.setdefault(n, []).append((sid, i))
         if ids:
             blocs.append({"id": b["id"], "nom": b.get("nom") or b["id"],
                           "date": b.get("date") or "", "series": ids})
-    return {"blocs": blocs, "series": series, "index": index, "liste": liste}
+    cat = {"blocs": blocs, "series": series, "index": index, "liste": liste}
+    cat.update(_range_pokedex(pokedex, series, blocs, officiels))
+    return cat
 
 
 def catalogue() -> dict:
@@ -222,13 +236,25 @@ def oublie_catalogue() -> None:
 
 
 def versions_de(l) -> str:
-    """Les versions d'une carte du catalogue, dans l'ordre de VERSIONS.
+    """Ce qu'on range d'une carte du catalogue, dans l'ordre de VERSIONS :
+    la carte elle-meme, et sa reverse quand elle en a une.
 
-    Une carte dont TCGdex ne dit rien existe au moins en normale : sans ca,
-    elle n'aurait aucune pochette a remplir.
+    TCGdex en distingue davantage -- holo, 1re edition, promo W -- mais la
+    page ne propose que « Possedee » et « Reverse » : cinq cases par carte,
+    dont trois que personne ne cochait, noyaient les deux qui comptent. La
+    jauge, le master set et les pochettes par version suivent d'eux-memes.
+
+    La carte elle-meme garde la lettre de sa premiere version hors reverse :
+    « N » le plus souvent, « H » pour une carte qui n'existe qu'en holo --
+    c'est ce qui lui donne son reflet. Une carte qui n'existe qu'en reverse
+    n'a que celle-la ; une carte dont TCGdex ne dit rien existe au moins en
+    normale : sans ca, elle n'aurait aucune pochette a remplir.
     """
-    v = "".join(x for x in VERSIONS if x in str(l[3] or ""))
-    return v or "N"
+    v = str(l[3] or "")
+    carte = next((x for x in VERSIONS if x != "R" and x in v), "")
+    if not carte:
+        return "R" if "R" in v else "N"
+    return "".join(x for x in VERSIONS if x == carte or (x == "R" and x in v))
 
 
 def serie_ou_refus(sid):
@@ -536,10 +562,9 @@ def pose(page, sid, numero, version, a_moi, valider=True) -> str:
     possedees de la carte apres coup.
 
     N'importe laquelle des cinq versions est acceptee, et pas seulement
-    celles que TCGdex donne pour cette carte : un catalogue a des trous (voir
-    ce qu'ygoprodeck a appris au classeur Yu-Gi-Oh), et une carte qu'on a en
-    main doit pouvoir se ranger meme quand il la croit impossible. C'est
-    l'entree « Autre version » du panneau.
+    celles que versions_de donne pour cette carte : la page n'en propose
+    plus d'autres, mais une version deja rangee doit toujours pouvoir se
+    retirer, et le serveur n'a pas a refuser ce qui existe en main.
 
     Rejouable : poser ce qui est deja la, ou retirer ce qui n'y est plus,
     ne change rien et ne leve rien -- deux clics rapides sur la meme
@@ -703,30 +728,215 @@ def enregistre_favorites(page, ids) -> None:
 
 
 # --------------------------------------------------------------------------
+#   Le Pokedex : chaque Pokemon, et toutes ses cartes
+# --------------------------------------------------------------------------
+# Une carte Pokemon porte le numero de son Pokemon au Pokedex national -- le
+# `dexId` de TCGdex, 6e case des lignes de series/<serie>.json : de quoi
+# retrouver les deux cents Pikachu, de serie en serie.
+#
+# Les noms viennent de pokedex.json : les noms francais officiels, tires de
+# PokeAPI, un par numero et dans l'ordre. Un numero qu'il ne connait pas
+# encore -- un Pokemon paru depuis -- prend le nom que ses cartes portent le
+# plus souvent, sans son « -ex » ni son « V » (voir _nom_court).
+
+# Le type d'une carte, tel que la page Pokemon le filtre, dans l'ordre de
+# ses boutons. Les cles sont celles du jeu : « ex » (2003 et 2023) et « EX »
+# (2012) sont deux mecaniques differentes.
+FORMES = (
+    ("normale", "Normales"), ("mega", "Méga"), ("ex", "ex"), ("EX", "EX"),
+    ("GX", "GX"), ("V", "V"), ("VMAX", "VMAX"), ("VSTAR", "VSTAR"),
+    ("TURBO", "TURBO"), ("NIVX", "NIV.X"), ("LEGENDE", "LÉGENDE"), ("prime", "Prime"),
+    ("radieux", "Radieux"), ("etoile", "Étoile ☆"), ("prisme", "Prisme ◇"),
+)
+
+# Le type se lit dans le nom : « Dracaufeu-ex », « M-Dracaufeu EX »,
+# « Pikachu VMAX ». Le premier motif qui repond l'emporte, d'ou l'ordre :
+# une Mega-ex est une Mega, une carte a deux Pokemon « ... GX » une GX.
+_MOTIFS_FORMES = tuple((cle, re.compile(motif, drapeaux)) for cle, motif, drapeaux in (
+    ("VSTAR", r"(?:^|[\s-])VSTAR\b", 0),
+    ("VMAX", r"(?:^|[\s-])VMAX\b", 0),
+    ("V", r"(?:^|[\s-])V(?:-UNION)?(?=$|[\s)])", 0),
+    ("GX", r"[\s-]GX\b", 0),
+    ("TURBO", r"\sTURBO\b", 0),
+    ("NIVX", r"\bNIV\.?\s?X\b", re.IGNORECASE),     # « Niv. 53 » est un niveau, pas un NIV.X
+    ("LEGENDE", r"\bLÉGENDE\b", 0),
+    ("mega", r"^(?:Méga|M)[-\s]", 0),                 # « M. Mime » n'en est pas une
+    ("EX", r"[\s-]EX\b", 0),
+    ("ex", r"[\s-]ex\b", 0),
+    ("radieux", r"\sRadieux\b", 0),
+    ("etoile", r"☆", 0),
+    ("prisme", r"◇", 0),
+))
+# ... et dans la rarete, quand le nom n'en dit rien : les Prime ont un nom
+# ordinaire, et quelques V ou NIV.X ont perdu leur suffixe chez TCGdex.
+_FORMES_PAR_RARETE = {
+    "Rare Holo V": "V", "Rare Holo VMAX": "VMAX", "Rare Holo VSTAR": "VSTAR",
+    "Rare Holo NIV.X": "NIVX", "LÉGENDE": "LEGENDE", "Rare Prime": "prime", "Radieux": "radieux",
+}
+
+# Le portrait d'un Pokemon, dans la liste : sa carte la plus recente au
+# cadre ordinaire, dont la page ne garde que l'illustration. Une carte
+# illustration rare ou une ex couvre toute la carte -- son haut ne montre
+# qu'un morceau du dessin.
+_RARETES_PORTRAIT = {"Commune", "Peu commune", "Rare", "Rare Holo"}
+
+_NOM_COURT = re.compile(r"[\s-]+(?:ex|EX|GX|V|VMAX|VSTAR|V-UNION|TURBO|Radieux|☆|◇|δ)$")
+
+
+def forme_de(nom, rarete="") -> str:
+    nom = str(nom or "")
+    for cle, motif in _MOTIFS_FORMES:
+        if motif.search(nom):
+            return cle
+    return _FORMES_PAR_RARETE.get(rarete or "", "normale")
+
+
+def _numeros_cites(nom, par_nom) -> list:
+    """Les Pokemon d'une carte qui en montre plusieurs : « Reshiram et
+    Dracaufeu GX », « Arceus, Dialga et Palkia GX ». TCGdex n'en donne
+    souvent qu'un numero ; les autres se retrouvent par leur nom, en
+    otant un mot a la fin tant qu'il ne colle pas (« Raikou LÉGENDE (haut) »
+    finit en « Raikou »)."""
+    if not re.search(r",| et | & ", nom):
+        return []
+    sortie = []
+    for morceau in re.split(r",\s*|\s+(?:et|&)\s+", nom):
+        mots = normalise(morceau).split()
+        essais = [mots, mots[1:]] if mots[:1] in (["mega"], ["m"]) else [mots]
+        for essai in essais:
+            n = next((par_nom[" ".join(essai[:k])] for k in range(len(essai), 0, -1)
+                      if " ".join(essai[:k]) in par_nom), None)
+            if n:
+                sortie.append(n)
+                break
+    return sortie
+
+
+def numeros_de(l, par_nom) -> list:
+    """Les numeros au Pokedex d'une carte du catalogue : aucun pour un
+    Dresseur ou une Energie, un d'habitude, plusieurs pour une carte a deux
+    ou trois Pokemon. Le stock ecrit un nombre, ou une liste depuis le
+    16/10/2026 (voir pokemon_stock._dex)."""
+    d = l[5] if len(l) > 5 else None
+    entier = lambda x: isinstance(x, int) and not isinstance(x, bool) and 0 < x < 10000
+    nums = [d] if entier(d) else [x for x in d if entier(x)] if isinstance(d, list) else []
+    if nums:
+        for n in _numeros_cites(str(l[1]), par_nom):
+            if n not in nums:
+                nums.append(n)
+    return nums
+
+
+def _nom_court(nom) -> str:
+    nom = re.sub(r"^(?:Méga|M)[-\s]", "", str(nom or "").strip())
+    while _NOM_COURT.search(nom):
+        nom = _NOM_COURT.sub("", nom)
+    return nom
+
+
+def _range_pokedex(pokedex, series, blocs, officiels) -> dict:
+    """Le Pokedex du catalogue : pour chaque numero, ses cartes de la serie
+    la plus recente a la plus ancienne, son nom et son portrait."""
+    rang = {sid: k for k, sid in enumerate(sid for b in blocs for sid in b["series"])}
+    noms, portraits = {}, {}
+    for n, cartes in pokedex.items():
+        cartes.sort(key=lambda x: (-rang[x[0]], x[1]))
+        if n <= len(officiels):
+            noms[n] = officiels[n - 1]
+        else:
+            seules = Counter(_nom_court(series[sid]["cartes"][i][1]) for sid, i in cartes
+                             if len(numeros_de(series[sid]["cartes"][i], {})) == 1)
+            noms[n] = (seules.most_common(1) or [(f"N° {n}", 0)])[0][0]
+        portrait = None
+        for sid, i in cartes:
+            s, l = series[sid], series[sid]["cartes"][i]
+            if l[0] not in s["images"]:
+                continue
+            chemin = f"{s['bloc']}/{sid}/{fichier_de(l[0])}"
+            if l[2] in _RARETES_PORTRAIT and forme_de(l[1], l[2]) == "normale":
+                portrait = chemin
+                break
+            portrait = portrait or chemin
+        portraits[n] = portrait
+    return {"pokedex": pokedex, "noms": noms, "portraits": portraits,
+            "numeros_pokedex": sorted(pokedex)}
+
+
+def vue_pokedex(page, u) -> dict:
+    """Tous les Pokemon qui ont une carte, par numero, et combien on en a :
+
+        [numero, nom, cartes, possedees, portrait]
+
+    `portrait` est le chemin de la vignette sous `vignettes`, ou null."""
+    cat = catalogue()
+    a_moi = possedees(page["id"])
+    series = cat["series"]
+    pokemon = []
+    for n in cat["numeros_pokedex"]:
+        cartes = cat["pokedex"][n]
+        miennes = sum(1 for sid, i in cartes if (sid, series[sid]["cartes"][i][0]) in a_moi)
+        pokemon.append([n, cat["noms"][n], len(cartes), miennes, cat["portraits"][n]])
+    return {"ok": True, "pokemon": pokemon, "vignettes": URL + "Vignettes/",
+            "write": u is not None and u["id"] == page["utilisateur_id"]}
+
+
+def vue_pokemon(page, u, n) -> dict:
+    """Un Pokemon et toutes ses cartes, de la serie la plus recente a la
+    plus ancienne. Une carte est la ligne d'une serie (voir ligne_de), plus
+    sa serie et son type :
+
+        [numero, nom, rarete, versions, categorie, fichier, possedees, serie, forme]
+    """
+    cat = catalogue()
+    cartes = cat["pokedex"].get(n)
+    if not cartes:
+        raise Refus("pokemon", "Ce Pokemon n'a aucune carte au catalogue.", 404)
+    a_moi = possedees(page["id"])
+    series, lignes, formes = {}, [], Counter()
+    for sid, i in cartes:
+        s = cat["series"][sid]
+        l = s["cartes"][i]
+        forme = forme_de(l[1], l[2])
+        formes[forme] += 1
+        lignes.append(ligne_de(s, l, a_moi) + [sid, forme])
+        if sid not in series:
+            series[sid] = {"nom": s["nom"], "bloc": s["bloc"], "sigle": s["sigle"],
+                           "officiel": s["officiel"], "date": s["date"]}
+    numeros = cat["numeros_pokedex"]
+    k = bisect.bisect_left(numeros, n)
+    voisin = lambda j: [numeros[j], cat["noms"][numeros[j]]] if 0 <= j < len(numeros) else None
+    return {
+        "ok": True,
+        "pokemon": {"numero": n, "nom": cat["noms"][n]},
+        "precedent": voisin(k - 1), "suivant": voisin(k + 1),
+        "cartes": lignes,
+        "series": series,
+        "formes": [[cle, nom, formes[cle]] for cle, nom in FORMES if formes[cle]],
+        "write": u is not None and u["id"] == page["utilisateur_id"],
+        **adresses(),
+    }
+
+
+# --------------------------------------------------------------------------
 #   Les routes
 # --------------------------------------------------------------------------
 blueprint_pokemon = Blueprint("pokemon", __name__, url_prefix="/api/pokemon")
 
 
 @blueprint_pokemon.before_request
-def reserve():
-    """Reserve a l'administration tant que le projet est en chantier.
+def exige_json():
+    """Meme parade CSRF que pour le classeur Yu-Gi-Oh : les ecritures sont
+    en JSON.
 
-    Le controle est ici et non route par route, comme dans cartes.py : un
-    oubli en ajoutant la prochaine route ne pardonnerait pas. Le jour de
-    l'ouverture, c'est cette fonction qu'on assouplit -- la lecture d'une
-    collection publique pour tous, l'ecriture pour son proprietaire, comme
-    le classeur Yu-Gi-Oh.
-
-    404 et non 403 : repondre « interdit » confirmerait qu'il y a quelque
-    chose derriere.
+    Reservee a l'administration pendant son chantier, la collection est
+    ouverte depuis le 16/10/2026 aux memes conditions que le classeur
+    Yu-Gi-Oh : une collection publique se lit sans compte, et chacun n'ecrit
+    que dans la sienne (voir ma_page_ou_refus et _page_lisible). Le stock,
+    lui, reste a l'administration : voir pokemon_stock.reserve.
     """
     if request.method in ("POST", "PUT", "PATCH") \
             and (request.mimetype or "") != "application/json":
         return echec("format", "Les ecritures attendent du JSON.", 415)
-    u = actuel()
-    if u is None or not u["admin"]:
-        return echec("introuvable", "Page inconnue.", 404)
     return None
 
 
@@ -745,6 +955,9 @@ def liste():
         "avatar": comptes.url_avatar(u), "banniere": comptes.url_banniere(u),
     }
     return reponse({"ok": True, "classeurs": annuaire(), "connecte": u is not None,
+                    # le pseudo du compte, collection ou pas : voir la meme
+                    # cle dans collection.py
+                    "compte": u["pseudo"] if u is not None else None,
                     # pour montrer le bouton du stock, et rien d'autre : le
                     # serveur ne s'en remet pas a la page (voir pokemon_stock)
                     "admin": u is not None and bool(u["admin"]),
@@ -769,6 +982,25 @@ def chercher():
     """Toutes les cartes dont le nom ressemble a ?q=. Ce n'est que le
     catalogue, rien de ce que chacun a."""
     return reponse({"ok": True, "cartes": cherche((request.args.get("q") or "")[:80])})
+
+
+@blueprint_pokemon.get("/cardmarket")
+def vers_cardmarket():
+    """La page Cardmarket d'une carte, ?serie=sv01&carte=001 : une redirection.
+
+    Le numero du produit vient de TCGdex, a la demande : voir « Cardmarket »
+    dans pokemon_stock.py. Seule une carte du catalogue fait appeler TCGdex ;
+    le reste repart sur l'accueil Pokemon de Cardmarket. Ouverte a tout le
+    monde, comme le catalogue.
+    """
+    import pokemon_stock           # import tardif : pokemon_stock importe ce module
+    cle = f"{request.args.get('serie') or ''}-{request.args.get('carte') or ''}"
+    place = catalogue()["index"].get(cle)
+    if place is None:
+        return redirect(pokemon_stock.CARDMARKET, code=302)
+    sid, i = place
+    nom = catalogue()["series"][sid]["cartes"][i][1]
+    return redirect(pokemon_stock.adresse_cardmarket(cle, nom), code=302)
 
 
 @blueprint_pokemon.get("/favorites")
@@ -831,6 +1063,18 @@ def lire(pseudo):
 def lire_serie(pseudo, sid):
     page, u = _page_lisible(pseudo)
     return reponse(vue_serie(page, u, sid))
+
+
+@blueprint_pokemon.get("/<pseudo>/pokedex")
+def lire_pokedex(pseudo):
+    page, u = _page_lisible(pseudo)
+    return reponse(vue_pokedex(page, u))
+
+
+@blueprint_pokemon.get("/<pseudo>/pokedex/<int:n>")
+def lire_pokemon(pseudo, n):
+    page, u = _page_lisible(pseudo)
+    return reponse(vue_pokemon(page, u, n))
 
 
 @blueprint_pokemon.get("/<pseudo>/export")

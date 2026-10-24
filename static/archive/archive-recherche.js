@@ -173,7 +173,7 @@ function monteRecherche(hote, opts){
     const brut = champ.value;
     const q = norm(brut);
     const items = SOURCES.map((s,i)=>({s,i})).filter(({s}) => !q || norm(s.nom).includes(q));
-    if(!items.length){ mot(`Aucun journal ne correspond à « ${brut} ».`); return; }
+    if(!items.length){ mot(`Aucun journal ne correspond à « ${brut} ».`); return; }
     nomme('list', 'Journaux trouvés');
     const ici = actif();
     liste.innerHTML = items.map(({s,i})=>{
@@ -212,13 +212,13 @@ function monteRecherche(hote, opts){
     let data;
     try{ data = await api('/api/jeu/suggestions', {nom: texte}); }
     catch(e){
-      if(jeton === etat.jeton) mot('Recherche impossible : ' + raisonReseau(e));
+      if(jeton === etat.jeton) mot('Recherche impossible : ' + raisonReseau(e));
       return;
     }
     // une frappe est passée devant, ou la recherche a été démontée
     if(jeton !== etat.jeton || !hote.isConnected) return;
     if(data.etat === 'ok') jeux(data.jeux || []);
-    else mot(data.raison ? 'IGDB : ' + data.raison : 'Aucun jeu ne porte ce nom sur IGDB.');
+    else mot(data.raison ? 'IGDB : ' + data.raison : 'Aucun jeu ne porte ce nom sur IGDB.');
   }
 
   /* ---------- la frappe ----------

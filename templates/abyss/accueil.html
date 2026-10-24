@@ -8,6 +8,7 @@
 <link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
 <link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
+<link rel="manifest" href="/static/commun/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex Mono, la police de tout Abyss ; le japonais ne demande que les
@@ -79,7 +80,7 @@
       </label>
       <p class="erreur" id="cErr" hidden></p>
       <button class="valider" type="submit" id="cGo">Se connecter</button>
-      <button type="button" class="lien lien-oubli" id="btnOubli">Mot de passe oublié ?</button>
+      <button type="button" class="lien lien-oubli" id="btnOubli">Mot de passe oublié ?</button>
     </form>
 
     <form id="formInsc" autocomplete="on" hidden>
@@ -133,7 +134,7 @@
 <!-- ---------- Suggestions et bugs ---------- -->
 <div class="voile" id="mSugg" hidden>
   <div class="modale" role="dialog" aria-modal="true" aria-labelledby="titreSugg">
-    <h2 class="titre-modale" id="titreSugg">Une idée, un bug ?</h2>
+    <h2 class="titre-modale" id="titreSugg">Une idée, un bug ?</h2>
     <form id="formSugg">
       <div class="sugg-genres" role="radiogroup" aria-label="Nature du message">
         <label class="sugg-genre">
@@ -227,14 +228,11 @@ const PROJETS = [
         categorie: "collection"
     },
     {
-        /* En chantier : réservée à l'administration, comme toute son API
-           (voir pokemon.reserve). */
         id: "pokemon",
         nom: "Collection Pokémon",
         texte: "Suivi de collection Pokémon, série par série et version par version.",
         url: "/pokemon",
-        categorie: "collection",
-        admin: true
+        categorie: "collection"
     },
     {
         id: "chainz",
@@ -252,7 +250,7 @@ const PROJETS = [
            bas, et cette page ne parle plus que de jeux vidéo. */
         id: "quiz",
         nom: "Mini-Jeux Vidéo",
-        texte: "Jaquette floue, chronologie, grille de connexions : des jeux autour des jeux vidéo.",
+        texte: "Jaquette floue, chronologie, grille de connexions : des jeux autour des jeux vidéo.",
         url: "/quiz",
         categorie: "mini-jeux"
     },
@@ -263,6 +261,16 @@ const PROJETS = [
         texte: "Deviner une carte Yu-Gi-Oh! à son artwork, seul ou avec des amis.",
         url: "/yugiquiz",
         categorie: "mini-jeux"
+    },
+    {
+        /* En chantier : la tuile ne se montre qu'à l'administration, et la
+           page répond 404 aux autres (voir PAGES_ADMIN dans app.py). */
+        id: "survivor",
+        nom: "Yu-Gi-Oh! Survivor",
+        texte: "Un survivor au tour par tour : ta main, tes monstres, et la horde.",
+        url: "/survivor",
+        categorie: "mini-jeux",
+        admin: true
     },
     {
         /* Ouvert à tous ; sans compte, la page invite à se connecter, la
@@ -444,6 +452,11 @@ const VISUELS = {
     "/static/archive/Cover/72.webp", "/static/archive/Cover/7346.webp",
     "/static/archive/Cover/17000.webp"] },
   "yugiquiz": { forme: "seule", images: ["/static/yugioh/CardsCropped/33396948.jpg"] },
+  /* Kuriboh, Magicien Sombre et Mokey Mokey : la horde, le duelliste, la
+     horde encore. */
+  "survivor": { forme: "eventail", images: [
+    "/static/survivor/art/40640057.webp", "/static/survivor/art/46986414.webp",
+    "/static/survivor/art/27288416.webp"] },
   "nihongo": { forme: "affiche", texte: "日本語", drapeau: true }
 };
 

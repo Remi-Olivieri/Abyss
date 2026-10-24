@@ -103,7 +103,7 @@
       else if (p.has("pref") || p.has("n-pref")) morceaux.push("préfixe");
       else if (p.has("suf") || p.has("n-suf")) morceaux.push("suffixe");
     }
-    if (p.has("vs") && !morceaux.some((x) => x.startsWith("verbe"))) morceaux.push("+ する : verbe");
+    if (p.has("vs") && !morceaux.some((x) => x.startsWith("verbe"))) morceaux.push("+ する : verbe");
     return morceaux.join(", ");
   }
 

@@ -71,23 +71,23 @@
   /* Quelques mots sur les caractères qui en demandent. Les katakanas ont
      les leurs : シ et ツ, ソ et ン sont les pièges classiques. */
   const NOTES = {
-    "は": "Comme particule du thème, は se lit « wa » : わたしは (watashi wa).",
-    "へ": "Comme particule de direction, へ se lit « e » : にほんへ (nihon e).",
-    "を": "Ne sert qu'à marquer le complément d'objet, et se prononce « o ».",
-    "ん": "Le seul kana sans voyelle. Devant b, p et m, il sonne « m » : さんぽ (sanpo).",
-    "ぢ": "Rare : « ji » s'écrit presque toujours じ. ぢ ne sert que dans des mots comme はなぢ (saignement de nez).",
-    "づ": "Rare : « zu » s'écrit presque toujours ず. づ ne sert que dans des mots comme つづく (continuer).",
-    "ふ": "Ni « fou » ni « hou » : les lèvres ne se touchent pas, l'air passe entre elles.",
-    "つ": "« tsu » se dit d'un seul coup, comme dans « tsé-tsé ».",
-    "ら": "La ligne ら est entre le r et le l : un seul battement de la langue contre le palais.",
-    "う": "Souvent presque muet en fin de mot : です se dit « dess ».",
-    "シ": "À ne pas confondre avec ツ : les deux petits traits de シ sont empilés à gauche, et le grand remonte depuis le bas.",
-    "ツ": "À ne pas confondre avec シ : les deux petits traits de ツ sont alignés en haut, et le grand descend.",
-    "ソ": "À ne pas confondre avec ン : le grand trait de ソ descend du haut vers la gauche.",
-    "ン": "À ne pas confondre avec ソ : le grand trait de ン remonte du bas vers la droite.",
-    "ヲ": "Ne s'emploie presque jamais : la particule s'écrit を, même dans un texte en katakana.",
+    "は": "Comme particule du thème, は se lit « wa » : わたしは (watashi wa).",
+    "へ": "Comme particule de direction, へ se lit « e » : にほんへ (nihon e).",
+    "を": "Ne sert qu'à marquer le complément d'objet, et se prononce « o ».",
+    "ん": "Le seul kana sans voyelle. Devant b, p et m, il sonne « m » : さんぽ (sanpo).",
+    "ぢ": "Rare : « ji » s'écrit presque toujours じ. ぢ ne sert que dans des mots comme はなぢ (saignement de nez).",
+    "づ": "Rare : « zu » s'écrit presque toujours ず. づ ne sert que dans des mots comme つづく (continuer).",
+    "ふ": "Ni « fou » ni « hou » : les lèvres ne se touchent pas, l'air passe entre elles.",
+    "つ": "« tsu » se dit d'un seul coup, comme dans « tsé-tsé ».",
+    "ら": "La ligne ら est entre le r et le l : un seul battement de la langue contre le palais.",
+    "う": "Souvent presque muet en fin de mot : です se dit « dess ».",
+    "シ": "À ne pas confondre avec ツ : les deux petits traits de シ sont empilés à gauche, et le grand remonte depuis le bas.",
+    "ツ": "À ne pas confondre avec シ : les deux petits traits de ツ sont alignés en haut, et le grand descend.",
+    "ソ": "À ne pas confondre avec ン : le grand trait de ソ descend du haut vers la gauche.",
+    "ン": "À ne pas confondre avec ソ : le grand trait de ン remonte du bas vers la droite.",
+    "ヲ": "Ne s'emploie presque jamais : la particule s'écrit を, même dans un texte en katakana.",
   };
-  const NOTE_YOUON = "Le petit ゃ, ゅ ou ょ fond les deux kanas en une seule syllabe : きゃ se dit « kya », en un temps, et pas « ki-ya ».";
+  const NOTE_YOUON = "Le petit ゃ, ゅ ou ょ fond les deux kanas en une seule syllabe : きゃ se dit « kya », en un temps, et pas « ki-ya ».";
 
   function versKata(s) {
     return s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));

@@ -8,6 +8,7 @@
     <link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
     <link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
     <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
+<link rel="manifest" href="/static/commun/manifest.webmanifest">
     <link rel="stylesheet" href="/static/yugiquiz/yugiquiz.css">
 </head>
 <body>
@@ -15,8 +16,7 @@
     <header>
         <div class="header-content">
             <h1>
-                <span class="title-main" id="title-leave" aria-label="Retour au lobby">Yu-Gi-Quiz!</span>
-            </h1>
+                <span class="title-main" id="title-leave" role="button" tabindex="0" aria-label="Quitter la partie">Yu-Gi-Quiz!</span>
             </h1>
         </div>
         <div class="header-info">
@@ -38,26 +38,29 @@
 
     <div class="container" id="main-content">
         
-        <div id="timer" class="timer-container" display="none">
+        <div id="timer" class="timer-container">
             <div class="timer-label">Temps Restant</div>
             <div class="timer-bar">
                 <div class="timer"></div>
             </div>
         </div>
         
-        <div id="card-container" display="none">
+        <div id="card-container">
             <div class="card-frame">
                 <div id="card-rotator">
-                    <img id="card" class="card mask-image zoom-effect" src="" alt="Card" draggable="false">
+                    <!-- remplacee a chaque carte par une image deja chargee :
+                         voir poseCarte -->
+                    <img id="card" class="card zoom-effect artwork cachee" alt="" draggable="false">
                     <div class="card__glare mask-image zoom-effect"></div>
                 </div>
             </div>
         </div>
         
-        <div class="input-section" display="none">
+        <div class="input-section">
             <div class="input-wrapper" style="position: relative;">
-                <input type="text" maxlength="80" id="user_answer" class="user-input" placeholder="Entrez le nom de la carte..." autocomplete="off">
-                <ul id="suggestions"></ul>
+                <input type="text" maxlength="80" id="user_answer" class="user-input" placeholder="Entre le nom de la carte..." autocomplete="off"
+                       spellcheck="false" role="combobox" aria-autocomplete="list" aria-controls="suggestions" aria-expanded="false" aria-label="Nom de la carte">
+                <ul id="suggestions" role="listbox" aria-label="Suggestions"></ul>
                 <div class="input-glow"></div>
             </div>
             <p id="image_name" class="response"></p>
@@ -76,9 +79,9 @@
     </div>
 
     <div id="leave-overlay">
-        <div class="leave-dialog">
-            <div class="leave-dialog-title">Quitter la partie ?</div>
-            <p class="leave-dialog-sub">Vous retournerez au lobby. Votre score sera perdu.</p>
+        <div class="leave-dialog" role="dialog" aria-modal="true" aria-labelledby="leave-titre">
+            <div class="leave-dialog-title" id="leave-titre">Quitter la partie ?</div>
+            <p class="leave-dialog-sub">Tu retourneras au lobby. Ton score sera perdu.</p>
             <div class="leave-dialog-btns">
                 <button class="leave-confirm-btn" onclick="confirmLeave()">Quitter</button>
                 <button class="leave-cancel-btn" onclick="closeLeaveDialog()">Annuler</button>
@@ -87,8 +90,8 @@
     </div>
 
     <div id="gameover-overlay">
-        <div class="leave-dialog">
-            <div class="leave-dialog-title">Fin de partie !</div>
+        <div class="leave-dialog" role="dialog" aria-modal="true" aria-labelledby="gameover-titre">
+            <div class="leave-dialog-title" id="gameover-titre">Fin de partie !</div>
             <p class="leave-dialog-sub" id="gameover-msg"></p>
             <div class="leave-dialog-btns">
                 <button class="leave-confirm-btn" onclick="window.location.href='/yugiquiz'">Retour au lobby</button>
@@ -99,6 +102,8 @@
     <!-- le battement de presence : voir static/commun/presence.js -->
     <script src="/static/commun/presence.js"></script>
     <script src="/static/commun/vendor/socket.io-4.1.2.min.js"></script>
+    <!-- le piege de focus des dialogues -->
+    <script src="/static/yugiquiz/commun.js"></script>
     <script>
         var ROOM_ID = "{{ room_id }}";
 
@@ -130,31 +135,97 @@
         let timeleft = 0;
 
         let timerCompte = null;   // reference du decompte en cours
-        let precharge = null;     // garde l'image suivante en vie le temps du fetch
         let GAME_TIME = 15;
         let SCORE_TO_WIN = 30;
         var gameReady = false;
+
+        /* Le numero de la manche a l'ecran. Une image arrive quand elle
+           peut : celle qui finit de charger apres le passage a la carte
+           suivante n'a plus rien a afficher, et c'est ce numero qui le dit. */
+        let manche = 0;
+        /* L'artwork de la carte d'apres, telecharge et decode pendant qu'on
+           joue celle-ci : { jeton, image }, image etant une promesse. */
+        let suivante = null;
 
         const DIFFICULTY_LABELS = { '1': 'Facile', '2': 'Normal', '3': 'Difficile', '4': 'Toutes les cartes' };
 
         const urlImage = (jeton) => `/api/yugiquiz/image/${ROOM_ID}/${jeton}`;
 
-        /* Va chercher le jeton de la carte suivante et la precharge, pour que
-           le changement de carte n'attende pas le reseau. */
-        function chargeSuite() {
-            return fetch('/api/yugiquiz/carte/' + ROOM_ID)
-                .then(r => r.ok ? r.json() : Promise.reject(r.status))
-                .then(data => {
-                    jetonCourant = data.jeton;
-                    jetonSuivant = data.jeton_suivant;
-                    GAME_TIME = data.time || 15;
-                    SCORE_TO_WIN = data.score_to_win || 30;
-                    if (jetonSuivant) {
-                        precharge = new Image();
-                        precharge.src = urlImage(jetonSuivant);
-                    }
-                })
-                .catch(() => {});
+        const answerInput = document.getElementById('user_answer');
+        const suggestionsList = document.getElementById('suggestions');
+
+        /* Une image telechargee et decodee hors de la page, qui n'attend plus
+           que de prendre la place de la carte (voir poseCarte). Rejetee si
+           le serveur la refuse : un jeton perime, une manche deja passee. */
+        function prepare(url) {
+            return new Promise((ok, ko) => {
+                const img = new Image();
+                img.onload = () => {
+                    /* decode() garantit une premiere frame qui n'est pas
+                       vide ; un navigateur qui le refuse a quand meme
+                       l'image, on la prend telle quelle */
+                    const decode = img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+                    decode.then(() => ok(img));
+                };
+                img.onerror = ko;
+                img.src = url;
+            });
+        }
+
+        /* Met une image prete a la place de la carte.
+
+           La revelation changeait le src de la carte ET sa taille, d'un seul
+           geste. La taille s'appliquait tout de suite, l'image seulement a
+           l'arrivee de la carte entiere -- qu'on ne peut pas precharger,
+           puisque le serveur ne la sert qu'une fois la manche close. Entre
+           les deux, le navigateur etirait l'artwork carre a la hauteur de la
+           carte, zoom compris : une illustration geante, puis la carte, qui
+           rebondissait jusqu'a sa taille. On remplace maintenant l'element
+           entier par une image deja la : la premiere frame a la fois la
+           bonne image et la bonne taille.
+
+           Le mouvement, lui, reste celui d'avant. L'artwork arrive a
+           l'echelle 1 et grossit jusqu'au zoom ; la carte entiere arrive au
+           zoom de l'artwork et revient a l'echelle 1, avec le rebond de
+           .zoom-effect. Dans les deux cas l'element est pose a l'echelle de
+           depart, et la transition part a la frame suivante : il lui faut un
+           point de depart. */
+        function poseCarte(img, pleine) {
+            img.id = 'card';
+            img.alt = pleine ? 'La carte' : 'Artwork à deviner';
+            img.draggable = false;
+            img.className = 'card zoom-effect ' + (pleine ? 'pleine zoomed' : 'artwork');
+            document.getElementById('card').replaceWith(img);
+
+            const glare = document.querySelector('.card__glare');
+            glare.classList.toggle('zoomed', pleine);
+            void img.offsetWidth;
+            img.classList.toggle('zoomed', !pleine);
+            glare.classList.toggle('zoomed', !pleine);
+        }
+
+        /* En attendant l'image d'une nouvelle manche : rien, plutot que la
+           carte d'avant -- qui porte son nom en toutes lettres, et qu'on
+           prendrait pour l'enigme. */
+        function cacheCarte() {
+            document.getElementById('card').classList.add('cachee');
+        }
+
+        function dezoome() {
+            document.getElementById('card').classList.remove('zoomed');
+            document.querySelector('.card__glare').classList.remove('zoomed');
+        }
+
+        /* Range le jeton de la carte d'apres et commence a la telecharger. */
+        function prepareSuivante(jeton) {
+            jetonSuivant = jeton || '';
+            suivante = jetonSuivant ? { jeton: jetonSuivant, image: prepare(urlImage(jetonSuivant)) } : null;
+            if (suivante) suivante.image.catch(() => {});
+        }
+
+        /* L'artwork de ce jeton : celui qu'on a deja prepare, sinon un neuf. */
+        function imageDe(jeton) {
+            return (suivante && suivante.jeton === jeton) ? suivante.image : prepare(urlImage(jeton));
         }
 
         /* Envoie ce qui est dans le champ, une fois pour la manche. Le serveur
@@ -164,39 +235,51 @@
             if (aRepondu || mancheRevelee) return;
             aRepondu = true;
             socket.emit('userAnswer', {
-                answer: document.getElementById('user_answer').value,
+                answer: answerInput.value,
                 roomId: ROOM_ID
             });
         }
 
         /* Fin de manche, annoncee par le serveur : c'est le seul moment ou le
-           nom de la carte arrive, avec les reponses de chacun. */
+           nom de la carte arrive, avec les reponses de chacun.
+
+           Le nom attend la carte entiere pour sortir avec elle, mais une
+           seconde au plus : une image qui traine ne retient pas la reponse. */
         function reveleManche(data) {
             if (mancheRevelee) return;
             mancheRevelee = true;
+            const m = manche;
 
             stopCompte();
             verrouilleChamp();
-
-            const cardEl = document.getElementById('card');
-            cardEl.style.width = 'auto';
-            cardEl.style.height = '70vh';
-            if (jetonCourant) cardEl.src = urlImage(jetonCourant) + '/pleine';
-            cardEl.classList.remove('zoomed');
-            document.querySelector('.card__glare').classList.remove('zoomed');
-
-            document.getElementById('suggestions').innerHTML = '';
-            document.getElementById('image_name').textContent = data.correct_name || '';
-            document.getElementById('image_name').style.display = "block";
             document.getElementById('timer').style.display = "none";
-            document.getElementById('user_answer').style.display = "none";
-            document.getElementById('user_answer').value = "";
+            answerInput.style.display = "none";
+            answerInput.value = "";
 
-            (data.resultats || []).forEach(afficheReponse);
-            if (data.scores) majScores(data.scores);
+            let dit = false;
+            const annonce = () => {
+                if (dit || m !== manche) return;
+                dit = true;
+                const nom = document.getElementById('image_name');
+                nom.textContent = data.correct_name || '';
+                nom.style.display = "block";
+                (data.resultats || []).forEach(afficheReponse);
+                if (data.scores) majScores(data.scores);
+            };
+
+            (jetonCourant ? prepare(urlImage(jetonCourant) + '/pleine') : Promise.reject())
+                .then(img => { if (m === manche) poseCarte(img, true); })
+                // pas de carte entiere : l'artwork reste, a sa taille
+                .catch(() => { if (m === manche) dezoome(); })
+                .finally(annonce);
+            setTimeout(annonce, 1000);
         }
 
-        function next() {
+        /* La carte suivante, annoncee par le serveur avec ses jetons : celui
+           de la carte a deviner, et celui de la prochaine, a precharger. */
+        function next(data) {
+            manche++;
+            const m = manche;
             mancheRevelee = false;
             aRepondu = false;
             unlockAnswer();
@@ -206,15 +289,17 @@
             document.querySelectorAll('#players .player-response').forEach(el => el.remove());
             document.getElementById('image_name').style.display = "none";
 
-            const cardEl = document.getElementById('card');
-            cardEl.style.width = '40vh';
-            cardEl.style.height = '40vh';
-            jetonCourant = jetonSuivant;
-            if (jetonCourant) cardEl.src = urlImage(jetonCourant);
+            jetonCourant = (data && data.jeton) || jetonSuivant;
+            const image = imageDe(jetonCourant);
+            prepareSuivante(data && data.jeton_suivant);
 
-            chargeSuite();
+            /* deja prechargee, l'image passe avant la prochaine frame et
+               cacheCarte ne se voit jamais */
+            cacheCarte();
+            image.then(img => { if (m === manche) poseCarte(img, false); }).catch(() => {});
+
             autoSubmit();
-            document.getElementById('user_answer').focus();
+            answerInput.focus();
         }
 
         function autoSubmit() {
@@ -227,10 +312,7 @@
 
         function autoSubmitWithTime(remaining) {
             document.getElementById('timer').style.display = "flex";
-            document.getElementById('user_answer').style.display = "block";
-
-            document.getElementById('card').classList.add('zoomed');
-            document.querySelector('.card__glare').classList.add('zoomed');
+            answerInput.style.display = "block";
 
             const timerBar = document.querySelector('.timer');
             timerBar.style.animation = 'none';
@@ -266,7 +348,7 @@
                 document.getElementById('pseudo').textContent = pseudo;
 
                 socket.emit('checkScores', { roomId: ROOM_ID });
-                
+
                 document.getElementById('image_name').style.display = 'none';
                 document.getElementById('main-content').style.display = 'flex';
                 document.getElementById('loading-message').style.display = 'none';
@@ -276,24 +358,30 @@
                     fetch('/api/yugiquiz/temps/' + ROOM_ID).then(r => r.json())
                 ]).then(([cardData, timeData]) => {
                     jetonCourant = cardData.jeton;
-                    jetonSuivant = cardData.jeton_suivant;
                     GAME_TIME = cardData.time;
                     SCORE_TO_WIN = cardData.score_to_win;
-                    if (jetonSuivant) {
-                        precharge = new Image();
-                        precharge.src = urlImage(jetonSuivant);
+                    manche++;
+                    const m = manche;
+                    prepareSuivante(cardData.jeton_suivant);
+                    if (!jetonCourant) return;
+
+                    /* arriver au milieu d'une revelation : la carte entiere,
+                       et l'on attend la suivante plutot que de lancer un
+                       decompte deja fini */
+                    if (cardData.revele) {
+                        verrouilleChamp();
+                        document.getElementById('timer').style.display = "none";
+                        answerInput.style.display = "none";
+                        prepare(urlImage(jetonCourant) + '/pleine')
+                            .then(img => { if (m === manche) poseCarte(img, true); })
+                            .catch(() => {});
+                        return;
                     }
-
-                    const cardEl = document.getElementById('card');
-                    cardEl.style.width = '40vh';
-                    cardEl.style.height = '40vh';
-                    if (jetonCourant) cardEl.src = urlImage(jetonCourant);
-
-                    /* arriver au milieu d'une revelation : on attend la carte
-                       suivante plutot que de lancer un decompte deja fini */
-                    if (cardData.revele) return;
+                    imageDe(jetonCourant)
+                        .then(img => { if (m === manche) poseCarte(img, false); })
+                        .catch(() => {});
                     autoSubmitWithTime(Math.max(0, timeData.rtime));
-                    document.getElementById('user_answer').focus();
+                    answerInput.focus();
                 });
             })
             .catch(() => window.location.href = '/yugiquiz/connexion');
@@ -309,7 +397,7 @@
             answerLocked = true;
             answerInput.classList.add('locked');
             answerInput.disabled = true;
-            suggestionsList.innerHTML = '';
+            fermeSuggestions();
         }
 
         function unlockAnswer() {
@@ -376,7 +464,7 @@
         });
 
         socket.on('nouvelle_image', data => {
-            next();
+            next(data);
         });
 
         function majScores(scores) {
@@ -455,8 +543,8 @@
 
         socket.on('gameOver', data => {
             const msg = data.winner === pseudo
-                ? `Vous avez gagné avec ${data.scores[data.winner]} points !`
-                : `${data.winner} a gagné avec ${data.scores[data.winner]} points !`;
+                ? `Tu as gagné avec ${data.scores[data.winner]} points !`
+                : `${data.winner} a gagné avec ${data.scores[data.winner]} points !`;
             document.getElementById('gameover-msg').textContent = msg;
             ouvreOverlay('gameover-overlay');
         });
@@ -476,7 +564,7 @@
             SCORE_TO_WIN = data.score_to_win;
             document.getElementById('info-score-to-win').textContent = `🏆 ${SCORE_TO_WIN} pts`;
             document.getElementById('info-difficulty').textContent = DIFFICULTY_LABELS[data.difficulty];
-            
+
             if (!gameReady) {
                 gameReady = true;
                 startFirstCard();
@@ -495,77 +583,200 @@
         /* joinGameRoom est deja emis dans socket.on('connect') : le doublon
            declenchait un updatePlayersList diffuse a toute la salle pour rien */
 
-        const suggestionsList = document.getElementById('suggestions');
-        const answerInput = document.getElementById('user_answer');
-        let debounceTimer;
-        let activeIndex = -1;
+        /* ---- Les suggestions ----
 
-        answerInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            activeIndex = -1;
-            debounceTimer = setTimeout(async () => {
-                const q = answerInput.value.trim();
-                suggestionsList.innerHTML = '';
-                if (q.length < 2) return;
+           Les noms de toutes les cartes arrivent une fois, au chargement
+           (voir noms_des_cartes cote serveur), et la recherche se fait ici, a
+           chaque touche. Elle se faisait au serveur, 180 ms apres la derniere
+           touche, plus l'aller-retour : la fleche du bas tombait souvent sur
+           une liste pas encore arrivee, et Entree envoyait le debut de nom
+           qu'on avait tape. */
+        const MAX_SUGGESTIONS = 20;
+        let INDEX = [];          // { nom, en, fr_n, en_n }, les plus vues d'abord
+        let proposees = [];      // ce que la liste montre, dans l'ordre
+        let activeIndex = -1;    // la ligne surlignee, -1 : aucune
 
-                const res = await fetch(`/api/yugiquiz/completion?q=${encodeURIComponent(q)}`);
-                const suggestions = await res.json();
+        /* La meme forme que normalize() cote serveur : sans casse, accents ni
+           ponctuation, ligatures ouvertes (« Chœur » se trouve en tapant
+           « choeur »). */
+        const LIGATURES = { 'œ': 'oe', 'æ': 'ae', 'ø': 'o', 'ß': 'ss' };
+        const norme = (t) => String(t || '').toLowerCase()
+            .replace(/[œæøß]/g, (c) => LIGATURES[c])
+            .normalize('NFD').replace(/\p{Mn}/gu, '')
+            .replace(/[^a-z0-9]+/g, ' ').trim();
 
-                suggestions.forEach((name) => {
-                    const li = document.createElement('li');
-                    li.textContent = name;
-                    li.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        answerInput.value = name;
-                        suggestionsList.innerHTML = '';
-                        answerInput.focus();
-                    });
-                    suggestionsList.appendChild(li);
+        fetch('/api/yugiquiz/noms')
+            .then(r => r.ok ? r.json() : [])
+            .then(noms => {
+                INDEX = noms.map(([fr, en]) => ({ nom: fr, en: en, fr_n: norme(fr), en_n: norme(en) }));
+                // on tapait deja : la liste rattrape ce qui est dans le champ
+                if (answerInput.value && document.activeElement === answerInput) proposeSuggestions();
+            })
+            .catch(() => {});
+
+        /* Les cartes dont le nom, francais ou anglais, contient tous les mots
+           tapes. Le nom exact d'abord, puis ceux qui commencent par ce qu'on
+           a tape, puis ceux ou chaque mot tape commence un mot, puis le
+           reste ; a rang egal, les cartes les plus connues. Le serveur
+           rendait les vingt-cinq premieres dans l'ordre alphabetique anglais :
+           « magicien » ne montrait pas le Magicien Sombre. */
+        function cherche(texte) {
+            const q = norme(texte);
+            if (q.length < 2) return [];
+            const mots = q.split(' ');
+            const debutDeMot = (s, m) => s.startsWith(m) || s.includes(' ' + m);
+            const rangs = [[], [], [], []];
+            for (const c of INDEX) {
+                let enFrancais = true;
+                const trouvee = mots.every(m => {
+                    if (c.fr_n.includes(m)) return true;
+                    enFrancais = false;
+                    return c.en_n.includes(m);
                 });
-            }, 180);
-        });
-
-        answerInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && activeIndex < 0 && !answerLocked) {
-                e.preventDefault();
-                suggestionsList.innerHTML = '';
-                activeIndex = -1; 
-                if (answerInput.value.trim()) {
-                    envoieReponse();
-                    verrouilleChamp();
+                if (!trouvee) continue;
+                let rang = 3;
+                if (c.fr_n === q || c.en_n === q) rang = 0;
+                else if (c.fr_n.startsWith(q) || c.en_n.startsWith(q)) rang = 1;
+                else if (mots.every(m => debutDeMot(c.fr_n, m) || debutDeMot(c.en_n, m))) rang = 2;
+                if (rangs[rang].length < MAX_SUGGESTIONS) {
+                    rangs[rang].push({ nom: c.nom, en: c.en, parEn: !enFrancais });
                 }
-                return;
             }
+            return rangs.flat().slice(0, MAX_SUGGESTIONS);
+        }
 
-            const items = suggestionsList.querySelectorAll('li');
-            if (!items.length) return;
+        function proposeSuggestions() {
+            proposees = answerLocked ? [] : cherche(answerInput.value);
+            activeIndex = -1;
+            suggestionsList.replaceChildren(...proposees.map((s, i) => {
+                const li = document.createElement('li');
+                li.id = 'suggestion-' + i;
+                li.setAttribute('role', 'option');
+                li.setAttribute('aria-selected', 'false');
+                li.textContent = s.nom;
+                /* trouvee par son nom anglais : on le montre, sinon on ne
+                   comprend pas ce que cette carte fait dans la liste */
+                if (s.parEn && s.en) {
+                    const en = document.createElement('span');
+                    en.className = 'suggestion-en';
+                    en.textContent = s.en;
+                    li.appendChild(en);
+                }
+                li.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    choisit(i, false);
+                });
+                // la souris et le clavier surlignent la meme ligne
+                li.addEventListener('mousemove', () => { if (activeIndex !== i) surligne(i, false); });
+                return li;
+            }));
+            suggestionsList.scrollTop = 0;
+            answerInput.setAttribute('aria-expanded', proposees.length ? 'true' : 'false');
+            answerInput.removeAttribute('aria-activedescendant');
+        }
 
-            if (e.key === 'Escape') {
-                suggestionsList.innerHTML = '';
-                activeIndex = -1;
-                return;
+        function surligne(i, defile = true) {
+            activeIndex = i;
+            Array.from(suggestionsList.children).forEach((li, j) => {
+                li.classList.toggle('active', j === i);
+                li.setAttribute('aria-selected', j === i ? 'true' : 'false');
+            });
+            const li = suggestionsList.children[i];
+            if (!li) return;
+            answerInput.setAttribute('aria-activedescendant', li.id);
+            if (defile) li.scrollIntoView({ block: 'nearest' });
+        }
+
+        function fermeSuggestions() {
+            proposees = [];
+            activeIndex = -1;
+            suggestionsList.replaceChildren();
+            answerInput.setAttribute('aria-expanded', 'false');
+            answerInput.removeAttribute('aria-activedescendant');
+        }
+
+        /* Met la suggestion dans le champ ; `envoie` la valide aussitot. */
+        function choisit(i, envoie) {
+            const s = proposees[i];
+            if (!s) return;
+            answerInput.value = s.nom;
+            fermeSuggestions();
+            if (envoie) valide();
+            else answerInput.focus();
+        }
+
+        /* Rend sa copie : une fois par manche, et pas un champ vide. */
+        function valide() {
+            if (answerLocked || !answerInput.value.trim()) return;
+            envoieReponse();
+            verrouilleChamp();
+        }
+
+        answerInput.addEventListener('input', proposeSuggestions);
+
+        /* Tout se fait au clavier :
+             fleches   parcourent la liste, qui boucle d'un bout a l'autre
+             Entree    envoie la ligne surlignee, sinon ce qui est tape
+             Tab       complete avec la ligne surlignee (ou la premiere)
+                       sans envoyer, pour relire avant de valider
+             Echap     ferme la liste
+           Les fleches ne faisaient rien : la ligne surlignee n'etait jamais
+           deplacee, et Entree n'avait donc jamais de suggestion a prendre. */
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.isComposing) return;
+            const n = proposees.length;
+            if (e.key === 'ArrowDown' && n) {
+                e.preventDefault();
+                surligne((activeIndex + 1) % n);
+            } else if (e.key === 'ArrowUp' && n) {
+                e.preventDefault();
+                surligne(activeIndex <= 0 ? n - 1 : activeIndex - 1);
+            } else if (e.key === 'Tab' && n && !e.shiftKey) {
+                e.preventDefault();
+                choisit(Math.max(activeIndex, 0), false);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0) choisit(activeIndex, true);
+                else valide();
+            } else if (e.key === 'Escape' && n) {
+                // la liste seulement, pas le dialogue de sortie
+                e.preventDefault();
+                e.stopPropagation();
+                fermeSuggestions();
             }
-
-            items.forEach((li, i) => li.classList.toggle('active', i === activeIndex));
-            if (activeIndex >= 0) items[activeIndex].scrollIntoView({ block: 'nearest' });
         });
 
         /* body.overlay-ouvert gele les animations du decor : sinon le
-           backdrop-filter du dialogue refloute tout l'ecran a chaque frame */
+           backdrop-filter du dialogue refloute tout l'ecran a chaque frame.
+           Le focus reste dans le dialogue tant qu'il est ouvert (voir
+           commun.js), et revient ou il etait en sortant. */
         function ouvreOverlay(id) {
-            document.getElementById(id).classList.add('active');
+            const el = document.getElementById(id);
+            el.classList.add('active');
             document.body.classList.add('overlay-ouvert');
+            fermeSuggestions();
+            Focus.piege(el);
         }
 
         function fermeOverlay(id) {
-            document.getElementById(id).classList.remove('active');
+            const el = document.getElementById(id);
+            if (!el.classList.contains('active')) return;
+            el.classList.remove('active');
+            Focus.rend(el);
             if (!document.querySelector('#leave-overlay.active, #gameover-overlay.active')) {
                 document.body.classList.remove('overlay-ouvert');
             }
         }
 
-        document.getElementById('title-leave').addEventListener('click', () => {
+        const titreQuitter = document.getElementById('title-leave');
+        titreQuitter.addEventListener('click', () => {
             ouvreOverlay('leave-overlay');
+        });
+        titreQuitter.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                ouvreOverlay('leave-overlay');
+            }
         });
 
         function closeLeaveDialog() {
@@ -580,8 +791,18 @@
             setTimeout(() => { window.location.href = '/yugiquiz'; }, 1000);
         }
 
+        /* Taper sans avoir clique dans le champ : le premier caractere y
+           ramene le focus, et s'y ecrit. Un clic sur la carte suffisait a le
+           perdre, et la frappe partait dans le vide. Seulement quand rien
+           d'autre n'a le focus : sur un bouton, Espace doit rester un clic. */
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeLeaveDialog();
+            if (e.key === 'Escape') { closeLeaveDialog(); return; }
+            if (document.body.classList.contains('overlay-ouvert')) return;
+            if (answerLocked || answerInput.style.display === 'none') return;
+            const actif = document.activeElement;
+            if (actif && actif !== document.body) return;
+            if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+            answerInput.focus();
         });
 
         document.getElementById('leave-overlay').addEventListener('click', (e) => {
@@ -590,8 +811,7 @@
 
         document.addEventListener('click', (e) => {
             if (!answerInput.contains(e.target) && !suggestionsList.contains(e.target)) {
-                suggestionsList.innerHTML = '';
-                activeIndex = -1;
+                fermeSuggestions();
             }
         });
 

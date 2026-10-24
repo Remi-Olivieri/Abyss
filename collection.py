@@ -43,6 +43,7 @@ import os
 import re
 import threading
 import unicodedata
+import urllib.parse
 from pathlib import Path
 
 from flask import Blueprint, redirect, request, send_file
@@ -324,6 +325,51 @@ def anglais() -> tuple:
             if _anglais is None:
                 _anglais = _construit_anglais()
     return _anglais
+
+
+def anglais_de(nom):
+    """Les noms anglais de la carte `nom`, ou None. Le nom exact d'abord, le
+    nom normalise ensuite, pour un accent ecrit autrement."""
+    if not isinstance(nom, str):
+        return None
+    exact, proche = anglais()
+    return exact.get(" ".join(nom.split())) or proche.get(normalise_nom(nom)) or None
+
+
+# --- Cardmarket ------------------------------------------------------------
+# La carte ouverte en grand mene a sa page Cardmarket, celle qui reunit tous
+# ses tirages. L'adresse s'ecrit avec le nom anglais, comme les liens
+# d'ygoprodeck, partenaire de Cardmarket : les espaces deviennent des
+# tirets, le reste est encode -- « Harpie's Feather Duster » donne
+# /Cards/Harpie%27s-Feather-Duster.
+#
+# La page ne connait que le nom francais : elle pointe sur
+# /api/collection/cardmarket?nom=..., qui redirige. Un vrai lien, qui
+# s'ouvre dans un onglet sans rien attendre -- une fenetre ouverte apres une
+# requete, le navigateur la bloquerait.
+CARDMARKET = "https://www.cardmarket.com/fr/YuGiOh"
+# Les offres en francais seulement. `language` prend le numero de langue de
+# Cardmarket, l'idLanguage de son API : 1 anglais, 2 francais, 3 allemand.
+EN_FRANCAIS = {"language": 2}
+
+
+def adresse_cardmarket(nom) -> str:
+    """La page Cardmarket de la carte `nom`, son nom francais.
+
+    Un seul nom anglais : la page de la carte. Deux -- « Lutine a la Cle »,
+    Key Mace et Key Mace #2 -- : une recherche sur le plus court, qui trouve
+    les deux. Aucun -- une carte trop recente pour le fichier, ou tapee a la
+    main : une recherche sur le nom francais, faute de mieux.
+    """
+    en = anglais_de(nom)
+    if en and len(en) == 1:
+        return (CARDMARKET + "/Cards/" + urllib.parse.quote(en[0].replace(" ", "-"), safe="")
+                + "?" + urllib.parse.urlencode(EN_FRANCAIS))
+    cherche = min(en, key=len) if en else " ".join(str(nom or "").split())
+    if not cherche:
+        return CARDMARKET
+    return CARDMARKET + "/Products/Search?" + urllib.parse.urlencode(
+        {"searchString": cherche, **EN_FRANCAIS})
 
 
 def vignette(fichier):
@@ -919,6 +965,10 @@ def liste():
     return reponse({"ok": True,
                     "classeurs": annuaire(),
                     "connecte": u is not None,
+                    # Le pseudo du compte, classeur ou pas : la page reconnait
+                    # ainsi sa propre adresse /collection/<pseudo> avant que
+                    # le classeur existe, et propose de le creer.
+                    "compte": u["pseudo"] if u is not None else None,
                     # La page s'en sert pour montrer le bouton du stock, et
                     # pour rien d'autre : le serveur ne s'en remet pas a elle,
                     # /api/cartes repond 404 a qui n'est pas administrateur.
@@ -982,6 +1032,16 @@ def poser_format():
     famille = famille_a_moi(page, d.get("cle"))
     return reponse({"ok": True, "cle": famille["cle"],
                     "format": enregistre_format(famille, d)})
+
+
+@blueprint_collection.get("/cardmarket")
+def vers_cardmarket():
+    """La page Cardmarket d'une carte, ?nom= son nom francais : une redirection.
+
+    Ouverte a tout le monde, comme la traduction : ce n'est qu'un nom de
+    carte. « cardmarket » est un pseudo reserve, comme « catalogue ».
+    """
+    return redirect(adresse_cardmarket((request.args.get("nom") or "")[:200]), code=302)
 
 
 @blueprint_collection.get("/<pseudo>")
@@ -1058,11 +1118,9 @@ def traduire_noms():
     noms = corps().get("noms")
     if not isinstance(noms, list) or len(noms) > CARTES_MAXI:
         raise Refus("noms", "Une liste de noms de cartes, s'il te plait.")
-    exact, proche = anglais()
     sortie = []
     for n in noms:
-        en = (exact.get(" ".join(n.split())) or proche.get(normalise_nom(n))
-              if isinstance(n, str) else None)
+        en = anglais_de(n)
         sortie.append(None if not en else en[0] if len(en) == 1 else en)
     return reponse({"ok": True, "noms": sortie})
 

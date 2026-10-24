@@ -8,6 +8,7 @@
 <link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
 <link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
+<link rel="manifest" href="/static/commun/manifest.webmanifest">
 <!-- Trois polices japonaises, servies par Google et non par Abyss : une
      police japonaise pèse plusieurs mégaoctets, et Google la découpe en
      tranches de caractères - la page ne télécharge que les glyphes qu'elle
@@ -113,15 +114,15 @@
 
 <!-- Les licences des sources le demandent : leur nom, en clair. -->
 <footer class="pied wrap">
-  Tracés : <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a>
-  (Ulrich Apel, CC BY-SA 3.0) · Kanjis et mots :
+  Tracés : <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a>
+  (Ulrich Apel, CC BY-SA 3.0) · Kanjis et mots :
   <a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project" target="_blank" rel="noopener">KANJIDIC2</a> et
   <a href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project" target="_blank" rel="noopener">JMdict</a>
-  (EDRDG, CC BY-SA 4.0) · Niveaux JLPT : listes de Jonathan Waller, rattachées à JMdict par
+  (EDRDG, CC BY-SA 4.0) · Niveaux JLPT : listes de Jonathan Waller, rattachées à JMdict par
   <a href="https://github.com/stephenmk/yomitan-jlpt-vocab" target="_blank" rel="noopener">yomitan-jlpt-vocab</a> ·
-  Voix : <a href="https://voicevox.hiroshiba.jp/nemo/" target="_blank" rel="noopener">VOICEVOX Nemo</a> ·
-  Découpage des textes : <a href="https://github.com/WorksApplications/sudachi.rs" target="_blank" rel="noopener">SudachiPy</a> ·
-  Lecture libre : phrases de <a href="https://tatoeba.org/fr" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR).
+  Voix : <a href="https://voicevox.hiroshiba.jp/nemo/" target="_blank" rel="noopener">VOICEVOX Nemo</a> ·
+  Découpage des textes : <a href="https://github.com/WorksApplications/sudachi.rs" target="_blank" rel="noopener">SudachiPy</a> ·
+  Lecture libre : phrases de <a href="https://tatoeba.org/fr" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR).
 </footer>
 
 <!-- La séance : par-dessus tout, rien d'autre à l'écran. -->
@@ -132,6 +133,18 @@
     <span class="sc-compte" id="scCompte"></span>
   </div>
   <div class="sc-scene" id="scScene"></div>
+  <!-- Quitter en plein milieu se demande : voir demandeQuitter dans nihongo.js -->
+  <div class="sc-confirme" id="scConfirme" hidden>
+    <div class="sc-confirme-boite" role="alertdialog" aria-modal="true"
+         aria-labelledby="scConfirmeTitre" aria-describedby="scConfirmeTexte">
+      <h2 class="sc-confirme-titre" id="scConfirmeTitre"></h2>
+      <p class="sc-confirme-texte" id="scConfirmeTexte"></p>
+      <div class="sc-actions">
+        <button type="button" class="btn-lien" id="scConfirmeQuitter">Quitter</button>
+        <button type="button" class="btn" id="scConfirmeRester">Continuer</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- La fiche d'un kana, remplie à l'ouverture. -->

@@ -219,7 +219,7 @@ function ouvrirRenom(onglet){
   host.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"
       aria-label="Renommer un onglet" style="max-width:460px">
     <div class="sheet-tools">
-      <span class="grp"><b class="fhead">Renommer « ${esc(onglet)} »</b></span>
+      <span class="grp"><b class="fhead">Renommer « ${esc(onglet)} »</b></span>
       <span class="grp"><button class="sbtn renom-x" aria-label="Fermer">×</button></span>
     </div>
     <div class="rsearch-in">
@@ -236,7 +236,7 @@ function ouvrirRenom(onglet){
   brancheConstructeur('r', periodeValide(onglet) ? onglet : '', (nom)=>{
     const fusion = BUCKETS.indexOf(nom) >= 0 && nom !== onglet;
     $('r_avis').textContent = fusion
-      ? `« ${nom} » existe déjà : les deux onglets n'en feront plus qu'un.`
+      ? `« ${nom} » existe déjà : les deux onglets n'en feront plus qu'un.`
       : '';
     $('r_ok').textContent = fusion ? 'Fusionner' : 'Renommer';
     $('r_ok').disabled = nom === onglet;
@@ -269,7 +269,7 @@ async function renommeOnglet(avant, bouton){
     applyData(data, true);
     fermerRenom();
     render();
-    toast(`Onglet renommé en « ${apres} »`);
+    toast(`Onglet renommé en « ${apres} »`);
   }catch(e){
     bouton.disabled = false; bouton.textContent = texte;
     toast(e.message, true);
@@ -285,7 +285,7 @@ async function poseOngletDefaut(onglet){
        la barre pour que la puce suive. */
     applyData(data, true);
     renderTabs();
-    toast(onglet ? `Ton classeur s'ouvrira sur « ${onglet} ».`
+    toast(onglet ? `Ton classeur s'ouvrira sur « ${onglet} ».`
                  : "Ton classeur s'ouvrira de nouveau sur l'année la plus récente.");
   }catch(err){ toast(err.message || 'Enregistrement impossible', true); }
 }
@@ -323,9 +323,9 @@ function renderTabs(){
                 aria-expanded="false" aria-selected="${surPeriode}">
           <!-- L'étoile ne marque que l'onglet favori lui-même. Elle
                s'affichait dès que le favori était quelque part dans la
-               liste, donc elle restait là en affichant « 2024 » alors que
-               le favori était « 2023 » : elle désignait le bouton au lieu
-               de désigner l'onglet. Repliée sur « Année », elle ne
+               liste, donc elle restait là en affichant « 2024 » alors que
+               le favori était « 2023 » : elle désignait le bouton au lieu
+               de désigner l'onglet. Repliée sur « Année », elle ne
                montre rien non plus - le favori est dans le menu, où sa
                ligne la porte. -->
           <span>${esc(surPeriode ? S.bucket : 'Année')}${
@@ -799,13 +799,13 @@ function emptyHTML(){
     const q = clean(S.q);
     return `<div class="empty">
       <h3>Aucun jeu trouvé...</h3>
-      <p>« ${esc(q)} » n'est pas dans ce journal.</p>
+      <p>« ${esc(q)} » n'est pas dans ce journal.</p>
       <button type="button" class="empty-cta" data-igdb="${esc(q)}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
         </svg>
-        Rechercher « ${esc(q)} »
+        Rechercher « ${esc(q)} »
       </button>
     </div>`;
   }
@@ -1000,7 +1000,7 @@ async function ajouteWishlist(i, btn){
     // il est au classeur : il n'a plus rien à faire dans les suggestions
     DECOUVERTE = DECOUVERTE.filter((_, k) => k !== i);
     render();
-    toast(`« ${s.titre} » ajouté à la wishlist`);
+    toast(`« ${s.titre} » ajouté à la wishlist`);
     if(s.image) poseJaquetteChoisie(s.titre, s.image, s.id);
   }catch(e){
     toast('Ajout impossible - ' + (e.message || 'erreur inconnue'), true);

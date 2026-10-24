@@ -218,15 +218,15 @@ function monteFiche(host){
       <div class="sheet-cover">
         <!-- La jaquette dans sa boîte à elle, et le bouton dessous. Un
              cran de plus dans le balisage, mais coverFiche() remplace tout
-             ce qu'elle trouve chez son hôte à chaque jeu : sans cette
+             ce qu'elle trouve chez son hôte à chaque jeu : sans cette
              boîte, le bouton partait avec l'image du jeu précédent. -->
         <div class="cov-boite"></div>
-        <!-- « Avis » : ce que les AUTRES ont pensé du même jeu. Sa place est
+        <!-- « Avis » : ce que les AUTRES ont pensé du même jeu. Sa place est
              sous la jaquette et non dans le corps de la fiche, parce qu'il
              parle du jeu lui-même - pas de la ligne qu'on est en train de
              lire, dont tout le reste de la fiche s'occupe.
-             Sur tous les jeux deja sortis, y compris « En cours » et
-             « Wishlist » : voir paintSheet. -->
+             Sur tous les jeux deja sortis, y compris « En cours » et
+             « Wishlist » : voir paintSheet. -->
         <button type="button" class="fiche-avis">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -280,7 +280,7 @@ function monteFiche(host){
       const g = jeu();
       if(!g) return;
       copier(g.name).then(ok =>
-        toast(ok ? `« ${g.name} » copié` : 'Copie impossible', !ok));
+        toast(ok ? `« ${g.name} » copié` : 'Copie impossible', !ok));
       return;
     }
     if(e.target.closest('.detail-btn')){

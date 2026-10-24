@@ -14,6 +14,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 html,body{height:100%}
+/* Un titre sur deux lignes se coupe au milieu, et ne laisse pas un mot
+   seul sur la seconde. */
+h1,h2,h3{text-wrap:balance}
 body{background:var(--bg);color:var(--ink);font-family:'Inter Tight',system-ui,sans-serif;
   background-image:radial-gradient(120% 80% at 50% -10%,#2C2436 0%,transparent 60%);
   height:100dvh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
@@ -289,6 +292,13 @@ footer{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:
 .panel .who .st b{font-weight:500}
 .panel .who .st .oui{color:#7FD8A8}
 .panel .who .st .non{color:#F3C9CF}
+/* Le lien vers Cardmarket, sous l'état de la carte : une ligne dans les
+   capitales des étiquettes plutôt qu'un bouton de plus, qui prendrait sa
+   hauteur à la carte agrandie. */
+.panel .who .cm{display:inline-flex;align-items:center;gap:5px;margin-top:2px;padding:4px 8px;
+  font-family:'DM Mono';font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--accent);text-decoration:none}
+.panel .who .cm:hover{text-decoration:underline;text-underline-offset:3px}
 .coord{display:flex;gap:7px;flex-wrap:wrap}
 .cbox{background:#00000047;border:1px solid var(--edge);border-radius:8px;padding:6px 11px;text-align:center;min-width:56px}
 .cbox .k{font-family:'DM Mono';font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint)}

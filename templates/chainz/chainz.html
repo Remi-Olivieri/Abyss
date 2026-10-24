@@ -8,6 +8,7 @@
 <link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
 <link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
+<link rel="manifest" href="/static/commun/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Eczar:wght@500;600&display=swap" rel="stylesheet">
@@ -101,10 +102,10 @@
     <button class="fermer" id="btnCloseInstructions" type="button" aria-label="Fermer">&#10005;</button>
     <div class="instructions-content">
       <h2 id="instrTitre">Instructions pour les illustrateurs</h2>
-      <p>Bienvenue dans l'Atelier Chainz ! Voici ce qu'il faut savoir pour contribuer :</p>
+      <p>Bienvenue dans l'Atelier Chainz ! Voici ce qu'il faut savoir pour contribuer :</p>
 
       <h3>Réservation des cartes</h3>
-      <p>Il n'y a pas de réservation automatique pour le moment. Si tu souhaites illustrer une carte, préviens-moi et je la marquerai comme « Réservée » sur le site.</p>
+      <p>Il n'y a pas de réservation automatique pour le moment. Si tu souhaites illustrer une carte, préviens-moi et je la marquerai comme « Réservée » sur le site.</p>
 
       <h3>Format et dimensions</h3>
       <p>Les artworks doivent être en format vertical. La taille idéale est <strong>494 × 720 pixels</strong>, ou au moins respecter le ratio hauteur/largeur.</p>
@@ -115,19 +116,19 @@
       <p>Les éléments comme la lumière, les particules, la posture du personnage, les cheveux, la fumée, les effets magiques... doivent renforcer cette direction. Tu peux être plus ou moins subtil·e, l'important est que l'image guide naturellement le regard.</p>
 
       <h3>Interprétation libre</h3>
-      <p>Inspire-toi du <strong>nom</strong>, du <strong>type</strong> et de la <strong>description</strong> de la carte pour imaginer la scène. Les effets de la carte peuvent être suggérés de manière visuelle. Les images actuelles ne sont que des concepts. Laisse libre cours à ta créativité !</p>
+      <p>Inspire-toi du <strong>nom</strong>, du <strong>type</strong> et de la <strong>description</strong> de la carte pour imaginer la scène. Les effets de la carte peuvent être suggérés de manière visuelle. Les images actuelles ne sont que des concepts. Laisse libre cours à ta créativité !</p>
 
       <h3>Composition de la carte</h3>
       <p>Le sujet principal doit être centré ou légèrement décalé, mais toujours bien lisible dans un format vertical. La carte devra être facilement reconnaissable même en petite taille.</p>
 
       <h3>Style</h3>
-      <p>Chaque artiste a son propre style, et c'est une richesse ! Aucune contrainte de style n'est imposée.</p>
+      <p>Chaque artiste a son propre style, et c'est une richesse ! Aucune contrainte de style n'est imposée.</p>
 
       <h3>Signature</h3>
       <p>Si tu signes ton artwork, évite de placer ta signature sur les bords au milieu, car ces zones sont recouvertes en jeu.</p>
 
       <h3>Engagement libre</h3>
-      <p>La participation est entièrement libre. Aucune pression / contrainte, illustre ce qui te plaît, quand tu veux. Amuse-toi bien 💛 !</p>
+      <p>La participation est entièrement libre. Aucune pression / contrainte, illustre ce qui te plaît, quand tu veux. Amuse-toi bien 💛 !</p>
     </div>
   </div>
 </div>
@@ -545,7 +546,7 @@
       renderChips();
       renderGrid();
     } catch (err) {
-      document.getElementById("grid").innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(err.message)}</p>`;
+      document.getElementById("grid").innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(err.message)}</p>`;
     }
   }
   init();

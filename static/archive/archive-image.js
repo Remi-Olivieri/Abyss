@@ -628,7 +628,7 @@ function libererBilan(){
   BILAN_BLOB = null;
 }
 function ouvrirBilan(){
-  if(!current().length){ toast("Cet onglet est vide : rien à mettre en image.", true); return; }
+  if(!current().length){ toast("Cet onglet est vide : rien à mettre en image.", true); return; }
   const nom = S.bucket === 'all' ? 'complet' : S.bucket;
   ouvrirImage({
     titre: `Bilan ${nom}`,
@@ -640,7 +640,7 @@ function ouvrirBilan(){
 function partagerJeu(g){
   if(!g) return;
   ouvrirImage({
-    titre: `« ${g.name} » en image`,
+    titre: `« ${g.name} » en image`,
     fichier: 'jeu-' + (slug(g.name) || 'fiche') + '.png',
     partage: g.name,
     composer: ()=> ficheCanvas(g),

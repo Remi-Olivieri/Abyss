@@ -903,9 +903,26 @@
   function saisieKana(input, kata) {
     let compose = false;
     if (kata) input.dataset.kata = "1";
+    /* « nn » tapé en dernier se montre ん tout de suite, comme sur un
+       clavier japonais, au lieu d'attendre la lettre suivante. Mais ce ん
+       reste provisoire : une voyelle qui le suit en fait ん + な, comme
+       versKana le lit dans « minna » ou « konnichiha ». `provisoire` : le
+       champ tel qu'on l'a laissé, ce ん en dernier. */
+    const N = kata ? "ン" : "ん";
+    let provisoire = null;
     const convertit = () => {
       if (compose || input.readOnly || romaji()) return;
-      const v = Mots.versKana(input.value, false, !!kata);
+      let brut = input.value;
+      if (provisoire !== null && brut.length > provisoire.length && brut.startsWith(provisoire)
+          && /^[aiueoy]/i.test(brut.slice(provisoire.length))) {
+        brut = provisoire.slice(0, -1) + "nn" + brut.slice(provisoire.length);
+      }
+      provisoire = null;
+      let v = Mots.versKana(brut, false, !!kata);
+      if (/nn$/i.test(v)) {
+        v = v.slice(0, -2) + N;
+        provisoire = v;
+      }
       if (v !== input.value) input.value = v;
     };
     input.addEventListener("compositionstart", () => { compose = true; });
@@ -924,8 +941,8 @@
     const t = Romaji.plat(tape);
     return romaji() && !!t && transcriptions.some((x) => Romaji.plat(x) === t);
   }
-  const PRESQUE = () => (romaji() ? " Presque : attention aux voyelles longues (ō, ū…) et aux consonnes doubles."
-                                  : " Presque : attention aux sons longs et aux っ.");
+  const PRESQUE = () => (romaji() ? " Presque : attention aux voyelles longues (ō, ū…) et aux consonnes doubles."
+                                  : " Presque : attention aux sons longs et aux っ.");
 
   /* ---------- l'affichage de la grammaire ----------
      Ses textes arrivent avec leurs furigana, {学生|がくせい}, et du
@@ -1167,7 +1184,8 @@
     e.preventDefault();
     va(a.dataset.rubrique);
   });
-  addEventListener("popstate", rend);
+  // pendant une séance, le retour ne change pas de rubrique : voir surRetour
+  addEventListener("popstate", surRetour);
 
   /* =====================================================================
      今日 - Aujourd'hui
@@ -1209,7 +1227,9 @@
     // deux cartes) ; une révision, une dizaine de secondes
     const minutes = Math.max(1, Math.round((aReviser * 10 + plan.kanas.length * 60 + plan.kanjis.length * 90
                                             + plan.mots.length * 45) / 60));
-    const fait = total === 0 && j.revisions > 0;
+    // une séance quittée en plein milieu n'est pas faite : elle se reprend
+    const reprise = repriseDuJour();
+    const fait = !reprise && total === 0 && j.revisions > 0;
     const reste = {
       kana: Kana.TOUS.some((it) => !commence(it)),
       kanji: Kanji.TOUS.some((it) => !commence(it)),
@@ -1256,7 +1276,18 @@
       ${enAttente > 1 ? "les" : "le"} demander</button></p>` : "";
 
     let seance;
-    if (total > 0) {
+    if (reprise) {
+      const faites = reprise.faites, reste = reprise.file.length;
+      seance = `
+        <div class="seance-texte">
+          <h2 class="seance-titre">La séance du jour</h2>
+          <p>Commencée, pas finie : ${faites ? `<strong>${faites}</strong> étape${faites > 1 ? "s" : ""}
+            faite${faites > 1 ? "s" : ""}, ` : ""}encore <strong>${reste}</strong>. Elle reprend là où tu l'as laissée.</p>
+          <p class="seance-duree"><button type="button" class="btn-lien" id="oublieReprise">Abandonner le reste</button></p>
+          ${demandesHtml}
+        </div>
+        <button class="btn btn-grand" id="reprend">続き <span>Reprendre</span></button>`;
+    } else if (total > 0) {
       seance = `
         <div class="seance-texte">
           <h2 class="seance-titre">La séance du jour</h2>
@@ -1308,18 +1339,22 @@
       <section class="programme">
         <h2 class="section-titre"><span lang="ja">道</span> Le chemin</h2>
         <ol class="etapes">
-          ${etapeProgramme("仮名", "Les kanas", "Hiragana et katakana : les lire, les écrire, trait par trait.", "kana")}
-          ${etapeProgramme("漢字", "Les kanjis", "Du N5 au N1 : leur sens, leurs lectures, leurs traits, et des mots courants.", "kanji")}
-          ${etapeProgramme("単語", "Le vocabulaire", "Les mots du JLPT : les comprendre, les lire, puis les retrouver depuis le français.", "vocabulaire")}
+          ${etapeProgramme("仮名", "Les kanas", "Hiragana et katakana : les lire, les écrire, trait par trait.", "kana")}
+          ${etapeProgramme("漢字", "Les kanjis", "Du N5 au N1 : leur sens, leurs lectures, leurs traits, et des mots courants.", "kanji")}
+          ${etapeProgramme("単語", "Le vocabulaire", "Les mots du JLPT : les comprendre, les lire, puis les retrouver depuis le français.", "vocabulaire")}
           ${etapeProgramme("文法", "La grammaire", "Des fiches courtes en français, et des phrases à compléter, à ton rythme.", "grammaire")}
-          ${etapeProgramme("読解", "La lecture", "Des textes à ta portée, du dialogue au conte et à l'article : chaque mot se touche, chaque phrase s'écoute.", "lecture")}
+          ${etapeProgramme("読解", "La lecture", "Des textes à ta portée, du dialogue au conte et à l'article : chaque mot se touche, chaque phrase s'écoute.", "lecture")}
         </ol>
-        ${premierJour ? "" : `<p class="programme-test">Tu en sais plus que ce chemin ne le montre ?
+        ${premierJour ? "" : `<p class="programme-test">Tu en sais plus que ce chemin ne le montre ?
           <button type="button" class="btn-lien" data-test>Passer le test de niveau</button></p>`}
       </section>`;
 
     const lance = $("lance");
     if (lance) lance.addEventListener("click", () => lanceSeance());
+    if (reprise) {
+      $("reprend").addEventListener("click", reprendSeance);
+      $("oublieReprise").addEventListener("click", oublieReprise);
+    }
     vue.querySelectorAll("[data-apercu]").forEach((b) => b.addEventListener("click", () => {
       ouvreFicheDe(apercus.get(b.dataset.apercu), b);
     }));
@@ -1362,16 +1397,16 @@
       detail = `<span class="etape-etat">${n} / ${Kana.TOUS.length} sus</span>`;
     } else if (rub === "kanji" || rub === "vocabulaire") {
       const en = niveauEnCours(rub === "kanji" ? Kanji : Mots);
-      detail = `<span class="etape-etat">${en ? `N${en.n} : ${en.sus} / ${en.total} sus` : "tous sus"}</span>`;
+      detail = `<span class="etape-etat">${en ? `N${en.n} : ${en.sus} / ${en.total} sus` : "tous sus"}</span>`;
     } else if (rub === "grammaire") {
       const en = niveauEnCours(Grammaire, "completer");
       detail = `<span class="etape-etat">${!grammaireOuverte() ? "après les hiraganas"
-        : en ? `N${en.n} : ${en.sus} / ${en.total} sus` : "tous sus"}</span>`;
+        : en ? `N${en.n} : ${en.sus} / ${en.total} sus` : "tous sus"}</span>`;
     } else if (rub === "lecture") {
       const n = (texteAVenir() || Lecture.TEXTES[Lecture.TEXTES.length - 1] || {}).n;
       const duNiveau = Lecture.TEXTES.filter((t) => t.n === n);
       detail = `<span class="etape-etat">${duNiveau.length
-        ? `N${n} : ${duNiveau.filter(estLu).length} / ${duNiveau.length} lus` : "bientôt"}</span>`;
+        ? `N${n} : ${duNiveau.filter(estLu).length} / ${duNiveau.length} lus` : "bientôt"}</span>`;
     }
     return `<li class="etape">
       <a href="/nihongo/${rub}" data-rubrique="${rub}">
@@ -1417,19 +1452,115 @@
     ouvreSeance(item && !commence(item) ? [{ genre: "decouverte", item }, ...revues] : revues, "gram");
   }
 
-  /* `genre` : « jour » ou « gram », pour la fin (voir finSeance). */
-  function ouvreSeance(file, genre) {
+  /* `genre` : « jour » ou « gram », pour la fin (voir finSeance).
+     `reprise` : la séance du jour laissée en plein milieu, qui repart avec
+     ses compteurs (voir repriseDuJour). */
+  function ouvreSeance(file, genre, reprise) {
     if (!file.length) return;
+    const r = reprise || {};
     // decouverts, rates : pour le bilan de la fin, chaque élément vers sa fiche
-    SEANCE = { file, genre, faites: 0, justes: 0, notees: 0, debut: Date.now(), courante: null,
-               decouverts: new Map(), rates: new Map() };
+    // repondue : l'étape dont la réponse est partie (voir sauveSeance)
+    SEANCE = { file, genre, faites: r.faites || 0, justes: r.justes || 0, notees: r.notees || 0,
+               debut: Date.now() - (r.duree || 0), courante: null, repondue: null,
+               decouverts: new Map((r.decouverts || []).map((it) => [it.id, it])),
+               rates: new Map((r.rates || []).map((it) => [it.id, it])) };
     $("seance").hidden = false;
     document.body.classList.add("en-seance");
+    poseEntree();
     etape();
+  }
+
+  /* ---------- la séance laissée en plein milieu ----------
+     Quitter - la croix, Échap, le retour du navigateur, la page fermée -
+     ne termine pas la séance du jour. Ce qui reste à faire est gardé sur
+     cet appareil à chaque étape, et la page Aujourd'hui propose de la
+     reprendre là où on l'a laissée. Sans ça, une séance quittée aux trois
+     quarts pouvait s'afficher « faite » : les révisions répondues ne sont
+     plus dues, les nouveautés découvertes comptent dans le quota du jour,
+     et la seconde carte d'un kanji qu'on n'avait pas encore tracé n'était
+     plus nulle part.
+
+     À chaque étape plutôt qu'au moment de partir : un onglet fermé, un
+     téléphone qui coupe la page ne préviennent pas toujours. Elle ne vaut
+     que pour le jour d'apprentissage où elle a commencé, et pour le compte
+     qui l'a faite. La séance de grammaire ne se garde pas : ses phrases
+     reviennent d'elles-mêmes à la suivante. */
+  const CLE_REPRISE = "seance";
+
+  function sauveSeance() {
+    if (!SEANCE || SEANCE.genre !== "jour") return;
+    // l'étape à l'écran, sauf si sa réponse est déjà partie : la reprendre
+    // la ferait noter deux fois
+    const repondue = !!SEANCE.courante && SEANCE.repondue === SEANCE.courante;
+    const reste = [...(SEANCE.courante && !repondue ? [SEANCE.courante] : []), ...SEANCE.file];
+    if (!reste.length) { Pref.efface(CLE_REPRISE); return; }
+    Pref.ecrit(CLE_REPRISE, {
+      moi: ETAT.moi, jour: ETAT.jour,
+      file: reste.map((e) => [e.genre, e.item.id, e.cle || "", e.essais || 0]),
+      faites: SEANCE.faites + (repondue ? 1 : 0), justes: SEANCE.justes, notees: SEANCE.notees,
+      duree: Date.now() - SEANCE.debut,
+      decouverts: [...SEANCE.decouverts.keys()], rates: [...SEANCE.rates.keys()],
+    });
+  }
+
+  /* Un élément d'après son identifiant : « kana:あ », « kanji:日 »,
+     « mot:食べる・たべる », « gram:te-kudasai ». */
+  function elementParId(id) {
+    const s = String(id), i = s.indexOf(":");
+    const type = s.slice(0, i), x = s.slice(i + 1);
+    if (type === "kana") return Kana.PAR_CAR.get(x) || null;
+    if (type === "kanji") return Kanji.PAR_CAR.get(x) || null;
+    if (type === "mot") return Mots.PAR_ID.get(s) || null;
+    if (type === "gram") return Grammaire.PAR_ID.get(s) || null;
+    return null;
+  }
+
+  /* La séance gardée, prête à repartir, ou null : rien de gardé, ou gardé
+     un autre jour, par un autre compte. Une étape que la matière ne
+     connaît plus (refaite depuis) tombe, de même que la découverte d'un
+     élément commencé entre-temps ailleurs ; le reste repart. */
+  function repriseDuJour() {
+    const r = Pref.lit(CLE_REPRISE, null);
+    if (!r || typeof r !== "object" || !Array.isArray(r.file)) return null;
+    if (r.jour !== ETAT.jour || (r.moi || null) !== (ETAT.moi || null)) {
+      Pref.efface(CLE_REPRISE);
+      return null;
+    }
+    const file = r.file.map((x) => {
+      if (!Array.isArray(x)) return null;
+      const [genre, id, cle, essais] = x;
+      const item = elementParId(id);
+      if (!item || !RENDUS[item.type] || !RENDUS[item.type][genre]) return null;
+      if (cle ? !depuisCle(cle) : genre !== "decouverte" || commence(item)) return null;
+      const e = { genre, item };
+      if (cle) e.cle = cle;
+      if (essais) e.essais = essais;
+      return e;
+    }).filter(Boolean);
+    if (!file.length) {
+      Pref.efface(CLE_REPRISE);
+      return null;
+    }
+    const elements = (ids) => (Array.isArray(ids) ? ids : []).map(elementParId).filter(Boolean);
+    return { file, faites: +r.faites || 0, justes: +r.justes || 0, notees: +r.notees || 0,
+             duree: +r.duree || 0, decouverts: elements(r.decouverts), rates: elements(r.rates) };
+  }
+
+  async function reprendSeance() {
+    const r = repriseDuJour();
+    if (!r) { rend(); return; }
+    try { await chargeTraces(r.file.map((e) => e.item)); } catch (e) { toast(e.message, true); return; }
+    ouvreSeance(r.file, "jour", r);
+  }
+
+  function oublieReprise() {
+    Pref.efface(CLE_REPRISE);
+    rend();
   }
 
   function insere(e, distance) {
     SEANCE.file.splice(Math.min(distance, SEANCE.file.length), 0, e);
+    sauveSeance();
   }
 
   /* Une carte ratée revient un peu plus loin, tant qu'il lui reste des
@@ -1453,6 +1584,7 @@
     const e = SEANCE.file.shift();
     SEANCE.courante = e || null;
     majJauge();
+    sauveSeance();         // et l'efface, quand il ne reste plus rien
     if (!e) { finSeance(); return; }
     e.debut = Date.now();
     const scene = $("scScene");
@@ -1474,6 +1606,8 @@
     SEANCE.notees++;
     if (valeur > 1) SEANCE.justes++;
     else SEANCE.rates.set(e.item.id, e.item);
+    SEANCE.repondue = e;
+    sauveSeance();
     const secondes = Math.round((Date.now() - e.debut) / 1000);
     try {
       const r = await api("/api/nihongo/reponse", "POST", { cle: e.cle, note: valeur, secondes });
@@ -1482,7 +1616,7 @@
       ETAT.aujourdhui = r.aujourdhui;
       ETAT.serie = r.serie;
     } catch (err) {
-      toast("Réponse non enregistrée : " + err.message, true);
+      toast("Réponse non enregistrée : " + err.message, true);
     }
   }
 
@@ -1601,7 +1735,7 @@
       <div class="carte-seance tache-jp">
         <p class="sc-genre"><span class="sc-marque" lang="ja">読</span> Lecture · ${genreLabel(e)}</p>
         <div class="sc-glyphe sc-glyphe-seul" lang="ja">${echappe(it.k)}</div>
-        ${tacheHtml("Comment se lit-il ?", "en rōmaji")}
+        ${tacheHtml("Comment se lit-il ?", "en rōmaji")}
         <form class="sc-reponse" id="scForm" autocomplete="off" data-langue="JP">
           <input id="scSaisie" class="sc-saisie" autocapitalize="none" autocorrect="off"
                  spellcheck="false" enterkeyhint="done" aria-label="La lecture, en rōmaji" placeholder="en rōmaji">
@@ -1622,8 +1756,8 @@
       saisie.classList.add(juste ? "juste" : "faux");
       Voix.dit(it.k);
       $("scRetour").innerHTML = juste
-        ? `<span class="verdict verdict-juste">正解</span> <span lang="ja">${echappe(it.k)}</span> se lit « ${echappe(it.r)} ».`
-        : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> <span lang="ja">${echappe(it.k)}</span> se lit « <strong>${echappe(it.r)}</strong> »${tape ? `, pas « ${echappe(tape)} »` : ""}. Il reviendra dans un instant.`;
+        ? `<span class="verdict verdict-juste">正解</span> <span lang="ja">${echappe(it.k)}</span> se lit « ${echappe(it.r)} ».`
+        : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> <span lang="ja">${echappe(it.k)}</span> se lit « <strong>${echappe(it.r)}</strong> »${tape ? `, pas « ${echappe(tape)} »` : ""}. Il reviendra dans un instant.`;
       $("scValider").textContent = "Continuer";
       $("scValider").focus();
       note(e, juste ? 3 : 1);
@@ -1645,7 +1779,7 @@
         <p class="sc-genre"><span class="sc-marque" lang="ja">意</span> Sens · ${genreLabel(e)}</p>
         ${mot ? motGrand(it) : `<div class="sc-glyphe sc-glyphe-seul" lang="ja">${echappe(it.k)}</div>`}
         ${mot && homographe(it) && enKanjis(it) && !romaji() ? `<p class="sc-precision" lang="ja">${echappe(it.l[0])}</p>` : ""}
-        ${tacheHtml(`Que veut dire ce ${mot ? "mot" : "kanji"} ?`, "en français")}
+        ${tacheHtml(`Que veut dire ce ${mot ? "mot" : "kanji"} ?`, "en français")}
         <form class="sc-reponse" id="scForm" autocomplete="off" data-langue="FR">
           <input id="scSaisie" class="sc-saisie sc-saisie-sens" autocapitalize="none" autocorrect="off"
                  spellcheck="false" enterkeyhint="done" aria-label="Son sens, en français" placeholder="son sens, en français">
@@ -1675,7 +1809,7 @@
       saisie.classList.add(juste ? "juste" : "faux");
       $("scRetour").innerHTML = juste
         ? `<span class="verdict verdict-juste">正解</span> C'est ça.`
-        : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> ${tape ? `Pas « ${echappe(tape)} ».` : "Voici ce qu'il veut dire."}`;
+        : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> ${tape ? `Pas « ${echappe(tape)} ».` : "Voici ce qu'il veut dire."}`;
       if (mot) {
         $("scDetail").innerHTML = detailMotHtml(it);
         $("scSon").addEventListener("click", () => dis(it));
@@ -1734,8 +1868,8 @@
       <div class="carte-seance tache-jp">
         <p class="sc-genre"><span class="sc-marque" lang="ja">読</span> Lecture · ${genreLabel(e)}</p>
         ${motGrand(it, "", graphie(it))}
-        ${homographe(it) ? `<p class="sc-precision">au sens de « ${sensMotHtml(it, 2)} »</p>` : ""}
-        ${tacheHtml("Comment se lit ce mot ?", "en japonais")}
+        ${homographe(it) ? `<p class="sc-precision">au sens de « ${sensMotHtml(it, 2)} »</p>` : ""}
+        ${tacheHtml("Comment se lit ce mot ?", "en japonais")}
         <form class="sc-reponse" id="scForm" autocomplete="off" data-langue="JP">
           <input id="scSaisie" class="sc-saisie" lang="ja" autocapitalize="none" autocorrect="off"
                  spellcheck="false" enterkeyhint="done" aria-label="Sa lecture, en rōmaji ou en kanas"
@@ -1759,11 +1893,11 @@
         const autre = autreLecture(it, tape);
         if (autre) {
           autreVue = true;
-          const ecrit = `<span lang="ja">${echappe(it.m)}</span>`, lu = `« <span lang="ja">${echappe(tape)}</span> »`;
+          const ecrit = `<span lang="ja">${echappe(it.m)}</span>`, lu = `« <span lang="ja">${echappe(tape)}</span> »`;
           $("scRetour").innerHTML = autre.mot
-            ? `${ecrit} se lit bien ${lu}, mais au sens de « ${sensMotHtml(autre.mot, 2)} ».
-               Ici, c'est « ${sensMotHtml(it, 2)} » : encore un essai.`
-            : `${lu} est bien une lecture du kanji ${ecrit}, mais pas celle du mot qu'il forme seul : encore un essai.`;
+            ? `${ecrit} se lit bien ${lu}, mais au sens de « ${sensMotHtml(autre.mot, 2)} ».
+               Ici, c'est « ${sensMotHtml(it, 2)} » : encore un essai.`
+            : `${lu} est bien une lecture du kanji ${ecrit}, mais pas celle du mot qu'il forme seul : encore un essai.`;
           saisie.value = "";
           saisie.focus();
           return;
@@ -1772,11 +1906,11 @@
       repondu = true;
       saisie.readOnly = true;
       saisie.classList.add(juste ? "juste" : "faux");
-      const lu = `<span lang="ja">${echappe(it.m)}</span> se lit « <strong lang="ja">${lectures.map(echappe).join(
-        "</strong> » ou « <strong lang=\"ja\">")}</strong> »`;
+      const lu = `<span lang="ja">${echappe(it.m)}</span> se lit « <strong lang="ja">${lectures.map(echappe).join(
+        "</strong> » ou « <strong lang=\"ja\">")}</strong> »`;
       $("scRetour").innerHTML = juste
         ? `<span class="verdict verdict-juste">正解</span> ${lu}.`
-        : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> ${lu}${tape ? `, pas « <span lang="ja">${echappe(tape)}</span> »` : ""}.`
+        : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> ${lu}${tape ? `, pas « <span lang="ja">${echappe(tape)}</span> »` : ""}.`
           + (tape && Mots.presque(it, tape) ? PRESQUE() : "");
       $("scDetail").innerHTML = detailMotHtml(it, { lecture: false });
       $("scDetail").hidden = false;
@@ -1801,7 +1935,7 @@
     $("scScene").innerHTML = `
       <div class="carte-seance tache-jp">
         <p class="sc-genre"><span class="sc-marque" lang="ja">言</span> Retrouver le mot · ${genreLabel(e)}</p>
-        <p class="sc-demande">Comment dit-on « <strong class="sc-demande-sens">${sensMotHtml(it, 3)}</strong> » ?</p>
+        <p class="sc-demande">Comment dit-on « <strong class="sc-demande-sens">${sensMotHtml(it, 3)}</strong> » ?</p>
         <p class="mt-nature">${echappe(Mots.nature(it))}</p>
         <form class="sc-reponse" id="scForm" autocomplete="off" data-langue="JP">
           <input id="scSaisie" class="sc-saisie" lang="ja" autocapitalize="none" autocorrect="off"
@@ -1847,7 +1981,7 @@
           synonymeVu = true;
           $("scRetour").innerHTML = `<span lang="ja">${echappe(motEcrit(autre))}</span>${enKanjis(autre) && !romaji()
             ? ` (<span lang="ja">${echappe(autre.l[0])}</span>)` : ""}
-            veut dire ça aussi ! Mais on cherche un autre mot : encore un essai.`;
+            veut dire ça aussi ! Mais on cherche un autre mot : encore un essai.`;
           saisie.value = "";
           saisie.focus();
           return;
@@ -1858,7 +1992,7 @@
       saisie.classList.add(juste ? "juste" : "faux");
       $("scRetour").innerHTML = juste
         ? `<span class="verdict verdict-juste">正解</span> ${indices ? "Avec un indice." : "C'est ça."}`
-        : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> On cherchait :`;
+        : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> On cherchait :`;
       $("scDetail").innerHTML = motGrand(it, "sc-mot-moyen") + detailMotHtml(it);
       $("scDetail").hidden = false;
       $("scSon").addEventListener("click", () => dis(it));
@@ -1886,7 +2020,7 @@
      da ji zu de do, et rien du tracé n'est soufflé. */
   function homophoneHtml(it) {
     const h = it.homophone;
-    return `<p class="sc-precision">celui de la ligne <strong>${echappe(h.ligne)}</strong> :
+    return `<p class="sc-precision">celui de la ligne <strong>${echappe(h.ligne)}</strong> :
       <span class="sc-precision-ligne">${h.syllabes.map((s, i) =>
         i === h.rang ? `<b>${echappe(s)}</b>` : echappe(s)).join(" ")}</span></p>`;
   }
@@ -1896,16 +2030,16 @@
     const kanji = it.type === "kanji";
     const traits = traitsDe(it);
     const demande = kanji
-      ? `<p class="sc-demande">Trace le kanji de « <strong class="sc-demande-sens">${echappe(Kanji.sens(it, 3).join(", "))}</strong> »</p>
+      ? `<p class="sc-demande">Trace le kanji de « <strong class="sc-demande-sens">${echappe(Kanji.sens(it, 3).join(", "))}</strong> »</p>
          ${lecturesHtml(it, true)}`
-      : `<p class="sc-demande">Trace « <strong>${echappe(it.r)}</strong> » ${boutonSon("scSon", "Réécouter")}</p>
+      : `<p class="sc-demande">Trace « <strong>${echappe(it.r)}</strong> » ${boutonSon("scSon", "Réécouter")}</p>
          ${it.homophone ? homophoneHtml(it) : ""}`;
     $("scScene").innerHTML = `
       <div class="carte-seance">
         <p class="sc-genre"><span class="sc-marque" lang="ja">書</span> Écriture · ${genreLabel(e)}</p>
         ${demande}
         <div class="tr-hote sc-trace-memoire" id="scTrace"></div>
-        <p class="sc-retour" id="scRetour" aria-live="polite">De mémoire, trait par trait${kanji ? ` : ${pluriel(traits.length, "trait")}` : ""}.</p>
+        <p class="sc-retour" id="scRetour" aria-live="polite">De mémoire, trait par trait${kanji ? ` : ${pluriel(traits.length, "trait")}` : ""}.</p>
         <div class="sc-actions">
           <button type="button" class="btn-lien" id="scOubli">Je ne sais plus</button>
           <button type="button" class="btn" id="scSuivant" hidden>Continuer</button>
@@ -2025,7 +2159,7 @@
     }
     $("scAide").addEventListener("click", () => {
       aide = true;
-      $("grIndice").innerHTML = `${motifHtml(it)} : ${texteHtml(it.sens)}`;
+      $("grIndice").innerHTML = `${motifHtml(it)} : ${texteHtml(it.sens)}`;
       $("grIndice").hidden = false;
       $("scAide").hidden = true;
       saisie.focus();
@@ -2039,8 +2173,8 @@
       if (ro && (verdict === "particule" || commeEcrit(saisie.value, [ro.t, ...(ro.r || [])]))) verdict = "juste";
       if (verdict === "particule" && !particuleVue) {
         particuleVue = true;
-        $("scRetour").innerHTML = `Presque : は, へ et を, quand ce sont des particules, se tapent
-          « ha », « he » et « wo ». Corrige, et valide.`;
+        $("scRetour").innerHTML = `Presque : は, へ et を, quand ce sont des particules, se tapent
+          « ha », « he » et « wo ». Corrige, et valide.`;
         saisie.focus();
         return;
       }
@@ -2054,10 +2188,10 @@
       $("scRetour").innerHTML = juste
         ? `<span class="verdict verdict-juste">正解</span> ${aide ? "Avec un indice." : "C'est ça."}`
         : `<span class="verdict verdict-faux">${tape ? "残念" : "?"}</span> Il fallait
-           « <strong lang="ja">${ro ? echappe(ro.t) : enJaponais(ex.t)}</strong> »${autres.length ? ` (ou <span lang="ja">${autres.map(echappe).join("</span>, <span lang=\"ja\">")}</span>)` : ""}${tape ? `, pas « <span lang="ja">${echappe(tape)}</span> »` : ""}.`
+           « <strong lang="ja">${ro ? echappe(ro.t) : enJaponais(ex.t)}</strong> »${autres.length ? ` (ou <span lang="ja">${autres.map(echappe).join("</span>, <span lang=\"ja\">")}</span>)` : ""}${tape ? `, pas « <span lang="ja">${echappe(tape)}</span> »` : ""}.`
           + (verdict === "presque" ? PRESQUE() : "");
       $("grRappel").innerHTML = `
-        <p class="gr-rappel-titre"><span>${motifHtml(it)}</span> : ${texteHtml(it.sens)}
+        <p class="gr-rappel-titre"><span>${motifHtml(it)}</span> : ${texteHtml(it.sens)}
           ${boutonSon("grSon", "Réécouter")}</p>
         <button type="button" class="btn-lien" id="grExplique">Revoir l'explication</button>
         <div class="gr-texte" id="grTexte" hidden>${it.formes.length ? `<ul class="gr-formes">${it.formes.map((f) => `<li>${texteHtml(f)}</li>`).join("")}</ul>` : ""}${blocsHtml(it.texte)}</div>`;
@@ -2100,10 +2234,10 @@
     const suivant = texteSuivant();
     const point = gramSuivant();
     const precision = SEANCE.notees ? Math.round(100 * SEANCE.justes / SEANCE.notees) : 100;
-    const versTexte = suivant ? `<button type="button" class="btn-lien" id="scLire">Un texte :
+    const versTexte = suivant ? `<button type="button" class="btn-lien" id="scLire">Un texte :
       <span lang="ja">${titreHtml(suivant)}</span> (${echappe(suivant.fr)})</button>` : "";
     const versPoint = point ? `<button type="button" class="btn-lien" id="scGram">${SEANCE.genre === "gram"
-      ? "Le point suivant" : "Un point de grammaire"} : ${motifHtml(point, true)}</button>` : "";
+      ? "Le point suivant" : "Un point de grammaire"} : ${motifHtml(point, true)}</button>` : "";
     const suites = (SEANCE.genre === "gram" ? [versPoint, versTexte] : [versTexte, versPoint]).filter(Boolean);
     // ce qu'on a découvert, ce qu'on a raté : chaque élément ouvre sa fiche
     const elements = new Map();
@@ -2119,7 +2253,7 @@
       <div class="carte-seance sc-fin">
         <div class="tampon" aria-hidden="true"><span lang="ja">済</span></div>
         <h2 class="sc-fin-titre" lang="ja">${romaji() ? "Otsukaresama deshita" : "お疲れさまでした"}</h2>
-        <p class="sc-fin-trad">${romaji() ? "" : "<em>otsukaresama deshita</em> "}« merci pour cet effort »</p>
+        <p class="sc-fin-trad">${romaji() ? "" : "<em>otsukaresama deshita</em> "}« merci pour cet effort »</p>
         <dl class="bilan">
           <div><dt>Réponses</dt><dd>${SEANCE.notees}</dd></div>
           <div><dt>Réponses justes</dt><dd>${precision} %</dd></div>
@@ -2127,7 +2261,7 @@
           <div><dt>Série</dt><dd>${ETAT.serie} jour${ETAT.serie > 1 ? "s" : ""}</dd></div>
         </dl>
         ${recap ? `<div class="sc-fin-recap">${recap}</div>` : ""}
-        ${suites.length ? `<div class="sc-fin-lire"><p>Et maintenant ?</p>${suites.join("")}</div>` : ""}
+        ${suites.length ? `<div class="sc-fin-lire"><p>Et maintenant ?</p>${suites.join("")}</div>` : ""}
         <button type="button" class="btn" id="scFin">Retour</button>
       </div>`;
     $("scFin").addEventListener("click", quitteSeance);
@@ -2135,37 +2269,133 @@
       ouvreFicheDe(elements.get(b.dataset.element), b);
     }));
     if (suivant) {
-      $("scLire").addEventListener("click", () => {
-        quitteSeance();
-        ouvreTexte(suivant);
-      });
+      $("scLire").addEventListener("click", () => quitteSeance(() => ouvreTexte(suivant)));
     }
     if (point) {
-      $("scGram").addEventListener("click", () => {
-        quitteSeance();
-        lanceGrammaire(point);
-      });
+      $("scGram").addEventListener("click", () => quitteSeance(() => lanceGrammaire(point)));
     }
     $("scFin").focus();
   }
 
-  function quitteSeance() {
+  /* `puis` : ce qui vient ensuite (un texte, un point de grammaire), une
+     fois la page revenue à sa place - voir poseEntree. */
+  function quitteSeance(puis) {
     Voix.arrete();
     SEANCE = null;
     TEST = null;
     $("seance").hidden = true;
+    $("scConfirme").hidden = true;
     $("scScene").innerHTML = "";
     document.body.classList.remove("en-seance");
+    const suite = typeof puis === "function" ? puis : () => {};
+    if (ENTREE_SEANCE) {
+      /* L'entrée posée à l'ouverture se retire avant tout le reste : la
+         suite peut poser sa propre adresse (un texte à lire), et le retour
+         arriverait après elle pour la défaire. Le navigateur prévient par
+         popstate (voir surRetour) ; s'il tarde, on n'attend pas. */
+      ENTREE_SEANCE = false;
+      const attendu = APRES_RETOUR = suite;
+      history.back();
+      setTimeout(() => { if (APRES_RETOUR === attendu) finitRetour(); }, 600);
+      return;
+    }
     rend();
+    suite();
   }
 
-  $("scQuitter").addEventListener("click", quitteSeance);
+  /* ---------- quitter en plein milieu ----------
+     La croix, Échap, le retour du navigateur : un geste vite fait, et
+     longtemps sans appel - la séance disparaissait. La question se pose
+     maintenant dans la séance même, « Continuer » en premier : c'est la
+     réponse qu'on donne quand le geste était un accident. Rien à demander
+     sur l'écran de fin, ni avant la première question du test. */
+  function enPleinMilieu() {
+    if (SEANCE) return !!(SEANCE.courante || SEANCE.file.length);
+    return !!(TEST && !TEST.intro && !TEST.fini);
+  }
+
+  const CONFIRMATIONS = {
+    jour: ["Quitter la séance ?", "Elle t'attendra sur la page Aujourd'hui : tu la reprendras là où tu en es."],
+    gram: ["Quitter la séance ?", "Tes réponses sont enregistrées ; les phrases qui restent reviendront à la prochaine séance de grammaire."],
+    test: ["Quitter le test ?", "Il s'arrête là, et rien de ce que tu as répondu n'est gardé."],
+  };
+  let FOCUS_AVANT = null;
+
+  function demandeQuitter() {
+    if (!$("scConfirme").hidden) return;
+    if (!enPleinMilieu()) { quitteSeance(); return; }
+    const [titre, texte] = CONFIRMATIONS[SEANCE ? SEANCE.genre : "test"];
+    $("scConfirmeTitre").textContent = titre;
+    $("scConfirmeTexte").textContent = texte;
+    FOCUS_AVANT = document.activeElement;
+    $("scConfirme").hidden = false;
+    $("scConfirmeRester").focus();
+  }
+
+  function resteEnSeance() {
+    $("scConfirme").hidden = true;
+    poseEntree();          // le retour qui a posé la question l'a consommée
+    if (FOCUS_AVANT && document.contains(FOCUS_AVANT)) FOCUS_AVANT.focus();
+    FOCUS_AVANT = null;
+  }
+
+  $("scQuitter").addEventListener("click", demandeQuitter);
+  $("scConfirmeRester").addEventListener("click", resteEnSeance);
+  $("scConfirmeQuitter").addEventListener("click", () => quitteSeance());
+  $("scConfirme").addEventListener("click", (e) => { if (e.target === $("scConfirme")) resteEnSeance(); });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if (!$("reglages").hidden) { fermeReglages(true); return; }
     if (!$("fiche").hidden) { fermeFiche(); return; }
-    if (!$("seance").hidden) { quitteSeance(); return; }
+    if (!$("seance").hidden) {
+      if ($("scConfirme").hidden) demandeQuitter(); else resteEnSeance();
+      return;
+    }
     if ($("pupitre") && !$("pupitre").hidden) fermePupitre();
+  });
+
+  /* ---------- le retour du navigateur ----------
+     Le bouton retour, le geste du bord de l'écran sur un téléphone :
+     pendant une séance, ils faisaient changer de rubrique sous elle, ou
+     quitter la page. La séance pose donc à son ouverture une entrée
+     d'historique de plus, à la même adresse ; le retour la consomme, et
+     c'est par là qu'on l'apprend (voir surRetour). Finie ou quittée, la
+     séance la retire elle-même - sinon il faudrait un retour de plus pour
+     sortir de la page. */
+  let ENTREE_SEANCE = false;
+  let APRES_RETOUR = null;
+
+  function poseEntree() {
+    if (ENTREE_SEANCE) return;
+    history.pushState({ seance: true }, "", location.href);
+    ENTREE_SEANCE = true;
+  }
+
+  function finitRetour() {
+    const suite = APRES_RETOUR;
+    APRES_RETOUR = null;
+    rend();
+    suite();
+  }
+
+  function surRetour() {
+    if (APRES_RETOUR) { finitRetour(); return; }
+    if ($("seance").hidden) { rend(); return; }
+    ENTREE_SEANCE = false;
+    // une fiche ouverte depuis la séance se ferme d'abord, comme avec Échap
+    if (!$("fiche").hidden) { fermeFiche(); poseEntree(); return; }
+    // deux retours de suite : la réponse est claire
+    if (!$("scConfirme").hidden || !enPleinMilieu()) { quitteSeance(); return; }
+    demandeQuitter();
+  }
+
+  /* Fermer l'onglet, recharger, aller ailleurs : le navigateur pose sa
+     propre question, la seule qu'il permette. Ce qui reste de la séance du
+     jour est déjà gardé (voir sauveSeance) ; un test, lui, serait perdu. */
+  addEventListener("beforeunload", (e) => {
+    if ($("seance").hidden || !enPleinMilieu()) return;
+    e.preventDefault();
+    e.returnValue = "";
   });
 
   /* =====================================================================
@@ -2214,8 +2444,8 @@
       <section class="feuille lc-suivant">
         <span class="lc-suivant-jp" lang="ja" aria-hidden="true">試</span>
         <div class="lc-suivant-texte">
-          <h2 class="lc-suivant-titre">Tu as déjà des bases ?</h2>
-          <p class="lc-suivant-intro">Quelques minutes de questions, et tu commences à ton niveau. Tu débutes ? La
+          <h2 class="lc-suivant-titre">Tu as déjà des bases ?</h2>
+          <p class="lc-suivant-intro">Quelques minutes de questions, et tu commences à ton niveau. Tu débutes ? La
             séance du jour commence par les hiraganas.</p>
         </div>
         <button type="button" class="btn btn-grand" data-test>試験 <span>Le test</span></button>
@@ -2226,6 +2456,7 @@
     TEST = { intro: true };
     $("seance").hidden = false;
     document.body.classList.add("en-seance");
+    poseEntree();
     $("scJauge").style.width = "0%";
     $("scCompte").textContent = "";
     scene(`
@@ -2235,9 +2466,9 @@
         <p class="nv-texte">Des questions à choix sur les kanas, le vocabulaire, les kanjis et la grammaire, de
           cinq à quinze minutes. Ce que tu sais déjà entre dans tes révisions et ne revient que de loin en loin,
           pour vérifier.</p>
-        <p class="nv-texte"><strong>Ne devine pas</strong> : « Je ne sais pas » vaut mieux qu'un coup de chance, qui
+        <p class="nv-texte"><strong>Ne devine pas</strong> : « Je ne sais pas » vaut mieux qu'un coup de chance, qui
           te ferait sauter ce que tu ne sais pas.</p>
-        <p class="sc-tache">Où en es-tu, à peu près ?</p>
+        <p class="sc-tache">Où en es-tu, à peu près ?</p>
         <div class="nv-departs">
           ${TEST_DEPARTS.map((d) => `<button type="button" class="nv-depart" data-depart="${d.n}">
             <strong>N${d.n}</strong><span>${d.texte}</span></button>`).join("")}
@@ -2293,7 +2524,7 @@
     if (domaine === "kana") {
       const tous = Kana.TOUS.filter((it) => it.sys === niveau && !it.homophone);
       return auHasard(tous, n).map((it) => ({
-        invite: glyphe(it.k), question: "Comment se lit-il ?", bonne: echappe(it.r),
+        invite: glyphe(it.k), question: "Comment se lit-il ?", bonne: echappe(it.r),
         autres: leurres(it, tous.filter((x) => x.famille === it.famille), (x) => x.r, (x) => [x.r]).map(echappe),
       }));
     }
@@ -2302,7 +2533,7 @@
       const texte = (x) => Mots.sens(x, 2).join(", ");
       return auHasard(tous, n).map((it) => {
         const pareils = tous.filter((x) => (x.p || [])[0] === (it.p || [])[0]);
-        return { invite: motGrand(it, "", it.m), question: "Que veut dire ce mot ?", bonne: echappe(texte(it)),
+        return { invite: motGrand(it, "", it.m), question: "Que veut dire ce mot ?", bonne: echappe(texte(it)),
                  autres: leurres(it, pareils.length > 10 ? pareils : tous, texte, (x) => Mots.sens(x)).map(echappe) };
       });
     }
@@ -2310,7 +2541,7 @@
       const tous = Kanji.TOUS.filter((it) => it.n === niveau);
       const texte = (x) => Kanji.sens(x, 2).join(", ");
       return auHasard(tous, n).map((it) => ({
-        invite: glyphe(it.k), question: "Que veut dire ce kanji ?", bonne: echappe(texte(it)),
+        invite: glyphe(it.k), question: "Que veut dire ce kanji ?", bonne: echappe(texte(it)),
         autres: leurres(it, tous, texte, (x) => Kanji.sens(x)).map(echappe),
       }));
     }
@@ -2333,7 +2564,7 @@
       return {
         invite: `<p class="gr-consigne">${echappe(ex.fr)}</p>
           <p class="gr-phrase gr-phrase-seance" lang="ja">${ecritJaponais(ex.a)}<span class="gr-trou" style="--n:3"></span>${ecritJaponais(ex.p)}</p>`,
-        question: "Que manque-t-il ?", bonne: ecritJaponais(ex.t), autres, jp: true,
+        question: "Que manque-t-il ?", bonne: ecritJaponais(ex.t), autres, jp: true,
       };
     });
   }
@@ -2462,6 +2693,7 @@
   function finTest() {
     const A = TEST.acquis;
     TEST.choix = null;
+    TEST.fini = true;      // plus rien à perdre : voir enPleinMilieu
     $("scJauge").style.width = "100%";
     $("scCompte").textContent = "";
     const cles = clesDuTest();
@@ -2472,11 +2704,11 @@
       if (!tries.length) return "à apprendre, depuis le N5";
       if (tries.length === 5) return "tout est su";
       const noms = tries.map((n) => `N${n}`);
-      return `${noms.length > 1 ? `${noms.slice(0, -1).join(", ")} et ${noms[noms.length - 1]}` : noms[0]} : su${
-        noms.length > 1 ? "s" : ""} ; la suite commence au N${Math.min(...tries) - 1}`;
+      return `${noms.length > 1 ? `${noms.slice(0, -1).join(", ")} et ${noms[noms.length - 1]}` : noms[0]} : su${
+        noms.length > 1 ? "s" : ""} ; la suite commence au N${Math.min(...tries) - 1}`;
     };
-    const kanas = A.kana.length === 2 ? "hiraganas et katakanas : sus"
-      : A.kana.length ? "hiraganas : sus ; les katakanas sont à apprendre" : "à apprendre, en commençant par les hiraganas";
+    const kanas = A.kana.length === 2 ? "hiraganas et katakanas : sus"
+      : A.kana.length ? "hiraganas : sus ; les katakanas sont à apprendre" : "à apprendre, en commençant par les hiraganas";
     const lignes = debutant ? [["仮名", "Kanas", kanas]] : [
       ["仮名", "Kanas", kanas],
       ["単語", "Vocabulaire", niveaux(A.mot)],
@@ -2491,10 +2723,10 @@
         <dl class="nv-resultats">${lignes.map(([jp, nom, texte]) => `
           <div><dt><span lang="ja">${jp}</span> ${nom}</dt><dd>${texte[0].toUpperCase() + texte.slice(1)}.</dd></div>`).join("")}
         </dl>
-        ${debutant ? `<p class="nv-texte">Pas de souci : la séance du jour commence par les hiraganas, quelques-uns
+        ${debutant ? `<p class="nv-texte">Pas de souci : la séance du jour commence par les hiraganas, quelques-uns
           chaque jour.</p>` : cles.length ? `<p class="nv-texte">${pluriel(cles.length, "carte")} entre${cles.length > 1 ? "nt" : ""}
-          dans tes révisions, déjà solide${cles.length > 1 ? "s" : ""} : elle${cles.length > 1 ? "s" : ""} reviendr${cles.length > 1 ? "ont" : "a"}
-          de loin en loin, pour vérifier.${traces ? ` L'écriture n'a pas été testée : les caractères que tu lis
+          dans tes révisions, déjà solide${cles.length > 1 ? "s" : ""} : elle${cles.length > 1 ? "s" : ""} reviendr${cles.length > 1 ? "ont" : "a"}
+          de loin en loin, pour vérifier.${traces ? ` L'écriture n'a pas été testée : les caractères que tu lis
           reviendront à tracer dans les trois mois, quelques-uns par jour.` : ""}</p>`
           : `<p class="nv-texte">Rien de plus que ce que tes révisions savent déjà.</p>`}
         <div class="sc-actions">
@@ -2515,18 +2747,19 @@
       } catch (e) {
         valide.disabled = false;
         toast(e.statut === 404 || e.statut === 405
-          ? "Le serveur ne connaît pas encore le test : il attend d'être redémarré."
-          : "Test non enregistré : " + e.message, true);
+          ? "Le serveur ne connaît pas encore le test : il attend d'être redémarré."
+          : "Test non enregistré : " + e.message, true);
         return;
       }
       quitteSeance();
-      toast("C'est noté : la séance reprend à ton niveau.");
+      toast("C'est noté : la séance reprend à ton niveau.");
     });
   }
 
   /* 1 à 4 au clavier : le choix du même numéro. */
   document.addEventListener("keydown", (e) => {
-    if (!TEST || !TEST.choix || TEST.repondu || $("seance").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!TEST || !TEST.choix || TEST.repondu || $("seance").hidden || !$("scConfirme").hidden
+        || e.ctrlKey || e.metaKey || e.altKey) return;
     const i = "1234".indexOf(e.key);
     if (i < 0 || i >= TEST.choix.length) return;
     e.preventDefault();
@@ -2546,7 +2779,7 @@
     vue.innerHTML = `
       <header class="rubrique-tete">
         <h1 class="titre"><span class="titre-jp" lang="ja">仮名</span><span class="titre-fr">Les kanas</span></h1>
-        <p class="chapeau">La porte d'entrée : les <strong>hiraganas</strong> pour la grammaire et les mots japonais,
+        <p class="chapeau">La porte d'entrée : les <strong>hiraganas</strong> pour la grammaire et les mots japonais,
           les <strong>katakanas</strong> pour les mots venus d'ailleurs.</p>
       </header>
 
@@ -2597,7 +2830,7 @@
   function caseKana(it) {
     const nl = niveauDe(it, "lire");
     const ne = it.ecrire ? niveauDe(it, "ecrire") : null;
-    const etiquette = `${it.k}, ${it.r}. Lecture : ${NIVEAUX[nl]}${ne === null ? "" : `, écriture : ${NIVEAUX[ne]}`}.`;
+    const etiquette = `${it.k}, ${it.r}. Lecture : ${NIVEAUX[nl]}${ne === null ? "" : `, écriture : ${NIVEAUX[ne]}`}.`;
     return `<button type="button" class="kn-case${it.famille === "youon" ? " kn-case-large" : ""}" data-k="${echappe(it.k)}" aria-label="${echappe(etiquette)}">
       <span class="kn-glyphe" lang="ja">${echappe(it.k)}</span>
       <span class="kn-romaji">${echappe(it.r)}</span>
@@ -2624,13 +2857,13 @@
         ${segmentNiveaux(Kanji.NIVEAUX, n)}
         <label class="recherche">
           <span class="lecture-seule">Chercher un kanji</span>
-          <input type="search" id="kjCherche" placeholder="Chercher : sens, lecture ou kanji" autocomplete="off" spellcheck="false">
+          <input type="search" id="kjCherche" placeholder="Chercher : sens, lecture ou kanji" autocomplete="off" spellcheck="false">
         </label>
       </div>
       <p class="kana-bilan bilan-fin" id="kjBilan">${vus ? `<strong>${pluriel(duNiveau.length, "kanji")}</strong> déjà
-        vu${duNiveau.length > 1 ? "s" : ""}, du plus récent au plus ancien : ` : ""}<strong>${compte(duNiveau, "sens")}</strong>
+        vu${duNiveau.length > 1 ? "s" : ""}, du plus récent au plus ancien : ` : ""}<strong>${compte(duNiveau, "sens")}</strong>
         / ${duNiveau.length} sus en sens · <strong>${compte(duNiveau, "ecrire")}</strong> / ${duNiveau.length} à l'écriture</p>
-      ${vus && !duNiveau.length ? `<p class="vide">Aucun kanji vu pour l'instant : la séance du jour en fait découvrir.</p>` : ""}
+      ${vus && !duNiveau.length ? `<p class="vide">Aucun kanji vu pour l'instant : la séance du jour en fait découvrir.</p>` : ""}
       <div class="kj-grille" id="kjGrille">${duNiveau.map((it) => caseKanji(it, vus)).join("")}</div>`;
 
     vue.querySelectorAll(".segment button").forEach((b) => b.addEventListener("click", () => {
@@ -2652,14 +2885,14 @@
       const trouves = Kanji.cherche(q);
       $("kjBilan").hidden = true;
       grille.innerHTML = trouves.length ? trouves.map((it) => caseKanji(it, true)).join("")
-        : `<p class="vide">Rien ne correspond à « ${echappe(q)} ».</p>`;
+        : `<p class="vide">Rien ne correspond à « ${echappe(q)} ».</p>`;
     });
   }
 
   function caseKanji(it, avecNiveau) {
     const ns = niveauDe(it, "sens"), ne = niveauDe(it, "ecrire");
     const premier = Kanji.sens(it, 1)[0] || "";
-    const etiquette = `${it.k} : ${Kanji.sens(it, 2).join(", ")}. Sens : ${NIVEAUX[ns]}, écriture : ${NIVEAUX[ne]}.`;
+    const etiquette = `${it.k} : ${Kanji.sens(it, 2).join(", ")}. Sens : ${NIVEAUX[ns]}, écriture : ${NIVEAUX[ne]}.`;
     return `<button type="button" class="kj-case" data-k="${echappe(it.k)}" aria-label="${echappe(etiquette)}">
       ${avecNiveau ? `<span class="kj-niveau">N${it.n}</span>` : ""}
       <span class="kj-glyphe" lang="ja">${echappe(it.k)}</span>
@@ -2708,7 +2941,7 @@
     vue.innerHTML = `
       <header class="rubrique-tete">
         <h1 class="titre"><span class="titre-jp" lang="ja">単語</span><span class="titre-fr">Le vocabulaire</span></h1>
-        <p class="chapeau">Les mots du JLPT, du N5 au N1, les plus fréquents d'abord : les comprendre, les lire, puis
+        <p class="chapeau">Les mots du JLPT, du N5 au N1, les plus fréquents d'abord : les comprendre, les lire, puis
           les retrouver depuis le français.</p>
       </header>
 
@@ -2720,12 +2953,12 @@
         </label>
       </div>
       <p class="kana-bilan bilan-fin" id="mtBilan">${vus ? `<strong>${pluriel(duNiveau.length, "mot")}</strong> déjà
-        vu${duNiveau.length > 1 ? "s" : ""}, du plus récent au plus ancien : ` : ""}${compte("sens")} sus en sens ·
+        vu${duNiveau.length > 1 ? "s" : ""}, du plus récent au plus ancien : ` : ""}${compte("sens")} sus en sens ·
         ${compte("lire")} à la lecture · ${compte("dire")} retrouvés depuis le français</p>
-      ${vus && !duNiveau.length ? `<p class="vide">Aucun mot vu pour l'instant : la séance du jour en fait découvrir.</p>` : ""}
+      ${vus && !duNiveau.length ? `<p class="vide">Aucun mot vu pour l'instant : la séance du jour en fait découvrir.</p>` : ""}
       ${anglais ? `<p class="mt-avertissement" id="mtAnglais">${anglais === duNiveau.length ? "Les sens de ce niveau sont"
           : `${pluriel(anglais, "mot")} de ce niveau ${anglais > 1 ? "ont" : "a"} leur sens`} en anglais en attendant
-          leur traduction : la réponse en anglais est acceptée.</p>` : ""}
+          leur traduction : la réponse en anglais est acceptée.</p>` : ""}
       <ul class="mt-liste" id="mtListe"></ul>
       <p class="mt-suite"><button type="button" class="btn btn-second" id="mtPlus" hidden></button></p>`;
 
@@ -2761,16 +2994,16 @@
       const trouves = Mots.cherche(q);
       $("mtPlus").hidden = true;
       liste.innerHTML = trouves.length ? trouves.map((it) => ligneMot(it, true)).join("")
-        : `<li class="vide">Rien ne correspond à « ${echappe(q)} ».</li>`;
+        : `<li class="vide">Rien ne correspond à « ${echappe(q)} ».</li>`;
     });
   }
 
   function ligneMot(it, avecNiveau) {
     const genres = GENRES_MOT.filter(([g]) => aCeGenre(it, g));
-    const etats = genres.map(([g, nom]) => `${nom.toLowerCase()} : ${NIVEAUX[niveauDe(it, g)]}`).join(", ");
+    const etats = genres.map(([g, nom]) => `${nom.toLowerCase()} : ${NIVEAUX[niveauDe(it, g)]}`).join(", ");
     const sens = Mots.sens(it, 3).join(", ");
     return `<li><button type="button" class="mt-ligne" data-id="${echappe(it.id)}"
-        aria-label="${echappe(`${it.m}${it.kanjis ? `, ${it.l[0]}` : ""} : ${sens}. ${etats}.`)}">
+        aria-label="${echappe(`${it.m}${it.kanjis ? `, ${it.l[0]}` : ""} : ${sens}. ${etats}.`)}">
       ${avecNiveau ? `<span class="kj-niveau">N${it.n}</span>` : ""}
       <span class="mt-ligne-jp"><span class="mt-ligne-mot" lang="ja">${echappe(romaji() ? Romaji.mot(it) : it.m)}</span>${
         it.kanjis && !romaji() ? `<span class="mt-ligne-kana" lang="ja">${echappe(it.l[0])}</span>` : ""}</span>
@@ -2794,7 +3027,7 @@
     vue.innerHTML = `
       <header class="rubrique-tete">
         <h1 class="titre"><span class="titre-jp" lang="ja">文法</span><span class="titre-fr">La grammaire</span></h1>
-        <p class="chapeau">Du N5 au N1, chaque point appuyé sur ceux d'avant : une fiche pour comprendre, des phrases
+        <p class="chapeau">Du N5 au N1, chaque point appuyé sur ceux d'avant : une fiche pour comprendre, des phrases
           à compléter pour retenir.</p>
       </header>
       ${gramCarteHtml("Le prochain point")}
@@ -2805,7 +3038,7 @@
         </div>
         <label class="recherche">
           <span class="lecture-seule">Chercher un point de grammaire</span>
-          <input type="search" id="grCherche" placeholder="Chercher : motif, rōmaji ou sens" autocomplete="off" spellcheck="false">
+          <input type="search" id="grCherche" placeholder="Chercher : motif, rōmaji ou sens" autocomplete="off" spellcheck="false">
         </label>
       </div>
       <div class="gr-barre">
@@ -2814,7 +3047,7 @@
         ${reglageFurigana()}
       </div>
       ${grammaireOuverte() ? "" : `<p class="mt-avertissement">La grammaire s'ouvre une fois les hiraganas découverts,
-        avec が, だ, で… : ses phrases en sont faites. Les fiches se lisent déjà.</p>`}
+        avec が, だ, で… : ses phrases en sont faites. Les fiches se lisent déjà.</p>`}
       <nav class="gr-sommaire" id="grSommaire" aria-label="Les chapitres du N${n}">
         ${chapitres.map((c) => `<button type="button" data-chap="${echappe(idChapitre(c))}">
           <span class="gr-sommaire-n" lang="ja">${enChiffresJaponais(c.numero)}</span>${texteHtml(c.nom)}</button>`).join("")}
@@ -2844,7 +3077,7 @@
       const trouves = q ? Grammaire.cherche(q) : duNiveau;
       $("grSommaire").hidden = !!q;
       liste.innerHTML = trouves.length ? listeGramHtml(trouves, !!q)
-        : `<p class="vide">Rien ne correspond à « ${echappe(q)} ».</p>`;
+        : `<p class="vide">Rien ne correspond à « ${echappe(q)} ».</p>`;
     });
   }
 
@@ -2939,7 +3172,7 @@
   function ligneGram(it) {
     const niv = niveauDe(it, "completer");
     return `<li><button type="button" class="gr-ligne" data-id="${echappe(it.id)}"
-        aria-label="${echappe(`${it.court} : ${Grammaire.surface(it.sens).replace(/\*\*/g, "")}. ${NIVEAUX[niv]}.`)}">
+        aria-label="${echappe(`${it.court} : ${Grammaire.surface(it.sens).replace(/\*\*/g, "")}. ${NIVEAUX[niv]}.`)}">
       <span class="gr-numero">${it.numero}</span>
       <span class="gr-ligne-titre">${motifHtml(it)}</span>
       <span class="gr-ligne-sens">${texteHtml(it.sens)}</span>
@@ -3054,7 +3287,7 @@
           <h2 class="lc-suivant-titre"><span lang="ja">${titreHtml(t)}</span>
             <span class="lc-suivant-fr">${echappe(t.fr)}</span></h2>
           <p class="lc-suivant-intro">${texteHtml(t.intro)}</p>
-          ${p.totalMots || p.totalPoints ? `<p class="lc-sur">Déjà connus : ${porteeHtml(p)}</p>` : ""}
+          ${p.totalMots || p.totalPoints ? `<p class="lc-sur">Déjà connus : ${porteeHtml(p)}</p>` : ""}
         </div>
         <button type="button" class="btn btn-grand" data-lire="${echappe(t.nom)}">読む <span>Lire</span></button>
       </section>`;
@@ -3080,7 +3313,7 @@
         ${nouveaux ? `<button type="button" class="btn btn-second" id="lcApprendre" data-texte="${echappe(t.nom)}">
           Apprendre ses ${pluriel(nouveaux, "mot")}</button>`
           : demandes ? `<p class="lc-demandes">${demandes > 1 ? `${demandes} de ses mots sont demandés`
-            : "Un de ses mots est demandé"} : ${demandes > 1 ? "ils passent" : "il passe"} en premier.
+            : "Un de ses mots est demandé"} : ${demandes > 1 ? "ils passent" : "il passe"} en premier.
             <button type="button" class="btn-lien" id="lcAnnule" data-texte="${echappe(t.nom)}">Annuler</button></p>` : ""}
       </section>`;
   }
@@ -3493,7 +3726,7 @@
     if (!m.f && !autre) return "";
     return `<p class="pp-forme"><span class="pp-ici">Ici</span> <span lang="ja">${romaji() ? ecritLs(m)
       : rubis(balise)}</span>${m.f
-      ? ` : ${echappe(m.f)}` : ""}</p>`;
+      ? ` : ${echappe(m.f)}` : ""}</p>`;
   }
 
   /* Les points de grammaire, en boutons qui ouvrent leur fiche. */
@@ -3507,11 +3740,11 @@
   function etatMotHtml(it) {
     if (commence(it)) {
       const n = niveauDe(it, "sens");
-      return `<i class="niv niv-${n}"></i><span>${NIVEAUX[n][0].toUpperCase() + NIVEAUX[n].slice(1)} :
+      return `<i class="niv niv-${n}"></i><span>${NIVEAUX[n][0].toUpperCase() + NIVEAUX[n].slice(1)} :
         déjà dans tes révisions.</span> <button type="button" class="btn-lien" id="ppFiche">Sa fiche</button>`;
     }
     if (demande(it)) {
-      return `<span class="pp-demande">Demandé : il viendra à la prochaine séance.</span>
+      return `<span class="pp-demande">Demandé : il viendra à la prochaine séance.</span>
         <button type="button" class="btn-lien" id="ppAnnule">Annuler</button>`;
     }
     return `<span>Pas encore appris.</span>
@@ -3566,7 +3799,7 @@
     } else {
       corps = `
         <div class="pp-tete"><span class="pp-mot" lang="ja">${romaji() ? ecritLs(m) : rubis(balise)}</span></div>
-        <p class="pp-nature">${romaji() ? "desu, da" : "です, だ"} : « être »</p>
+        <p class="pp-nature">${romaji() ? "desu, da" : "です, だ"} : « être »</p>
         ${m.f ? `<p class="pp-sens">${echappe(m.f)}</p>` : ""}
         ${gramHtml(m.g)}`;
     }
@@ -3637,13 +3870,13 @@
       }
       if (oui) toast(ids.length > 1 ? `${ids.length} mots viendront aux prochaines séances.`
                                     : "Il viendra à la prochaine séance.");
-      else toast(ids.length > 1 ? `${ids.length} demandes annulées : ces mots reprennent leur place.`
+      else toast(ids.length > 1 ? `${ids.length} demandes annulées : ces mots reprennent leur place.`
                                 : "Demande annulée.");
       return true;
     } catch (e) {
       toast(e.statut === 404 || e.statut === 405
-        ? "Le serveur ne garde pas encore les demandes : il attend d'être redémarré."
-        : "Demande non enregistrée : " + e.message, true);
+        ? "Le serveur ne garde pas encore les demandes : il attend d'être redémarré."
+        : "Demande non enregistrée : " + e.message, true);
       return false;
     }
   }
@@ -3727,7 +3960,7 @@
     return `
       <section class="feuille ls-questions">
         <h2 class="section-titre"><span lang="ja">問</span> Les questions</h2>
-        <p class="ls-q-aide">Pour vérifier ce que tu as compris : rien n'est noté.</p>
+        <p class="ls-q-aide">Pour vérifier ce que tu as compris : rien n'est noté.</p>
         <ol class="ls-q">${t.q.map((q, i) => `
           <li data-q="${i}">
             <p class="ls-q-texte">${texteHtml(q.q)}</p>
@@ -3767,14 +4000,14 @@
   function finHtml(t) {
     const l = lectures()[t.nom];
     return `
-      <h2 class="section-titre"><span lang="ja">済</span> ${l ? "Relu jusqu'au bout ?" : "Lu jusqu'au bout ?"}</h2>
-      <p class="ls-fin-texte">Qu'en as-tu compris ?</p>
+      <h2 class="section-titre"><span lang="ja">済</span> ${l ? "Relu jusqu'au bout ?" : "Lu jusqu'au bout ?"}</h2>
+      <p class="ls-fin-texte">Qu'en as-tu compris ?</p>
       <div class="ls-compris">
         ${[3, 2, 1].map((c) => `<button type="button" class="btn btn-second" data-compris="${c}">${
           COMPRIS[c][0].toUpperCase() + COMPRIS[c].slice(1)}</button>`).join("")}
       </div>
       ${l ? `<p class="ls-deja">Déjà lu ${l.f > 1 ? `${l.f} fois` : "une fois"}, la dernière le
-        ${dateCourte(l.l)} : compris ${COMPRIS[l.c]}.</p>` : ""}`;
+        ${dateCourte(l.l)} : compris ${COMPRIS[l.c]}.</p>` : ""}`;
   }
 
   function brancheFin(t) {
@@ -3795,8 +4028,8 @@
     } catch (e) {
       $("lsFin").querySelectorAll("button").forEach((b) => { b.disabled = false; });
       toast(e.statut === 404 || e.statut === 405
-        ? "Le serveur ne garde pas encore les lectures : il attend d'être redémarré."
-        : "Lecture non enregistrée : " + e.message, true);
+        ? "Le serveur ne garde pas encore les lectures : il attend d'être redémarré."
+        : "Lecture non enregistrée : " + e.message, true);
       return;
     }
     LISEUSE.debut = Date.now();
@@ -3813,7 +4046,7 @@
           ${nouveaux.length ? `<p>${pluriel(nouveaux.length, "mot")} du texte ${nouveaux.length > 1 ? "ne sont" : "n'est"}
             pas encore dans tes révisions.
             <button type="button" class="btn-lien" id="lsApprendreFin">${nouveaux.length > 1 ? "Les apprendre" : "L'apprendre"}</button></p>` : ""}
-          ${suivant && suivant !== t ? `<p><button type="button" class="btn" data-lire="${echappe(suivant.nom)}">Texte suivant :
+          ${suivant && suivant !== t ? `<p><button type="button" class="btn" data-lire="${echappe(suivant.nom)}">Texte suivant :
             <span lang="ja">${titreHtml(suivant)}</span></button></p>` : ""}
         </div>
       </div>`;
@@ -3858,8 +4091,8 @@
       ${nouveaux ? `<p class="ls-mots-action"><button type="button" class="btn btn-second" id="lsApprendre">
         Apprendre les ${nouveaux} nouveau${nouveaux > 1 ? "x" : ""}</button>
         <span>Ils viendront dans les prochaines séances, avant les autres.</span></p>` : ""}
-      ${demandes ? `<p class="ls-mots-action"><span>${demandes > 1 ? `${demandes} sont demandés : ils passent`
-        : "Un est demandé : il passe"} avant les autres dans les séances.</span>
+      ${demandes ? `<p class="ls-mots-action"><span>${demandes > 1 ? `${demandes} sont demandés : ils passent`
+        : "Un est demandé : il passe"} avant les autres dans les séances.</span>
         <button type="button" class="btn-lien" id="lsAnnule">Annuler ${demandes > 1 ? "ces demandes" : "la demande"}</button></p>` : ""}
       <ul class="mt-liste ls-liste">${items.map((it) => ligneMot(it, true)).join("")}</ul>`;
   }
@@ -3896,7 +4129,10 @@
   /* =====================================================================
      Les fiches
      ===================================================================== */
-  let FICHE = { retour: null, demo: null, trace: null };
+  /* `memoire` : l'exercice « De mémoire » est choisi. Il tient d'une fiche
+     à sa voisine, pour en tracer plusieurs à la suite ; il retombe à la
+     fermeture. */
+  let FICHE = { retour: null, demo: null, trace: null, memoire: false };
 
   function videFiche() {
     if (FICHE.demo) FICHE.demo.detruit();
@@ -3912,7 +4148,19 @@
     }).join("")}</dl>`;
   }
 
-  function pratiqueHtml() {
+  /* Ce que demande l'exercice « De mémoire » à la place du caractère : ce
+     que demande la carte d'écriture de la séance (voir rendEcrire), le son
+     d'un kana, le sens et les lectures d'un kanji. */
+  function consigneMemoireHtml(it) {
+    if (it.type === "kanji") {
+      return `<p class="sc-demande">Trace le kanji de « <strong class="sc-demande-sens">${echappe(Kanji.sens(it, 3).join(", "))}</strong> »</p>
+        ${lecturesHtml(it, true)}`;
+    }
+    return `<p class="sc-demande">Trace « <strong>${echappe(it.r)}</strong> » ${boutonSon("fiSonMemoire", "Écouter")}</p>
+      ${it.homophone ? homophoneHtml(it) : ""}`;
+  }
+
+  function pratiqueHtml(item) {
     return `
       <div class="fi-pratique">
         <div class="fi-pratique-tete">
@@ -3922,6 +4170,7 @@
             <button type="button" role="radio" data-mode="memoire" aria-checked="false">De mémoire</button>
           </div>
         </div>
+        <div class="fi-consigne" id="fiConsigne" hidden>${consigneMemoireHtml(item)}</div>
         <div class="tr-hote fi-trace" id="fiTrace"></div>
         <p class="fi-retour" id="fiRetour" aria-live="polite">Rien de ce qui se trace ici ne compte dans les révisions.</p>
         <button type="button" class="btn-lien" id="fiEncore">Recommencer</button>
@@ -3934,10 +4183,12 @@
     return x.type === "gram" ? motifCourt(x) : x.k;
   }
 
+  /* De mémoire, les voisins se nomment sans se montrer : le caractère d'à
+     côté, c'est peut-être le prochain qu'on tracera (voir .fi-memoire). */
   function navHtml(prec, suiv) {
     return `<div class="fi-nav">
-      ${prec ? `<button type="button" class="btn-lien" id="fiPrec">← <span lang="ja">${echappe(nomVoisin(prec))}</span></button>` : "<span></span>"}
-      ${suiv ? `<button type="button" class="btn-lien" id="fiSuiv"><span lang="ja">${echappe(nomVoisin(suiv))}</span> →</button>` : "<span></span>"}
+      ${prec ? `<button type="button" class="btn-lien" id="fiPrec">← <span lang="ja">${echappe(nomVoisin(prec))}</span><span class="fi-nav-cache">Précédent</span></button>` : "<span></span>"}
+      ${suiv ? `<button type="button" class="btn-lien" id="fiSuiv"><span lang="ja">${echappe(nomVoisin(suiv))}</span><span class="fi-nav-cache">Suivant</span> →</button>` : "<span></span>"}
     </div>`;
   }
 
@@ -3966,13 +4217,30 @@
         FICHE.trace.recommence();
         retour.textContent = "On recommence.";
       });
-      $("fiche").querySelectorAll(".fi-pratique .segment button").forEach((b) => b.addEventListener("click", () => {
-        $("fiche").querySelectorAll(".fi-pratique .segment button")
-          .forEach((x) => x.setAttribute("aria-checked", String(x === b)));
-        FICHE.trace.mode(b.dataset.mode);
+      if (item.type === "kana") brancheSon("fiSonMemoire", item.k);
+      const boite = $("fiche").querySelector(".fi-boite");
+      const boutons = boite.querySelectorAll(".fi-pratique .segment button");
+      /* De mémoire, la case prend toute la fiche : le caractère en grand, sa
+         démonstration et les mots qui l'emploient restaient juste au-dessus,
+         et l'on recopiait au lieu de se souvenir. Reste la consigne de la
+         séance, le son ou le sens. */
+      const choisitMode = (mode) => {
+        FICHE.memoire = mode === "memoire";
+        boutons.forEach((x) => x.setAttribute("aria-checked", String(x.dataset.mode === mode)));
+        boite.classList.toggle("fi-memoire", FICHE.memoire);
+        $("fiConsigne").hidden = !FICHE.memoire;
+        FICHE.trace.mode(mode);
+        boite.scrollTop = 0;
+      };
+      boutons.forEach((b) => b.addEventListener("click", () => {
+        choisitMode(b.dataset.mode);
         retour.textContent = b.dataset.mode === "guide" ? "Le point rouge marque le départ du trait."
-                                                        : "Case vide : le modèle n'apparaît qu'après deux essais manqués.";
+                                                        : "Case vide : le modèle n'apparaît qu'après deux essais manqués.";
       }));
+      if (FICHE.memoire) {
+        choisitMode("memoire");
+        retour.textContent = "De mémoire : le modèle n'apparaît qu'après deux essais manqués.";
+      }
     }
     $("fiX").focus();
   }
@@ -4006,7 +4274,7 @@
             ${etatHtml(item, item.ecrire ? [["lire", "Lecture"], ["ecrire", "Écriture"]] : [["lire", "Lecture"]])}
           </div>
         </div>
-        ${traits ? pratiqueHtml() : ""}
+        ${traits ? pratiqueHtml(item) : ""}
         ${navHtml(voisins[i - 1], voisins[i + 1])}
       </div>`;
     brancheSon("fiSon", item.k);
@@ -4044,7 +4312,7 @@
           </div>
         </div>
         ${item.m.length || motDuKanji(item) ? `<div class="fi-mots"><h3>Dans des mots</h3>${motsHtml(item)}</div>` : ""}
-        ${traits ? pratiqueHtml() : ""}
+        ${traits ? pratiqueHtml(item) : ""}
         ${navHtml(voisins[i - 1], voisins[i + 1])}
       </div>`;
     brancheMots($("fiche"));
@@ -4078,11 +4346,11 @@
           <div class="mt-ecoute">${lectures}${boutonSon("fiSon")}</div>
           ${item.a ? `<p class="mt-nature">s'écrit aussi <span lang="ja">${echappe(item.a)}</span></p>` : ""}
           ${enKanas && !romaji() ? `<p class="mt-nature">Dans tes séances et tes textes, il s'écrit en kanas
-            (<span lang="ja">${echappe(item.l[0])}</span>) ; en kanjis ${quandHtml(item)}.</p>` : ""}
+            (<span lang="ja">${echappe(item.l[0])}</span>) ; en kanjis ${quandHtml(item)}.</p>` : ""}
           ${kanjiDuMot(item) && !enKanas ? `<p class="mt-nature">Son sens se révise avec le kanji
             <span lang="ja">${echappe(item.m)}</span>.</p>` : ""}
           <p class="fi-sens">${sensMotHtml(item)}</p>
-          ${item.fr.length && item.en.length ? `<p class="mt-en">En anglais : ${echappe(item.en.join(", "))}</p>` : ""}
+          ${item.fr.length && item.en.length ? `<p class="mt-en">En anglais : ${echappe(item.en.join(", "))}</p>` : ""}
           ${kanjisDuMot(item, true)}
           ${etatHtml(item, GENRES_MOT.filter(([g]) => aCeGenre(item, g)))}
         </div>
@@ -4117,7 +4385,7 @@
             ${reglageFurigana()}
           </div>
           <ol class="gr-exemples">${item.ex.map(exempleHtml).join("")}</ol>
-          ${voir.length ? `<p class="gr-voir">Voir aussi : ${voir.map((v) => `<button type="button" class="btn-lien"
+          ${voir.length ? `<p class="gr-voir">Voir aussi : ${voir.map((v) => `<button type="button" class="btn-lien"
             data-voir="${echappe(v.nom)}">${motifHtml(v, true)}</button>`).join(" · ")}</p>` : ""}
           ${etatHtml(item, [["completer", "Compléter", "pas encore étudié"]])}
           ${!commence(item) && grammaireOuverte() ? `<button type="button" class="btn" id="fiEtudier">Étudier ce point</button>` : ""}
@@ -4149,6 +4417,7 @@
   function fermeFiche() {
     if ($("fiche").hidden) return;
     videFiche();
+    FICHE.memoire = false;
     $("fiche").hidden = true;
     $("fiche").innerHTML = "";
     document.body.classList.remove("voile-ouvert");
@@ -4259,7 +4528,7 @@
       const fait = [];
       if (r) fait.push(`${r} réponse${r > 1 ? "s" : ""}, ${Math.round(100 * ok / r)} % de justes`);
       if (lus) fait.push(`${pluriel(lus, "texte")} lu${lus > 1 ? "s" : ""}`);
-      info.textContent = fait.length ? `${date} : ${fait.join(" ; ")}.` : `${date} : rien.`;
+      info.textContent = fait.length ? `${date} : ${fait.join(" ; ")}.` : `${date} : rien.`;
     };
     cal.addEventListener("mouseover", detail);
     cal.addEventListener("click", detail);
@@ -4462,7 +4731,7 @@
       <section class="porte">
         <div class="tampon tampon-pose" aria-hidden="true"><span lang="ja">入</span></div>
         <h1 class="salut" lang="ja">ようこそ</h1>
-        <p class="salut-trad"><em>yōkoso</em> « bienvenue »</p>
+        <p class="salut-trad"><em>yōkoso</em> « bienvenue »</p>
         <p>Connecte-toi pour commencer à apprendre le japonais chaque jour.</p>
         <p><a class="btn" href="/abyss?connexion=1">Se connecter sur Abyss</a></p>
       </section>`;
@@ -4483,7 +4752,7 @@
                          Lecture.charge(), transcrits]);
     } catch (e) {
       if (e.statut === 401) { vueConnexion(vue); return; }
-      vue.innerHTML = `<p class="erreur-page">Impossible de charger la page : ${echappe(e.message)}</p>`;
+      vue.innerHTML = `<p class="erreur-page">Impossible de charger la page : ${echappe(e.message)}</p>`;
       return;
     }
     $("onglets").hidden = false;

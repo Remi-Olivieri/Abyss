@@ -111,6 +111,7 @@ PAGES = {
     "/chainz": "L'Atelier Chainz",
     "/nihongo": "Nihongo",
     "/nihongo/<rubrique>": "Nihongo",
+    "/survivor": "Yu-Gi-Oh! Survivor",
     "/yugiquiz": "Yu-Gi-Quiz",
     "/yugiquiz/jeu/<room_id>": "Yu-Gi-Quiz - partie",
 }
@@ -875,15 +876,6 @@ def resume() -> dict:
                  " GROUP BY chemin ORDER BY visiteurs DESC, vues DESC",
                  (fenetre[0] if fenetre else aujourdhui,)).fetchall()]
 
-    # ---- ce que le site contient ----
-    contenu = {
-        "journaux": _un("SELECT COUNT(*) FROM page WHERE projet = 'jeux-videos'"),
-        "publics": _un("SELECT COUNT(*) FROM page WHERE projet = 'jeux-videos'"
-                       " AND visibilite = 'publique'"),
-        "jeux": _un("SELECT COUNT(*) FROM jeu"),
-        "suggestions": _un("SELECT COUNT(*) FROM suggestion"),
-    }
-
     return {
         "ok": True,
         "comptes": comptes,
@@ -906,7 +898,6 @@ def resume() -> dict:
         },
         "jours": jours,
         "pages": pages,
-        "contenu": contenu,
     }
 
 
@@ -1022,7 +1013,7 @@ def redemarrer():
         return echec("format", "Les ecritures attendent du JSON.", 415)
     maitre, raison = _maitre()
     if maitre is None:
-        return echec("impossible", f"Redemarrage impossible : {raison}.", 409)
+        return echec("impossible", f"Redemarrage impossible : {raison}.", 409)
 
     def coupe():
         time.sleep(DELAI_REDEMARRAGE)

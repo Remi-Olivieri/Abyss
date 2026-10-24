@@ -1,0 +1,724 @@
+/* =======================================================================
+   Yu-Gi-Oh! Survivor
+
+   La table de jeu du Yu-Gi-Quiz : le velours noir, l'or, Cinzel pour ce
+   qui annonce et Raleway pour ce qui se lit. Les cartes portent la couleur
+   de leur cadre au JCC (jaune pour un monstre normal, orange pour un effet,
+   violet pour une fusion, vert pour une magie, rose pour un piège) : c'est
+   ce qui les fait reconnaître d'un coup d'œil dans la main.
+
+   La mise en page : le plateau prend toute la place qu'il peut, le
+   terrain et la fiche de la carte à sa droite, la main dessous. Sous
+   900 px, tout s'empile, et la fiche devient un tiroir qui ne sort que
+   lorsqu'on choisit une carte.
+   ======================================================================= */
+
+:root{
+  --bg:#07060E;
+  --bg2:#100E18;
+  --bg3:#1A1626;
+  --ligne:rgba(201,168,76,.18);
+  --ligne-forte:rgba(201,168,76,.42);
+  --texte:#EDE0C4;
+  --pale:#9C8B69;
+  --or:#C9A84C;
+  --or-clair:#F0D080;
+  --or-sombre:#8B6914;
+  --rouge:#FF5C5C;
+  --vert:#4CFF91;
+
+  --cadre-normal:#C9A15A;
+  --cadre-effect:#C8703A;
+  --cadre-fusion:#8D5CC4;
+  --cadre-spell:#1E9C7A;
+  --cadre-trap:#B23A7A;
+
+  /* le dos d'une carte : le booster, le deck, les cartes encore à découvrir */
+  --dos:radial-gradient(circle at 50% 50%,#3B1F0E 0 22%,transparent 23%),
+    radial-gradient(circle at 50% 50%,#C9852A 0 30%,transparent 31%),linear-gradient(135deg,#5A2A0C,#2A1206);
+
+  /* un cadenas, pour un duelliste à débloquer (un masque : sa couleur est
+     celle du fond) */
+  --cadenas:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V7a3 3 0 0 0-6 0z'/%3E%3C/svg%3E");
+
+  --titre:"Cinzel",Georgia,serif;
+  --deco:"Cinzel Decorative","Cinzel",Georgia,serif;
+  --corps:"Raleway","Segoe UI",system-ui,sans-serif;
+
+  --cote:340px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;color:var(--texte);font-family:var(--corps);font-size:14px;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%,rgba(201,168,76,.10),transparent 70%),
+    radial-gradient(ellipse 60% 60% at 100% 100%,rgba(120,60,160,.10),transparent 70%),
+    var(--bg);
+  display:flex;flex-direction:column;overflow:hidden;
+  /* un glissé sur le plateau est un pas, pas un défilement de la page */
+  overscroll-behavior:none;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none !important}
+
+/* ---------- l'en-tête ---------- */
+.haut{
+  display:flex;align-items:center;gap:14px;flex:0 0 auto;
+  padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));
+  border-bottom:1px solid var(--ligne);
+  background:linear-gradient(180deg,rgba(16,14,24,.95),rgba(7,6,14,.9));
+}
+.entete-action{
+  display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px 0 12px;flex:0 0 auto;
+  border-radius:99px;border:1px solid var(--ligne);color:var(--pale);text-decoration:none;
+  font-size:12px;white-space:nowrap;background:rgba(0,0,0,.25);transition:.16s;
+}
+.entete-action:hover{color:var(--texte);border-color:var(--or)}
+.marque{
+  margin:0;font-family:var(--titre);font-weight:700;font-size:18px;letter-spacing:.06em;
+  color:var(--pale);white-space:nowrap;
+}
+.marque b{
+  font-family:var(--deco);color:transparent;
+  background:linear-gradient(180deg,var(--or-clair),var(--or) 55%,var(--or-sombre));
+  -webkit-background-clip:text;background-clip:text;
+}
+.releves{display:flex;align-items:center;gap:18px;margin-left:auto}
+.releve{display:flex;align-items:baseline;gap:6px;position:relative}
+.releve .etiquette{font-family:var(--titre);font-size:11px;color:var(--pale);letter-spacing:.1em}
+.releve b{font-family:var(--titre);font-size:20px;font-weight:700;color:var(--or-clair);
+  font-variant-numeric:tabular-nums}
+.releve.lp b{min-width:4.2ch;text-align:right}
+.releve.lp b.touche{animation:lp-touche .4s ease}
+.releve.lp b.soigne{animation:lp-soigne .4s ease}
+@keyframes lp-touche{30%{color:var(--rouge);transform:scale(1.12)}}
+@keyframes lp-soigne{30%{color:var(--vert);transform:scale(1.08)}}
+.jauge{display:block;position:relative;width:110px;height:6px;border-radius:9px;
+  background:var(--bg3);overflow:hidden;align-self:center;border:1px solid rgba(201,168,76,.15)}
+.jauge i{position:absolute;inset:0;width:100%;transform-origin:left;
+  background:linear-gradient(90deg,#C23B3B,#E8B04A 45%,#7FE08A);transition:transform .25s ease}
+.jauge.xp{width:70px}
+.jauge.xp i{background:linear-gradient(90deg,#6E7CFF,#B983FF)}
+.rond{width:34px;height:34px;border-radius:50%;border:1px solid var(--ligne);display:grid;
+  place-items:center;background:rgba(0,0,0,.25);color:var(--pale);flex:0 0 auto;transition:.16s}
+.rond:hover{color:var(--texte);border-color:var(--or)}
+
+/* ---------- la table ---------- */
+.table{
+  flex:1 1 auto;min-height:0;display:grid;gap:12px;padding:12px 16px 14px;
+  grid-template-columns:minmax(0,1fr) var(--cote);
+  grid-template-rows:minmax(0,1fr) auto;
+  grid-template-areas:"plateau cote" "main cote";
+}
+.plateau{
+  grid-area:plateau;position:relative;min-height:0;border-radius:10px;overflow:hidden;
+  border:1px solid var(--ligne-forte);
+  box-shadow:0 0 0 1px rgba(0,0,0,.6) inset,0 0 40px rgba(201,168,76,.08);
+  touch-action:none;user-select:none;-webkit-user-select:none;
+}
+#toile{position:absolute;inset:0;width:100%;height:100%;display:block}
+.boss{
+  position:absolute;left:50%;top:10px;transform:translateX(-50%);width:min(420px,80%);
+  display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none;
+  font-family:var(--titre);font-weight:700;font-size:13px;letter-spacing:.08em;color:#FFB3B3;
+  text-shadow:0 1px 6px #000;
+}
+.boss .jauge{width:100%;height:8px;border-color:rgba(255,92,92,.35)}
+.boss .jauge i{background:linear-gradient(90deg,#7A1010,#FF4A4A)}
+.annonces{position:absolute;left:0;right:0;top:22%;display:flex;flex-direction:column;
+  align-items:center;gap:8px;pointer-events:none}
+.annonce{
+  font-family:var(--titre);font-weight:900;font-size:clamp(18px,3.2vw,30px);letter-spacing:.06em;
+  color:var(--or-clair);text-shadow:0 2px 14px rgba(0,0,0,.9),0 0 22px rgba(201,168,76,.45);
+  animation:annonce 1.9s ease forwards;text-align:center;padding:0 12px;
+}
+.annonce.a-boss,.annonce.a-horde{color:#FF8E8E;text-shadow:0 2px 14px #000,0 0 24px rgba(255,60,60,.5)}
+.annonce.a-info{font-size:15px;font-weight:600;color:var(--texte)}
+.annonce.a-exodia{color:#FFC861;text-shadow:0 2px 14px #000,0 0 26px rgba(255,170,60,.7)}
+@keyframes annonce{0%{opacity:0;transform:translateY(10px) scale(.94)}
+  12%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+
+/* ---------- le terrain : zones monstre et magie/piège ---------- */
+.cote{grid-area:cote;display:flex;flex-direction:column;gap:12px;min-height:0}
+.terrain{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;
+  border:1px solid var(--ligne);background:rgba(16,14,24,.7)}
+.rangee{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.rangee.petite{grid-template-columns:repeat(6,1fr)}
+.zone{
+  position:relative;aspect-ratio:1;border-radius:7px;border:1px dashed rgba(201,168,76,.25);
+  background:rgba(0,0,0,.3);overflow:hidden;padding:0;display:block;width:100%;
+  transition:border-color .15s,box-shadow .15s,transform .15s;
+}
+.zone.pleine{border:2px solid var(--cadre,var(--or))}
+.zone img{width:100%;height:100%;object-fit:cover;display:block}
+.zone.terrain-zone{border-style:dotted}
+.zone.terrain-zone::before{content:"T";position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--titre);color:rgba(201,168,76,.3);font-size:13px}
+.zone.terrain-zone.pleine::before{content:none}
+.zone .pips{position:absolute;left:2px;right:2px;bottom:2px;text-align:center;font-size:9px;
+  line-height:1;color:var(--or-clair);text-shadow:0 0 3px #000,0 0 3px #000;letter-spacing:-.5px}
+.badge-zone{position:absolute;top:2px;font-size:8.5px;line-height:1;padding:2px 4px;border-radius:3px;
+  font-weight:700;pointer-events:none}
+.badge-zone.compteurs{left:2px;background:rgba(110,124,255,.9);color:#fff}
+.badge-zone.double{right:2px;background:var(--or);color:#1A1208}
+.badge-zone.duree{right:2px;background:rgba(255,92,92,.9);color:#fff}
+/* la recharge : un voile qui se lève à mesure que l'attaque revient */
+.zone .voile-recharge{position:absolute;inset:0;background:rgba(5,4,10,.62);transform-origin:bottom;
+  transition:transform .2s linear;pointer-events:none}
+.zone.jeton{border-style:dashed;opacity:.9}
+.zone.touchee{animation:zone-touchee .35s ease}
+@keyframes zone-touchee{30%{box-shadow:0 0 0 2px #FF8A3D,0 0 14px #FF5C1A;transform:translateY(2px)}}
+.zone.tire{animation:zone-tire .3s ease}
+@keyframes zone-tire{40%{box-shadow:0 0 0 2px var(--or-clair),0 0 16px var(--or);transform:scale(1.06)}}
+.zone.arrive{animation:zone-arrive .5s ease}
+@keyframes zone-arrive{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.1);opacity:1}}
+.zone.choisissable{border-color:var(--or-clair);animation:pulse 1s ease infinite;cursor:pointer}
+.zone.choisie{box-shadow:0 0 0 3px var(--rouge);border-color:var(--rouge);animation:none}
+@keyframes pulse{50%{box-shadow:0 0 0 2px rgba(240,208,128,.6),0 0 12px rgba(240,208,128,.4)}}
+
+/* ---------- la fiche d'une carte ---------- */
+.duel-cadre{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border-radius:10px;
+  border:1px solid var(--ligne);background:rgba(16,14,24,.7)}
+.fiche{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px;border-radius:10px;
+  border:1px solid var(--ligne);background:rgba(16,14,24,.7);scrollbar-width:thin;
+  scrollbar-color:rgba(201,168,76,.3) transparent}
+.fiche-tete{display:flex;gap:12px;align-items:flex-start}
+.fiche-art{width:92px;flex:0 0 92px;aspect-ratio:1;border-radius:7px;object-fit:cover;
+  border:2px solid var(--cadre,var(--or));background:var(--bg3)}
+.fiche h3{margin:0 0 4px;font-family:var(--titre);font-size:16px;font-weight:700;color:var(--or-clair);
+  line-height:1.2}
+.fiche .sous{margin:0;color:var(--pale);font-size:12px}
+.fiche .etoiles{color:var(--or-clair);font-size:13px;letter-spacing:1px}
+/* les mots-clés : soulignés d'un pointillé, leur sens dans une bulle */
+.mot{text-decoration:underline dotted;text-decoration-thickness:1px;text-underline-offset:3px;
+  color:var(--or-clair);cursor:help}
+.grande .mot{color:#6B3D0A}
+.bulle{position:fixed;z-index:50;max-width:280px;padding:8px 11px;border-radius:8px;pointer-events:none;
+  background:#1A1626;border:1px solid var(--or);color:var(--texte);font-size:13px;line-height:1.4;
+  box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.bulle b{color:var(--or-clair)}
+/* le texte d'une carte : un bloc par sorte de ligne, chacun à sa façon --
+   les stats en grand, l'attaque et ses chiffres en pastilles, les effets
+   avec leur mot-clé en gras, les conditions en italique, à part */
+.txt{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.txt p{margin:0;line-height:1.4}
+.t-stats{display:flex;gap:16px;font-family:var(--titre);font-weight:700;font-size:19px;color:var(--or-clair)}
+.t-stats i{font-style:normal;font-size:10.5px;letter-spacing:.12em;color:var(--pale);margin-right:5px}
+.t-stats small{font-size:12px;color:var(--pale)}
+.t-attaque{font-size:13.5px}
+.t-puces{display:flex;flex-wrap:wrap;gap:5px;margin-top:-4px !important}
+.t-puces span{padding:2px 7px;border-radius:99px;font-size:11.5px;font-weight:600;
+  background:rgba(201,168,76,.12);border:1px solid var(--ligne);color:var(--or-clair)}
+.t-bonus{font-size:13px;margin-top:-4px !important}
+.t-bonus b{font-weight:700;letter-spacing:.04em}
+.t-effet{font-size:13.5px}
+.t-effet b{color:var(--or-clair);font-weight:600}
+.t-cond{font-size:12.5px;font-style:italic;color:var(--pale)}
+.t-attaque + .t-puces + .t-effet,.t-effet + .t-cond,.t-puces + .t-cond{margin-top:3px !important}
+.fiche .statut{margin-top:12px;padding:8px 10px;border-radius:6px;font-size:13px;
+  background:rgba(201,168,76,.08);border:1px solid var(--ligne)}
+.fiche .statut.non{background:rgba(255,92,92,.08);border-color:rgba(255,92,92,.3);color:#FFC2C2}
+.fiche .actions{display:flex;align-items:center;gap:8px;margin-top:12px}
+.fiche .actions .statut{flex:1;margin:0}
+.fiche-repos h3{margin-bottom:10px}
+/* les relevés du duel : le Deck et le Cimetière s'ouvrent d'un clic */
+.duel-lignes{display:flex;flex-direction:column;gap:2px;margin:0 -6px;font-size:13px}
+.duel-ligne{display:flex;justify-content:space-between;gap:14px;margin:0;padding:3px 6px;border:0;border-radius:5px;
+  background:none;text-align:left;font:inherit;color:var(--texte)}
+.duel-ligne span{color:var(--pale)}
+.duel-ligne b{font-weight:400;font-variant-numeric:tabular-nums}
+button.duel-ligne:hover{background:rgba(201,168,76,.1)}
+button.duel-ligne:hover span,button.duel-ligne:hover b{color:var(--or-clair)}
+.exodia{display:flex;gap:5px;margin-top:14px}
+.exodia span{flex:1;aspect-ratio:1;border-radius:5px;border:1px dashed rgba(201,168,76,.25);
+  overflow:hidden;background:rgba(0,0,0,.3)}
+.exodia img{width:100%;height:100%;object-fit:cover;display:block}
+.exodia span.eue{border:1px solid var(--or);box-shadow:0 0 10px rgba(255,170,60,.45)}
+.fiche-tiroir{display:none}
+
+/* ---------- la main ---------- */
+.main-zone{grid-area:main;display:flex;align-items:flex-end;gap:12px;min-width:0}
+.main{flex:1 1 auto;display:flex;gap:8px;overflow-x:auto;overflow-y:visible;padding:14px 4px 4px;
+  min-height:128px;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.3) transparent}
+.attendre{flex:0 0 auto;height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--ligne-forte);
+  background:rgba(201,168,76,.08);font-family:var(--titre);font-weight:700;letter-spacing:.06em;
+  color:var(--or-clair);transition:.15s}
+/* au bureau, « Attendre » ferme le cadre de la fiche ; celui d'à côté de la
+   main n'est que pour le téléphone */
+.duel-cadre .attendre{margin:0 14px 14px}
+.attendre.telephone{display:none;margin-bottom:6px}
+.attendre:hover{background:rgba(201,168,76,.18)}
+
+/* une carte de la main */
+.carte{
+  --cadre:var(--cadre-normal);
+  position:relative;flex:0 0 auto;width:84px;padding:4px 4px 5px;border-radius:7px;border:0;
+  background:linear-gradient(170deg,color-mix(in srgb,var(--cadre) 92%,#fff 8%),
+                             color-mix(in srgb,var(--cadre) 70%,#000 30%));
+  box-shadow:0 3px 10px rgba(0,0,0,.5);text-align:left;
+  transition:transform .15s ease,box-shadow .15s ease,opacity .15s;
+}
+.carte[data-cadre="effect"]{--cadre:var(--cadre-effect)}
+.carte[data-cadre="fusion"]{--cadre:var(--cadre-fusion)}
+.carte[data-cadre="spell"]{--cadre:var(--cadre-spell)}
+.carte[data-cadre="trap"]{--cadre:var(--cadre-trap)}
+.carte img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px;
+  border:1px solid rgba(0,0,0,.45);background:#000}
+.carte .nom{display:block;margin-top:4px;font-family:var(--titre);font-weight:700;font-size:9.5px;
+  line-height:1.15;color:#1A1208;height:2.3em;overflow:hidden;text-shadow:0 1px 0 rgba(255,255,255,.25)}
+.carte[data-cadre="fusion"] .nom,.carte[data-cadre="spell"] .nom,.carte[data-cadre="trap"] .nom{
+  color:#FFF6E2;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.carte .ligne{display:flex;justify-content:space-between;align-items:center;margin-top:2px;
+  font-size:9px;font-weight:600;color:rgba(20,14,6,.85)}
+.carte[data-cadre="fusion"] .ligne,.carte[data-cadre="spell"] .ligne,.carte[data-cadre="trap"] .ligne{
+  color:rgba(255,246,226,.85)}
+.carte .niv{color:#C0261B;font-size:9px;font-weight:700}
+.carte .ad{font-variant-numeric:tabular-nums;letter-spacing:-.2px;margin-left:3px}
+.carte .num{position:absolute;left:-5px;top:-7px;width:18px;height:18px;border-radius:50%;
+  display:grid;place-items:center;font-size:10px;font-weight:700;background:var(--bg);
+  color:var(--pale);border:1px solid var(--ligne-forte)}
+.carte:hover{transform:translateY(-4px)}
+.carte.choisie{transform:translateY(-10px);box-shadow:0 0 0 2px var(--or-clair),0 8px 22px rgba(201,168,76,.4)}
+.carte.injouable{opacity:.55}
+.carte.injouable:hover{opacity:.8}
+.carte.nouvelle{animation:carte-arrive .45s ease}
+@keyframes carte-arrive{0%{transform:translateX(30px) scale(.8);opacity:0}100%{transform:none;opacity:1}}
+.carte .badge{position:absolute;right:-5px;top:-7px;padding:1px 5px;border-radius:9px;font-size:9px;
+  font-weight:700;background:var(--or);color:#1A1208}
+/* la prochaine pioche : une carte en pointillé, et dans combien de tours */
+.carte.a-venir{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:transparent;border:2px dashed var(--ligne-forte);box-shadow:none;color:var(--pale);cursor:default}
+.carte.a-venir:hover{transform:none}
+.carte.a-venir b{font-family:var(--titre);font-size:26px;line-height:1;color:var(--or-clair)}
+.carte.a-venir span{font-size:11px}
+
+/* ---------- les boutons ---------- */
+.cta{
+  display:inline-flex;align-items:center;justify-content:center;height:46px;padding:0 26px;
+  border-radius:8px;border:1px solid var(--or);font-family:var(--titre);font-weight:700;
+  font-size:15px;letter-spacing:.08em;color:#1A1208;text-decoration:none;
+  background:linear-gradient(180deg,var(--or-clair),var(--or) 60%,#A8862F);
+  box-shadow:0 0 24px rgba(201,168,76,.28);transition:transform .12s,filter .12s;
+}
+.cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.cta.petit{height:36px;padding:0 16px;font-size:13px}
+.cta:disabled{opacity:.45;cursor:default;filter:none;transform:none;box-shadow:none}
+.cta.sombre{background:linear-gradient(180deg,#9DB8FF,#5D72C9);border-color:#8FA6F0;box-shadow:none;color:#0B1030}
+.sobre{
+  display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 18px;
+  border-radius:8px;border:1px solid var(--ligne-forte);background:transparent;color:var(--pale);
+  font-size:13px;text-decoration:none;transition:.15s;
+}
+.sobre:hover{color:var(--texte);border-color:var(--or)}
+.sobre.petit{height:36px}
+
+/* ---------- les écrans par-dessus ---------- */
+.ecran{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;
+  background:rgba(4,3,8,.82);backdrop-filter:blur(3px);overflow-y:auto}
+.boite{width:min(420px,100%);padding:28px 24px;border-radius:12px;border:1px solid var(--ligne-forte);
+  background:linear-gradient(180deg,#141120,#0B0912);text-align:center;display:flex;flex-direction:column;
+  gap:12px;box-shadow:0 0 60px rgba(201,168,76,.12)}
+.boite h2{margin:0 0 4px;font-family:var(--titre);font-weight:900;font-size:26px;color:var(--or-clair);
+  letter-spacing:.05em}
+
+/* l'accueil : le titre, les Points de Duel, trois onglets */
+/* sans flou : un filtre ferait du tiroir de la fiche (position fixe) un
+   enfant qui défile avec la liste */
+.ecran.accueil{backdrop-filter:none;place-items:start center;padding-top:max(5vh,16px);background:
+  radial-gradient(ellipse 60% 45% at 50% 20%,rgba(201,168,76,.13),transparent 70%),
+  repeating-linear-gradient(45deg,rgba(201,168,76,.025) 0 2px,transparent 2px 22px),
+  var(--bg)}
+.retour-accueil{position:absolute;left:16px;top:max(12px,env(safe-area-inset-top))}
+.accueil-in{width:min(620px,100%);display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+.ecran.accueil.large .accueil-in{width:min(1120px,100%)}
+.accueil-tete{display:flex;flex-direction:column;align-items:center;gap:8px}
+.titre-jeu{margin:0;font-family:var(--deco);font-weight:700;line-height:1.05;
+  font-size:clamp(30px,6vw,50px);color:transparent;
+  background:linear-gradient(180deg,#FFF3C4,var(--or-clair) 30%,var(--or) 60%,var(--or-sombre));
+  -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 18px rgba(201,168,76,.3))}
+.titre-jeu span{white-space:nowrap}
+.dp{display:flex;align-items:baseline;gap:7px;margin:0;padding:5px 14px;border-radius:99px;
+  border:1px solid var(--ligne-forte);background:rgba(201,168,76,.08)}
+.dp b{font-family:var(--titre);font-size:19px;color:var(--or-clair);font-variant-numeric:tabular-nums}
+.dp span{font-size:12px;color:var(--pale)}
+.onglets{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.onglet{padding:8px 20px;border-radius:99px;border:1px solid var(--ligne-forte);background:rgba(0,0,0,.25);
+  font-family:var(--titre);font-weight:700;font-size:14px;letter-spacing:.06em;color:var(--pale);transition:.15s}
+.onglet:hover{color:var(--texte);border-color:var(--or)}
+.onglet[aria-selected="true"]{color:#1A1208;border-color:var(--or);
+  background:linear-gradient(180deg,var(--or-clair),var(--or) 60%,#A8862F)}
+.panneau.jouer{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:6px}
+/* le duelliste : son portrait debout sur le bord du cadre, son nom et
+   son deck de départ à côté */
+.duelliste{display:flex;align-items:flex-end;gap:18px;padding:14px 22px 0 16px;border-radius:10px;
+  border:1px solid var(--ligne);background:rgba(16,14,24,.7);max-width:100%;overflow:hidden}
+.duelliste .portrait{display:block;flex:0 0 auto;height:210px;width:auto;
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
+.duelliste-corps{display:flex;flex-direction:column;align-items:flex-start;gap:10px;align-self:center;
+  padding-bottom:14px;min-width:0}
+.duelliste .qui{font-family:var(--titre);font-size:24px;font-weight:700;letter-spacing:.06em;color:var(--or-clair)}
+.duelliste .cartes{display:flex;flex-wrap:wrap;gap:6px}
+.mini{--cadre:var(--cadre-normal);display:block;width:44px;height:44px;border-radius:5px;overflow:hidden;
+  border:2px solid var(--cadre);background:var(--bg3)}
+.mini[data-cadre="effect"]{--cadre:var(--cadre-effect)}
+.mini[data-cadre="fusion"]{--cadre:var(--cadre-fusion)}
+.mini[data-cadre="spell"]{--cadre:var(--cadre-spell)}
+.mini[data-cadre="trap"]{--cadre:var(--cadre-trap)}
+.mini img{width:100%;height:100%;object-fit:cover;display:block}
+.mini.dos{border-color:#3A2410;background:var(--dos)}
+/* un duelliste à débloquer : sa silhouette, ses cartes de dos, et ce qu'il
+   faut faire pour l'ouvrir */
+.duelliste.ferme .portrait{filter:brightness(0) drop-shadow(0 0 1px rgba(240,208,128,.8))
+  drop-shadow(0 0 12px rgba(201,168,76,.3))}
+.duelliste.ferme .qui{color:var(--pale)}
+.condition{margin:0;max-width:230px;text-align:left;font-size:12.5px;font-style:italic;color:var(--pale)}
+/* les médaillons des duellistes : leur visage dans un cercle d'or */
+.duellistes{display:flex;justify-content:center;gap:14px;margin-top:-4px}
+.medaillon{display:flex;flex-direction:column;align-items:center;gap:5px;padding:0;border:0;background:none;
+  color:var(--pale);font-family:var(--titre);font-weight:700;font-size:12px;letter-spacing:.06em}
+.visage{position:relative;display:block;width:58px;height:58px;border-radius:50%;overflow:hidden;
+  border:2px solid var(--ligne-forte);background:radial-gradient(circle at 50% 35%,#2A2238,#100E18);
+  transition:border-color .15s,box-shadow .15s,transform .15s}
+/* l'image --zoom fois plus large que le cercle, le visage (--fx, --fy) au milieu */
+.visage img{position:absolute;left:50%;top:50%;width:calc(var(--zoom,3) * 100%);max-width:none;
+  transform:translate(calc(var(--fx) * -100%),calc(var(--fy) * -100%))}
+.medaillon:hover .visage{border-color:var(--or);transform:translateY(-2px)}
+.medaillon[aria-pressed="true"]{color:var(--or-clair)}
+.medaillon[aria-pressed="true"] .visage{border-color:var(--or-clair);box-shadow:0 0 0 2px rgba(240,208,128,.25),0 0 16px rgba(201,168,76,.45)}
+.medaillon.ferme .visage img{filter:brightness(0)}
+.medaillon.ferme .visage::after{content:"";position:absolute;inset:0;margin:auto;width:18px;height:18px;
+  background:var(--pale);-webkit-mask:var(--cadenas) center/contain no-repeat;mask:var(--cadenas) center/contain no-repeat}
+.medaillon.ferme[aria-pressed="true"] .visage::after{background:var(--or-clair)}
+.record{margin:0;color:var(--pale);font-size:12.5px;min-height:1em}
+.prix-ligne{margin:12px 0 0;font-size:13px;color:var(--pale)}
+.prix-ligne b{font-family:var(--titre);font-size:19px;color:var(--or-clair);margin-right:4px}
+/* « Relancer » et « Ne rien prendre » : dans le coin du booster, sans lui
+   prendre de hauteur */
+.booster-actions{position:absolute;top:14px;right:14px;z-index:1;display:flex;gap:8px}
+
+/* le deck et la boutique : les cartes à gauche, la fiche à droite */
+.atelier{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;width:100%;text-align:left;align-items:start}
+.atelier-listes h3{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;margin:18px 0 9px;
+  font-family:var(--titre);font-size:15px;color:var(--or-clair)}
+.atelier-listes h3:first-child{margin-top:0}
+.compte{font-size:13px;color:var(--vert)}
+.compte.faux{color:var(--rouge)}
+.grille-cartes{display:flex;flex-wrap:wrap;gap:12px 8px;padding-top:6px}
+.grille-cartes .carte{width:80px}
+.carte .prix{position:absolute;right:-5px;top:-7px;padding:1px 6px;border-radius:9px;font-size:9.5px;font-weight:700;
+  background:var(--bg);color:var(--or-clair);border:1px solid var(--or)}
+.atelier-fiche{position:sticky;top:0;max-height:calc(100vh - 40px)}
+/* la boutique : le booster à gauche, la pioche du jour à côté */
+.boutique{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start}
+.vitrine-booster{display:flex;flex-direction:column;align-items:center;gap:6px}
+.vitrine-jour{flex:1;min-width:260px}
+.paquet{width:150px;height:210px;padding:0;border-radius:12px;border:6px solid #3A2410;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 50%,#3B1F0E 0 22%,transparent 23%),
+    radial-gradient(circle at 50% 50%,#C9852A 0 30%,transparent 31%),linear-gradient(135deg,#5A2A0C,#2A1206);
+  box-shadow:0 8px 30px rgba(0,0,0,.6),0 0 24px rgba(201,168,76,.25);transition:transform .15s,box-shadow .15s}
+.paquet span{font-family:var(--deco);font-weight:700;font-size:17px;color:var(--or-clair);
+  text-shadow:0 2px 6px #000;transform:rotate(-12deg)}
+.paquet:not(:disabled):hover{transform:translateY(-4px) rotate(-1deg);box-shadow:0 12px 34px rgba(0,0,0,.6),0 0 34px rgba(201,168,76,.45)}
+.paquet:disabled{opacity:.45;cursor:default}
+.carte.eteinte{opacity:.4}
+.ecran.revelation{cursor:pointer}
+.revelation-in{display:flex;flex-direction:column;align-items:center;gap:14px;perspective:1200px}
+
+/* le constructeur de deck, comme dans un simulateur : le Deck et l'Extra
+   Deck sur une page, la collection dans un cadre qui défile, triée et
+   filtrée */
+.atelier.deck{grid-template-columns:minmax(0,1fr) 300px}
+.constructeur{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,340px);gap:18px;align-items:start}
+.aide{font-family:var(--corps);font-size:12px;font-weight:400;color:var(--pale)}
+.grille-tuiles{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.grille-tuiles.extra{grid-template-columns:repeat(8,minmax(0,1fr))}
+.tuile{position:relative;aspect-ratio:1;padding:0;border-radius:6px;overflow:hidden;
+  border:2px solid var(--cadre-normal);background:var(--bg3);transition:transform .12s,box-shadow .12s}
+.tuile[data-cadre="effect"]{border-color:var(--cadre-effect)}
+.tuile[data-cadre="fusion"]{border-color:var(--cadre-fusion)}
+.tuile[data-cadre="spell"]{border-color:var(--cadre-spell)}
+.tuile[data-cadre="trap"]{border-color:var(--cadre-trap)}
+.tuile img{width:100%;height:100%;object-fit:cover;display:block}
+.tuile:hover{transform:translateY(-2px)}
+.tuile.choisie{box-shadow:0 0 0 2px var(--or-clair),0 0 14px rgba(201,168,76,.5)}
+.tuile.vide{border:1px dashed rgba(201,168,76,.22);background:rgba(0,0,0,.25)}
+.collection-cadre{display:flex;flex-direction:column;border:1px solid var(--ligne);border-radius:10px;
+  background:rgba(16,14,24,.7);overflow:hidden}
+.col-tete{padding:12px 12px 10px;border-bottom:1px solid var(--ligne);display:flex;flex-direction:column;gap:8px}
+.col-tete h3{margin:0 !important}
+.tri{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--pale)}
+.tri select{flex:1;font:inherit;font-size:13px;color:var(--texte);background:var(--bg3);
+  border:1px solid var(--ligne-forte);border-radius:6px;padding:5px 8px}
+.filtres{display:flex;flex-wrap:wrap;gap:4px}
+.filtre{padding:4px 9px;border-radius:99px;border:1px solid var(--ligne);background:transparent;
+  font-size:11.5px;color:var(--pale)}
+.filtre[aria-pressed="true"]{color:#1A1208;background:var(--or);border-color:var(--or)}
+.col-liste{overflow-y:auto;max-height:calc(100vh - 330px);min-height:260px;padding:6px;
+  display:flex;flex-direction:column;gap:3px;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.3) transparent}
+.ligne-col{--cadre:var(--cadre-normal);display:flex;align-items:center;gap:9px;width:100%;padding:4px 8px 4px 4px;
+  border-radius:7px;border:1px solid transparent;background:rgba(0,0,0,.2);text-align:left;transition:background .12s}
+.ligne-col[data-cadre="effect"]{--cadre:var(--cadre-effect)}
+.ligne-col[data-cadre="fusion"]{--cadre:var(--cadre-fusion)}
+.ligne-col[data-cadre="spell"]{--cadre:var(--cadre-spell)}
+.ligne-col[data-cadre="trap"]{--cadre:var(--cadre-trap)}
+.ligne-col img{width:38px;height:38px;flex:0 0 38px;border-radius:5px;object-fit:cover;border:2px solid var(--cadre)}
+.ligne-col:hover{background:rgba(201,168,76,.08)}
+.ligne-col.choisie{border-color:var(--or-clair);background:rgba(201,168,76,.12)}
+.lc-texte{display:flex;flex-direction:column;min-width:0;flex:1}
+.lc-texte b{font-family:var(--titre);font-size:12.5px;color:var(--texte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-texte span{font-size:11px;color:var(--pale);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vide{color:var(--pale);margin:8px 0}
+.annonce-accueil{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:30;padding:10px 16px;
+  border-radius:8px;background:#1A1626;border:1px solid var(--or);color:var(--texte);font-size:14px;
+  box-shadow:0 8px 30px rgba(0,0,0,.6);animation:annonce 2.6s ease forwards;white-space:nowrap}
+
+/* ---------- ce qui s'ouvre sur le plateau : le booster, la liste de
+   Polymérisation. Le plateau seul est couvert : le terrain, la main et la
+   fiche restent à portée, pour choisir en sachant ce qu'on a. ---------- */
+.voile{position:absolute;inset:0;z-index:6;display:grid;place-items:center;padding:14px;overflow-y:auto;
+  background:rgba(4,3,8,.82);backdrop-filter:blur(2px)}
+.voile h2{margin:0;font-family:var(--titre);font-weight:900;font-size:clamp(22px,3.4vw,32px);
+  color:var(--or-clair);letter-spacing:.05em;text-shadow:0 0 20px rgba(201,168,76,.4);text-align:center}
+.voile-sous{margin:4px 0 16px;color:var(--pale);text-align:center}
+.booster-in{width:100%;max-width:820px}
+.offres{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;perspective:1200px}
+.offre{position:relative;width:226px;height:330px;padding:0;border:0;background:none;
+  transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.8,.25,1)}
+.offre .face,.offre .dos{position:absolute;inset:0;border-radius:12px;backface-visibility:hidden;
+  -webkit-backface-visibility:hidden}
+.offre .dos{background:var(--dos);border:6px solid #3A2410;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+.offre .face{transform:rotateY(180deg)}
+.offre.retournee{transform:rotateY(180deg)}
+.offre.retournee:hover{transform:rotateY(180deg) translateY(-6px)}
+.offre:focus-visible{outline:none}
+.offre:focus-visible .face{box-shadow:0 0 0 3px var(--or-clair)}
+
+/* une grande carte : le booster et la fiche du tiroir */
+.grande{
+  --cadre:var(--cadre-normal);
+  display:flex;flex-direction:column;gap:6px;height:100%;padding:10px;border-radius:12px;text-align:left;
+  background:linear-gradient(170deg,color-mix(in srgb,var(--cadre) 92%,#fff 8%),
+                             color-mix(in srgb,var(--cadre) 65%,#000 35%));
+  box-shadow:0 10px 34px rgba(0,0,0,.6);overflow:hidden;position:relative;
+}
+.grande[data-cadre="effect"]{--cadre:var(--cadre-effect)}
+.grande[data-cadre="fusion"]{--cadre:var(--cadre-fusion)}
+.grande[data-cadre="spell"]{--cadre:var(--cadre-spell)}
+.grande[data-cadre="trap"]{--cadre:var(--cadre-trap)}
+.grande .nom{font-family:var(--titre);font-weight:700;font-size:14px;line-height:1.15;color:#1A1208;
+  padding:4px 6px;border-radius:4px;background:rgba(255,255,255,.18)}
+.grande[data-cadre="fusion"] .nom,.grande[data-cadre="spell"] .nom,.grande[data-cadre="trap"] .nom{color:#FFF6E2}
+.grande .niv{color:#C0261B;font-size:12px;letter-spacing:1px;text-align:right;min-height:1em}
+.grande[data-cadre="spell"] .niv,.grande[data-cadre="trap"] .niv{color:rgba(255,246,226,.85);
+  font-family:var(--titre);font-weight:700;font-size:10px;letter-spacing:.12em}
+.grande img{width:100%;aspect-ratio:1.9;object-fit:cover;border-radius:4px;border:2px solid rgba(0,0,0,.45)}
+.grande .texte{flex:1;min-height:0;padding:6px 8px;border-radius:4px;background:rgba(255,248,230,.93);color:#21170A;
+  overflow-y:auto;scrollbar-width:thin}
+/* le même texte que la fiche, en petit et sur fond clair */
+.grande .txt{margin:0;gap:5px}
+.grande .t-stats{font-size:14px;gap:12px;color:#3A2608}
+.grande .t-stats i{font-size:8.5px;color:#7A6440;margin-right:3px}
+.grande .t-stats small{font-size:10px;color:#7A6440}
+.grande .t-attaque,.grande .t-effet{font-size:11px;line-height:1.3}
+.grande .t-effet b{color:#6B3D0A}
+.grande .t-puces{gap:3px;margin-top:-2px !important}
+.grande .t-puces span{font-size:9.5px;padding:1px 5px;background:rgba(120,80,20,.12);border-color:rgba(120,80,20,.25);color:#5A3A0A}
+.grande .t-cond{font-size:10.5px;color:#6B5A3E}
+.grande .t-bonus{font-size:10.5px;margin-top:-2px !important}
+.grande .t-bonus b{text-shadow:0 0 1px #000,0 0 2px rgba(0,0,0,.6)}
+.grande .ruban{position:absolute;right:-34px;top:16px;transform:rotate(38deg);padding:3px 40px;
+  background:var(--or);color:#1A1208;font-family:var(--titre);font-weight:900;font-size:11px;
+  box-shadow:0 2px 8px rgba(0,0,0,.4)}
+/* le reflet des super et ultra rares */
+.grande.super::after,.grande.ultra::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 45%,rgba(255,230,160,.15) 52%,transparent 65%);
+  background-size:260% 100%;animation:reflet 2.6s ease-in-out infinite;mix-blend-mode:screen}
+.grande.ultra::after{background:linear-gradient(115deg,transparent 25%,rgba(255,120,200,.35) 38%,
+  rgba(120,220,255,.35) 50%,rgba(255,240,140,.35) 62%,transparent 75%);background-size:260% 100%}
+@keyframes reflet{0%{background-position:120% 0}100%{background-position:-60% 0}}
+
+/* la liste de Polymérisation et de Monster Reborn */
+.choix-in{width:100%;max-width:640px;display:flex;flex-direction:column;align-items:center}
+.options{display:flex;flex-direction:column;gap:9px;width:100%;margin-bottom:14px}
+.option{
+  --cadre:var(--cadre-fusion);
+  display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:start;width:100%;padding:9px;
+  border-radius:10px;border:1px solid var(--ligne-forte);text-align:left;
+  background:linear-gradient(100deg,color-mix(in srgb,var(--cadre) 22%,#100E18),#100E18 70%);
+  transition:border-color .15s,transform .15s;
+}
+.option[data-cadre="normal"]{--cadre:var(--cadre-normal)}
+.option[data-cadre="effect"]{--cadre:var(--cadre-effect)}
+.option:hover,.option:focus-visible{border-color:var(--or-clair);transform:translateX(3px);outline:none}
+.option-art img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;border:2px solid var(--cadre);display:block}
+.option-corps{display:flex;flex-direction:column;gap:5px;min-width:0}
+.option-nom{font-family:var(--titre);font-size:15px;color:var(--or-clair)}
+.option-stats{font-family:var(--titre);font-weight:700;font-size:14px;color:var(--texte)}
+.option-stats i{font-style:normal;font-size:9.5px;letter-spacing:.12em;color:var(--pale);margin:0 4px 0 10px}
+.option-stats i:first-child{margin-left:0}
+.option-effet{font-size:12.5px;line-height:1.35}
+.option-effet b{color:var(--or-clair);font-weight:600}
+.option-matieres{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:2px}
+.matiere{display:inline-flex;align-items:center;gap:5px;padding:2px 7px 2px 2px;border-radius:99px;
+  background:rgba(0,0,0,.35);border:1px solid var(--ligne);font-size:11px}
+.matiere img{width:22px;height:22px;border-radius:50%;object-fit:cover}
+.matiere i{font-style:italic;color:var(--pale);margin-left:4px}
+.plus{color:var(--pale);font-size:12px}
+/* Libération d'Âme : les cartes du deck à cocher ; le deck et le cimetière
+   qu'on regarde */
+.grille-tuiles.liberation,.grille-tuiles.recherche,.grille-tuiles.pile-cartes{
+  grid-template-columns:repeat(auto-fill,minmax(64px,1fr));width:100%}
+.pile-voile{z-index:7}
+.grille-tuiles.pile-cartes{grid-template-columns:repeat(auto-fit,68px);justify-content:center;margin-bottom:14px}
+.tuile .nombre{position:absolute;right:2px;bottom:2px;padding:1px 5px;border-radius:9px;font-size:10px;font-weight:700;
+  background:rgba(7,6,14,.85);color:var(--or-clair);border:1px solid var(--ligne-forte)}
+.grille-tuiles.recherche{max-width:640px;margin:0 auto}
+.tuile.regardee{box-shadow:0 0 0 3px var(--or-clair)}
+.options .valider{align-self:center;margin-top:4px}
+.options .valider:disabled{opacity:.5;cursor:default;filter:none;transform:none}
+
+/* la fin */
+.fin-sous{margin:0;color:var(--pale)}
+.gain{margin:2px 0;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--titre);color:var(--or-clair)}
+.gain b{font-size:24px}
+.gain span{font-family:var(--corps);font-size:12px;color:var(--pale)}
+/* un duelliste débloqué par cette victoire */
+.debloques{display:flex;flex-direction:column;gap:6px;margin:4px 0}
+.debloque{display:flex;align-items:center;gap:12px;margin:0;padding:10px 12px;border-radius:10px;text-align:left;
+  border:1px solid var(--or);background:rgba(201,168,76,.1);font-size:12.5px;color:var(--pale);
+  animation:zone-arrive .5s ease}
+.debloque b{display:block;font-family:var(--titre);font-size:16px;color:var(--or-clair)}
+.debloque .visage{width:52px;height:52px;flex:0 0 auto;border-color:var(--or-clair)}
+
+/* les succès : une ligne chacun, sa marque, ce qu'il demande, ce qu'il
+   rapporte ; obtenu, il passe à l'or */
+.succes-liste{display:flex;flex-direction:column;gap:8px}
+.succes{display:grid;grid-template-columns:auto minmax(200px,1fr) auto;gap:6px 12px;align-items:center;padding:10px 12px;
+  border-radius:10px;border:1px solid var(--ligne);background:rgba(16,14,24,.7)}
+.succes-marque{width:30px;height:30px;border-radius:50%;border:2px solid var(--ligne-forte);
+  background:rgba(0,0,0,.3);position:relative;flex:0 0 auto}
+.succes.obtenu{border-color:var(--or);background:linear-gradient(100deg,rgba(201,168,76,.13),rgba(16,14,24,.7) 60%)}
+.succes.obtenu .succes-marque,.debloque .succes-marque{border-color:var(--or-clair);background:var(--or)}
+.succes.obtenu .succes-marque::after,.debloque .succes-marque::after{content:"";position:absolute;left:9px;top:4px;
+  width:7px;height:13px;border:solid #1A1208;border-width:0 3px 3px 0;transform:rotate(45deg)}
+.debloque .succes-marque{display:block;width:30px;height:30px;flex:0 0 auto;border-radius:50%;position:relative}
+.succes-corps{display:flex;flex-direction:column;gap:1px;min-width:0}
+.succes-corps b{font-family:var(--titre);font-size:14px;color:var(--texte)}
+.succes.obtenu .succes-corps b{color:var(--or-clair)}
+.succes-corps span{font-size:12.5px;color:var(--pale)}
+.recompenses{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px}
+.recompenses .tuile{width:44px}
+.recompense-duelliste{display:flex;align-items:center;gap:6px;margin-right:4px;font-family:var(--titre);font-size:12px;
+  color:var(--or-clair)}
+.recompense-duelliste i{font-style:normal}
+.recompense-duelliste .visage{width:40px;height:40px}
+.prime{margin-left:4px;padding:3px 10px;border-radius:99px;border:1px solid var(--ligne);background:rgba(201,168,76,.08);
+  font-size:11.5px;color:var(--pale);white-space:nowrap}
+.prime b{font-family:var(--titre);font-size:14px;color:var(--or-clair);margin-right:4px}
+.bilan{display:grid;grid-template-columns:1fr auto;gap:6px 18px;margin:8px 0;text-align:left;font-size:14px}
+.bilan dt{color:var(--pale)}
+.bilan dd{margin:0;text-align:right;font-family:var(--titre);font-weight:700;color:var(--or-clair)}
+
+/* ---------- l'ordinateur ---------- */
+@media (min-width:901px){
+  /* la fiche se fond dans son cadre, que ferme « Attendre » */
+  .duel-cadre .fiche{border:0;background:none}
+  /* les menus 20 % plus grands : l'accueil, le deck, la boutique, la pause,
+     la fin, le booster et la liste de Polymérisation */
+  .accueil-in,.retour-accueil,.boite,.booster-in,.choix-in{zoom:1.2}
+  /* le deck et la boutique tiennent dans l'écran, sans que la page défile :
+     ce qui est trop long défile dans son cadre (la collection prend toute
+     la hauteur qui reste). Un peu de marge dans les cadres qui défilent,
+     pour ne pas rogner l'ombre d'une carte qu'on survole. */
+  .ecran.accueil.large{display:flex;flex-direction:column;align-items:center}
+  .ecran.accueil.large .accueil-in{flex:1 1 auto;min-height:0}
+  .large .atelier{flex:1 1 auto;min-height:0;grid-template-rows:minmax(0,1fr)}
+  .large .atelier-listes{align-self:stretch}
+  .large .atelier-listes,.large .deck-centre{min-height:0;overflow-y:auto;padding:6px;margin:-6px;
+    scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.3) transparent}
+  .large .atelier-fiche{max-height:100%}
+  [data-onglet="deck"] .atelier-listes{overflow:visible}
+  [data-onglet="deck"] .constructeur{height:100%;grid-template-rows:minmax(0,1fr);align-items:stretch}
+  [data-onglet="deck"] .collection-cadre{min-height:0}
+  [data-onglet="deck"] .col-liste{flex:1 1 auto;max-height:none;min-height:120px}
+}
+/* une fenêtre basse : le booster grandit moins, pour tenir sur le plateau */
+@media (min-width:901px) and (max-height:759px){
+  .booster-in,.choix-in{zoom:1.1}
+}
+
+/* ---------- téléphone et petites fenêtres ---------- */
+@media (max-width:900px){
+  /* l'atelier : la liste seule, la fiche en tiroir quand on touche une carte */
+  .atelier,.atelier.deck,.constructeur{grid-template-columns:minmax(0,1fr)}
+  .grille-tuiles,.grille-tuiles.extra{grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+  .col-liste{max-height:55vh}
+  .atelier-fiche.ouverte{top:auto}
+  .grille-cartes .carte{width:70px}
+  .table{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto auto;
+    grid-template-areas:"plateau" "cote" "main";gap:8px;padding:8px 10px 10px;
+    padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  .cote{display:block}
+  .terrain{flex-direction:row;padding:7px;gap:6px}
+  .rangee{flex:5;gap:4px}
+  .rangee.petite{flex:6;gap:3px}
+  .zone .pips{font-size:7px}
+  /* la fiche devient un tiroir : elle ne sort qu'avec une carte choisie */
+  .fiche{display:none}
+  .fiche.ouverte{display:block;position:fixed;left:0;right:0;bottom:0;z-index:15;max-height:62vh;
+    border-radius:14px 14px 0 0;border-color:var(--ligne-forte);background:#100E18;
+    padding-bottom:max(14px,env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.7);
+    animation:tiroir .2s ease}
+  @keyframes tiroir{from{transform:translateY(40px);opacity:0}}
+  /* pendant qu'on désigne des tributs, le tiroir ne garde que la consigne
+     et monte en haut de l'écran : les zones à toucher sont en bas */
+  .fiche.ouverte.choix{top:0;bottom:auto;border-radius:0 0 14px 14px;
+    padding-top:max(12px,env(safe-area-inset-top));padding-bottom:12px;animation:none}
+  .fiche.choix .fiche-tete,.fiche.choix ul{display:none}
+  .fiche.choix .statut{margin-top:0}
+  .fiche.choix .actions{margin-top:8px}
+  .main{min-height:108px;padding-top:12px}
+  .carte{width:70px}
+  .attendre{height:40px;padding:0 12px;font-size:12px}
+  /* la fiche n'est plus qu'un tiroir : « Attendre » passe à côté de la main */
+  .duel-cadre{display:contents}
+  .duel-cadre .attendre{display:none}
+  .attendre.telephone{display:block}
+}
+@media (max-width:640px){
+  .retour-accueil{left:10px;top:10px}
+  .ecran.accueil{padding-top:56px}
+  .haut{gap:8px;padding:8px 10px}
+  .entete-action{padding:0;width:34px;justify-content:center}
+  .entete-action span{display:none}
+  .marque{display:none}
+  .releves{gap:8px;margin-left:0;flex:1;min-width:0;justify-content:space-between}
+  .releve{gap:4px}
+  .releve b{font-size:16px}
+  .releve.lp b{min-width:0}
+  .jauge{width:44px}
+  .jauge.xp{width:30px}
+  /* au téléphone, les trois cartes du booster se couchent l'une sous
+     l'autre : l'image à gauche, le texte lisible à droite */
+  .voile{padding:10px;place-items:start center}
+  .voile-sous{margin-bottom:10px}
+  .offres{flex-direction:column;align-items:stretch;gap:8px}
+  .offre{width:100%;height:150px}
+  .offre.regardee .face{box-shadow:0 0 0 3px var(--or-clair)}
+  .grande{display:grid;grid-template-columns:84px 1fr;grid-template-rows:auto auto 1fr;
+    column-gap:8px;row-gap:3px;padding:7px}
+  .grande img{grid-column:1;grid-row:1/4;aspect-ratio:auto;height:100%}
+  .grande .nom{grid-column:2;font-size:12px;padding:2px 5px}
+  .grande .niv{grid-column:2;font-size:10px;text-align:left}
+  .grande .texte{grid-column:2;padding:4px 6px}
+  .grande .ruban{font-size:9px;right:-38px;top:10px}
+  .option{grid-template-columns:64px 1fr}
+  .succes{grid-template-columns:auto minmax(0,1fr)}
+  .recompenses{grid-column:2;justify-content:flex-start}
+  .duelliste{gap:12px;padding:12px 14px 0 10px}
+  .duelliste .portrait{height:160px}
+  .duelliste .qui{font-size:20px}
+  .booster-actions{position:static;justify-content:center;margin:-2px auto 12px}
+}

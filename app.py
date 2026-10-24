@@ -26,6 +26,7 @@ import pokemon_stock
 import quiz
 import sauvegarde
 import social
+import survivor
 import yugiquiz
 from jaquettes import blueprint_jaquettes
 from monitoring import blueprint_monitoring
@@ -47,6 +48,7 @@ REINITIALISER = "abyss/reinitialiser.html"
 CHAINZ = "chainz/chainz.html"
 NIHONGO = "nihongo/nihongo.html"
 POKEMON = "pokemon/pokemon.html"
+SURVIVOR = "survivor/survivor.html"
 # La cle qui signe les cookies de session Flask. Elle ne sert qu'au pseudo
 # d'invite du Yu-Gi-Quiz : les comptes Abyss, eux, ont leur propre cookie et
 # leur table de sessions (voir comptes.COOKIE). Gardee dans donnees/, qui
@@ -60,6 +62,16 @@ CLE_SECRETE = DONNEES / "cle_secrete"
 # donnees/ n'est volontairement pas dans cette liste : la base contient les
 # empreintes de mots de passe.
 DOSSIERS = (STATIQUE, TEMPLATES)
+
+# Les pages reservees a l'administration : un projet en chantier dont
+# toute la matiere vit dans la page, sans API qui refuserait a sa place.
+# Les autres pages sont servies a tout le monde et laissent leur API dire
+# non (voir /abyss/suggestions) ; un jeu qui tourne dans le navigateur n'a
+# pas d'API, c'est donc la page elle-meme qui repond 404 -- sous son
+# adresse propre comme sous son chemin de gabarit, d'ou la comparaison sur
+# le fichier resolu dans envoie. Ses scripts sous static/ restent servis
+# par nginx comme tous les autres : seule la page est fermee.
+PAGES_ADMIN = {(TEMPLATES / SURVIVOR).resolve()}
 
 # images/artworks : jamais modifiees une fois ajoutees, autant laisser le
 # navigateur les garder en cache (sinon chaque affichage retelecharge tout,
@@ -100,8 +112,9 @@ COMPRESSES_MAXI = 300
 #    « supprimer mon compte » (clickjacking) ;
 #  - base-uri, object-src, form-action : ce qu'une injection de HTML
 #    pourrait detourner sans meme executer de script.
-# La CSP ne restreint pas encore les scripts : les pages en ont en ligne, et
-# les bloquer demanderait de les sortir toutes dans des fichiers.
+# La CSP de base ne restreint pas les scripts : des pages en ont encore en
+# ligne. Celles qui n'en ont plus recoivent en plus « script-src 'self' »
+# (voir envoie et SCRIPT_EN_LIGNE).
 EN_TETES_SECURITE = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
@@ -110,6 +123,19 @@ EN_TETES_SECURITE = {
     "Content-Security-Policy": "frame-ancestors 'none'; base-uri 'self'; "
                                "object-src 'none'; form-action 'self'",
 }
+
+# Une page dont tous les scripts sont des fichiers de static/ -- pas de
+# <script> sans src, pas d'attribut onclick= & co -- n'a aucune raison d'en
+# executer d'autres : « script-src 'self' » le lui interdit, et une injection
+# de HTML qui passerait l'echappement n'y lancerait plus rien. Le test porte
+# sur la page elle-meme, servie telle quelle : une page qui garde un script
+# en ligne garde la CSP de base et marche comme avant, et sortir son script
+# dans un fichier suffit a la proteger. Dans le doute (un commentaire qui
+# contiendrait « <script> »), la page reste sans la restriction.
+SCRIPT_EN_LIGNE = re.compile(r"<script\b(?![^>]*\bsrc=)[^>]*>|<[a-z][^>]*\son[a-z]+\s*=",
+                             re.IGNORECASE)
+CSP_SANS_SCRIPT_EN_LIGNE = (EN_TETES_SECURITE["Content-Security-Policy"]
+                            + "; script-src 'self'")
 
 app = Flask(__name__, static_folder=None) # on gere les fichiers nous-memes
 
@@ -186,6 +212,10 @@ app.register_blueprint(collection.blueprint_vignettes)
 # qu'il ecrit vit dans static/yugioh/. Reserve a l'administration, voir
 # cartes.py.
 app.register_blueprint(cartes.branche(STATIQUE / "yugioh"))
+# Un nom corrige a la main dans cartes-fr.json : les pochettes qui portaient
+# l'ancien prennent le nouveau ici, avant la premiere requete (voir
+# cartes.suit_les_renommages).
+cartes.suit_les_renommages()
 # Chaque jaquette ecrite est annoncee au fil du Social : une carte arrivee
 # en direct la recoit sans rechargement (voir social.annonce_jaquette).
 app.register_blueprint(blueprint_jaquettes(STATIQUE / "archive" / "Cover",
@@ -220,6 +250,9 @@ app.register_blueprint(nihongo.branche(STATIQUE / "nihongo"))
 # sont reserves a l'administration tant que le projet est en chantier.
 app.register_blueprint(pokemon.branche(STATIQUE / "pokemon"))
 app.register_blueprint(pokemon_stock.branche())
+# Yu-Gi-Oh! Survivor : ce que chacun garde d'une partie a l'autre (Points de
+# Duel, cartes achetees, deck). La partie elle-meme tourne dans la page.
+app.register_blueprint(survivor.branche())
 
 
 @app.before_request
@@ -327,6 +360,11 @@ def envoie(chemin):
         if cible.is_dir():
             cible = cible / "index.html"
 
+        if cible in PAGES_ADMIN:
+            u = comptes.actuel()
+            if u is None or not u["admin"]:
+                abort(404)
+
         if cible.is_file():
             if cible.suffix.lower() == ".html":
                 # une page : jamais gardee, ses scripts cites avec leur ?v=, et
@@ -336,6 +374,8 @@ def envoie(chemin):
                                      request.view_args)
                 reponse = Response(html, mimetype="text/html")
                 reponse.headers["Cache-Control"] = "no-store, max-age=0"
+                if not SCRIPT_EN_LIGNE.search(html):
+                    reponse.headers["Content-Security-Policy"] = CSP_SANS_SCRIPT_EN_LIGNE
                 return reponse
             reponse = send_from_directory(dossier, cible.relative_to(dossier).as_posix())
             if cible.suffix.lower() in EXTENSIONS_CACHABLES:
@@ -505,6 +545,13 @@ def page_pokemon():
 @app.route("/pokemon/<pseudo>", strict_slashes=False)
 def pokemon_de(pseudo):
     return envoie(POKEMON)
+
+# Yu-Gi-Oh! Survivor : un survivor au tour par tour, tout entier dans la
+# page (static/survivor/, voir survivor.py). Reserve a l'administration
+# tant qu'il est en chantier : 404 pour les autres, voir PAGES_ADMIN.
+@app.route("/survivor", strict_slashes=False)
+def page_survivor():
+    return envoie(SURVIVOR)
 
 @app.route("/collection-yugioh.html")
 def ancienne_collection():

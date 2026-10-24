@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yu-Gi-Oh! Survivor</title>
+<!-- le logo du site : voir static/commun/logo/ -->
+<link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
+<link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
+<link rel="manifest" href="/static/commun/manifest.webmanifest">
+<!-- Cinzel et Raleway, servies par Abyss : les polices du Yu-Gi-Quiz, et la
+     même table de velours noir et d'or (voir survivor.css). -->
+<link rel="stylesheet" href="/static/commun/polices/polices.css">
+<link rel="stylesheet" href="/static/survivor/survivor.css">
+</head>
+<body>
+
+<header class="haut">
+  <a class="entete-action" href="/abyss" aria-label="Retour à Abyss">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    <span>Retour à Abyss</span>
+  </a>
+  <h1 class="marque">Yu-Gi-Oh! <b>Survivor</b></h1>
+  <!-- Les relevés de la partie : tes LP, le tour, ton niveau. Cachés tant
+       qu'aucun duel n'est commencé. -->
+  <div class="releves" id="releves" hidden>
+    <div class="releve lp">
+      <span class="etiquette">LP</span>
+      <b id="lp">8000</b>
+      <span class="jauge"><i id="lpJauge"></i></span>
+    </div>
+    <div class="releve">
+      <span class="etiquette">Tour</span>
+      <b id="tour">0</b>
+    </div>
+    <div class="releve niveau">
+      <span class="etiquette">Niv.</span>
+      <b id="niveau">1</b>
+      <span class="jauge xp"><i id="xpJauge"></i></span>
+    </div>
+  </div>
+  <button class="rond" id="pauseBtn" hidden aria-label="Pause">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>
+    </svg>
+  </button>
+</header>
+
+<main class="table" id="table" hidden>
+  <!-- Le plateau : dessiné dans le canvas par survivor.js, le joueur toujours
+       au centre. Par-dessus, la jauge du boss et les annonces. -->
+  <section class="plateau" id="plateau">
+    <canvas id="toile" aria-label="Le plateau de jeu"></canvas>
+    <div class="boss" id="boss" hidden>
+      <span id="bossNom"></span>
+      <span class="jauge"><i id="bossJauge"></i></span>
+    </div>
+    <div class="annonces" id="annonces" aria-live="polite"></div>
+
+    <!-- Un booster : trois cartes face cachée, on en garde une. Il ne
+         couvre que le plateau : le terrain, la main et la fiche restent là,
+         pour regarder ce qu'on a avant de choisir. -->
+    <section class="voile booster" id="booster" hidden>
+      <div class="booster-in">
+        <h2 id="boosterTitre">Niveau 2 !</h2>
+        <p class="voile-sous" id="boosterSous">Garde une carte.</p>
+        <div class="booster-actions">
+          <button class="sobre petit" id="boosterRelancer" hidden>Relancer</button>
+          <button class="sobre petit" id="boosterPasser">Ne rien prendre</button>
+        </div>
+        <div class="offres" id="offres"></div>
+      </div>
+    </section>
+
+    <!-- Les cartes du deck ou du cimetière, qu'on regarde : par-dessus
+         tout le reste du plateau, même un booster ouvert -->
+    <section class="voile pile-voile" id="pile" hidden>
+      <div class="choix-in">
+        <h2 id="pileTitre"></h2>
+        <p class="voile-sous" id="pileSous"></p>
+        <div class="grille-tuiles pile-cartes" id="pileCartes"></div>
+        <button class="sobre" id="pileFermer">Fermer</button>
+      </div>
+    </section>
+
+    <!-- Ce que Polymérisation ou Monster Reborn proposent -->
+    <section class="voile choix" id="choix" hidden>
+      <div class="choix-in">
+        <h2 id="choixTitre"></h2>
+        <p class="voile-sous" id="choixSous"></p>
+        <div class="options" id="options"></div>
+        <button class="sobre" id="choixAnnuler">Annuler</button>
+      </div>
+    </section>
+  </section>
+
+  <!-- Le terrain du duelliste : cinq zones monstre (tes armes, qui
+       attaquent seules), cinq zones magie/piège (tes passifs, tes pièges
+       face cachée), la zone terrain. Puis la fiche de la carte regardée
+       (« Ton duel » quand on n'en regarde aucune, dont les lignes Deck et
+       Cimetière montrent leurs cartes), et « Attendre » sous elle. -->
+  <aside class="cote">
+    <div class="terrain">
+      <div class="rangee" id="zonesMonstres" aria-label="Zones monstre"></div>
+      <div class="rangee petite" id="zonesMagies" aria-label="Zones magie et piège"></div>
+    </div>
+    <div class="duel-cadre">
+      <div class="fiche" id="fiche"></div>
+      <button class="attendre" id="attendreBtn">Attendre</button>
+    </div>
+  </aside>
+
+  <!-- La main ; au téléphone, où la fiche n'est pas à l'écran,
+       « Attendre » à côté d'elle -->
+  <section class="main-zone">
+    <div class="main" id="main" aria-label="Ta main"></div>
+    <button class="attendre telephone" id="attendreTel">Attendre</button>
+  </section>
+</main>
+
+<!-- L'écran d'avant le duel : jouer, composer son deck, acheter des
+     cartes avec les Points de Duel gagnés en partie. -->
+<section class="ecran accueil" id="accueil">
+  <!-- l'accueil couvre l'en-tête de la page : il porte son propre retour -->
+  <a class="entete-action retour-accueil" href="/abyss" aria-label="Retour à Abyss">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    <span>Retour à Abyss</span>
+  </a>
+  <div class="accueil-in">
+    <div class="accueil-tete">
+      <h2 class="titre-jeu">Yu-Gi-Oh! <span>Survivor</span></h2>
+      <p class="dp" id="dp" hidden><b id="dpValeur">0</b><span>Points de Duel</span></p>
+    </div>
+    <nav class="onglets" role="tablist" aria-label="Menu">
+      <button class="onglet" role="tab" data-onglet="jouer" aria-selected="true">Jouer</button>
+      <button class="onglet" role="tab" data-onglet="deck" aria-selected="false">Cartes</button>
+      <button class="onglet" role="tab" data-onglet="boutique" aria-selected="false">Boutique</button>
+      <button class="onglet" role="tab" data-onglet="succes" aria-selected="false">Succès</button>
+    </nav>
+    <div class="panneau jouer" id="pJouer">
+      <div class="duelliste" id="duelliste"></div>
+      <!-- les duellistes : Yugi, puis Joey quand Yugi a battu Obélisk -->
+      <div class="duellistes" id="duellistes" role="group" aria-label="Duellistes" hidden></div>
+      <button class="cta" id="commencer">Commencer le duel</button>
+      <p class="record" id="record"></p>
+    </div>
+    <!-- Les cartes (boosters, Extra Deck, collection), la boutique et les succès : la liste à gauche, la fiche
+         de la carte qu'on a touchée à droite (un tiroir au téléphone). -->
+    <div class="atelier" id="atelier" hidden>
+      <div class="atelier-listes" id="atelierListes"></div>
+      <aside class="fiche atelier-fiche" id="ficheAtelier"></aside>
+    </div>
+  </div>
+</section>
+
+<section class="ecran pause" id="pause" hidden>
+  <div class="boite">
+    <h2>Pause</h2>
+    <button class="cta" id="reprendre">Reprendre</button>
+    <button class="sobre" id="abandonner">Abandonner le duel</button>
+  </div>
+</section>
+
+<section class="ecran fin" id="fin" hidden>
+  <div class="boite">
+    <h2 id="finTitre"></h2>
+    <p class="fin-sous" id="finSous"></p>
+    <dl class="bilan" id="bilan"></dl>
+    <p class="gain" id="finGain" hidden></p>
+    <div class="debloques" id="finDebloque" hidden></div>
+    <button class="cta" id="rejouer">Rejouer</button>
+    <button class="sobre" id="menu">Menu</button>
+  </div>
+</section>
+
+<script src="/static/survivor/moteur.js"></script>
+<script src="/static/survivor/survivor.js"></script>
+</body>
+</html>

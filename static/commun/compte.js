@@ -99,7 +99,7 @@
         </button>
         <div class="menu" id="menuCompte" hidden>
           ${entree("/abyss/profil", "Mon profil")}
-          <!-- reservee a l'admin : l'entree n'apparait que pour lui, et
+          <!-- reservee a l'admin : l'entree n'apparait que pour lui, et
                l'API qu'ouvre la page repond 404 a tous les autres -->
           ${u.admin ? entree("/abyss/suggestions", "Suggestions", neuf) : ""}
           ${u.admin ? entree("/abyss/monitoring", "Monitoring") : ""}

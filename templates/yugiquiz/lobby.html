@@ -8,6 +8,7 @@
     <link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
     <link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
     <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
+<link rel="manifest" href="/static/commun/manifest.webmanifest">
     <link rel="stylesheet" href="/static/yugiquiz/yugiquiz.css">
 </head>
 <body>
@@ -42,14 +43,14 @@
                 </div>
                 <div class="room-sidebar">
                     <div class="room-title-display" id="room-sidebar-name">-</div>
-                    <div class="room-code-label" id="room-player-count">0 joueur(s)</div>
+                    <div class="room-code-label" id="room-player-count">0 joueur</div>
                     <div class="room-code-label" id="room-params">-</div>
                     <div class="launch-timer" id="launch-timer">
                         <div class="launch-timer-label">Démarrage dans</div>
                         <div class="launch-timer-count" id="launch-count">5</div>
                     </div>
                     <button class="ready-btn not-ready" id="ready-btn" onclick="toggleReady()">
-                        Prêt !
+                        Prêt !
                     </button>
                     <button class="leave-btn" onclick="leaveRoom()">Quitter la salle</button>
                 </div>
@@ -142,9 +143,9 @@
         </div>
 
         <div id="password-overlay">
-            <div class="leave-dialog">
-                <div class="leave-dialog-title">Salle privée</div>
-                <p class="leave-dialog-sub">Entrez le mot de passe</p>
+            <div class="leave-dialog" role="dialog" aria-modal="true" aria-labelledby="password-titre">
+                <div class="leave-dialog-title" id="password-titre">Salle privée</div>
+                <p class="leave-dialog-sub">Entre le mot de passe</p>
                 <!-- voir le panneau « Créer une salle » : même raison -->
                 <input type="password" maxlength="24" id="password-input" class="create-input" placeholder="Mot de passe..." autocomplete="new-password" name="mdp-de-salle" style="margin-bottom: .75rem;">
                 <div class="leave-dialog-btns">
@@ -161,6 +162,8 @@
     <!-- le battement de presence : voir static/commun/presence.js -->
     <script src="/static/commun/presence.js"></script>
     <script src="/static/commun/vendor/socket.io-4.1.2.min.js"></script>
+    <!-- le piege de focus des dialogues -->
+    <script src="/static/yugiquiz/commun.js"></script>
     <script>
         const socket = io();
 
@@ -182,6 +185,8 @@
         let pendingRoomId = null;
 
         const DIFFICULTY_LABELS = { '1': 'Facile', '2': 'Normal', '3': 'Difficile', '4': 'Toutes les cartes' };
+
+        const joueurs = (n) => `${n} joueur${n > 1 ? 's' : ''}`;
 
         socket.on('connect', () => {
             fetch('/api/yugiquiz/moi')
@@ -242,9 +247,12 @@
             if (isPrivate) {
                 pendingRoomId = roomId;
                 document.getElementById('password-input').value = '';
-                document.getElementById('password-overlay').classList.add('active');
+                const overlay = document.getElementById('password-overlay');
+                overlay.classList.add('active');
                 document.body.classList.add('overlay-ouvert');
-                setTimeout(() => document.getElementById('password-input').focus(), 50);
+                /* le champ est le premier arret du piege : c'est lui qui
+                   prend le focus (voir commun.js) */
+                Focus.piege(overlay);
             } else {
                 socket.emit('joinRoom', { roomId });
             }
@@ -261,7 +269,11 @@
         }
 
         function closePasswordDialog() {
-            document.getElementById('password-overlay').classList.remove('active');
+            const overlay = document.getElementById('password-overlay');
+            if (overlay.classList.contains('active')) {
+                overlay.classList.remove('active');
+                Focus.rend(overlay);
+            }
             document.body.classList.remove('overlay-ouvert');
             pendingRoomId = null;
         }
@@ -279,7 +291,7 @@
                 btn.textContent = 'Annuler';
                 btn.className = 'ready-btn is-ready';
             } else {
-                btn.textContent = 'Prêt !';
+                btn.textContent = 'Prêt !';
                 btn.className = 'ready-btn not-ready';
             }
         }
@@ -297,7 +309,7 @@
 
         function updateRoomPlayers(players) {
             const list = document.getElementById('room-players-list');
-            document.getElementById('room-player-count').textContent = `${players.length} joueur(s)`;
+            document.getElementById('room-player-count').textContent = joueurs(players.length);
 
             if (!players.length) {
                 list.innerHTML = `<div class="empty-state"><div class="millennium-eye"></div><p>En attente de duellistes...</p></div>`;
@@ -316,7 +328,7 @@
             currentRoom = null;
             isReady = false;
             document.getElementById('room-panel').classList.remove('active');
-            document.getElementById('ready-btn').textContent = 'Prêt !';
+            document.getElementById('ready-btn').textContent = 'Prêt !';
             document.getElementById('ready-btn').className = 'ready-btn not-ready';
             document.getElementById('create-panel').style.display = '';
             document.getElementById('rooms-panel').style.display = '';
@@ -359,7 +371,7 @@
                 <div class="room-item" onclick="joinRoom('${r.id}', ${r.private})">
                     <div class="room-info">
                         <span class="room-name">${r.private ? '🔒 ' : ''}${esc(r.name)}</span>
-                        <span class="room-meta">${r.players} joueur(s) <br> ${r.time}s · ${r.score_to_win} pts · ${DIFFICULTY_LABELS[r.difficulty] || 'Normal'}</span>
+                        <span class="room-meta">${joueurs(r.players)} <br> ${r.time}s · ${r.score_to_win} pts · ${DIFFICULTY_LABELS[r.difficulty] || 'Normal'}</span>
                     </div>
                     <span class="room-status ${r.status === 'in_game' ? 'in-game' : 'waiting'}">${r.status === 'in_game' ? 'En jeu' : 'En attente'}</span>
                     <button class="join-btn" onclick="event.stopPropagation(); joinRoom('${r.id}', ${r.private})">Rejoindre</button>
@@ -379,12 +391,12 @@
         socket.on('roomJoined', data => {
             closePasswordDialog();
             showRoomPanel(data.room);
-            showToast(`Salle « ${data.room.name} » rejointe !`);
+            showToast(`Salle « ${data.room.name} » rejointe !`);
         });
 
         socket.on('roomLeft', () => {
             hideRoomPanel();
-            showToast('Vous avez quitté la salle.');
+            showToast('Tu as quitté la salle.');
         });
 
         socket.on('roomUpdated', data => {
@@ -395,7 +407,7 @@
                     isReady = myEntry.ready;
                     const btn = document.getElementById('ready-btn');
                     if (isReady) { btn.textContent = 'Annuler'; btn.className = 'ready-btn is-ready'; }
-                    else { btn.textContent = 'Prêt !'; btn.className = 'ready-btn not-ready'; }
+                    else { btn.textContent = 'Prêt !'; btn.className = 'ready-btn not-ready'; }
                 }
             }
         });

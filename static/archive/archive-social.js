@@ -520,7 +520,7 @@ function socialEcrireHTML(connecte){
   }
   return `<form class="soc-ecrire" autocomplete="off">
     <!-- La cible d'une reponse. Cachee tant qu'on ecrit un commentaire neuf,
-         elle apparait au-dessus du champ des qu'on clique « Repondre » :
+         elle apparait au-dessus du champ des qu'on clique « Repondre » :
          c'est le meme endroit qui sert aux deux, et c'est tout l'interet.
          Voir socialVise() dans ce fichier. -->
     <div class="soc-cible" id="socCible" hidden>
@@ -760,7 +760,7 @@ function socialBrancheFil(h, jeuId){
          et rien ne rattrape un message effacé. */
       if(!efface.classList.contains('armed')){
         efface.classList.add('armed');
-        efface.textContent = 'Confirmer ?';
+        efface.textContent = 'Confirmer ?';
         setTimeout(()=>{
           if(efface.isConnected){
             efface.classList.remove('armed');
@@ -1080,7 +1080,7 @@ function socialNotifHTML(n){
     <span class="soc-notif-in">
       <b>${esc(n.pseudo)}</b> ${esc(socialNotifPhrase(n))}
       <u>${esc(n.jeu)}</u>
-      ${n.texte ? `<i>« ${esc(n.texte)} »</i>` : ''}
+      ${n.texte ? `<i>« ${esc(n.texte)} »</i>` : ''}
     </span>
   </li>`;
 }

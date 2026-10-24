@@ -40,6 +40,9 @@
 
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+/* Un titre sur deux lignes se coupe au milieu, et ne laisse pas un mot
+   seul sur la seconde. */
+h1,h2,h3{text-wrap:balance}
 /* La fiche bloque le defilement du fond : sans gouttiere reservee, la
    barre disparait et toute la grille saute d'une quinzaine de pixels. */
 html{scrollbar-gutter:stable;scrollbar-color:rgba(255,204,69,.5) #060C15}

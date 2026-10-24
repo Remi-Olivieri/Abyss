@@ -56,6 +56,8 @@ SECTIONS = {
     "yugiquiz": "Yu-Gi-Quiz!",
     # meme chose, pour la collection Pokemon
     "pokemon": "Collection Pokémon",
+    # meme chose ; reserve tant que le jeu est en chantier, voir RESERVEES
+    "survivor": "Yu-Gi-Oh! Survivor",
 }
 
 # Les projets qu'on ne propose qu'a l'administration : un projet pas encore
@@ -66,10 +68,11 @@ SECTIONS = {
 # sorti le jour ou sa tuile est devenue visible de tous -- l'y laisser
 # revenait a refuser un rapport de bug sur la seule page ou l'on peut en
 # trouver. Nihongo y a figure pour la meme raison, et en est sorti de meme
-# a son ouverture. La collection Pokemon y est, le temps de son chantier.
+# a son ouverture, comme la collection Pokemon apres lui. Yu-Gi-Oh! Survivor
+# y est tant que sa page repond 404 aux autres (voir PAGES_ADMIN dans app.py).
 #
 # static/commun/suggestion.js porte la meme liste sous le nom `reserve`.
-RESERVEES = ("pokemon",)
+RESERVEES = ("survivor",)
 
 GENRES = ("suggestion", "bug")
 
@@ -387,7 +390,7 @@ def envoyer():
     # mecanique de limitation n'aurait rien appris de plus.
     cle = f"suggestion:{u['id']}"
     if trop_d_essais(cle):
-        return echec("debit", f"Doucement : {ESSAIS_MAX} suggestions par"
+        return echec("debit", f"Doucement : {ESSAIS_MAX} suggestions par"
                      f" {int(FENETRE_ESSAIS.total_seconds() // 60)} minutes, pas plus.", 429)
     note_essai(cle)
     d = corps()

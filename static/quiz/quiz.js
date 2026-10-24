@@ -1,0 +1,1798 @@
+/* =======================================================================
+   Mini-Jeux Vidéo - quiz.js
+
+   Le script de templates/quiz/quiz.html, sorti de la page : un fichier
+   se garde en cache, et une page sans script en ligne reçoit la CSP
+   « script-src 'self' » (voir envoie dans app.py).
+   ======================================================================= */
+const el = (id) => document.getElementById(id);
+const esc = (s) => String(s === null || s === undefined ? "" : s)
+  .replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;",
+                                 '"': "&quot;", "'": "&#39;" }[c]));
+
+async function api(chemin, options) {
+  const o = options || {};
+  const r = await fetch(chemin, {
+    method: o.methode || "GET",
+    credentials: "same-origin",
+    headers: o.corps ? { "Content-Type": "application/json" } : undefined,
+    body: o.corps ? JSON.stringify(o.corps) : undefined,
+  });
+  let data = null;
+  try { data = await r.json(); } catch (e) { /* réponse illisible */ }
+  if (!r.ok || !data || data.ok === false) {
+    throw new Error((data && data.message) || "Le serveur n'a pas répondu.");
+  }
+  return data;
+}
+
+/* =========================================================
+   Avec quels jeux on joue
+
+   Un seul réglage, commun à tous les mini-jeux de la famille Jeux Vidéos, et
+   gardé dans le compte : c'est une façon de jouer, elle ne change pas d'une
+   partie à l'autre, et la redemander à chaque lancement serait une question
+   à laquelle on répond toujours pareil. D'où le menu du salon plutôt qu'un
+   écran de réglages avant chaque partie - et plus d'écran du tout, cliquer
+   sur un jeu le lance.
+
+   La valeur arrive avec /api/moi et repart dans /api/preferences.
+   ========================================================= */
+let SOURCE = "tous";     // 'tous' : les journaux publics · 'moi' : le mien
+let MOI = null;          // le compte connecte, ou null pour un visiteur
+
+const SOURCES = [
+  { v: "tous", nom: "Tous les jeux", note: "les journaux publics du site" },
+  { v: "moi", nom: "Mes jeux", note: "seulement mon journal" },
+];
+
+/* =========================================================
+   Le menu
+   ========================================================= */
+/* Les emblèmes, en filigrane dans le coin des cartes. Dessinés à la main
+   plutôt que pris à une bibliothèque : quatre formes ne valent pas une
+   dépendance, et chacune dit ce que son jeu demande de faire. */
+const EMBLEMES = {
+  flou: `<svg class="qz-embleme" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+    stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+    <defs><filter id="eFlou" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5"/></filter></defs>
+    <g filter="url(#eFlou)"><circle cx="18" cy="19" r="5" fill="currentColor" stroke="none"/>
+      <path d="M9 37l9-11 7 8 5-5 9 8z" fill="currentColor" stroke="none"/></g>
+    <rect x="7" y="5" width="34" height="38" rx="3"/></svg>`,
+  frise: `<svg class="qz-embleme" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 34h40"/><path d="M11 34v-7M23 34V19M35 34v-11"/>
+    <rect x="6" y="9" width="10" height="9" rx="2"/><rect x="18" y="4" width="10" height="9" rx="2"/>
+    <rect x="30" y="11" width="10" height="9" rx="2"/></svg>`,
+  /* La frise qui ne s'arrête pas : l'infini au-dessus d'un axe du temps
+     dont la flèche sort du cadre. */
+  infini: `<svg class="qz-embleme" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M24 17c-3-4-6-6-9-6a6 6 0 0 0 0 12c3 0 6-2 9-6s6-6 9-6a6 6 0 0 1 0 12c-3 0-6-2-9-6z"/>
+    <path d="M4 36h38M38 32l4 4-4 4"/><path d="M11 36v-4M20 36v-4M29 36v-4"/></svg>`,
+  grille: `<svg class="qz-embleme" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+    stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+    <rect x="5" y="5" width="16" height="16" rx="2.5"/><rect x="27" y="5" width="16" height="16" rx="2.5"/>
+    <rect x="5" y="27" width="16" height="16" rx="2.5"/><rect x="27" y="27" width="16" height="16" rx="2.5"
+      fill="currentColor" stroke="none"/></svg>`,
+};
+
+/* Une famille par couleur : l'or du site pour les jeux vidéo. Il y en a eu
+   une seconde, Yu-Gi-Oh!, en violet, tant que le Yu-Gi-Quiz se rangeait ici ;
+   il est devenu un projet à lui, avec sa tuile sur Abyss. La liste reste
+   pour la prochaine famille. */
+const FAMILLES = [
+  { cle: "jv", nom: "Jeux Vidéos" },
+];
+
+/* `cle` : ce qui se joue ici - la carte devient un bouton, et `lance` est la
+   fonction qui démarre la partie. Les déclarations de fonction sont
+   remontées, elle peut donc être écrite plus bas dans le fichier. */
+const JEUX = [
+  { famille: "jv", cle: "jaquette-floue", embleme: "flou", nom: "Jaquette floue",
+    texte: "Une jaquette arrive floutée et se dévoile à chaque erreur. Trouve le titre",
+    lance: lance },
+  { famille: "jv", cle: "chronologie", embleme: "frise", nom: "Chronologie",
+    texte: "Cinq jeux à remettre dans l'ordre de sortie, du plus ancien au plus récent.",
+    lance: lanceChrono },
+  { famille: "jv", cle: "chronologie-sans-fin", embleme: "infini", nom: "Chronologie sans fin",
+    texte: "Un jeu à la fois, à placer dans une frise qui s'allonge. Trois vies, et chaque carte rapporte plus que la précédente.",
+    lance: lanceEndurance },
+  { famille: "jv", cle: "grille", embleme: "grille", nom: "Grille de connexions",
+    texte: "Seize jeux, quatre groupes de quatre à retrouver : même studio, même année, un genre ou un mot en commun... Quatre erreurs et c'est perdu.",
+    lance: lanceGrille },
+];
+
+/* Le sous-titre du bandeau : le nom du mini-jeu en cours, ou rien. Le nom
+   du site, lui, ne bouge jamais - il est écrit dans la page. */
+const jeuDe = (cle) => JEUX.find((j) => j.cle === cle);
+
+function marque(sous) {
+  el("marqueSous").textContent = sous || "";
+}
+
+const FLECHE = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+  aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>`;
+
+/* La barre du haut de l'écran : rien, une flèche de retour, ou une croix
+   d'abandon. Un seul endroit la remplit, pour qu'elle soit toujours au même
+   pixel d'un écran à l'autre. */
+function nav(contenu) {
+  el("nav").innerHTML = contenu || "";
+}
+
+function navRetour(vers, titre) {
+  nav(`<button type="button" class="sbtn" id="navRetour"
+         aria-label="Revenir aux mini-jeux">${FLECHE}</button>
+       <span class="qz-nav-titre">${esc(titre)}</span>`);
+  el("navRetour").addEventListener("click", vers);
+}
+
+/* Abandonner une partie : la croix s'arme au premier clic et exécute au
+   second, comme la suppression d'un jeu dans l'Archive. Une vraie fenêtre
+   de confirmation pour quitter une partie sans enjeu serait disproportionnée,
+   mais partir sur un clic de travers le serait tout autant. Le désarmement
+   automatique évite qu'une croix rouge reste en embuscade. */
+let MINUTEUR_ABANDON = null;
+function navAbandon(titre) {
+  nav(`<button type="button" class="sbtn qz-abandon" id="navAbandon"
+         aria-label="Abandonner la partie">×</button>
+       <span class="qz-nav-titre">${esc(titre)}</span>`);
+  const b = el("navAbandon");
+  b.addEventListener("click", () => {
+    if (b.classList.contains("arme")) { quitte(); return; }
+    b.classList.add("arme");
+    b.textContent = "Abandonner ?";
+    clearTimeout(MINUTEUR_ABANDON);
+    MINUTEUR_ABANDON = setTimeout(() => {
+      b.classList.remove("arme");
+      b.textContent = "×";
+    }, 4000);
+  });
+}
+
+function quitte() {
+  clearTimeout(MINUTEUR_ABANDON);
+  PARTIE = null; ETAT = null; CHRONO = null; PRISE = null; GRILLE = null; ENDU = null;
+  dessineMenu();
+}
+
+/* Une carte de jeu. Trois formes possibles, et la balise suit l'usage :
+   un lien pour ce qui mène ailleurs, un bouton pour ce qui se joue ici, un
+   simple bloc pour ce qui n'existe pas encore - inerte, donc rien à
+   désactiver. */
+function carteJeu(j) {
+  const corps = `
+    ${EMBLEMES[j.embleme] || ""}
+    ${j.externe ? '<span class="qz-sort" aria-hidden="true">&#8599;</span>' : ""}
+    <h3>${esc(j.nom)}</h3>
+    <p>${esc(j.texte)}</p>
+    ${j.regle ? `<u>${esc(j.regle)}</u>` : ""}`;
+  if (j.url) {
+    /* Un nouvel onglet pour ce qui sort du site, la même fenêtre pour ce qui
+       reste dedans : ouvrir une page d'Abyss à côté d'Abyss n'aide personne,
+       et le bouton « retour » de la page suffit à revenir ici. */
+    const ailleurs = j.externe
+      ? ' target="_blank" rel="noopener noreferrer"' : "";
+    return `<a class="qz-jeu" href="${esc(j.url)}"${ailleurs}>${corps}</a>`;
+  }
+  if (j.cle) {
+    return `<button type="button" class="qz-jeu" data-jeu="${esc(j.cle)}">${corps}</button>`;
+  }
+  return `<div class="qz-jeu bientot">${corps}</div>`;
+}
+
+/* ---------- le choix du vivier, dans l'en-tête de la famille ----------
+   À sa place : c'est un réglage de la famille « Jeux Vidéos » tout entière,
+   pas d'une partie, et il n'apparaît qu'au salon - le seul endroit d'où l'on
+   démarre.
+
+   Deux valeurs, donc deux boutons côte à côte plutôt qu'une liste à
+   dérouler. Le menu cachait la moitié d'un choix qui tient en deux mots et
+   demandait deux clics - un pour voir ce qu'il y avait, un pour choisir -
+   là où basculer entre deux états est le geste le plus courant de la page.
+   Les deux possibilités se lisent maintenant d'un coup d'œil et un seul clic
+   change de vivier. La forme est celle de la barre d'onglets de l'Archive :
+   pastille dorée sur l'option retenue, rien à réapprendre. */
+/* Seulement pour qui est connecte : « Mes jeux » n'existe pas sans journal,
+   et un choix dont une moitie ne mene nulle part n'est pas un choix. Un
+   visiteur joue donc avec les journaux publics, sans qu'on lui montre un
+   reglage a ne pas toucher. */
+function menuSource() {
+  return `<div class="qz-src" role="group" aria-label="Avec quels jeux jouer">
+    <u>Jouer avec</u>
+    <div class="qz-src-piste" id="srcPiste">
+      ${SOURCES.map((x) => `
+        <button type="button" class="qz-src-opt" data-v="${esc(x.v)}"
+                aria-pressed="${x.v === SOURCE}">${esc(x.nom)}</button>`).join("")}
+    </div>
+  </div>`;
+}
+
+function brancheSource() {
+  const p = el("srcPiste");
+  if (!p) return;
+  p.querySelectorAll("[data-v]").forEach((x) =>
+    x.addEventListener("click", () => choisitSource(x.dataset.v)));
+}
+
+/* La pastille se déplace toute seule : redessiner le salon entier pour un
+   réglage qui ne change aucune carte le ferait clignoter pour rien. */
+function majSource() {
+  const p = el("srcPiste");
+  if (p) p.querySelectorAll("[data-v]").forEach((x) =>
+    x.setAttribute("aria-pressed", String(x.dataset.v === SOURCE)));
+}
+
+async function choisitSource(v) {
+  if (v === SOURCE) return;
+  const avant = SOURCE;
+  SOURCE = v;
+  majSource();
+  try {
+    await api("/api/preferences", { methode: "PUT", corps: { quizSource: v } });
+  } catch (err) {
+    /* Le serveur n'a pas suivi : revenir en arrière plutôt que d'afficher un
+       réglage qui ne survivra pas au rechargement. */
+    SOURCE = avant;
+    majSource();
+  }
+}
+
+function dessineMenu() {
+  marque("");
+  nav("");
+  el("hero").hidden = false;
+  /* Une famille sans aucun jeu ne s'affiche pas : un titre suivi de rien
+     annonce un vide au lieu d'annoncer un contenu. */
+  el("scene").innerHTML = FAMILLES.map((f) => {
+    const jeux = JEUX.filter((j) => j.famille === f.cle);
+    if (!jeux.length) return "";
+    return `<section class="qz-fam ${esc(f.cle)}">
+      <div class="qz-fam-tete">
+        <h2>${esc(f.nom)}</h2>
+        <i aria-hidden="true"></i>
+        ${f.cle === "jv" && MOI ? menuSource() : `<u>${esc(f.note)}</u>`}
+      </div>
+      <div class="qz-menu">${jeux.map(carteJeu).join("")}</div>
+    </section>`;
+  }).join("");
+  brancheSource();
+  /* Cliquer sur un jeu le lance : il n'y a plus rien à régler avant une
+     partie, le seul réglage vit au-dessus et vaut pour toutes. */
+  el("scene").querySelectorAll("[data-jeu]").forEach((b) => {
+    b.addEventListener("click", () => {
+      const j = jeuDe(b.dataset.jeu);
+      if (j && j.lance) j.lance();
+    });
+  });
+}
+
+/* =========================================================
+   Le bilan de fin de partie
+
+   Les trois mini-jeux se comptent sur mille (voir POINTS, CHRONO_PAR_JEU et
+   GRILLE_PAR_GROUPE dans quiz.py). Ils finissaient pourtant sur trois écrans
+   qui disaient la même chose de trois façons, et surtout sur un grand
+   nombre seul : « 740 » ne dit pas si on est passé près, et « sur 1000
+   possibles » en petit dessous se lit après coup, quand le regard est déjà
+   reparti.
+
+   D'où un seul bloc pour les trois, et trois façons de lire le même
+   résultat, de la plus rapide à la plus précise :
+
+     - une mention. C'est ce qu'on retient d'une partie, et ça se lit sans
+       compter ;
+     - une jauge. La part remplie donne le rapport d'un coup d'œil, là où
+       deux nombres demandent une division ;
+     - les nombres, le score contre son maximum, collés l'un à l'autre
+       plutôt qu'à deux étages.
+
+   Le détail (« 3 jaquettes sur 5 ») reste dessous : c'est la phrase qu'on
+   lit en dernier, quand on veut savoir ce qui s'est passé et plus seulement
+   comment ça s'est fini.
+   ========================================================= */
+/* Du meilleur au pire : la première tranche atteinte gagne. Le parfait a sa
+   propre marche - c'est la seule partie dont on se souvient. */
+const MENTIONS = [
+  { part: 1,  texte: "Parfait",          classe: "parfait" },
+  { part: .8, texte: "Excellent",        classe: "haut" },
+  { part: .6, texte: "Bien joué",        classe: "haut" },
+  { part: .4, texte: "Pas mal",          classe: "moyen" },
+  { part: .2, texte: "Peut mieux faire", classe: "moyen" },
+  { part: 0,  texte: "Aïe...",           classe: "bas" },
+];
+
+/* `detail` : la phrase du dessous, propre à chaque jeu - ce qui a été trouvé
+   et sur combien. Le reste se déduit du score et de son maximum.
+
+   La jauge s'anime en CSS depuis une largeur nulle : la valeur part dans une
+   variable, pas dans un style calculé au rendu, sinon il faudrait attendre
+   une image pour la faire bouger. */
+function bilanHTML(score, maxi, detail) {
+  const part = maxi > 0 ? Math.min(1, Math.max(0, score / maxi)) : 0;
+  const m = MENTIONS.find((x) => part >= x.part) || MENTIONS[MENTIONS.length - 1];
+  return `
+    <p class="qz-mention ${m.classe}">${m.texte}</p>
+    <p class="qz-total">${score}<span class="qz-max">/ ${maxi}</span></p>
+    <div class="qz-jauge ${m.classe}" style="--part:${(part * 100).toFixed(1)}%"
+         role="img" aria-label="${score} points sur ${maxi}"><i></i></div>
+    <p class="qz-sur">${detail}</p>`;
+}
+
+/* =========================================================
+   Jaquette floue
+
+   Une manche : une image, trois propositions. Les deux premières se tapent
+   au clavier ; la troisième, et elle seule, affiche six titres à choisir.
+   La manche donne donc sa chance à la mémoire avant de la donner à la
+   reconnaissance - et une manche perdue l'est après avoir vu la réponse
+   passer sous les yeux, ce qui vaut mieux que d'en sortir sans jamais avoir
+   eu de prise dessus.
+
+   Chaque erreur dévoile la jaquette d'un cran et fait tomber le gain -
+   200, 100, 50, puis rien. Trois erreurs et la manche est perdue, la
+   réponse s'affiche, on passe à la suivante.
+
+   PARTIE.manches porte la bonne réponse : le serveur l'envoie avec la
+   manche et c'est la page qui corrige. Le plus simple tant qu'aucun score
+   n'est enregistré - on ne triche pas contre soi-même. Le jour où un score
+   comptera, il faudra l'inverse : la manche reste au serveur, qui ne reçoit
+   que les propositions.
+   ========================================================= */
+/* Trois paliers de netteté, du plus flou au presque net. Le dernier laisse
+   volontairement de quoi douter : à zéro, la troisième proposition n'aurait
+   plus rien d'un pari. L'écart entre deux paliers est resserré depuis que la
+   troisième donne six titres - l'image n'a plus à faire tout le travail. */
+const FLOUS = [26, 17, 10];
+
+let PARTIE = null;   // { manches, points, propositions, titres }
+let ETAT = null;     // { i, essai, score, resultats }
+let TITRES = [];     // le vivier, pour compléter la saisie
+
+/* La dernière proposition, et elle seule, se joue au choix. */
+const avecChoix = () => ETAT.essai >= PARTIE.propositions - 1;
+
+async function lance() {
+  marque("Jaquette floue");
+  navRetour(dessineMenu, "Tirage…");
+  el("hero").hidden = true;
+  el("scene").innerHTML = '<p class="qz-etat">Tirage des jaquettes…</p>';
+  try {
+    PARTIE = await api("/api/quiz/jaquette-floue?source=" + encodeURIComponent(SOURCE));
+  } catch (err) {
+    /* la porte de sortie compte autant que le message : sans elle on reste
+       coincé sur l'erreur */
+    el("scene").innerHTML = `<p class="qz-etat"><b>Impossible de lancer la partie.</b>
+      ${esc(err.message)}</p>
+      <p class="qz-boutons" style="margin-top:18px">
+        <button type="button" class="cta" id="retour">Revenir aux jeux</button></p>`;
+    el("retour").addEventListener("click", dessineMenu);
+    return;
+  }
+  TITRES = PARTIE.titres || [];
+  ETAT = { i: 0, essai: 0, score: 0, resultats: [] };
+  dessineManche();
+}
+
+function manche() { return PARTIE.manches[ETAT.i]; }
+
+/* La zone de réponse change de nature au fil des propositions : un champ,
+   puis une grille. Un seul endroit la fabrique et un seul la branche, pour
+   qu'un passage de l'une à l'autre en cours de manche ne soit qu'un
+   remplacement de contenu. */
+function zoneReponse() {
+  if (avecChoix()) {
+    return `<div class="qz-choix" id="choix">${manche().choix.map((t) => `
+      <button type="button" data-titre="${esc(t)}">${esc(t)}</button>`).join("")}</div>`;
+  }
+  return `
+    <form class="qz-saisie" id="saisie">
+      <span class="qz-boite">
+        <input id="essai" type="text" autocomplete="off" autocapitalize="off"
+               spellcheck="false" placeholder="Le titre du jeu…"
+               aria-label="Le titre du jeu" role="combobox" aria-expanded="false"
+               aria-autocomplete="list" aria-controls="ac">
+        <div class="qz-ac" id="ac" role="listbox" aria-label="Titres proposés" hidden></div>
+      </span>
+      <button type="submit" class="cta" id="valide"
+              style="width:auto;padding:0 20px">Passer</button>
+    </form>`;
+}
+
+function brancheReponse() {
+  if (avecChoix()) {
+    el("choix").querySelectorAll("button").forEach((b) =>
+      b.addEventListener("click", () => juge(b.dataset.titre, b)));
+    return;
+  }
+  el("saisie").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const champ = el("essai");
+    const dit = champ.value.trim();
+    acFerme();
+    champ.value = "";
+    majValide();
+    if (dit) juge(dit, null);
+    else avance(null);
+  });
+  el("essai").addEventListener("input", () => { majValide(); acFrappe(); });
+  el("essai").addEventListener("keydown", acTouche);
+  el("essai").addEventListener("blur", () => setTimeout(acFerme, 120));
+  el("essai").focus();
+}
+
+function dessineManche() {
+  const m = manche();
+  navAbandon(`Manche ${ETAT.i + 1} / ${PARTIE.manches.length}`);
+  el("scene").innerHTML = `
+    <div class="qz-partie">
+      <div class="qz-barre">
+        <span>Manche ${ETAT.i + 1} / ${PARTIE.manches.length}</span>
+        <div class="qz-jalons" aria-hidden="true">${PARTIE.manches.map((_, k) => {
+          const r = ETAT.resultats[k];
+          return `<span class="qz-jalon${r ? (r.points ? " gagne" : " perdu") : ""}${
+            k === ETAT.i ? " ici" : ""}"></span>`;
+        }).join("")}</div>
+        <span class="qz-score">Score <b>${ETAT.score}</b></span>
+      </div>
+
+      <div class="qz-cadre">
+        <img id="jaquette" src="${esc(m.image)}" alt="Jaquette floutée à deviner"
+             draggable="false" style="--flou:${FLOUS[ETAT.essai]}px">
+        <div class="qz-verdict" id="verdict" hidden></div>
+      </div>
+
+      <div id="reponse">${zoneReponse()}</div>
+
+      <p class="qz-info qz-sous" id="info"></p>
+    </div>`;
+  brancheReponse();
+  info();
+}
+
+/* Un champ vide n'a rien à valider : le bouton dit alors ce qu'il fait
+   vraiment. Un « Valider » grisé laisserait croire qu'il faut écrire quelque
+   chose pour avancer, alors qu'on a justement le droit de renoncer. */
+function majValide() {
+  const b = el("valide"), champ = el("essai");
+  if (b && champ) b.textContent = champ.value.trim() ? "Valider" : "Passer";
+}
+
+/* Passer à la proposition suivante - après une erreur comme après un
+   « Passer », c'est exactement le même prix. La jaquette se dévoile d'un
+   cran, et la dernière troque le clavier contre six titres.
+
+   `refuse` : le titre qu'on vient de proposer pour rien, ou rien du tout
+   si on a passé son tour. */
+function avance(refuse) {
+  ETAT.essai++;
+  if (ETAT.essai >= PARTIE.propositions) {
+    ETAT.resultats[ETAT.i] = { titre: manche().titre, points: 0, essai: 0 };
+    termine(false, 0);
+    return;
+  }
+  el("jaquette").style.setProperty("--flou", FLOUS[ETAT.essai] + "px");
+  acFerme();
+  if (avecChoix()) {
+    el("reponse").innerHTML = zoneReponse();
+    brancheReponse();
+  } else {
+    el("essai").focus();
+  }
+  info(refuse);
+}
+
+/* La ligne sous la jaquette : ce qu'on vient de proposer pour rien, et ce
+   qu'il reste à jouer.
+
+   Elle disait tout en toutes lettres et sur un seul souffle - « « We Were
+   Here Expeditions: The FriendShip », non. Proposition 2 sur 3 · 100 points
+   si tu trouves maintenant » - soit une phrase à relire en entier, à chaque
+   erreur, pour y retrouver deux chiffres.
+
+   Deux lignes plutôt qu'une, et rien qu'on ne lise déjà ailleurs :
+
+     - le titre refusé, barré. Barré, il n'a plus besoin qu'on lui dise
+       « non » ; et sur une ligne à lui, un titre à rallonge ne repousse
+       plus le reste hors de vue - il se coupe, il ne déborde pas ;
+     - l'essai en cours et la mise, en petit dessous. « pts » suffit là où
+       il y a déjà un chiffre, et le prix se lit sans qu'on rappelle à quoi
+       il sert : le seul moment où on le lit, c'est en cherchant.
+
+   La hauteur est réservée pour les deux lignes : sans ça le compteur
+   sauterait d'un cran à la première erreur, juste sous une image qu'on est
+   en train de regarder. */
+function info(refuse) {
+  el("info").innerHTML = `
+    ${refuse ? `<span class="qz-refus">${esc(refuse)}</span>` : ""}
+    <span class="qz-mise">Essai ${ETAT.essai + 1} / ${PARTIE.propositions}
+      <b>${PARTIE.points[ETAT.essai]} pts</b></span>`;
+}
+
+/* ---------- compléter le titre pendant la frappe ----------
+   Le vivier de la partie est arrivé avec elle : la liste répond donc sans
+   attendre, hors ligne, et sans un aller-retour par lettre tapée.
+
+   Choisir une suggestion REMPLIT le champ, ça ne valide pas. Un clic de
+   travers coûterait sinon une proposition sur trois, et il n'y a pas de
+   retour en arrière dans une manche.
+
+   La comparaison passe par cle() - la même que celle qui juge la réponse :
+   ce qui s'affiche pendant qu'on tape et ce qui est accepté à la fin
+   doivent suivre la même règle, sinon la liste promet ce que le jeu refuse. */
+const AC_MAXI = 8;
+let AC = { liste: [], i: -1 };
+
+function acFerme() {
+  const b = el("ac");
+  AC = { liste: [], i: -1 };
+  if (!b) return;
+  b.hidden = true; b.innerHTML = "";
+  const champ = el("essai");
+  if (champ) champ.setAttribute("aria-expanded", "false");
+}
+
+function acFrappe() {
+  const champ = el("essai");
+  const q = cle(champ.value);
+  if (q.length < 2 || !TITRES.length) { acFerme(); return; }
+  /* Ce qui commence par ce qu'on tape d'abord, ce qui le contient ensuite :
+     « mario » doit proposer « Mario Kart » avant « Super Mario Odyssey ». */
+  const debut = [], dedans = [];
+  for (const t of TITRES) {
+    const c = cle(t);
+    if (c.startsWith(q)) debut.push(t);
+    else if (c.includes(q)) dedans.push(t);
+    if (debut.length >= AC_MAXI) break;
+  }
+  const liste = debut.concat(dedans).slice(0, AC_MAXI);
+  if (!liste.length) { acFerme(); return; }
+  AC = { liste: liste, i: -1 };
+  const b = el("ac");
+  b.innerHTML = liste.map((t, k) => `
+    <button type="button" role="option" aria-selected="false" data-k="${k}"
+      >${esc(t)}</button>`).join("");
+  b.hidden = false;
+  champ.setAttribute("aria-expanded", "true");
+  b.querySelectorAll("button").forEach((x) => {
+    /* mousedown et non click : le champ perdrait le focus en premier, la
+       liste se refermerait, et le clic atterrirait dans le vide */
+    x.addEventListener("mousedown", (e) => { e.preventDefault(); acChoisit(+x.dataset.k); });
+  });
+}
+
+function acChoisit(k) {
+  const t = AC.liste[k];
+  if (t === undefined) return;
+  const champ = el("essai");
+  champ.value = t;
+  /* Remplir le champ par le script ne déclenche aucun événement `input` :
+     sans cet appel, le bouton continuerait d'annoncer « Passer » au-dessus
+     d'un titre écrit. */
+  majValide();
+  acFerme();
+  champ.focus();
+}
+
+function acBouge(pas) {
+  const b = el("ac");
+  if (!b || b.hidden || !AC.liste.length) return;
+  const n = AC.liste.length;
+  AC.i = AC.i < 0 ? (pas > 0 ? 0 : n - 1) : (AC.i + pas + n) % n;
+  b.querySelectorAll("button").forEach((x, k) => {
+    const on = k === AC.i;
+    x.classList.toggle("on", on);
+    x.setAttribute("aria-selected", on ? "true" : "false");
+    if (on) x.scrollIntoView({ block: "nearest" });
+  });
+}
+
+function acTouche(e) {
+  const b = el("ac");
+  const ouvert = b && !b.hidden && AC.liste.length;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    if (!ouvert) return;
+    e.preventDefault(); acBouge(e.key === "ArrowDown" ? 1 : -1);
+  } else if (e.key === "Enter") {
+    /* Entrée sur une suggestion surlignée la recopie ; le formulaire ne
+       part donc qu'à la deuxième Entrée, celle qui dit « c'est bien ça ». */
+    if (!ouvert || AC.i < 0) return;
+    e.preventDefault(); acChoisit(AC.i);
+  } else if (e.key === "Escape") {
+    if (!ouvert) return;
+    e.preventDefault(); e.stopPropagation(); acFerme();
+  }
+}
+
+/* ---------- reconnaître une réponse écrite ----------
+   Sans propositions, il faut pardonner l'orthographe : le jeu teste la
+   mémoire, pas la dactylographie. Trois tolérances, dans cet ordre :
+
+     - la ponctuation, la casse et les accents ne comptent pas ;
+     - le titre avant OU après les deux-points suffit : « The Witcher 3 »
+       et « Wild Hunt » pour « The Witcher 3: Wild Hunt », c'est ainsi que
+       les gens les nomment. Le sous-titre ne compte qu'à partir de huit
+       lettres - « GO » ou « 2 » ouvriraient sinon toute une famille ;
+     - quelques fautes de frappe, d'autant plus qu'un titre est long. Une
+       marge fixe rendrait « Celeste » aussi permissif que « The Legend of
+       Zelda: Breath of the Wild », donc trois lettres sur un titre court
+       accepteraient n'importe quoi. */
+const cle = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/* Levenshtein, plafonné : au-delà de `maxi` on abandonne, le chiffre exact
+   n'apprendrait rien de plus et la boucle coûte pour rien. */
+function distance(a, b, maxi) {
+  if (Math.abs(a.length - b.length) > maxi) return maxi + 1;
+  let ligne = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let precedent = ligne[0];
+    ligne[0] = i;
+    let mini = ligne[0];
+    for (let j = 1; j <= b.length; j++) {
+      const garde = ligne[j];
+      ligne[j] = Math.min(ligne[j] + 1, ligne[j - 1] + 1,
+                          precedent + (a[i - 1] === b[j - 1] ? 0 : 1));
+      precedent = garde;
+      if (ligne[j] < mini) mini = ligne[j];
+    }
+    if (mini > maxi) return maxi + 1;
+  }
+  return ligne[b.length];
+}
+
+function reconnait(dit, titre) {
+  const a = cle(dit);
+  if (!a) return false;
+  const formes = [cle(titre)];
+  const morceaux = titre.split(/[:–—]/);
+  if (morceaux.length > 1) {
+    const avant = cle(morceaux[0]);
+    const apres = cle(morceaux.slice(1).join(" "));
+    if (avant && avant !== formes[0]) formes.push(avant);
+    if (apres.length >= 8 && apres !== formes[0]) formes.push(apres);
+  }
+  return formes.some((b) => {
+    if (a === b) return true;
+    const marge = Math.min(3, Math.floor(b.length / 12));
+    return marge > 0 && distance(a, b, marge) <= marge;
+  });
+}
+
+function juge(dit, bouton) {
+  const m = manche();
+  /* Un bouton, c'est la grille : le titre vient de la liste, il doit tomber
+     juste au caractère près. Tapé à la main, on pardonne l'orthographe. */
+  const bon = bouton ? dit === m.titre : reconnait(dit, m.titre);
+
+  if (bon) {
+    const gain = PARTIE.points[ETAT.essai];
+    ETAT.score += gain;
+    ETAT.resultats[ETAT.i] = { titre: m.titre, points: gain, essai: ETAT.essai + 1 };
+    if (bouton) bouton.classList.add("bon");
+    termine(true, gain);
+    return;
+  }
+
+  if (bouton) { bouton.classList.add("rate"); bouton.disabled = true; }
+  /* Un clic dans la grille n'arrive qu'à la dernière proposition : la manche
+     se termine, et c'est le verdict qui parle, pas cette ligne-là. */
+  avance(bouton ? null : dit);
+}
+
+/* Fin de manche : la jaquette se révèle, la réponse s'affiche dessus, et on
+   attend un clic. Pas d'enchaînement automatique - on vient peut-être de
+   découvrir un jeu, et se le faire arracher au bout d'une seconde serait le
+   contraire du but. */
+function termine(gagne, gain) {
+  const m = manche();
+  el("jaquette").style.setProperty("--flou", "0px");
+  /* La grille n'est là qu'à la dernière proposition : c'est sa présence qui
+     décide, pas le rang de l'essai. */
+  const grille = el("choix");
+  if (grille) {
+    grille.querySelectorAll("button").forEach((b) => {
+      b.disabled = true;
+      if (b.dataset.titre === m.titre && !gagne) b.classList.add("montre");
+    });
+  } else {
+    el("reponse").innerHTML = "";
+  }
+  const v = el("verdict");
+  v.className = "qz-verdict " + (gagne ? "bon" : "rate");
+  v.innerHTML = `<u>${gagne ? `Trouvé · +${gain} points` : "Manche perdue"}</u>
+    <b>${esc(m.titre)}</b>`;
+  v.hidden = false;
+
+  const dernier = ETAT.i >= PARTIE.manches.length - 1;
+  el("info").innerHTML = `<button type="button" class="cta" id="suivant"
+    style="width:auto;padding:0 24px">${
+      dernier ? "Voir le résultat" : "Manche suivante"}</button>`;
+  const b = el("suivant");
+  b.addEventListener("click", () => {
+    if (dernier) { dessineFin(); return; }
+    ETAT.i++; ETAT.essai = 0;
+    dessineManche();
+  });
+  b.focus();
+}
+
+/* Le tableau de fin : les cinq jaquettes en ligne, nettes cette fois.
+   Une liste de titres dirait la même chose, mais c'est d'images qu'on vient
+   de jouer - et une jaquette qu'on n'a pas reconnue, on la reconnaîtra la
+   prochaine fois pour l'avoir vue ici en grand, pas pour avoir lu son nom.
+   Celles qu'on a manquées restent en gris : le tableau se lit alors d'un
+   regard, sans compter les pastilles. */
+function dessineFin() {
+  navRetour(dessineMenu, "Résultat");
+  const maxi = PARTIE.manches.length * PARTIE.points[0];
+  const trouvees = ETAT.resultats.filter((r) => r.points).length;
+  const s = trouvees > 1 ? "s" : "";
+  el("scene").innerHTML = `
+    <div class="qz-partie qz-etendu qz-fin">
+      <div class="qz-bilan">${bilanHTML(ETAT.score, maxi,
+        `${trouvees} jaquette${s} sur ${PARTIE.manches.length} trouvée${s}`)}</div>
+      <div class="qz-tableau">${PARTIE.manches.map((m, k) => {
+        const r = ETAT.resultats[k] || { points: 0 };
+        return `<div class="qz-carte ${r.points ? "gagne" : "rate"}">
+          <span class="qz-face">
+            <img src="${esc(m.image)}" alt="" loading="lazy" draggable="false">
+            <span class="qz-sceau">${r.points ? `+${r.points}` : "raté"}</span>
+          </span>
+          <b>${esc(m.titre)}</b>
+          <i>${r.points ? `${RANGS[r.essai - 1] || r.essai + "e"} proposition`
+                        : "non trouvée"}</i>
+        </div>`;
+      }).join("")}</div>
+      <div class="qz-boutons">
+        <button type="button" class="cta" id="rejouer">Rejouer</button>
+        <button type="button" class="cta" id="autres"
+                style="background:none;color:var(--muted);border:1px solid var(--line)">Autres jeux</button>
+      </div>
+    </div>`;
+  el("rejouer").addEventListener("click", lance);
+  el("autres").addEventListener("click", dessineMenu);
+}
+
+/* =========================================================
+   Chronologie
+
+   Cinq jaquettes en ligne, le titre dessous, du plus ancien à gauche au plus
+   récent à droite. On les glisse pour les ranger, et on vérifie - un seul
+   essai, il n'y a pas de deuxième chance à négocier.
+
+   « Vérifier » fait tout d'un coup : la frise se range dans l'ordre juste,
+   chaque carte dit si on l'y avait mise, les dates apparaissent et le score
+   s'affiche dessous. Pas d'écran de résultat séparé, et surtout pas de liste
+   verticale qui rejouerait la même chose en moins lisible : ce qu'on veut
+   voir en corrigeant une chronologie, c'est la chronologie.
+
+   Un seul essai, mais pas tout ou rien : chaque jeu bien placé rapporte ses
+   points. Une frise à moitié juste est à moitié sue, et la compter zéro
+   effacerait la différence entre s'être trompé de deux places et n'avoir
+   rien reconnu.
+
+   L'ordre attendu vient des dates envoyées avec la partie : c'est la page
+   qui corrige, comme pour la jaquette floue, et pour la même raison - rien
+   n'est enregistré, on ne triche pas contre soi-même.
+
+   Le glisser-déposer est écrit avec les événements de pointeur et non avec
+   le drag-and-drop du navigateur, qui ignore purement et simplement le
+   tactile ; cette page se joue aussi sur un téléphone.
+
+   Et sur un téléphone, justement, cinq jaquettes côte à côte feraient cinq
+   timbres : la feuille de style repasse la frise en colonne sous 640 px.
+   Le glissement n'est donc écrit sur AUCUN axe en particulier - il lit celui
+   de la liste au moment où on attrape une carte, et tout le reste du calcul
+   est le même. Ce qui change avec l'axe, c'est le doigt : en ligne, un
+   glissement horizontal ne dispute rien au défilement de la page et toute la
+   carte s'attrape ; en colonne, il faut passer par la poignée, seul endroit
+   qui bloque le défilement.
+   ========================================================= */
+const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin",
+              "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+
+/* `sortie` arrive en 'AAAA-MM-JJ'. Le jour compte : deux jeux de la même
+   année ne se départagent que par lui, et afficher la seule année ferait
+   passer une bonne réponse pour une égalité. */
+function dateFr(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ""));
+  if (!m) return String(s || "");
+  return `${+m[3]} ${MOIS[+m[2] - 1] || ""} ${m[1]}`.replace(/\s+/g, " ").trim();
+}
+
+let CHRONO = null;   // { jeux, juste, ordre, reponse, parJeu, bien, score, fini }
+let PRISE = null;    // la carte tenue en ce moment, ou rien
+
+const POIGNEE = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"
+  aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/>
+  <circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/>
+  <circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>`;
+
+/* L'axe de la frise, lu sur la liste elle-même plutôt que deviné d'une
+   largeur d'écran : la feuille de style est seule à décider, et le script
+   la suit sans avoir à connaître le point de bascule. */
+const chronoAxe = () =>
+  getComputedStyle(el("frise")).flexDirection.startsWith("row") ? "x" : "y";
+const glisse = (axe, n) => (axe === "x" ? `translateX(${n}px)` : `translateY(${n}px)`);
+
+async function lanceChrono() {
+  marque("Chronologie");
+  navRetour(dessineMenu, "Tirage…");
+  el("hero").hidden = true;
+  el("scene").innerHTML = '<p class="qz-etat">Tirage des jeux…</p>';
+  let data;
+  try {
+    data = await api("/api/quiz/chronologie?source=" + encodeURIComponent(SOURCE));
+  } catch (err) {
+    el("scene").innerHTML = `<p class="qz-etat"><b>Impossible de lancer la partie.</b>
+      ${esc(err.message)}</p>
+      <p class="qz-boutons" style="margin-top:18px">
+        <button type="button" class="cta" id="retour">Revenir aux jeux</button></p>`;
+    el("retour").addEventListener("click", dessineMenu);
+    return;
+  }
+  const jeux = data.jeux || [];
+  /* Un jeu est désigné par son rang dans `jeux` et plus jamais autrement :
+     l'ordre affiché est une liste de ces numéros, celui attendu aussi, et
+     les comparer revient à comparer deux listes de nombres. */
+  CHRONO = {
+    jeux: jeux,
+    juste: jeux.map((_, i) => i).sort((a, b) =>
+      jeux[a].sortie < jeux[b].sortie ? -1 : jeux[a].sortie > jeux[b].sortie ? 1 : 0),
+    ordre: jeux.map((_, i) => i),
+    reponse: null,        // l'ordre donné, gardé au moment de la correction
+    parJeu: data.parJeu || 200,
+    bien: 0,
+    score: 0,
+    fini: false,
+  };
+  PRISE = null;
+  dessineChrono();
+}
+
+function dessineChrono() {
+  navAbandon("Chronologie");
+  el("scene").innerHTML = `
+    <div class="qz-partie qz-chrono">
+
+      <ol class="qz-frise" id="frise"></ol>
+
+      <!-- La flèche du temps sous la frise. Les rangs sur les jaquettes
+           disent déjà l'ordre ; celle-ci dit dans quel SENS il se lit, et
+           c'est ce qu'on oublie une fois la première carte posée. -->
+      <div class="qz-axe" aria-hidden="true">
+        <u>Plus ancien</u><i></i><u>Plus récent</u>
+      </div>
+
+      <!-- Tout ce qui suit la frise change d'un coup à la correction : le
+           bouton et sa promesse de points cèdent la place au score. Un seul
+           bloc à remplacer, donc rien à cacher ni à réafficher un par un. -->
+      <div id="apres">
+        <div class="qz-boutons">
+          <button type="button" class="cta" id="verifier"
+                  style="width:auto;padding:0 26px">Vérifier l'ordre</button>
+        </div>
+        <p class="qz-info"><b>${CHRONO.parJeu} points</b> par jeu bien placé</p>
+      </div>
+    </div>`;
+  dessineFrise();
+  el("verifier").addEventListener("click", chronoVerifie);
+}
+
+/* La liste est redessinée en entier plutôt que déplacée nœud par nœud :
+   cinq cartes coûtent trois fois rien, et les rangs, les décalages en cours
+   et les écouteurs repartent tous de la même source - CHRONO.ordre. */
+const RANGS = ["1re", "2e", "3e", "4e", "5e"];
+
+function dessineFrise() {
+  el("frise").innerHTML = CHRONO.ordre.map((id, p) => {
+    const j = CHRONO.jeux[id];
+    /* Une fois corrigé, la frise affiche l'ordre JUSTE : `p` est donc la
+       vraie place du jeu, et c'est dans CHRONO.reponse qu'on lit celle qu'on
+       lui avait donnée. Une carte mal placée le dit en toutes lettres -
+       « placé en 4e » - plutôt que de laisser deviner d'où elle vient. */
+    const donne = CHRONO.fini ? CHRONO.reponse.indexOf(id) : p;
+    const bon = donne === p;
+    return `<li class="qz-piece${CHRONO.fini ? (bon ? " juste" : " faux") : ""}"
+                data-id="${id}">
+      <span class="qz-face">
+        <span class="qz-rang">${p + 1}</span>
+        ${j.image
+          ? `<img src="${esc(j.image)}" alt="" draggable="false">`
+          : `<span class="qz-vide" aria-hidden="true">${esc((j.titre || "?").charAt(0))}</span>`}
+      </span>
+      <span class="qz-titre">
+        <b>${esc(j.titre)}</b>
+        ${CHRONO.fini ? `<i class="qz-date">${esc(dateFr(j.sortie))}</i>
+        ${bon ? "" : `<i class="qz-place">placé en ${RANGS[donne] || donne + 1}</i>`}` : ""}
+      </span>
+      ${CHRONO.fini ? "" : `<button type="button" class="qz-grip"
+              aria-label="Déplacer ${esc(j.titre)}">${POIGNEE}</button>`}
+    </li>`;
+  }).join("");
+
+  if (CHRONO.fini) return;
+  el("frise").querySelectorAll(".qz-piece").forEach((li) => {
+    li.addEventListener("pointerdown", (e) => chronoPrend(e, li));
+    li.addEventListener("pointermove", chronoBouge);
+    li.addEventListener("pointerup", chronoLache);
+    li.addEventListener("pointercancel", chronoLache);
+    /* Le clavier déplace la carte qui a le focus : sans ça, le jeu serait
+       injouable sans souris ni doigt, et il n'y a rien à cliquer qui
+       remplacerait un glissement. Les quatre flèches, parce que la frise est
+       tantôt une ligne, tantôt une colonne. */
+    li.querySelector(".qz-grip").addEventListener("keydown", (e) => {
+      const pas = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
+      if (!pas) return;
+      e.preventDefault();
+      chronoDeplace(+li.dataset.id, pas);
+    });
+  });
+}
+
+function chronoDeplace(id, pas) {
+  const o = CHRONO.ordre;
+  const p = o.indexOf(id);
+  const q = p + pas;
+  if (p < 0 || q < 0 || q >= o.length) return;
+  o.splice(p, 1);
+  o.splice(q, 0, id);
+  dessineFrise();
+  const b = el("frise").querySelector(`.qz-piece[data-id="${id}"] .qz-grip`);
+  if (b) b.focus();
+}
+
+function chronoPrend(e, li) {
+  if (CHRONO.fini || PRISE) return;
+  if (e.button) return;                                   // seulement le bouton gauche
+  const axe = chronoAxe();
+  /* En colonne, uniquement par la poignée : c'est le seul élément posé en
+     touch-action:none, donc le seul endroit où glisser au doigt ne fait pas
+     défiler la page. En ligne, le glissement est horizontal - il ne dispute
+     rien au défilement, et toute la carte s'attrape. */
+  if (e.pointerType === "touch" && axe === "y" && !e.target.closest(".qz-grip")) return;
+
+  const pieces = Array.from(el("frise").children);
+  const dep = pieces.indexOf(li);
+  if (dep < 0) return;
+  /* Le pas mesuré sur la liste elle-même, taille et écart compris : la
+     feuille de style peut changer les deux sans que ce calcul mente. */
+  const pas = pieces.length > 1
+    ? (axe === "x" ? pieces[1].offsetLeft - pieces[0].offsetLeft
+                   : pieces[1].offsetTop - pieces[0].offsetTop)
+    : (axe === "x" ? li.offsetWidth : li.offsetHeight);
+  PRISE = { li, axe, dep, i: dep, pas, bouge: false, pointeur: e.pointerId,
+            d0: axe === "x" ? e.clientX : e.clientY };
+  li.setPointerCapture(e.pointerId);
+  e.preventDefault();                                     // pas de sélection de texte
+}
+
+function chronoBouge(e) {
+  if (!PRISE || e.pointerId !== PRISE.pointeur) return;
+  const d = (PRISE.axe === "x" ? e.clientX : e.clientY) - PRISE.d0;
+  /* Quelques pixels de tolérance : un clic n'est jamais parfaitement
+     immobile, et sans ce seuil chaque appui soulèverait la carte. */
+  if (!PRISE.bouge) {
+    if (Math.abs(d) < 4) return;
+    PRISE.bouge = true;
+    PRISE.li.classList.add("prise");
+    el("frise").classList.add("bouge");
+  }
+  PRISE.li.style.transform = glisse(PRISE.axe, d);
+  const n = CHRONO.ordre.length;
+  const cible = Math.max(0, Math.min(n - 1, PRISE.dep + Math.round(d / PRISE.pas)));
+  if (cible === PRISE.i) return;
+  const id = +PRISE.li.dataset.id;
+  CHRONO.ordre.splice(CHRONO.ordre.indexOf(id), 1);
+  CHRONO.ordre.splice(cible, 0, id);
+  PRISE.i = cible;
+  chronoDecale();
+}
+
+/* Pendant un glissement, le DOM ne bouge pas : chaque carte est simplement
+   décalée de l'écart entre sa place de départ et sa place du moment.
+   Déplacer les nœuds pour de vrai sous un doigt qui appuie dessus
+   reviendrait à déplacer le sol sous ses pieds. */
+function chronoDecale() {
+  Array.from(el("frise").children).forEach((x, b) => {
+    if (PRISE && x === PRISE.li) return;
+    const p = CHRONO.ordre.indexOf(+x.dataset.id);
+    x.style.transform = p === b ? "" : glisse(PRISE.axe, (p - b) * PRISE.pas);
+  });
+}
+
+function chronoLache(e) {
+  if (!PRISE || (e && e.pointerId !== PRISE.pointeur)) return;
+  const li = PRISE.li, bouge = PRISE.bouge;
+  try { li.releasePointerCapture(PRISE.pointeur); } catch (err) { /* déjà relâché */ }
+  PRISE = null;
+  el("frise").classList.remove("bouge");
+  li.classList.remove("prise");
+  /* Rien n'a bougé : c'était un clic, pas un glissement. Redessiner la liste
+     pour rien lui ferait perdre le focus qu'on venait de lui donner. */
+  if (bouge) dessineFrise();   // le DOM rattrape l'ordre logique, décalages à zéro
+}
+
+function chronoVerifie() {
+  CHRONO.bien = CHRONO.ordre.reduce((t, id, p) => t + (id === CHRONO.juste[p] ? 1 : 0), 0);
+  CHRONO.score = CHRONO.bien * CHRONO.parJeu;
+  CHRONO.reponse = CHRONO.ordre.slice();
+  chronoTermine();
+}
+
+/* La correction, en un seul geste : la frise se range dans l'ordre juste, les
+   dates apparaissent, chaque carte dit si on l'y avait mise, et le score
+   remplace le bouton. Rien à cliquer entre les deux - le résultat d'un jeu
+   d'un seul essai n'a pas à se mériter en deux temps.
+
+   Les cartes glissent de leur ancienne place vers la nouvelle (technique dite
+   FLIP : on mesure avant, on redessine, on remet les cartes à leur position
+   d'avant, et on lâche). Sans ça elles se téléporteraient, et on ne verrait
+   pas ce qui a bougé - or c'est précisément ce qu'on vient de jouer. */
+function chronoTermine() {
+  const frise = el("frise");
+  const avant = new Map();
+  Array.from(frise.children).forEach((li) =>
+    avant.set(li.dataset.id, { x: li.offsetLeft, y: li.offsetTop }));
+
+  CHRONO.fini = true;
+  CHRONO.ordre = CHRONO.juste.slice();
+  frise.classList.add("corrige");
+  dessineFrise();
+
+  const ecarts = Array.from(frise.children).map((li) => {
+    const a = avant.get(li.dataset.id);
+    return a ? { li, dx: a.x - li.offsetLeft, dy: a.y - li.offsetTop } : null;
+  });
+  ecarts.forEach((e) => {
+    if (!e || (!e.dx && !e.dy)) return;
+    e.li.style.transition = "none";
+    e.li.style.transform = `translate(${e.dx}px,${e.dy}px)`;
+  });
+  void frise.offsetWidth;                 // la position de départ est prise en compte
+  requestAnimationFrame(() => ecarts.forEach((e) => {
+    if (!e) return;
+    e.li.style.transition = "";           // rend la main à la feuille de style
+    e.li.style.transform = "";
+  }));
+
+  /* La croix d'abandon n'a plus rien à abandonner : la partie est finie, la
+     flèche ramène au salon. */
+  navRetour(dessineMenu, "Corrigé");
+  /* « jeu » fait « jeux », pas « jeus » : les noms en -eu prennent un x. Le
+     participe qui suit, lui, prend bien son s. */
+  const s = CHRONO.bien > 1 ? "s" : "";
+  el("apres").innerHTML = `
+    <div class="qz-bilan">
+      ${bilanHTML(CHRONO.score, CHRONO.jeux.length * CHRONO.parJeu, CHRONO.bien
+        ? `${CHRONO.bien} jeu${s ? "x" : ""} sur ${CHRONO.jeux.length} bien placé${s}`
+        : "aucun jeu à sa place")}
+      <div class="qz-boutons">
+        <button type="button" class="cta" id="rejouer">Rejouer</button>
+        <button type="button" class="cta" id="autres"
+                style="background:none;color:var(--muted);border:1px solid var(--line)">Autres jeux</button>
+      </div>
+    </div>`;
+  el("rejouer").addEventListener("click", lanceChrono);
+  el("autres").addEventListener("click", dessineMenu);
+  el("rejouer").focus();
+}
+
+/* =========================================================
+   Chronologie sans fin
+
+   La variante endurance : un jeu à la fois, à placer dans une frise qui
+   s'allonge, jusqu'à la troisième erreur. La première carte est posée
+   d'office, date visible - c'est le premier repère.
+
+   La frise est une colonne, du plus ancien en haut au plus récent en bas,
+   et non une ligne comme celle de la Chronologie : elle grandit sans fin,
+   et trente jaquettes côte à côte ne tiennent sur aucun écran. Entre deux
+   cartes, et aux deux bouts, une fente où poser la carte en main. Un clic
+   ou un appui suffit, sans glisser : c'est un geste qu'on répète trente
+   fois d'affilée, il doit être le plus court possible.
+
+   La carte en main reste collée en haut de l'écran pendant qu'on descend
+   la frise chercher sa place : sans ça, on perdrait de vue ce qu'on range.
+
+   Une erreur coûte une vie, et la carte se pose quand même, à sa vraie
+   place et en rouge. La frise est aussi ce qu'on apprend en jouant : une
+   date ratée est celle dont on se souvient à la partie suivante.
+
+   Le score : une carte bien placée vaut ENDU.parJeu points par jeu déjà sur
+   la frise (voir ENDURANCE_PAR_JEU dans quiz.py) - elle rapporte autant
+   qu'elle était difficile. Pas de maximum, donc pas de jauge sur mille
+   comme les trois autres jeux : on joue contre son record, gardé par le
+   navigateur, et un par vivier - « Mes jeux » se connaît mieux que « Tous
+   les jeux », les deux records ne se comparent pas.
+   ========================================================= */
+let ENDU = null;   // { pioche, frise, carte, vies, viesMax, parJeu, score, bien, verdict, fini, fige, record, nouveau, vide }
+
+const COEUR = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"
+  aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.1
+  5.4 3.1 1.8-2 3.3-3.1 5.4-3.1 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z"/></svg>`;
+
+/* Le record. Le stockage du navigateur peut manquer - navigation privée,
+   stockage bloqué : on joue alors sans record, et rien d'autre ne change. */
+const cleRecord = () => "quiz-chronologie-sans-fin-" + SOURCE;
+function lisRecord() {
+  try { return Math.max(0, parseInt(localStorage.getItem(cleRecord()), 10) || 0); }
+  catch (e) { return 0; }
+}
+function poseRecord(n) {
+  try { localStorage.setItem(cleRecord(), String(n)); } catch (e) { /* pas de record */ }
+}
+
+// ce que rapporte la carte en main si elle est bien placée
+const enValeur = () => ENDU.frise.length * ENDU.parJeu;
+const enDoux = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+
+async function lanceEndurance() {
+  marque("Chronologie sans fin");
+  navRetour(dessineMenu, "Tirage…");
+  el("hero").hidden = true;
+  el("scene").innerHTML = '<p class="qz-etat">Tirage des jeux…</p>';
+  let data;
+  try {
+    data = await api("/api/quiz/chronologie-sans-fin?source=" + encodeURIComponent(SOURCE));
+  } catch (err) {
+    el("scene").innerHTML = `<p class="qz-etat"><b>Impossible de lancer la partie.</b>
+      ${esc(err.message)}</p>
+      <p class="qz-boutons" style="margin-top:18px">
+        <button type="button" class="cta" id="retour">Revenir aux jeux</button></p>`;
+    el("retour").addEventListener("click", dessineMenu);
+    return;
+  }
+  const jeux = data.jeux || [];
+  ENDU = {
+    pioche: jeux.slice(2),
+    frise: [{ jeu: jeux[0], etat: "depart" }],
+    carte: jeux[1],
+    vies: data.vies || 3,
+    viesMax: data.vies || 3,
+    parJeu: data.parJeu || 10,
+    score: 0,
+    bien: 0,
+    verdict: null,      // ce qui vient de se passer, dit sous la carte en main
+    fini: false,
+    fige: false,        // le court temps d'arrêt après chaque placement
+    record: lisRecord(),
+    nouveau: false,
+    vide: false,        // la pioche s'est épuisée avant les vies
+  };
+  dessineEndurance();
+  window.scrollTo(0, 0);
+}
+
+function dessineEndurance() {
+  navAbandon("Chronologie sans fin");
+  el("scene").innerHTML = `
+    <div class="qz-partie qz-endu">
+      <div class="qz-barre">
+        <span class="en-vies" id="enVies" role="img"></span>
+        <span id="enLong"></span>
+        <span class="qz-score">Score<b id="enScore">0</b></span>
+      </div>
+      <!-- aria-live sur le conteneur, qui reste, et non sur le verdict,
+           redessiné à chaque carte : une région annoncée doit exister avant
+           que son contenu change. -->
+      <div class="en-main" id="enMain" aria-live="polite"></div>
+      <ol class="en-frise" id="enFrise"></ol>
+    </div>`;
+  /* Une seule écoute pour toutes les fentes : elles sont redessinées à
+     chaque placement, des écoutes posées une à une seraient à reposer. */
+  el("enFrise").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-k]");
+    if (b) enPlace(+b.dataset.k);
+  });
+  peintEndurance();
+}
+
+const enFace = (j) => `<span class="en-face">${j.image
+  ? `<img src="${esc(j.image)}" alt="" draggable="false">`
+  : `<span class="qz-vide" aria-hidden="true">${esc((j.titre || "?").charAt(0))}</span>`}</span>`;
+
+/* Une carte de la frise : sa date se lit deux fois, l'année en grand au bout
+   de la ligne pour chercher sa place d'un coup d'œil en descendant, le jour
+   exact sous le titre pour les voisins de la même année. */
+function enCarteHTML(x) {
+  const j = x.jeu;
+  return `<li class="en-carte ${x.etat}${x.neuve ? " neuve" : ""}">
+    ${enFace(j)}
+    <span class="en-txt"><b>${esc(j.titre)}</b><i>${esc(dateFr(j.sortie))}</i></span>
+    <span class="en-an">${esc(String(j.sortie || "").slice(0, 4))}</span>
+    ${x.neuve && x.etat === "juste" ? `<span class="en-gain" aria-hidden="true">+${x.pts}</span>` : ""}
+  </li>`;
+}
+
+/* Une fente, là où la carte en main peut aller. Les deux bouts disent dans
+   quel sens se lit la frise ; celles du milieu n'ont qu'à dire « ici ». Le
+   nom lu à voix haute dit entre quoi et quoi, puisque l'œil, lui, le voit. */
+function enFente(k) {
+  const f = ENDU.frise, n = f.length;
+  const avant = k > 0 ? f[k - 1].jeu.titre : null;
+  const apres = k < n ? f[k].jeu.titre : null;
+  const ou = !avant ? `avant ${apres}` : !apres ? `après ${avant}` : `entre ${avant} et ${apres}`;
+  const texte = k === 0 ? "Plus ancien" : k === n ? "Plus récent" : "Placer ici";
+  return `<li class="en-fente${k === 0 ? " en-debut" : k === n ? " en-bout" : ""}">
+    <button type="button" data-k="${k}"
+            aria-label="Placer ${esc(ENDU.carte.titre)} ${esc(ou)}"><span>${texte}</span></button>
+  </li>`;
+}
+
+function enMainHTML() {
+  const e = ENDU, v = e.verdict;
+  return `
+    <div class="en-carte en-tenue">
+      ${enFace(e.carte)}
+      <span class="en-txt"><b>${esc(e.carte.titre)}</b><i>Où se place-t-il ?</i></span>
+      <span class="en-mise">+${enValeur()}</span>
+    </div>
+    <p class="en-verdict${v ? (v.juste ? " bon" : " mauvais") : ""}">${
+      v ? v.texte : "Choisis sa place dans la frise."}</p>`;
+}
+
+/* Le bilan, là où était la carte en main : c'est le haut de la partie, et
+   la frise complète reste dessous, toutes dates visibles. */
+const EN_MENTIONS = [
+  { bien: 25, texte: "Légendaire",       classe: "parfait" },
+  { bien: 15, texte: "Excellent",        classe: "haut" },
+  { bien: 8,  texte: "Bien joué",        classe: "haut" },
+  { bien: 4,  texte: "Pas mal",          classe: "moyen" },
+  { bien: 1,  texte: "Peut mieux faire", classe: "moyen" },
+  { bien: 0,  texte: "Aïe...",           classe: "bas" },
+];
+
+function enBilanHTML() {
+  const e = ENDU;
+  const m = EN_MENTIONS.find((x) => e.bien >= x.bien);
+  const s = e.bien > 1 ? "s" : "";
+  const record = e.nouveau
+    ? `<p class="en-record neuf">Nouveau record${e.record ? ` · l'ancien était ${e.record}` : ""}</p>`
+    : e.record ? `<p class="en-record">Record : ${e.record}</p>` : "";
+  return `<div class="qz-bilan en-bilan">
+      <p class="qz-mention ${e.vide ? "parfait" : m.classe}">${e.vide ? "Pioche épuisée" : m.texte}</p>
+      <p class="qz-total">${e.score}<span class="qz-max">points</span></p>
+      ${record}
+      <p class="qz-sur">${e.bien
+        ? `${e.bien} jeu${s ? "x" : ""} bien placé${s}` : "aucun jeu bien placé"}
+        · frise de ${e.frise.length} cartes</p>
+      <div class="qz-boutons">
+        <button type="button" class="cta" id="enRejouer">Rejouer</button>
+        <button type="button" class="cta" id="enAutres"
+                style="background:none;color:var(--muted);border:1px solid var(--line)">Autres jeux</button>
+      </div>
+    </div>`;
+}
+
+function peintEndurance() {
+  const e = ENDU;
+  /* La carte en main se colle sous l'en-tête, dont la hauteur change avec la
+     largeur - deux rangées sur un téléphone. Mesurée plutôt que devinée. */
+  const haut = document.querySelector(".top");
+  el("scene").style.setProperty("--en-haut", (haut ? haut.offsetHeight : 0) + "px");
+  const vies = el("enVies");
+  vies.innerHTML = Array.from({ length: e.viesMax }, (_, i) =>
+    `<i class="en-vie${i < e.vies ? "" : " perdue"}">${COEUR}</i>`).join("");
+  vies.setAttribute("aria-label", `${e.vies} vie${e.vies > 1 ? "s" : ""} sur ${e.viesMax}`);
+  el("enLong").innerHTML = `Frise <b>${e.frise.length}</b>`;
+  el("enScore").textContent = e.score;
+  const main = el("enMain");
+  main.classList.toggle("termine", e.fini);
+  main.innerHTML = e.fini ? enBilanHTML() : enMainHTML();
+  const frise = el("enFrise");
+  frise.innerHTML = e.fini
+    ? e.frise.map(enCarteHTML).join("")
+    : enFente(0) + e.frise.map((x, i) => enCarteHTML(x) + enFente(i + 1)).join("");
+  frise.classList.toggle("fige", e.fige);
+  if (e.fini) {
+    el("enRejouer").addEventListener("click", lanceEndurance);
+    el("enAutres").addEventListener("click", dessineMenu);
+  }
+}
+
+function enPlace(k) {
+  const e = ENDU;
+  if (!e || e.fini || e.fige) return;
+  const f = e.frise, c = e.carte;
+  /* Juste si la carte tient entre ses deux voisines. Le serveur n'envoie
+     jamais deux fois la même date, mais l'égalité est acceptée quand même :
+     la refuser punirait une réponse qui n'a pas tort. */
+  const juste = (k === 0 || f[k - 1].jeu.sortie <= c.sortie)
+             && (k === f.length || c.sortie <= f[k].jeu.sortie);
+  const pts = enValeur();
+  f.forEach((x) => { x.neuve = false; });
+  let place = k;
+  if (juste) {
+    e.score += pts;
+    e.bien += 1;
+    e.verdict = { juste: true, texte: `<b>Bien placé</b> · +${pts}` };
+  } else {
+    place = f.findIndex((x) => x.jeu.sortie > c.sortie);
+    if (place < 0) place = f.length;
+    e.vies -= 1;
+    e.verdict = { juste: false, texte: `<b>Raté</b> · ${esc(c.titre)} est sorti le ${
+      esc(dateFr(c.sortie))}${e.vies === 1 ? " · plus qu'une vie" : ""}` };
+  }
+  f.splice(place, 0, { jeu: c, etat: juste ? "juste" : "faux", neuve: true, pts: pts });
+
+  if (e.vies <= 0 || !e.pioche.length) {
+    enTermine();
+    return;
+  }
+  e.carte = e.pioche.shift();
+  /* Un temps d'arrêt après chaque placement : la frise vient de bouger
+     sous le doigt, et un second appui parti trop vite tomberait dans une
+     fente qui n'est plus celle qu'on visait. */
+  e.fige = true;
+  setTimeout(() => {
+    if (ENDU !== e) return;
+    e.fige = false;
+    const fr = el("enFrise");
+    if (fr) fr.classList.remove("fige");
+  }, 450);
+
+  const avant = document.activeElement && document.activeElement.closest
+    && document.activeElement.closest("#enFrise [data-k]");
+  peintEndurance();
+  /* Le clavier garde sa place : redessiner la frise a emporté le bouton
+     qui avait le focus, on le rend à la fente du même rang. */
+  if (avant) {
+    const b = el("enFrise").querySelector(`[data-k="${Math.min(k, f.length)}"]`);
+    if (b) b.focus({ preventScroll: true });
+  }
+  /* Une carte ratée se pose à sa vraie place, qui peut être loin de celle
+     qu'on visait : on la montre. */
+  if (!juste) {
+    const neuve = el("enFrise").querySelector(".en-carte.neuve");
+    if (neuve) neuve.scrollIntoView({ block: "nearest", behavior: enDoux() });
+  }
+}
+
+function enTermine() {
+  const e = ENDU;
+  e.fini = true;
+  e.fige = false;
+  e.vide = e.vies > 0;
+  e.nouveau = e.score > e.record;
+  if (e.nouveau) poseRecord(e.score);
+  /* La croix d'abandon n'a plus rien à abandonner : la flèche ramène au
+     salon. */
+  navRetour(dessineMenu, "Terminé");
+  peintEndurance();
+  /* Le bilan est en haut de la partie, et on peut être loin dessous, au
+     fond d'une frise de trente cartes. */
+  window.scrollTo({ top: 0, behavior: enDoux() });
+  el("enRejouer").focus({ preventScroll: true });
+}
+
+/* =========================================================
+   Grille de connexions
+
+   Seize jeux en carré, quatre groupes de quatre à retrouver : même studio,
+   même année, un genre ou un mot en commun. On en désigne quatre, on valide,
+   et au quatrième faux pas la partie est perdue.
+
+   Ce qui fait ou défait ce jeu-là tient entièrement dans le tirage, et il
+   est côté serveur (voir _tire_grille et _sans_ambiguite dans quiz.py) : une
+   grille n'est envoyée que si elle n'a qu'une seule lecture possible. Aucune
+   des quatre catégories ne déborde sur les douze autres cases, et surtout
+   aucun AUTRE paquet de quatre du plateau ne forme une catégorie que le jeu
+   aurait pu proposer. Sans cette seconde condition, on voit quatre Donkey
+   Kong, on les propose, on a raison - et le jeu répond non.
+
+   La page, elle, ne fait que corriger : les groupes arrivent avec la partie.
+   C'est le parti pris des deux autres mini-jeux, et il vaut ici aussi tant
+   qu'aucun score n'est enregistré - voir l'avertissement en tête de quiz.py.
+
+   « Presque : il n'en manquait qu'un » : quand trois des quatre cases
+   désignées appartiennent au même groupe. Sans ce retour, une erreur ne
+   dit rien, et on recommence la même à une case près sans savoir qu'on y
+   était. Il s'écrit dès la validation, pendant la secousse - et le plateau
+   se tait le temps de le laisser lire : voir gcAnime().
+   ========================================================= */
+let GRILLE = null;   // { groupes, cases, choisies, trouves, erreurs, ... }
+
+/* Quatre couleurs, dans l'ordre où les groupes arrivent - que le serveur a
+   mélangé exprès, pour que la couleur ne trahisse jamais la nature du lien. */
+const GC_COULEURS = ["or", "vert", "bleu", "violet"];
+
+/* Fisher-Yates. Array.sort(() => Math.random() - .5) ne mélange pas : il
+   dépend de l'algorithme de tri du navigateur et laisse des positions
+   quasi inchangées. */
+function melange(liste) {
+  for (let i = liste.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [liste[i], liste[j]] = [liste[j], liste[i]];
+  }
+  return liste;
+}
+
+async function lanceGrille() {
+  marque("Grille de connexions");
+  navRetour(dessineMenu, "Tirage…");
+  el("hero").hidden = true;
+  el("scene").innerHTML = '<p class="qz-etat">Construction de la grille…</p>';
+  let data;
+  try {
+    data = await api("/api/quiz/grille?source=" + encodeURIComponent(SOURCE));
+  } catch (err) {
+    el("scene").innerHTML = `<p class="qz-etat"><b>Impossible de lancer la partie.</b>
+      ${esc(err.message)}</p>
+      <p class="qz-boutons" style="margin-top:18px">
+        <button type="button" class="cta" id="retour">Revenir aux jeux</button></p>`;
+    el("retour").addEventListener("click", dessineMenu);
+    return;
+  }
+  const groupes = data.groupes || [];
+  GRILLE = {
+    groupes: groupes,
+    /* Une case ne connaît que son groupe : c'est tout ce qu'il faut pour
+       corriger, et le titre suffit à l'identifier - le vivier est
+       dédoublonné par titre côté serveur. */
+    cases: melange(groupes.flatMap((g, i) =>
+      g.jeux.map((j) => ({ titre: j.titre, image: j.image, groupe: i })))),
+    choisies: [],
+    trouves: [],          // les groupes résolus, dans l'ordre où ils l'ont été
+    /* Les quatuors déjà proposés, chacun réduit à ses quatre titres triés.
+       Reproposer le même ne coûte pas une seconde vie : voir gcValide(). */
+    essais: [],
+    erreurs: 0,
+    erreursMax: data.erreurs || 4,
+    parGroupe: data.parGroupe || 150,
+    parVie: data.parVie || 100,
+    message: "",
+    /* Le numéro du message, et non son texte : c'est lui qui décide de
+       rejouer l'apparition, pour que deux « Presque » de suite se voient.
+       Voir gcDitMessage(). */
+    messageNo: 0,
+    /* Vrai le temps qu'une réponse s'anime. Le plateau est alors sourd :
+       sans ce verrou, un clic pressé pendant la secousse effaçait le
+       message avant qu'il ne s'affiche, et un second appui sur « Valider »
+       coûtait une deuxième vie pour le même essai. */
+    anime: false,
+    fini: false,
+    gagne: false,
+  };
+  GC_MSG_PEINT = 0;
+  dessineGrille();
+}
+
+function dessineGrille() {
+  navAbandon("Grille de connexions");
+  el("scene").innerHTML = `
+    <div class="qz-partie gc">
+      <!-- Les groupes résolus s'empilent au-dessus de la grille, qui rétrécit
+           d'autant : le plateau se vide à mesure qu'on avance, et ce qu'on a
+           trouvé reste sous les yeux pour aider à trouver le reste. -->
+      <div class="gc-bandes" id="gcBandes"></div>
+      <div class="gc-plateau" id="gcPlateau"></div>
+      <p class="gc-message" id="gcMessage" role="status" aria-live="polite"></p>
+      <div class="gc-pied" id="gcPied"></div>
+    </div>`;
+  gcPeint();
+}
+
+/* Tout est repeint depuis GRILLE à chaque geste : seize cases coûtent trois
+   fois rien, et les états - choisie, résolue, terminée - repartent tous de
+   la même source plutôt que d'être rattrapés un par un. */
+function gcPeint() {
+  const g = GRILLE;
+  const resolus = new Set(g.trouves);
+
+  gcEmpileBandes();
+
+  /* Partie finie, le plateau se vide : les bandes ci-dessus disent déjà
+     tout, y compris les groupes qu'on n'a pas trouvés. Laisser les cases
+     restantes en dessous reviendrait à afficher la question sous sa
+     réponse. */
+  el("gcPlateau").innerHTML = g.fini ? "" : g.cases
+    .filter((c) => !resolus.has(c.groupe))
+    .map((c) => {
+      const prise = g.choisies.indexOf(c.titre) >= 0;
+      /* `jaq` plutôt qu'un test sur la variable CSS : c'est elle qui décide
+         du voile sombre posé sous le titre, et une case sans jaquette n'a
+         rien à assombrir - elle serait juste plus terne que ses voisines. */
+      return `<button type="button" class="gc-case${prise ? " prise" : ""}${
+              c.image ? " jaq" : ""}"
+              data-titre="${esc(c.titre)}" aria-pressed="${prise}"${g.fini ? " disabled" : ""}
+              ${c.image ? `style="--fond:url('${esc(c.image)}')"` : ""}>
+        <span>${esc(c.titre)}</span>
+        <i class="gc-coche" aria-hidden="true">&#10003;</i>
+      </button>`;
+    }).join("");
+
+  gcDitMessage();
+  gcPied();
+
+  if (g.fini) return;
+  el("gcPlateau").querySelectorAll(".gc-case").forEach((b) =>
+    b.addEventListener("click", () => gcTouche(b.dataset.titre)));
+  el("gcMelanger").addEventListener("click", gcMelange);
+  el("gcVider").addEventListener("click", () => {
+    GRILLE.choisies = []; GRILLE.message = ""; gcPeint();
+  });
+  el("gcValider").addEventListener("click", gcValide);
+}
+
+/* ---------- le message ----------
+   Il doit se REVOIR même quand il redit la même chose. « Presque » deux
+   essais de suite s'écrivait deux fois au même endroit sans que rien ne
+   bouge à l'écran : le jeu avait l'air de n'avoir rien entendu, alors
+   qu'il venait de répondre. Un lecteur d'écran, lui, ne réannonce même pas
+   un aria-live dont le texte n'a pas changé.
+
+   D'où le numéro : chaque message en reçoit un neuf, et c'est lui - pas le
+   texte - qui décide de rejouer l'apparition. Le texte est vidé puis
+   réécrit pour la même raison, du côté de ceux qui écoutent la page. */
+let GC_MSG_PEINT = 0;
+
+function gcDitMessage() {
+  const g = GRILLE, p = el("gcMessage");
+  p.classList.toggle("fort", !!g.message);
+  if (g.messageNo === GC_MSG_PEINT) { p.textContent = g.message; return; }
+  GC_MSG_PEINT = g.messageNo;
+  p.textContent = "";
+  p.textContent = g.message;
+  /* Retirer, forcer un recalcul, reposer : sans ce détour le navigateur ne
+     voit aucun changement et l'animation ne repart pas. */
+  p.classList.remove("dit");
+  void p.offsetWidth;
+  p.classList.add("dit");
+}
+
+/* Les bandes s'empilent, elles ne se refont pas.
+
+   Tout le reste de la grille est repeint à chaque geste - c'est voulu, seize
+   cases ne coûtent rien - mais les bandes arrivent en s'ouvrant
+   (gc-bande-entre dans la feuille de style), et une bande réécrite rejoue
+   son animation. Désigner ou relâcher une case faisait donc reclignoter les
+   groupes déjà trouvés, comme s'ils venaient d'être découverts : le seul
+   endroit de la page où l'on avait posé quelque chose de définitif était
+   aussi le seul à bouger sans raison.
+
+   Une bande n'est jamais retirée ni déplacée une fois posée, et le plateau
+   repart d'un hôte vide à chaque partie (voir dessineGrille) : ce qui est
+   déjà à l'écran est donc toujours le début de ce qu'on veut y voir, et il
+   suffit d'ajouter la suite. Seules les nouvelles s'ouvrent, les autres ne
+   bronchent pas. */
+function gcEmpileBandes() {
+  const g = GRILLE;
+  const hote = el("gcBandes");
+  const resolus = new Set(g.trouves);
+  /* Les groupes trouvés, dans l'ordre où ils l'ont été. Puis, si la partie
+     est perdue, ceux qu'on n'a pas vus : finir sur une grille muette, c'est
+     repartir sans savoir ce qu'on cherchait. */
+  const voulues = g.trouves.map((i) => [i, true]).concat(
+    g.fini && !g.gagne
+      ? g.groupes.map((_, i) => [i, false]).filter(([i]) => !resolus.has(i))
+      : []);
+  for (let n = hote.children.length; n < voulues.length; n++) {
+    hote.insertAdjacentHTML("beforeend", gcBande(voulues[n][0], voulues[n][1]));
+  }
+}
+
+/* Une bande de groupe résolu : son lien en toutes lettres, et les quatre
+   jeux dessous. `trouve` la sépare de celles qu'on dévoile en perdant -
+   même bande, mais éteinte : ce n'est pas la même chose de les avoir vues. */
+function gcBande(i, trouve) {
+  const g = GRILLE.groupes[i];
+  return `<div class="gc-bande ${GC_COULEURS[i % GC_COULEURS.length]}${
+    trouve ? "" : " ratee"}">
+    <b>${esc(g.titre)}</b>
+    <i>${g.jeux.map((j) => esc(j.titre)).join(" · ")}</i>
+  </div>`;
+}
+
+/* Les vies en pastilles plutôt qu'en chiffre : il y en a quatre, on les
+   compte d'un regard, et une pastille éteinte se voit mieux qu'un « 3 »
+   devenu « 2 ». */
+function gcPied() {
+  const g = GRILLE;
+  if (g.fini) {
+    /* La croix d'abandon n'a plus rien à abandonner : la flèche ramène au
+       salon, comme à la fin d'une chronologie. */
+    navRetour(dessineMenu, g.gagne ? "Grille résolue" : "Perdu");
+    const s = g.trouves.length > 1 ? "s" : "";
+    el("gcPied").innerHTML = `
+      <div class="qz-bilan">
+        ${bilanHTML(gcScore(), gcMaxi(), g.gagne
+          ? `grille complète · ${g.erreurs ? `${g.erreurs} erreur${g.erreurs > 1 ? "s" : ""}`
+                                           : "sans la moindre erreur"}`
+          : `${g.trouves.length || "aucun"} groupe${s} sur ${g.groupes.length} trouvé${s}`)}
+        <div class="qz-boutons">
+          <button type="button" class="cta" id="gcRejouer">Rejouer</button>
+          <button type="button" class="cta" id="gcAutres"
+                  style="background:none;color:var(--muted);border:1px solid var(--line)">Autres jeux</button>
+        </div>
+      </div>`;
+    el("gcRejouer").addEventListener("click", lanceGrille);
+    el("gcAutres").addEventListener("click", dessineMenu);
+    el("gcRejouer").focus();
+    return;
+  }
+  const restant = g.erreursMax - g.erreurs;
+  el("gcPied").innerHTML = `
+    <div class="gc-vies" aria-label="${restant} erreur${restant > 1 ? "s" : ""} restante${restant > 1 ? "s" : ""}">
+      <u>Erreurs</u>
+      ${Array.from({ length: g.erreursMax }, (_, k) =>
+        `<i class="${k < g.erreurs ? "usee" : ""}"></i>`).join("")}
+    </div>
+    <div class="gc-actions">
+      <button type="button" class="ghost" id="gcMelanger">Mélanger</button>
+      <button type="button" class="ghost" id="gcVider"
+              ${g.choisies.length ? "" : "disabled"}>Désélectionner</button>
+      <button type="button" class="cta gc-ok" id="gcValider"
+              ${g.choisies.length === 4 ? "" : "disabled"}>Valider</button>
+    </div>`;
+}
+
+const gcScore = () =>
+  GRILLE.trouves.length * GRILLE.parGroupe
+  + (GRILLE.erreursMax - GRILLE.erreurs) * GRILLE.parVie;
+/* Une grille parfaite vaut le même millier qu'une chronologie sans faute et
+   que cinq jaquettes trouvées du premier coup - le barème est calé pour ça
+   côté serveur. C'est ce maximum que le bilan met en face du score : sans
+   lui, 750 ne dit pas si on est passé près. */
+const gcMaxi = () =>
+  GRILLE.groupes.length * GRILLE.parGroupe + GRILLE.erreursMax * GRILLE.parVie;
+
+function gcTouche(titre) {
+  /* Sourd tant qu'une réponse s'anime : les cases restent à l'écran
+     pendant la secousse, et le clic qui partait dedans effaçait le message
+     avant même qu'on ait pu le lire. */
+  if (GRILLE.fini || GRILLE.anime) return;
+  const c = GRILLE.choisies;
+  const p = c.indexOf(titre);
+  if (p >= 0) c.splice(p, 1);
+  else if (c.length < 4) c.push(titre);
+  else return;                     // quatre au maximum : le cinquième clic ne fait rien
+  GRILLE.message = "";
+  gcPeint();
+}
+
+/* Mélanger ne change rien à la partie : c'est un coup de pouce pour l'œil,
+   qui finit par voir les cases à leur place plutôt que ce qu'elles disent.
+   La sélection en cours survit - on mélange justement pour regarder
+   autrement ce qu'on hésitait à valider. */
+function gcMelange() {
+  if (GRILLE.fini || GRILLE.anime) return;
+  melange(GRILLE.cases);
+  GRILLE.message = "";
+  gcPeint();
+}
+
+function gcValide() {
+  const g = GRILLE;
+  if (g.fini || g.anime || g.choisies.length !== 4) return;
+
+  /* Le même quatuor proposé deux fois ne coûte pas deux vies. C'est le plus
+     souvent un double appui sur « Valider » ; et quand c'est vraiment un
+     second essai, le redire vaut mieux que le punir - on n'apprend rien
+     d'une vie perdue sur une réponse qu'on a déjà eue.
+     La clé est triée : l'ordre dans lequel on a désigné les quatre cases
+     ne fait pas un essai différent. */
+  const essai = [...g.choisies].sort().join("\u0000");
+  if (g.essais.indexOf(essai) >= 0) {
+    g.message = "Déjà proposé.";
+    g.messageNo += 1;
+    gcDitMessage();
+    return;
+  }
+  g.essais.push(essai);
+
+  const cases = g.choisies.map((t) => g.cases.find((c) => c.titre === t));
+  const comptes = new Map();
+  cases.forEach((c) => comptes.set(c.groupe, (comptes.get(c.groupe) || 0) + 1));
+  const [groupe, combien] = [...comptes.entries()].sort((a, b) => b[1] - a[1])[0];
+
+  if (combien === 4) {
+    g.trouves.push(groupe);
+    g.choisies = [];
+    /* Effacé tout de suite, et pas au repaint : le « Presque » de l'essai
+       précédent serait resté affiché sous les quatre cases en train de
+       s'allumer en vert, à dire le contraire de ce qui vient d'arriver. */
+    g.message = "";
+    gcDitMessage();
+    if (g.trouves.length === g.groupes.length) { g.fini = true; g.gagne = true; }
+    gcAnime("juste", () => gcPeint());
+    return;
+  }
+
+  g.erreurs += 1;
+  /* Trois sur quatre : le seul retour utile qu'on puisse donner sans
+     désigner la case fautive - le dire coûterait le groupe entier.
+     Le cas de la dernière vie ne se tait plus : il ne disait rien
+     précisément là où l'on veut savoir sur quoi on a perdu. */
+  g.message = combien === 3
+    ? "Presque : il n'en manquait qu'un."
+    : "Aucun lien entre ces quatre-là.";
+  g.messageNo += 1;
+  /* Écrit maintenant et non au repaint : c'est pendant la secousse qu'on
+     le lit, pas six dixièmes de seconde après. */
+  gcDitMessage();
+  if (g.erreurs >= g.erreursMax) { g.fini = true; g.gagne = false; }
+  gcAnime("faux", () => gcPeint());
+}
+
+/* Les quatre cases désignées réagissent avant que la grille ne se
+   redessine : sans ce temps d'arrêt, un groupe trouvé disparaîtrait
+   instantanément et une erreur ne se verrait pas du tout. La classe est
+   posée sur les cases actuelles, le repaint arrive après.
+
+   Le plateau est verrouillé pendant ce temps-là, ce qu'il n'était pas :
+   cases et boutons restaient vivants sous l'animation. Un joueur qui
+   enchaîne - et on enchaîne, sur seize cases - effaçait le « Presque »
+   avant qu'il ne s'affiche, ou repayait une vie en réappuyant sur
+   « Valider ». Le verrou tient dans GRILLE.anime, que gcTouche, gcMelange
+   et gcValide consultent ; les boutons, eux, s'éteignent tout de suite
+   plutôt qu'au repaint, sinon ils restent cliquables - et l'air
+   cliquables - pendant toute l'animation. */
+function gcAnime(classe, apres) {
+  const g = GRILLE;
+  const plateau = el("gcPlateau");
+  g.anime = true;
+  plateau.querySelectorAll(".gc-case.prise").forEach((b) => b.classList.add(classe));
+  el("gcPied").querySelectorAll("button").forEach((b) => { b.disabled = true; });
+  /* `fige` par-dessus le verrou : gcTouche() ignore déjà les clics, mais
+     une case qui s'allume encore au survol pendant qu'on lui répond dit le
+     contraire de ce qui se passe. */
+  plateau.classList.add("fige");
+  setTimeout(() => {
+    g.anime = false;
+    plateau.classList.remove("fige");
+    apres();
+  }, classe === "juste" ? 420 : 620);
+}
+
+/* Clic droit sur une image de partie : bloque. « Ouvrir l'image dans un
+   nouvel onglet » et « Rechercher l'image avec Google » donnaient la reponse
+   en deux clics - le flou est pose en CSS, le fichier derriere est net, et
+   il porte le titre du jeu dans son nom.
+
+   C'est un garde-fou, pas une serrure : la meme image reste a portee d'un
+   onglet reseau, et ce n'est pas ce qu'on cherche a arreter. Ce qu'on arrete,
+   c'est le geste qui gache une manche sans meme avoir voulu tricher.
+
+   Sur toute la scene et pas seulement sur la jaquette floue : une image sur
+   laquelle le clic droit marche et une autre ou il ne marche pas, c'est une
+   regle a deviner. */
+document.addEventListener("contextmenu", (e) => {
+  if (e.target.closest("#scene img")) e.preventDefault();
+});
+
+(async function () {
+  let data = null;
+  /* Un visiteur joue comme les autres : la page ne demande plus de compte,
+     et /api/moi n'est plus une porte mais un renseignement. Si la reponse
+     n'arrive pas, on continue en visiteur plutot que de bloquer -- un tirage
+     qui echouerait le dirait lui-meme, avec sa porte de sortie. */
+  try { data = await api("/api/moi"); }
+  catch (e) { /* serveur muet : on joue avec les journaux publics */ }
+
+  MOI = (data && data.connecte && data.utilisateur) ? data.utilisateur : null;
+  /* Le vivier garde dans le compte, s'il y en a un. Sinon « tous » : c'est
+     la seule valeur qui veut dire quelque chose pour qui n'a pas de journal. */
+  if (MOI && (data.quizSource === "moi" || data.quizSource === "tous")) {
+    SOURCE = data.quizSource;
+  }
+  dessineMenu();
+  el("corps").hidden = false;
+  el("suggBtn").hidden = false;
+  /* Le bouton menait à /abyss?suggestion=quiz : noter une idée de mini-jeu
+     faisait quitter la partie en cours. La fenêtre s'ouvre ici, habillée
+     comme le reste de la page - elle reprend les .sg-* de l'Archive, dont
+     cette page porte déjà la feuille de style.
+
+     Le bouton reste visible pour un visiteur : la fenêtre lui dira elle-même
+     qu'il faut un compte (voir suggestion.js), ce qui vaut mieux qu'un bouton
+     qui disparaît sans qu'on sache qu'il a existé. */
+  if (window.Suggestion) {
+    Suggestion.branche({ bouton: "suggBtn", projet: "quiz",
+                         estConnecte: () => MOI !== null });
+  }
+})();

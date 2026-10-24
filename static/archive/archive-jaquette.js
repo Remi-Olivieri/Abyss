@@ -54,10 +54,10 @@ async function jaquetteAuto(nom, sortie, force, idIgdb){
   if(data.etat === 'telechargee'){ poseJaquette(cle); toast('Jaquette récupérée'); }
   else if(data.etat === 'deja-la'){ poseJaquette(cle); }
   else if(data.etat === 'choix'){ openJaq(nom, data.propositions || [], null, idIgdb); }
-  else if(data.etat === 'introuvable'){ toast(`Aucune jaquette trouvée pour « ${nom} »`); }
+  else if(data.etat === 'introuvable'){ toast(`Aucune jaquette trouvée pour « ${nom} »`); }
   // le motif exact plutôt qu'un « ça n'a pas marché » : HTTP 403, certificat
   // SSL, délai dépassé... c'est la seule chose qui permette d'y remédier
-  else if(data.etat === 'injoignable'){ toast('IGDB injoignable : ' + (data.raison || 'pas de réponse'), true); }
+  else if(data.etat === 'injoignable'){ toast('IGDB injoignable : ' + (data.raison || 'pas de réponse'), true); }
 }
 
 /* On montre toujours ce qui a été trouvé, même une seule jaquette : c'est
@@ -81,7 +81,7 @@ function jaqHTML(nom, propositions, retenir, opts){
       </div>`;
   return `<div class="sheet jaq-sheet" role="dialog" aria-modal="true">
     <div class="sheet-tools">
-      <span class="grp"><b class="fhead">${opts.titre ? esc(opts.titre) : `Jaquette de « ${esc(nom)} »`}</b></span>
+      <span class="grp"><b class="fhead">${opts.titre ? esc(opts.titre) : `Jaquette de « ${esc(nom)} »`}</b></span>
       <span class="grp"><button class="sbtn jaq-x" aria-label="Fermer">×</button></span>
     </div>
     <div class="jaq-in">
@@ -303,12 +303,37 @@ function posePick(fiche){
   /* Rien à montrer tant qu'aucune fiche n'est retenue : la case reste
      vide. Un encart « Aucun jeu choisi » occupait la place pour ne rien
      dire - la liste sous le nom du jeu se charge déjà d'en proposer une,
-     et la validation refuse un ajout sans fiche avec son propre message. */
-  if(!fiche || !fiche.image){ b.hidden = true; return; }
+     et la validation refuse un ajout sans fiche avec son propre message.
+     En modification, on retombe sur le jeu tel qu'il est (poseActuel). */
+  if(!fiche || !fiche.image){
+    if(EDIT) poseActuel(EDIT); else b.hidden = true;
+    return;
+  }
+  $('f_pickimg').hidden = false;
   $('f_pickimg').src = fiche.apercu;
   $('f_pickt').textContent = fiche.titre;
   $('f_pickd').textContent = (fiche.date || 'date inconnue')
     + (fiche.nature ? ' · ' + fiche.nature : '');
+  b.hidden = false;
+}
+/* En modification, la case montre d'entrée le jeu tel qu'il est : sa
+   jaquette du disque, son nom, sa date. Sans elle, changer de jaquette
+   obligeait à retaper le nom pour faire apparaître la liste, alors que
+   l'ajout offre ce bouton dès qu'une fiche est choisie.
+
+   Ce n'est pas une fiche retenue : JEU_PICK reste vide, donc ni
+   rattachement IGDB ni jaquette ne repartent à l'enregistrement tant
+   qu'on n'a rien désigné d'autre (voir lireForm et submitForm). */
+function poseActuel(g){
+  const b = $('f_pick');
+  if(!b || !g) return;
+  const img = $('f_pickimg');
+  const url = coverURL(cleJaquette(g));
+  img.onerror = ()=>{ img.hidden = true; };
+  img.hidden = !url;
+  if(url) img.src = url; else img.removeAttribute('src');
+  $('f_pickt').textContent = g.name;
+  $('f_pickd').textContent = g.release ? dateFmt(g.release) : 'date inconnue';
   b.hidden = false;
 }
 /* Un champ rempli par une fiche peut être remplacé par la fiche suivante.
@@ -332,6 +357,11 @@ function acChoisir(i){
   acFerme();
   const champ = $('f_name');
   champ.value = j.titre;
+  /* Le nom vient de changer sans frappe, donc sans `input` : l'avis de
+     doublon restait celui du texte tapé. « pokemon ranger » trouvait bien
+     « Pokémon Ranger » dans le journal, et l'avis survivait au choix de
+     « Pokémon Ranger: Shadows of Almia ». */
+  majDoublon();
   posePick(Object.assign({}, j, {nom: j.titre}));
   champ.focus();
   alignePick(j);           // la date et le prix suivent la fiche choisie
@@ -436,8 +466,8 @@ async function changerPick(){
       alignePick(p);
     });
   }
-  else if(data.etat === 'introuvable'){ toast(`Aucune jaquette trouvée pour « ${nom} »`); }
-  else if(data.etat === 'injoignable'){ toast('IGDB injoignable : ' + (data.raison || 'pas de réponse'), true); }
+  else if(data.etat === 'introuvable'){ toast(`Aucune jaquette trouvée pour « ${nom} »`); }
+  else if(data.etat === 'injoignable'){ toast('IGDB injoignable : ' + (data.raison || 'pas de réponse'), true); }
 }
 
 function brancherAuto(){

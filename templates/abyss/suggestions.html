@@ -8,6 +8,7 @@
 <link rel="icon" href="/static/commun/logo/favicon.ico" sizes="32x32">
 <link rel="icon" href="/static/commun/logo/abyss-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/static/commun/logo/abyss-180.png">
+<link rel="manifest" href="/static/commun/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -82,7 +83,7 @@
   .sug-section{--cat:var(--c-abyss);margin-bottom:34px}
   .sug-section:is([data-projet="jeux-videos"],[data-projet="chainz"]){--cat:var(--c-jeux)}
   .sug-section[data-projet="collection"]{--cat:var(--c-collection)}
-  .sug-section:is([data-projet="quiz"],[data-projet="yugiquiz"]){--cat:var(--c-minijeux)}
+  .sug-section:is([data-projet="quiz"],[data-projet="yugiquiz"],[data-projet="survivor"]){--cat:var(--c-minijeux)}
   .sug-section[data-projet="nihongo"]{--cat:var(--c-apprendre)}
   .sug-section[hidden]{display:none}
   .sug-section-tete{
@@ -696,7 +697,7 @@ function envoieResolu(texte) {
   api("/api/changement/resolu", "POST", { projet: a.section.projet, texte: texte })
     .catch((err) => {
       remet(a);
-      toast(`Pas retirée : ${err.message}`, true);
+      toast(`Pas retirée : ${err.message}`, true);
     });
 }
 
@@ -725,7 +726,7 @@ function resoudre(bouton) {
   setTimeout(() => { dessine(); }, 280);
 
   const extrait = ligne.message.length > 48 ? ligne.message.slice(0, 46) + "…" : ligne.message;
-  toast(`Résolu : « ${extrait} »`, false, {
+  toast(`Résolu : « ${extrait} »`, false, {
     nom: "Annuler",
     faire: () => {
       if (!EN_ATTENTE.has(texte)) return;

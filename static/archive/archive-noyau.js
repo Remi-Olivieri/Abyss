@@ -449,8 +449,13 @@ function chronoKey(g){
    un ordre stable aux ex æquo, pas pour être lu. */
 const TRIS = [
   ['note',    'Note',                     'desc', x => x.rating],
-  ['chrono',  'Ordre où je les ai faits', 'asc',  chronoKey,
+  ['chrono',  'Date finie',               'asc',  chronoKey,
               (a,b)=>(b.rating??0)-(a.rating??0)],
+  /* L'identifiant, et non une date envoyée exprès : une seule écriture
+     crée un jeu (voir ajoute dans journal.py), donc l'ordre des
+     identifiants est celui des ajouts, au jeu près. Les jeux importés
+     d'un bloc le 31 août gardent entre eux l'ordre de l'import. */
+  ['ajout',   "Date d'ajout",             'desc', x => x.id],
   ['solde',   'Solde',                    'desc', remiseDe,
               (a,b)=>String(a.release||'9999').localeCompare(String(b.release||'9999'))],
   ['release', 'Date de sortie',           'desc', x => x.release || null],
@@ -468,8 +473,8 @@ const DEPART_NOM = (a,b)=>a.name.localeCompare(b.name,'fr');
    vendre, ce tri n'a de sens que là où les prix bougent encore. */
 const TRIS_PAR_FAMILLE = {
   periode:  TRIS.map(([k]) => k).filter(k => k !== 'solde'),
-  statut:   ['release', 'paid', 'base', 'az'],
-  wishlist: ['solde', 'release', 'base', 'az'],
+  statut:   ['release', 'ajout', 'paid', 'base', 'az'],
+  wishlist: ['solde', 'release', 'ajout', 'base', 'az'],
 };
 /* Le sens qu'un critère prend quand on vient de le choisir, là où celui de
    la table serait à contresens : dans un calendrier de sorties à venir,

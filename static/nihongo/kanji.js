@@ -99,9 +99,11 @@
     return morceaux.join(" ");
   }
 
-  /* Les abréviations qu'on tape, ou qu'un sens emploie : « M. », « Mme ». */
+  /* Les abréviations qu'on tape, ou qu'un sens emploie : « M. », « Mme »,
+     « svp » pour お願いします. */
   const ABREGES = { m: "monsieur", mr: "monsieur", mme: "madame", mlle: "mademoiselle",
-                    qqn: "quelqu un", qqch: "quelque chose", qq: "quelque" };
+                    qqn: "quelqu un", qqch: "quelque chose", qq: "quelque",
+                    svp: "s il vous plait", stp: "s il te plait" };
 
   function normaliseSens(s) {
     return String(s || "").toLowerCase()
@@ -112,7 +114,7 @@
       .replace(/(\d)[\s.](?=\d{3}(?!\d))/g, "$1")
       .replace(/\d+/g, (c) => ` ${enLettres(+c)} `)
       .replace(/[^a-z0-9]+/g, " ").trim()
-      .replace(/\b(?:m|mr|mme|mlle|qqn|qqch|qq)\b/g, (a) => ABREGES[a])
+      .replace(/\b(?:m|mr|mme|mlle|qqn|qqch|qq|svp|stp)\b/g, (a) => ABREGES[a])
       .replace(ARTICLES, "")
       .replace(/^(\w{3,})[sx]$/, "$1")
       .replace(/(\w{3,})[sx]( |$)/g, "$1$2");

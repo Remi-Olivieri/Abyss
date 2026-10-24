@@ -79,6 +79,9 @@
    qui fait la table de jeu : sans lui le noir est un vide, avec lui c'est
    une surface. Meme construction que le Yu-Gi-Quiz, aux memes angles. */
 body{background:var(--bg)}
+/* Un titre sur deux lignes se coupe au milieu, et ne laisse pas un mot
+   seul sur la seconde. */
+h1,h2,h3{text-wrap:balance}
 body::before{
   content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
   background:

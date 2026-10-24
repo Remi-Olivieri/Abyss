@@ -570,11 +570,11 @@ def _cles_de(jeu):
         if nom:
             cles[("studio", nom)] = f"Développés par {nom}"
     for g in _decoupe(jeu.get("genres")):
-        cles[("genre", g)] = f"Genre : {GENRES_FR.get(g, g)}"
+        cles[("genre", g)] = f"Genre : {GENRES_FR.get(g, g)}"
     for t in _decoupe(jeu.get("themes")):
-        cles[("theme", t)] = f"Thème : {THEMES_FR.get(t, t)}"
+        cles[("theme", t)] = f"Thème : {THEMES_FR.get(t, t)}"
     for cle, mot in _mots_du_titre(jeu["titre"]).items():
-        cles[("mot", cle)] = f"Des titres avec « {mot} »"
+        cles[("mot", cle)] = f"Des titres avec « {mot} »"
     initiale = _sans_accent(jeu["titre"].strip()[:1]).upper()
     if initiale.isalpha():
         cles[("initiale", initiale)] = f"Des titres qui commencent par {initiale}"
@@ -758,7 +758,7 @@ def partie_grille(u=None):
     groupes = _tire_grille(vivier)
     if groupes is None:
         raise Refus("vide", "Ces jeux-là ne donnent aucune grille sans"
-                            " ambiguïté : il faudrait des studios, des genres"
+                            " ambiguïté : il faudrait des studios, des genres"
                             " ou des années plus variés.", 409)
     random.shuffle(groupes)
 

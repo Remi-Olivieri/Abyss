@@ -1,0 +1,2899 @@
+/* =========================================================
+   Le classeur Yu-Gi-Oh
+
+   Il vivait sur une feuille Google : une adresse de script Apps Script
+   écrite en dur en tête de ce fichier, un jeton saisi dans la page pour
+   avoir le droit d'écrire, et une carte repérée par « feuille + ligne +
+   colonne ». Rien de tout ça n'existe plus. Les classeurs sont ceux des
+   comptes d'Abyss, servis par collection.py ; l'autorisation d'écrire vient
+   de la session, que le cookie porte tout seul ; et une carte a un `id` qui
+   ne bouge pas.
+
+   La page reprend donc le fonctionnement de l'Archive Jeux Vidéos, dont
+   elle est la voisine : un annuaire des classeurs publics, une recherche
+   pour aller chez les autres, une adresse /collection/<pseudo> qu'on peut
+   donner, et trois écrans avant le classeur - visiteur, connecté sans
+   classeur, classeur qui ne s'ouvre pas.
+
+   Ce qui ne bouge pas, c'est le classeur lui-même : la reliure, les pages
+   qui tournent, les pochettes, la carte qu'on sort pour la regarder. C'est
+   l'objet de cette page, et il n'avait rien à voir avec l'endroit d'où
+   venaient les données.
+   ========================================================= */
+
+const el = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* Le format d'un classeur : des pochettes en colonnes et en rangées sur
+   chaque face, deux faces par page, tant de pages par tome. Ce sont les
+   réglages de son propriétaire, pour que le classeur à l'écran soit celui
+   qu'il a en main : « page 12, emplacement 4 » doit tomber sur la même
+   pochette des deux côtés. Un par onglet - les Fusion ne tiennent pas
+   forcément dans le même classeur que les Lien - porté par l'onglet
+   lui-même (t.format), et vérifié une fois pour toutes par applyData().
+   Sans onglet désigné, c'est celui qu'on regarde. */
+const FORMAT_DEFAUT = { colonnes: 3, rangees: 3, pages: 30 };
+const FORMAT_BORNES = { colonnes: [2, 4], rangees: [2, 4], pages: [5, 100] };
+const fmt = t => (t || T()).format || FORMAT_DEFAUT;
+const parFace = t => fmt(t).colonnes * fmt(t).rangees;
+const parPage = t => 2 * parFace(t);
+const parClasseur = t => parPage(t) * fmt(t).pages;
+const RARETES = [
+  ['C','Commune'], ['R','Rare'], ['SR','Super'], ['UR','Ultra'], ['SE','Secrète'],
+  ['CR','Collector'], ['ULTI','Ultimate'], ['G','Gold'], ['GSE','Gold Secrète'],
+  ['PG','Premium Gold'], ['SPE','Spécial'], ['PLAT','Platinium'], ['STAR','Starlight']
+];
+const CODES = RARETES.map(r => r[0]);
+const LIBELLE_RAR = {};
+RARETES.forEach(r => { LIBELLE_RAR[r[0]] = r[1]; });
+const ETATS = [[3,'Bon'], [2,'Moyen'], [1,'Mauvais']];
+
+/* Une carte est un petit tableau et non un objet : deux mille cartes en
+   JSON, ce sont deux mille fois les mêmes noms de champs à ne pas répéter.
+   Ses cases, telles que collection.py les envoie (voir en_json) :
+
+       [0] nom   [1] rareté   [2] état   [3] id   [4] fichier de l'artwork
+       [5] les raretés sous lesquelles cette carte est parue
+
+   `id` remplace le couple ligne/colonne de la feuille : c'est lui qu'on
+   renvoie pour écrire. `fichier` remplace tout un mécanisme - la page
+   téléchargeait 570 Ko de noms français, en construisait un index de
+   quatorze mille entrées, puis essayait .jpg, .png et .webp au hasard
+   jusqu'à ce que l'une réponde. Le serveur le sait déjà, il le dit une fois
+   par carte.
+
+   La sixième suit le même chemin, et pour la même raison : le fichier des
+   raretés pèse 550 Ko pour quatorze mille cartes, dont un classeur n'en
+   montre que deux mille. Voir raretes() dans collection.py. */
+const NOM = 0, RAR = 1, ETAT = 2, ID = 3, ART = 4, DISPO = 5;
+
+/* rareté normalisée d'une carte ('' si elle n'est pas dans le classeur) */
+const codeRar = card => !card || !card[RAR] ? ''
+  : (CODES.indexOf(card[RAR]) >= 0 ? card[RAR] : 'C');
+/* les communes et les rares n'ont aucun vernis sur l'illustration */
+const brille = c => !!c && c !== 'C';
+const FOIL = '<i class="foil"><span></span></i>';
+
+/* ---------------- ce qui existe, et ce qui n'existe pas ----------------
+   Une carte n'est pas parue dans toutes les raretés : le « Dragon Blanc aux
+   Yeux Bleus » existe en Commune, en Ultra et en Secrète, jamais en Gold
+   Secrète. Le panneau ne propose donc que ce qui existe.
+
+   `null` - une carte que le catalogue ne connaît pas - et `undefined` - un
+   classeur mis en cache avant cette version - valent « on ne sait pas », et
+   non « aucune » : le menu propose alors les treize, comme il l'a toujours
+   fait. Mieux vaut ça qu'une pochette qu'on ne peut plus remplir. */
+function dispoDe(card){
+  const d = card && card[DISPO];
+  return (Array.isArray(d) && d.length) ? d : null;
+}
+
+/* Le menu du panneau : ce qui existe pour cette carte, et rien d'autre. Avec
+   deux réserves, qui font que la liste n'est jamais un mur :
+
+     - la rareté déjà enregistrée y figure toujours, même si le catalogue ne
+       la connaît pas - sans elle, corriger l'état d'une carte changerait sa
+       rareté au passage ;
+     - « Autre rareté… », en dernier, redéploie les treize. ygoprodeck ignore
+       des tirages qui existent bel et bien - la Secrète de BLZD, la
+       Starlight de TN23, la Secrète de L26D - et une carte qu'on a en main
+       doit pouvoir se ranger même quand le catalogue la croit impossible.
+       C'est une aide à la saisie, pas une serrure. */
+const AUTRES = '+';
+function optionsRarete(card, tout){
+  const d = tout ? null : dispoDe(card);
+  const codes = d ? d.slice() : CODES.slice();
+  const actuelle = card && card[RAR];
+  if (actuelle && codes.indexOf(actuelle) < 0) codes.unshift(actuelle);
+  return codes.map(c => '<option value="' + esc(c) + '">'
+      + esc(LIBELLE_RAR[c] || c) + '</option>').join('')
+    + (d ? '<option value="' + AUTRES + '">Autre rareté…</option>' : '');
+}
+
+let DATA = { types: [], images: '/static/yugioh/Cards/', vignettes: '/collection/vignette/' };
+let MODE = 'offline';
+const S = { t:0, c:0, spread:0, sel:null, hit:null, pose:null, zoom:false, zt:0, zc:0 };
+
+const T = () => DATA.types[S.t] || { label:'', color:'#A086B7', classeurs:[] };
+const C = () => T().classeurs[S.c] || { n:1, cards:[] };
+const sheets = () => Math.max(fmt().pages, Math.ceil(C().cards.length / parPage()));
+const narrow = () => matchMedia('(max-width:900px)').matches;
+const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* La couleur d'un onglet vient de la base, et la base n'est pas forcément
+   remplie par toi : elle part dans un style="", où esc() ne protège que des
+   guillemets. On n'accepte donc qu'une vraie couleur, jamais un morceau de
+   CSS. Le serveur fait la même vérification de son côté (voir COULEUR dans
+   collection.py) : la page se protège des classeurs des autres, la base se
+   protège de ce qu'on lui donne. */
+const COULEUR = /^(#[0-9a-f]{3,8}|rgba?\([0-9\s.,%/]+\)|[a-z]{3,20})$/i;
+const couleurSure = c => (typeof c === 'string' && COULEUR.test(c.trim())) ? c.trim() : '#A086B7';
+
+/* emplacement : page + face + numéro dans la face, au format de l'onglet `t` */
+function pos(i, t){
+  const pp = parPage(t), pf = parFace(t);
+  const k = i % pp;
+  return { page: Math.floor(i / pp) + 1,
+           face: k < pf ? 'recto' : 'verso',
+           slot: k % pf + 1 };
+}
+
+/* ---------------- ce qui dormait dans le navigateur ----------------
+   Les versions précédentes gardaient ici des choses qui n'ont plus d'objet :
+   un dossier d'images à deviner, l'extension qui avait fonctionné, un jeton
+   par adresse de script, et des caches dont la clé était l'adresse d'un
+   Sheet - avec, dedans, des cartes qui finissaient par leur ligne et leur
+   colonne de feuille. On jette tout d'un coup plutôt que de lire un vieux
+   format qui ne veut plus rien dire. */
+const VERSION_CACHE = 'abyss-6';
+try {
+  if (localStorage.getItem('classeur-chemins') !== VERSION_CACHE){
+    ['classeur-img', 'classeur-ext', 'classeur-data', 'classeur-cfg',
+     'classeur-jetons', 'classeur-source']
+      .forEach(k => localStorage.removeItem(k));
+    for (let k = localStorage.length - 1; k >= 0; k--){
+      const c = localStorage.key(k);
+      if (c && c.indexOf('classeur-data:') === 0) localStorage.removeItem(c);
+    }
+    localStorage.setItem('classeur-chemins', VERSION_CACHE);
+  }
+} catch(e){}
+
+/* dernière réponse connue : affichée tout de suite au chargement, le temps
+   que la vraie requête reparte en arrière-plan. Une clé par classeur. */
+const cleCache = url => 'classeur-data:' + url;
+function lireCache(url){
+  try { return JSON.parse(localStorage.getItem(cleCache(url))); }
+  catch(e){ return null; }
+}
+function ecrireCache(url, d){
+  try { localStorage.setItem(cleCache(url), JSON.stringify(d)); } catch(e){}
+}
+
+/* ---------------- qui suis-je, quels classeurs existent ----------------
+   Un seul appel au démarrage : l'annuaire des classeurs publics, plus
+   l'état de la session. C'est lui qui remplit SOURCES, jusqu'ici écrit en
+   dur en tête du fichier. */
+let SOURCES = [];
+let SRC = 0;
+let CAN_WRITE = false;
+let MOI = { connecte: false, pseudo: null, compte: null, admin: false };
+
+const source = () => SOURCES[SRC] || null;
+const estLeMien = () => !!MOI.pseudo && !!source() && norm(source().nom) === norm(MOI.pseudo);
+const urlClasseur = pseudo => '/api/collection/' + encodeURIComponent(pseudo);
+
+async function chargeAnnuaire(){
+  const r = await fetch('/api/collection', { credentials: 'same-origin' });
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.message || 'annuaire illisible');
+  MOI = { connecte: !!d.connecte, pseudo: d.moi ? d.moi.pseudo : null,
+          compte: d.compte || null, admin: d.admin === true };
+  SOURCES = (d.classeurs || []).map(c => ({
+    nom: c.pseudo, titre: c.titre, cartes: c.cartes,
+    avatar: c.avatar, banniere: c.banniere, url: urlClasseur(c.pseudo),
+  }));
+  /* Le sien d'abord : c'est celui qu'on vient consulter neuf fois sur dix,
+     et le seul qu'on puisse modifier. Un classeur privé n'apparaît pas dans
+     l'annuaire, qui ne liste que les publics : on l'ajoute nous-mêmes
+     plutôt que de laisser la page retomber sur n'importe qui d'autre. */
+  if (MOI.pseudo){
+    const i = SOURCES.findIndex(x => x.nom === MOI.pseudo);
+    if (i > 0) SOURCES.unshift(SOURCES.splice(i, 1)[0]);
+    else if (i < 0) SOURCES.unshift({ nom: MOI.pseudo, url: urlClasseur(MOI.pseudo) });
+    SOURCES[0].moi = true;
+    SOURCES[0].cartes = d.moi.cartes;
+    SOURCES[0].avatar = d.moi.avatar;
+    SOURCES[0].banniere = d.moi.banniere;
+  }
+  /* Le stock de cartes n'est pas un réglage du classeur affiché : il parle
+     des cartes qui existent, pour tout le monde à la fois. Il vit donc hors
+     du menu de l'engrenage, en bas à gauche, comme la mise à jour depuis
+     IGDB dans l'Archive - et il n'apparaît que pour l'administration. */
+  el('stockBtn').hidden = !MOI.admin;
+}
+
+/* ---------------- l'état de la connexion ----------------
+   Il tient tout entier dans la pastille de l'engrenage - verte en ligne,
+   ambrée pendant une actualisation, rouge quand celle-ci a échoué, éteinte
+   hors ligne - et dans son aria-label pour qui ne voit pas la pastille.
+
+   Il était aussi écrit en toutes lettres en tête du menu (« synchronisé à
+   l'instant », « modifiable »), au-dessus d'un bouton « Rafraîchir ». Trois
+   lignes pour dire que tout va bien, dans un menu qu'on ouvre pour agir : la
+   page se recharge seule à chaque visite, et un classeur qui n'aurait pas
+   répondu le dit déjà par son écran. */
+function setSync(mode, txt){
+  MODE = mode;
+  const g = el('gear');
+  g.dataset.etat = mode;
+  g.setAttribute('aria-label', 'Réglages - ' + txt);
+}
+
+/* ---------------- normalisation des noms ----------------
+   Sert à la recherche de cartes et à comparer deux pseudos. œ et æ ne se
+   décomposent pas en NFD, il faut les déplier à la main pour que « coeur »
+   trouve « Cœur ». */
+function norm(s){
+  return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+}
+const deplier = s => String(s == null ? '' : s).replace(/[œŒ]/g, 'oe').replace(/[æÆ]/g, 'ae');
+const motsCle = s => norm(deplier(s)).split(' ').filter(Boolean);
+/* « Maître d'Oz » -> « maitredoz » : apostrophes, tirets, accents et espaces
+   cessent d'être un piège. Mémorisé, la liste étant reparcourue à chaque frappe. */
+const CLES = Object.create(null);
+function cle(s){
+  s = String(s == null ? '' : s);
+  let k = CLES[s];
+  if (k === undefined) k = CLES[s] = motsCle(s).join('');
+  return k;
+}
+/* Les initiales d'un pseudo, pour l'avatar de secours dans la recherche. */
+function initiales(nom){
+  const mots = String(nom || '?').trim().split(/\s+/).filter(Boolean);
+  const deux = (mots[0] || '?')[0] + (mots.length > 1 ? mots[mots.length - 1][0] : '');
+  return deux.toUpperCase();
+}
+/* Une teinte stable par pseudo, pour que l'avatar d'une même personne ne
+   change pas de couleur d'une recherche à l'autre. */
+function teinteAvatar(nom){
+  let h = 0;
+  for (const c of (nom || '?')) h = (h * 31 + c.codePointAt(0)) % 360;
+  return h;
+}
+
+/* ---------------- les illustrations ----------------
+   Deux adresses, envoyées une fois par le serveur plutôt que deux mille
+   fois : la vignette pour les pochettes, l'original pour la carte qu'on
+   sort du classeur. Le nom du fichier, lui, est déjà dans la carte.
+
+   Une pochette fait cent pixels de large ; l'original en fait 813 pour
+   160 Ko. Servir l'original partout revenait à télécharger 2,8 Mo par
+   double-page pour afficher dix-huit timbres-poste. */
+const vignetteDe = card => (card && card[ART]) ? DATA.vignettes + card[ART] : '';
+const artworkDe  = card => (card && card[ART]) ? DATA.images    + card[ART] : '';
+
+/* pixel transparent : réaffecter src coupe net un téléchargement en cours */
+const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+/* L'image d'une pochette. Rien pendant un feuilletage maintenu : les pages
+   traversées ne feraient qu'empiler des requêtes qu'il faudra annuler avant
+   de voir la page d'arrivée. Le rendu complet suit à l'arrêt. */
+function imgHTML(card){
+  const src = vignetteDe(card);
+  if (!src || RAPIDE) return '';
+  return '<img class="art" alt="" decoding="async" data-art="' + esc(card[ART])
+       + '" src="' + esc(src) + '">';
+}
+/* L'artwork peut manquer sur le disque alors que l'index le donnait : sans
+   ce filet, `.slot.art .nm` garderait le nom caché derrière une image qui
+   n'arrivera pas, et la pochette resterait vide. Les événements load/error
+   ne remontent pas : on écoute en capture.
+   Un échec n'est pas forcément définitif - un serveur qui redémarre, une
+   connexion qui flanche : un second essai une seconde plus tard, avant de
+   rendre la pochette à son nom. Sans lui, l'image ne revenait qu'en tournant
+   la page et en revenant. Si la double-page a été redessinée entre-temps,
+   draw() a retiré data-art et l'essai n'a plus lieu d'être. */
+document.addEventListener('error', e => {
+  const im = e.target;
+  if (!im || im.tagName !== 'IMG' || !im.dataset || !im.dataset.art) return;
+  if (!im.dataset.essai){
+    im.dataset.essai = '1';
+    const src = im.getAttribute('src');
+    setTimeout(() => { if (im.isConnected && im.dataset.art) im.src = src; }, 1000);
+    return;
+  }
+  const p = im.parentNode;
+  im.remove();
+  if (p) p.classList.remove('art');
+}, true);
+
+/* ---------------- chargement d'un classeur ---------------- */
+function applyData(d, frais){
+  DATA = d;
+  /* la réponse ne vient pas forcément de ton classeur : une famille mal
+     formée ne doit pas casser la page, juste être ignorée */
+  DATA.types = (Array.isArray(DATA.types) ? DATA.types : []).filter(t => t && typeof t === 'object');
+  DATA.types.forEach(t => {
+    t.classeurs = (Array.isArray(t.classeurs) ? t.classeurs : [])
+      .filter(c => c && Array.isArray(c.cards));
+    t.format = formatSur(t.format);
+  });
+  DATA.images = DATA.images || '/static/yugioh/Cards/';
+  DATA.vignettes = DATA.vignettes || '/collection/vignette/';
+  relie();
+  CAN_WRITE = DATA.write === true;
+  S.t = Math.max(0, Math.min(S.t, DATA.types.length - 1));
+  S.c = Math.max(0, Math.min(S.c, T().classeurs.length - 1));
+  S.spread = Math.min(S.spread, sheets());
+  majEntete();
+  majVerrou();
+  setSync(frais ? 'live' : 'stale',
+          frais ? (CAN_WRITE ? 'modifiable' : 'lecture seule') : 'actualisation...');
+}
+
+/* Un format reçu du serveur, ou d'un cache plus ancien que lui : chaque
+   valeur hors bornes retombe sur celle par défaut, plutôt que de dessiner
+   un classeur d'une colonne ou de mille pages. */
+function formatSur(f){
+  const sortie = Object.assign({}, FORMAT_DEFAUT);
+  if (!f || typeof f !== 'object') return sortie;
+  Object.keys(FORMAT_BORNES).forEach(k => {
+    const v = f[k], b = FORMAT_BORNES[k];
+    if (Number.isInteger(v) && v >= b[0] && v <= b[1]) sortie[k] = v;
+  });
+  return sortie;
+}
+
+/* Les tomes, recoupés au format de chaque onglet. La base range une famille
+   en tomes de 540 cartes ; ici ils ne servent plus qu'à donner l'ordre : on
+   met les cartes bout à bout et on les redistribue par classeurs de la
+   taille choisie. Au format par défaut, c'est exactement le découpage de la
+   base. Rejouable sans dégât sur un classeur déjà recoupé - le cache en
+   garde un. */
+function relie(){
+  DATA.types.forEach(t => {
+    const place = parClasseur(t);
+    const toutes = [];
+    t.classeurs.forEach(c => { for (const x of c.cards) toutes.push(x); });
+    const tomes = [];
+    for (let k = 0; k < toutes.length; k += place){
+      tomes.push({ n: tomes.length + 1, cards: toutes.slice(k, k + place) });
+    }
+    t.classeurs = tomes.length ? tomes : [{ n: 1, cards: [] }];
+  });
+}
+
+async function charger(opts){
+  const o = opts || {};
+  const s = source();
+  if (!s || !s.url){ showGate(null); return; }
+  const silencieux = !!o.silencieux;
+
+  /* Plus de jeton dans l'adresse : le cookie de session part tout seul,
+     même origine oblige, et c'est le serveur qui décide de `write`. */
+  let data = null, pourquoi = '', statut = 0;
+  const stop = new AbortController();
+  const minuteur = setTimeout(() => stop.abort(), 20000);
+  try {
+    const r = await fetch(s.url, { credentials:'same-origin', signal: stop.signal });
+    statut = r.status;
+    if (r.ok) data = await r.json();
+    else {
+      try { data = await r.json(); } catch(e){}
+      pourquoi = (data && data.message) || ('réponse HTTP ' + r.status);
+      data = null;
+    }
+  } catch(e){
+    pourquoi = e.name === 'AbortError' ? "le serveur n'a pas répondu à temps"
+                                       : 'serveur injoignable';
+  }
+  clearTimeout(minuteur);
+
+  if (!data || !data.ok){
+    if (silencieux){
+      setSync('erreur', 'actualisation impossible');
+      if (pourquoi) toast(pourquoi, true);
+      return;
+    }
+    // 403 privé, 404 inconnu : le serveur a répondu, et il a dit non
+    const refus = statut === 403 || statut === 404;
+    const dit = pourquoi ? (/[.!?]$/.test(pourquoi) ? pourquoi : pourquoi + '.') : '';
+    showGate(!dit ? null
+      : refus ? '<b>' + esc(dit) + '</b>'
+              : '<b>Impossible de charger le classeur.</b> ' + esc(dit), refus);
+    return;
+  }
+
+  ecrireCache(s.url, data);
+  applyData(data, true);
+  /* Un classeur sans la moindre famille : il existe, il est bien à son
+     propriétaire, mais il n'a aucune pochette à dessiner. Ça n'arrive que si
+     le site n'avait encore aucun classeur à recopier au moment de le créer
+     (voir page_modele dans collection.py). Le dire vaut mieux qu'une reliure
+     vide dont rien n'explique le silence. */
+  if (!DATA.types.length){
+    showGate('<b>Ce classeur est vide.</b> Aucune famille de cartes n’y a'
+           + ' encore été versée.', true);
+    return;
+  }
+  showApp();
+  redrawAll();
+  if (S.sel !== null && ZOOM){ majPanel(S.sel); majGrandeCarte(); }
+}
+
+/* ---------------- écriture ----------------
+   Une requête JSON vers Flask, cookie de session compris. Le serveur ne
+   renvoie que la carte touchée, et non le classeur entier : contrairement à
+   un jeu ajouté, rien d'autre ne bouge - ni l'ordre, ni les onglets, ni les
+   classeurs - et deux mille cartes à chaque clic sur une pochette feraient un
+   aller-retour de plus à chaque geste. */
+async function poser(card, rarete, etat){
+  if (!CAN_WRITE){
+    toast(MOI.connecte ? "Ce classeur n'est pas le tien : lecture seule."
+                       : 'Connecte-toi sur Abyss pour modifier ton classeur.', true);
+    return false;
+  }
+  let data = null, pourquoi = '';
+  try {
+    const r = await fetch('/api/collection/carte/' + encodeURIComponent(card[ID]), {
+      method: 'PUT',
+      credentials: 'same-origin',
+      // application/json : un formulaire posté depuis un autre site ne peut
+      // pas produire ce type sans pré-vol CORS. C'est la parade CSRF.
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rarete: rarete || '', etat: etat || '' }),
+    });
+    try { data = await r.json(); } catch(e){}
+    if (!r.ok) pourquoi = (data && data.message) || ('réponse HTTP ' + r.status);
+  } catch(e){ pourquoi = 'serveur injoignable'; }
+  if (!data || data.ok === false){
+    toast("Échec de l'écriture : " + (pourquoi || 'erreur inconnue'), true);
+    return false;
+  }
+  /* La carte relue remplace la nôtre case par case, et non l'objet lui-même :
+     c'est le même tableau qui est dans DATA.types, dans ZOOM et dans les
+     résultats de recherche - le remplacer ne mettrait à jour aucun des trois. */
+  const neuve = data.carte || [];
+  for (let k = 0; k < neuve.length; k++) card[k] = neuve[k];
+  ecrireCache(source().url, DATA);
+  toast(card[RAR] ? '« ' + card[NOM] + ' » rangée dans le classeur.'
+                  : '« ' + card[NOM] + ' » retirée du classeur.');
+  return true;
+}
+
+let toastT;
+function toast(msg, bad){
+  const t = el('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (bad ? ' bad' : '');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { t.className = 'toast' + (bad ? ' bad' : ''); }, 4200);
+}
+
+/* =========================================================
+   Les écrans
+
+   Quatre, et un seul à la fois : le classeur, l'écran du visiteur, celui de
+   qui n'a pas encore de classeur, et celui du classeur qui ne s'ouvre pas.
+   ========================================================= */
+function cacheTout(){
+  fermerNet(); fermerRecherche(); closeMenu(); fermerModale();
+  el('res').hidden = true;
+  ['app', 'gate', 'invite', 'accueil'].forEach(k => { el(k).hidden = true; });
+}
+
+/* Le classeur. Rien n'est ferme ici, contrairement aux trois autres :
+   showApp() est rejoue a chaque actualisation en arriere-plan, et fermer la
+   carte qu'on est en train de regarder parce que le serveur vient de
+   repondre n'aurait aucun sens. */
+function showApp(){
+  ['gate', 'invite', 'accueil'].forEach(k => { el(k).hidden = true; });
+  el('app').hidden = false;
+  el('tabs').hidden = false;
+  outils(true);
+  fit();
+}
+
+/* Les deux boutons du bout de barre. Ils ne règlent que le classeur - l'état
+   de la connexion, les reflets de rareté - et n'ont donc rien à faire
+   au-dessus d'un écran qui n'en montre aucun. */
+function outils(visibles){
+  el('gear').hidden = !visibles;
+  el('shine').hidden = !visibles;
+}
+
+/* Écran d'aide : le classeur demandé ne répond pas, ou le serveur a dit non.
+   `refus` distingue le second cas - classeur privé, pseudo inconnu. Un lien
+   /collection/<pseudo> partagé tombe surtout là-dessus, et « ne répond pas »
+   serait faux : il a répondu, c'est justement le problème. Pas de bouton
+   « Réessayer » dans ce cas, il ne pourrait que faire redire non. */
+function showGate(erreur, refus){
+  cacheTout();
+  const s = source();
+  majEntete();
+  setSync('offline', s ? 'non connecté' : 'aucun classeur');
+  outils(!!s);
+  el('tabs').hidden = true;
+  el('tabs').innerHTML = '';
+  el('binder').innerHTML = '';
+  el('gTitle').textContent = refus
+    ? 'Ce classeur ne peut pas être ouvert'
+    : (s ? 'Ce classeur ne répond pas' : 'Aucun classeur');
+  el('gMsg').textContent = refus || !s ? ''
+    : 'Le serveur d’Abyss n’a pas renvoyé le classeur de ' + (s.nom || '?') + '.';
+  el('gErr').hidden = !erreur;
+  if (erreur) el('gErr').innerHTML = erreur;
+  el('gRetry').hidden = !s || !!refus;
+  el('gate').hidden = false;
+}
+
+/* Connecté mais aucun classeur : plutôt que d'atterrir sur celui d'un
+   inconnu, on propose tout de suite de créer le sien. */
+function showInvite(){ ecranSansClasseur('invite'); }
+
+/* Personne n'est connecté : on n'ouvre le classeur de personne. La page
+   tombait jusqu'ici sur SOURCES[0], c'est-à-dire le premier classeur public
+   venu - un visiteur atterrissait chez quelqu'un qu'il n'avait pas demandé,
+   sans qu'aucun mot ne lui dise où il était. */
+function showAccueil(){
+  ecranSansClasseur('accueil');
+  monteRecherche(el('accueilRech'));
+}
+
+function ecranSansClasseur(quel){
+  cacheTout();
+  /* Aucun classeur n'est réellement affiché ici : SRC restait à 0, si bien
+     que la recherche marquait le premier classeur public comme déjà ouvert -
+     cocher une coche sur laquelle cliquer ne fait rien, puisque
+     choisirClasseur() ignore un clic sur ce qui est déjà « SRC ». -1
+     n'existe dans aucune liste : rien ne coche, et le premier clic ouvre
+     bien le classeur visé. */
+  SRC = -1;
+  CAN_WRITE = false;
+  DATA = { types: [], images: DATA.images, vignettes: DATA.vignettes };
+  el('brand-title').textContent = 'Classeur Yu-Gi-Oh';
+  el('tabs').hidden = true;
+  el('tabs').innerHTML = '';
+  el('binder').innerHTML = '';
+  outils(false);
+  majVerrou();
+  el(quel).hidden = false;
+}
+
+/* ---------------- en-tête ---------------- */
+function majEntete(){
+  const s = source();
+  el('brand-title').textContent = s && s.nom
+    ? (s.moi || estLeMien() ? 'Mon classeur' : 'Classeur de ' + s.nom)
+    : 'Classeur Yu-Gi-Oh';
+}
+
+/* Ce que le visiteur peut faire, une fois qu'on sait qui il est.
+   Il n'y a plus rien à déverrouiller : le serveur répond `write: true` quand
+   le classeur affiché est celui du visiteur connecté, et `false` sinon. */
+function majVerrou(){
+  /* La maison ne se montre que si elle mène quelque part : il faut un
+     classeur à soi, et ne pas déjà être dessus. Sinon elle resterait là à ne
+     rien faire - un bouton qui ne change rien à l'écran se lit comme une
+     panne. */
+  el('homeBtn').hidden = !MOI.pseudo || CAN_WRITE;
+  el('unlock').hidden = CAN_WRITE;
+  /* les favorites sont un réglage de son classeur à soi, pas de celui qu'on
+     regarde */
+  el('favBtn').hidden = !CAN_WRITE;
+  el('formatBtn').hidden = !CAN_WRITE;
+  el('unlock').textContent = !MOI.connecte ? 'Se connecter sur Abyss'
+    : MOI.pseudo ? 'Ouvrir mon classeur' : 'Créer mon classeur';
+  /* les boutons d'écriture dépendent du verrou, pas de la carte ouverte :
+     sans ça « Enregistrer » restait visible tant qu'aucune carte n'avait été
+     désignée, donc dès l'arrivée sur la page */
+  el('pSave').hidden = !CAN_WRITE;
+  el('pDel').hidden = true;
+  if (S.sel !== null) majPanel(S.sel);   // rétablit pDel selon la carte
+}
+
+/* =========================================================
+   La recherche : quel classeur ouvrir
+
+   Elle se monte où on le lui demande - dans sa fenêtre quand on clique sur
+   « Rechercher », et à même l'écran d'accueil quand personne n'est connecté,
+   où elle est tout ce qu'un visiteur peut faire et n'a donc pas à être
+   derrière un bouton. D'où l'absence d'identifiants ici : deux exemplaires
+   peuvent vivre en même temps dans la page, et deux id identiques n'en
+   désigneraient qu'un.
+
+   Une seule chose à chercher, contrairement à l'Archive qui cherche aussi
+   un jeu : ici, chercher une carte se fait dans le classeur ouvert, avec la
+   barre posée au-dessus des pages.
+   ========================================================= */
+const LOUPE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"'
+  + ' stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"'
+  + ' aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+
+function monteRecherche(hote){
+  hote.innerHTML = '<label class="rsearch-box">' + LOUPE
+    + '<input class="rsearch-input" type="text" placeholder="Nom du collectionneur..."'
+    + ' autocomplete="off" spellcheck="false" aria-label="Rechercher un classeur"></label>'
+    + '<div class="rsearch-list"></div>';
+
+  const champ = hote.querySelector('.rsearch-input');
+  const liste = hote.querySelector('.rsearch-list');
+
+  /* Un mot à la place de la liste plutôt qu'une liste vide : une liste qui
+     reste vide sans rien dire laisse croire que la frappe n'a pas pris. Le
+     rôle part avec les résultats - une liste déroulante qui ne contient
+     qu'une phrase n'en est plus une, et un lecteur d'écran l'annoncerait
+     comme une liste vide de choix. */
+  function mot(texte){
+    liste.removeAttribute('role');
+    liste.removeAttribute('aria-label');
+    liste.innerHTML = '<p class="rsearch-vide">' + esc(texte) + '</p>';
+  }
+
+  function dessine(){
+    const brut = champ.value;
+    const q = norm(brut);
+    const items = SOURCES.map((s, i) => ({ s:s, i:i })).filter(x => !q || norm(x.s.nom).includes(q));
+    if (!items.length){ mot('Aucun classeur ne correspond à « ' + brut + ' ».'); return; }
+    liste.setAttribute('role', 'list');
+    liste.setAttribute('aria-label', 'Classeurs trouvés');
+    liste.innerHTML = items.map(x => {
+      const s = x.s;
+      const n = typeof s.cartes === 'number'
+        ? s.cartes + ' carte' + (s.cartes > 1 ? 's' : '') : 'classeur public';
+      const sous = s.moi ? 'Ton classeur - ' + n : n.charAt(0).toUpperCase() + n.slice(1);
+      const avatar = s.avatar
+        ? '<img class="rsearch-avatar" src="' + esc(s.avatar) + '" alt="">'
+        : '<span class="rsearch-avatar" style="--h:' + teinteAvatar(s.nom) + '">'
+          + esc(initiales(s.nom)) + '</span>';
+      return '<button class="rsearch-item' + (x.i === SRC ? ' on' : '')
+        + (s.banniere ? ' rsearch-orne' : '') + '" data-i="' + x.i + '">'
+        + avatar
+        + '<span class="rsearch-meta"><b>' + esc(s.nom || '?') + '</b><i>' + esc(sous) + '</i></span>'
+        + (x.i === SRC ? '<span class="tick">✓</span>' : '')
+        + '</button>';
+    }).join('');
+    liste.querySelectorAll('.rsearch-item').forEach(b => {
+      b.onclick = () => choisirClasseur(+b.dataset.i);
+      /* La bannière tapisse la ligne, très en retrait : elle dit à qui
+         appartient le classeur d'un coup d'œil sans rendre le texte
+         illisible. L'adresse est posée en JavaScript et non écrite dans le
+         HTML : esc() n'échappe pas l'apostrophe, qui suffirait à sortir d'un
+         url('...') et à injecter du CSS. */
+      const s = SOURCES[+b.dataset.i];
+      if (s && s.banniere) b.style.setProperty('--banniere', 'url("' + s.banniere + '")');
+    });
+  }
+
+  champ.addEventListener('input', dessine);
+  champ.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const premier = liste.querySelector('.rsearch-item');
+    if (premier) premier.click();
+  });
+  dessine();
+  return { champ: champ };
+}
+
+function fermerRecherche(){
+  const host = el('recherche');
+  if (host.hidden) return;
+  host.hidden = true;
+  host.innerHTML = '';
+}
+function ouvrirRecherche(){
+  closeMenu();
+  const host = el('recherche');
+  host.innerHTML = '<div class="rsearch-sheet" role="dialog" aria-modal="true" aria-label="Rechercher un classeur">'
+    + '<div class="rsearch-tete"><b>Rechercher un classeur</b>'
+    + '<button class="rsearch-x" aria-label="Fermer">&times;</button></div>'
+    + '<div class="rsearch-in"></div></div>';
+  host.hidden = false;
+  host.querySelector('.rsearch-x').onclick = fermerRecherche;
+  monteRecherche(host.querySelector('.rsearch-in')).champ.focus();
+}
+el('recherche').addEventListener('click', e => {
+  if (e.target === el('recherche')) fermerRecherche();
+});
+el('jnlSearchBtn').addEventListener('click', e => { e.stopPropagation(); ouvrirRecherche(); });
+
+/* ---------------- changer de classeur ---------------- */
+function choisirClasseur(i){
+  fermerRecherche();
+  if (i === SRC || !SOURCES[i]) return;
+  landFlip(); fermerNet();
+  SRC = i;
+  majAdresse();
+  S.t = 0; S.c = 0; S.spread = 0; S.hit = null; S.pose = null; S.sel = null;
+  CAN_WRITE = false;
+  DATA = { types: [], images: DATA.images, vignettes: DATA.vignettes };
+  el('q').value = '';
+  majEntete(); majVerrou();
+  ouvreClasseurAffiche();
+}
+
+/* Le cache s'affiche tout de suite, quitte à ne pas être à jour : la vraie
+   requête part en même temps, en silence, et remplace dès qu'elle répond.
+   Sans cache, l'attente est nue - mais elle est courte, et le classeur ne se
+   dessine qu'une fois qu'il est là. */
+function ouvreClasseurAffiche(){
+  const s = source();
+  if (!s || !s.url){ showGate(null); return; }
+  setSync('offline', 'connexion...');
+  const cache = lireCache(s.url);
+  if (cache && cache.types && cache.types.length){
+    applyData(cache, false);
+    showApp();
+    redrawAll();
+    charger({ silencieux:true });
+  } else {
+    charger();
+  }
+}
+
+function ouvrirLeMien(){
+  const i = SOURCES.findIndex(x => x.nom === MOI.pseudo);
+  if (i < 0) return;
+  if (i !== SRC){ choisirClasseur(i); return; }
+  landFlip(); fermerNet();
+  S.t = 0; S.c = 0; S.spread = 0; S.hit = null; S.pose = null;
+  el('q').value = ''; el('res').hidden = true;
+  redrawAll();
+  charger({ silencieux:true });
+}
+
+/* Créer son classeur : une seule requête, et le serveur renvoie le classeur
+   tout prêt - les mêmes pochettes que les autres, toutes vides (voir
+   cree_page dans collection.py). Rejouable sans dégât, il rend l'existant
+   s'il y en a un. */
+async function creerMonClasseur(){
+  const b = el('inviteCreate');
+  b.disabled = true;
+  try {
+    const r = await fetch('/api/collection', {
+      method:'POST', credentials:'same-origin',
+      headers:{ 'Content-Type':'application/json' }, body:'{}',
+    });
+    const d = await r.json();
+    if (!r.ok || d.ok === false) throw new Error(d.message || 'création impossible');
+    MOI.pseudo = d.pseudo;
+    SOURCES.unshift({ nom: d.pseudo, titre: d.titre, moi: true, cartes: 0,
+                      url: urlClasseur(d.pseudo) });
+    SRC = 0;
+    majAdresse();
+    S.t = 0; S.c = 0; S.spread = 0;
+    ecrireCache(SOURCES[0].url, d);
+    applyData(d, true);
+    showApp();
+    redrawAll();
+    toast('Ton classeur est prêt. Range ta première carte.');
+  } catch(e){
+    toast('Création impossible - ' + (e.message || 'erreur inconnue'), true);
+  }
+  b.disabled = false;
+}
+
+/* =========================================================
+   L'adresse : /collection/<pseudo>
+
+   Un classeur a une adresse à lui, qu'on peut copier et donner. C'est ce qui
+   rend la page partageable, et c'est aussi le chemin le plus court pour
+   arriver chez quelqu'un : le lien ouvre son classeur directement, même chez
+   qui n'a pas de compte et verrait sinon l'écran d'accueil.
+   ========================================================= */
+function pseudoDeURL(){
+  const m = location.pathname.match(/^\/collection\/([^/]+)\/?$/);
+  if (!m) return '';
+  try { return decodeURIComponent(m[1]); } catch(e){ return m[1]; }
+}
+
+/* Le rang d'un classeur dans SOURCES, en l'y ajoutant s'il n'y est pas.
+   L'annuaire ne liste que les classeurs publics : un lien vers un classeur
+   privé, ou vers un pseudo qui n'existe pas, n'y trouve rien. On l'ajoute
+   quand même pour tenter le chargement - c'est le serveur qui doit dire
+   « privé » ou « inconnu », pas un silence ici. */
+function rangDuClasseur(nom){
+  const i = SOURCES.findIndex(x => norm(x.nom) === norm(nom));
+  if (i >= 0) return i;
+  SOURCES.push({ nom: nom, url: urlClasseur(nom) });
+  return SOURCES.length - 1;
+}
+
+/* L'adresse suit le classeur affiché : elle est copiable telle quelle à tout
+   moment, ce qui est tout l'intérêt. replaceState et non pushState - une
+   entrée d'historique par changement de classeur ferait du bouton Retour un
+   « classeur précédent » que personne n'a demandé, et il doit continuer de
+   ramener d'où l'on vient. */
+function majAdresse(){
+  const s = source();
+  const voulue = (s && s.nom) ? '/collection/' + encodeURIComponent(s.nom) : '/collection';
+  if (location.pathname !== voulue){
+    try { history.replaceState(null, '', voulue + location.search); } catch(e){}
+  }
+}
+
+/* ---------------- l'en-tête : onglets, jauge, classeurs ---------------- */
+function renderTabs(){
+  el('tabs').innerHTML = DATA.types.map((t, i) => {
+    const tot = t.classeurs.reduce((a, c) => a + c.cards.length, 0);
+    return '<button class="tab" role="tab" aria-selected="' + (i === S.t) + '" data-t="' + i + '">'
+      + '<span class="dot" style="background:' + couleurSure(t.color) + '"></span>' + esc(t.label)
+      + '<span class="n">' + tot + '</span></button>';
+  }).join('');
+}
+function renderMeter(){
+  let tot = 0, own = 0;
+  T().classeurs.forEach(c => c.cards.forEach(x => { tot++; if (x[RAR]) own++; }));
+  const pct = tot ? own / tot * 100 : 0;
+  el('mOwn').textContent = own;
+  el('mTot').textContent = tot;
+  el('mBar').style.width = pct + '%';
+  el('mPct').textContent = pct.toFixed(1).replace('.', ',') + ' %';
+  document.documentElement.style.setProperty('--accent', couleurSure(T().color));
+}
+function renderClasseurs(){
+  const cs = T().classeurs;
+  /* Un petit format coupe une famille en dix classeurs ou plus : le mot ne
+     s'écrit alors qu'une fois, devant les numéros, comme sur téléphone. */
+  el('classeurs').classList.toggle('serres', cs.length > 4);
+  el('classeurs').innerHTML = cs.length < 2 ? '' :
+    /* Le mot dans un <span> : sur téléphone la barre du bas ne l'écrit
+       qu'une fois, devant les numéros (voir .cl-mot dans collection.css). */
+    cs.map((c, i) => '<button data-c="' + i + '" aria-pressed="' + (i === S.c)
+      + '" aria-label="Classeur ' + c.n + '"><span class="cl-mot">Classeur </span>'
+      + c.n + '</button>').join('');
+  /* Sur téléphone la rangée défile : le classeur ouvert y est ramené au
+     milieu, sinon le dixième s'ouvrait hors de vue. Sans effet quand tout
+     tient. */
+  const barre = el('classeurs'), ouvert = barre.querySelector('[aria-pressed="true"]');
+  if (ouvert){
+    const a = ouvert.getBoundingClientRect(), b = barre.getBoundingClientRect();
+    barre.scrollLeft += (a.left + a.width / 2) - (b.left + b.width / 2);
+  }
+}
+
+/* ---------------- dimensionnement : le classeur remplit l'écran ---------------- */
+function fit(){
+  const st = el('stage');
+  if (!st || el('app').hidden) return;
+  /* le format est celui de l'onglet : render() repasse ici à chaque
+     changement d'onglet, et la grille prend ses colonnes */
+  const cols = fmt().colonnes, rangs = fmt().rangees;
+  document.documentElement.style.setProperty('--cols', cols);
+  const gap = 8, pad = 13, head = 28, marge = 6;
+  let ch;
+  if (narrow()){
+    const cw = (st.clientWidth - (cols - 1) * gap - 2 * pad - marge) / cols;
+    ch = cw * 86 / 59;
+  } else {
+    const bar = el('topbar') ? el('topbar').offsetHeight : 0;
+    const dispoW = st.clientWidth - 2 * (38 + 10) - 20 - marge;   // flèches + reliure
+    const dispoH = st.clientHeight - bar - marge;
+    const parLargeur = ((dispoW / 2 - 2 * pad - (cols - 1) * gap) / cols) * 86 / 59;
+    const parHauteur = (dispoH - 2 * pad - head - (rangs - 1) * gap) / rangs;
+    ch = Math.min(parLargeur, parHauteur);
+  }
+  ch = Math.max(72, Math.floor(ch));
+  const r = document.documentElement.style;
+  r.setProperty('--ch', ch + 'px');
+  r.setProperty('--cw', Math.floor(ch * 59 / 86) + 'px');
+}
+
+/* ---------------- pages ---------------- */
+function slotHTML(i, col){
+  const card = C().cards[i];
+  if (!card) return '<span class="slot void" aria-hidden="true"></span>';
+  if (!col) col = couleurSure(T().color);
+  const owned = !!card[RAR];
+  const art = owned ? imgHTML(card) : '';
+  const cls = ['slot', owned ? 'owned' : 'miss'];
+  /* la classe est posée dès le rendu, et non à l'événement load : sinon le
+     nom de la carte reste visible jusqu'à l'arrivée de l'image et clignote
+     à chaque page tournée */
+  if (art) cls.push('art');
+  const rc = codeRar(card);
+  if (rc){ cls.push('r-' + rc); if (brille(rc)) cls.push('brille'); }
+  if (S.zoom && S.sel === i && S.t === S.zt && S.c === S.zc) cls.push('sortie');
+  if (S.hit && S.hit.c === S.c && S.hit.i === i) cls.push('hit');
+  if (S.pose && S.pose.c === S.c && S.pose.i === i) cls.push('pose');
+  /* décalage du reflet : les pochettes d'une face ne clignotent pas ensemble */
+  return '<button class="' + cls.join(' ') + '" style="--c:' + couleurSure(col)
+    + ';--d:' + ((i * 7) % 9 * 0.62).toFixed(2) + 's" data-i="' + i + '">'
+    + art
+    + (owned ? FOIL : '')
+    + (owned ? '<span class="rar">' + esc(card[RAR]) + '</span>' : '')
+    + '<span class="nm">' + esc(card[NOM]) + '</span></button>';
+}
+/* remplace une seule pochette : évite de reconstruire (et recharger) toute la double-page */
+function majSlot(i){
+  const s = slotEl(i);
+  if (s) s.outerHTML = slotHTML(i);
+}
+
+function faceHTML(sheet, face){
+  const side = face === 'recto' ? 'r' : 'l';
+  if (sheet < 1 || sheet > sheets()) return '<div class="page ' + side + ' cover"></div>';
+  const col = couleurSure(T().color);
+  const start = (sheet - 1) * parPage() + (face === 'recto' ? 0 : parFace());
+  let slots = '';
+  for (let j = 0; j < parFace(); j++) slots += slotHTML(start + j, col);
+  return '<div class="page ' + side + '">'
+    + '<div class="face"><span class="pg">Page ' + sheet + '</span></div>'
+    + '<div class="grid">' + slots + '</div></div>';
+}
+const SPINE = '<div class="spine">' + '<i class="ring"></i>'.repeat(4) + '</div>';
+
+function draw(leftSheet, rightSheet){
+  const b = el('binder');
+  /* on abandonne cette double-page : on annule ses téléchargements, sinon
+     ils restent dans la file du navigateur et retardent la page d'arrivée.
+     data-art est retiré d'abord pour que l'écouteur d'erreur ci-dessus
+     ignore le pixel et n'aille pas dégrader une pochette au passage. */
+  const vieilles = b.querySelectorAll('img[data-art]');
+  for (let k = 0; k < vieilles.length; k++){
+    vieilles[k].removeAttribute('data-art');
+    vieilles[k].src = PIXEL;
+  }
+  b.innerHTML = faceHTML(leftSheet, 'verso') + SPINE + faceHTML(rightSheet, 'recto');
+}
+function render(){
+  if (!DATA.types.length) return;
+  fit();
+  draw(S.spread, S.spread + 1);
+  // en bout de classeur la flèche reste active s'il y a un classeur voisin
+  el('prev').disabled = S.spread <= 0 && classeurVoisin(-1) < 0;
+  el('next').disabled = S.spread >= sheets() && classeurVoisin(1) < 0;
+  el('goPage').max = sheets();
+  if (document.activeElement !== el('goPage')){
+    el('goPage').value = Math.min(S.spread + 1, sheets());
+  }
+  el('ofPages').textContent = '/ ' + sheets();
+}
+function redrawAll(){
+  if (!DATA.types.length) return;
+  renderTabs(); renderMeter(); renderClasseurs(); render();
+}
+const slotEl = i => el('binder').querySelector('.slot[data-i="' + i + '"]');
+
+/* ---------------- tourner les pages ---------------- */
+let flip = null, lastTurn = 0;
+let swap = null;   // changement de classeur en cours
+
+/* feuilletage maintenu (flèche enfoncée) : tant que les pages défilent on
+   dessine les pochettes sans artwork, et on redessine pour de bon 160 ms
+   après la dernière page tournée. */
+let RAPIDE = false, rapideT = null;
+function feuilletage(){
+  RAPIDE = true;
+  clearTimeout(rapideT);
+  rapideT = setTimeout(() => {
+    RAPIDE = false;
+    /* une feuille tourne encore : la redessiner maintenant remettrait la
+       double-page à sa position d'arrivée sous la feuille en mouvement
+       (page dédoublée le temps de l'animation). Son onfinish s'en charge. */
+    if (!flip && !swap) render();
+  }, 160);
+}
+
+function landFlip(){
+  landSwap();
+  if (!flip) return;
+  S.spread = flip.target;
+  flip.anim.onfinish = null;
+  flip.anim.cancel();
+  flip.el.remove();
+  flip = null;
+  el('binder').style.minHeight = '';
+}
+
+/* index du classeur voisin dans l'onglet courant, ou -1 s'il n'y en a pas */
+function classeurVoisin(dir){
+  const c = S.c + dir;
+  return (c >= 0 && c < T().classeurs.length) ? c : -1;
+}
+
+/* changement de classeur commencé : on l'achève tout de suite */
+function landSwap(){
+  if (!swap) return;
+  const s = swap;
+  swap = null;
+  s.anim.onfinish = null;
+  s.anim.cancel();
+  s.appliquer();
+}
+
+/* Bascule sur le classeur `c` - celui du bas de page, pas celui de la
+   personne : un onglet qui déborde se poursuit dans un second classeur. On
+   change donc de reliure, pas de page : une feuille qui pivote n'aurait
+   aucun sens. Le classeur en cours sort dans le sens de lecture (`dir`), le
+   nouveau entre par l'autre bord ; .stage a overflow:hidden, la sortie est
+   donc rognée net. `debut` dit si on arrive à la première double-page du
+   classeur ou à la dernière. */
+function changeClasseur(c, dir, debut){
+  if (c < 0 || c === S.c) return false;
+
+  const appliquer = () => {
+    S.c = c;
+    S.spread = debut ? 0 : sheets();   // sheets() lit déjà le nouveau classeur
+    S.hit = null; S.pose = null;
+    renderClasseurs(); render();
+  };
+
+  if (reduce() || narrow()){ appliquer(); return true; }
+
+  const dx = dir > 0 ? -46 : 46;
+  const sortie = el('binder').animate([
+    { transform:'translateX(0) scale(1)',            opacity:1 },
+    { transform:'translateX(' + dx + 'px) scale(.93)', opacity:0 }
+  ], { duration:170, easing:'cubic-bezier(.4,0,1,1)', fill:'forwards' });
+
+  swap = { anim: sortie, appliquer: appliquer };
+  sortie.onfinish = () => {
+    swap = null;
+    appliquer();                       // le binder est encore masqué (fill:forwards)
+    const b = el('binder');
+    b.animate([
+      { transform:'translateX(' + (-dx) + 'px) scale(.93)', opacity:0 },
+      { transform:'translateX(0) scale(1)',                 opacity:1 }
+    ], { duration:240, easing:'cubic-bezier(0,0,.3,1)' });
+    sortie.cancel();                   // l'entrée pilote déjà opacity/transform
+  };
+  return true;
+}
+
+function turn(dir){
+  landFlip();
+  const from = S.spread, to = from + dir;
+  if (to < 0 || to > sheets()){
+    // bout du classeur : on enchaîne sur le voisin s'il existe
+    if (!changeClasseur(classeurVoisin(dir), dir, dir > 0)) render();
+    return;
+  }
+  const sheet = dir > 0 ? from + 1 : from;
+
+  const now = performance.now();
+  const enchaine = now - lastTurn < 340;   // enchaînement rapide = flip court
+  lastTurn = now;
+  if (enchaine) feuilletage();             // page traversée : pas d'artwork
+
+  if (reduce() || narrow() || sheet < 1 || sheet > sheets()){
+    S.spread = to; render(); return;
+  }
+
+  const dur = enchaine ? 200 : 460;
+
+  // ce qui se trouve sous la feuille en train de tourner. La reliure garde
+  // sa hauteur : une feuille unique n'a rien dessous, et elle tombait à
+  // celle du dos - la feuille qui tourne débordait alors en bas, tordue
+  // par la perspective. landFlip la lui rend.
+  el('binder').style.minHeight = el('binder').offsetHeight + 'px';
+  if (dir > 0) draw(from, from + 2); else draw(from - 1, from + 1);
+
+  const f = document.createElement('div');
+  f.className = 'flipper';
+  f.innerHTML = faceHTML(sheet, 'recto')
+    + faceHTML(sheet, 'verso').replace('class="page l"', 'class="page l back"');
+  el('binder').appendChild(f);
+
+  const a0 = dir > 0 ? 0 : -180, a1 = dir > 0 ? -180 : 0;
+  const anim = f.animate(
+    [{ transform: 'rotateY(' + a0 + 'deg)' }, { transform: 'rotateY(' + a1 + 'deg)' }],
+    { duration: dur, easing: 'cubic-bezier(.35,.02,.28,1)', fill: 'forwards' });
+
+  flip = { el: f, anim: anim, target: to };
+  anim.onfinish = () => { landFlip(); render(); };
+}
+
+function goToSpread(n){
+  landFlip();
+  const target = Math.max(0, Math.min(sheets(), n));
+  if (Math.abs(target - S.spread) === 1) turn(target > S.spread ? 1 : -1);
+  else { S.spread = target; render(); }
+}
+
+/* ---------------- aller à une carte ---------------- */
+function goToCard(ti, ci, i){
+  landFlip();
+  fermerNet();
+  S.t = ti; S.c = ci; S.hit = { c: ci, i: i };
+  clearTimeout(hitT);
+  hitT = setTimeout(() => { S.hit = null; }, 3600);
+  const o = pos(i);
+  S.spread = o.face === 'recto' ? o.page - 1 : o.page;
+  redrawAll();
+  ouvrir(i, slotEl(i));
+}
+
+/* ---------------- panneau + carte au premier plan ---------------- */
+el('pRar').innerHTML = RARETES.map(r => '<option value="' + r[0] + '">' + r[1] + '</option>').join('');
+el('pQual').innerHTML = ETATS.map(e => '<option value="' + e[0] + '">' + e[1] + '</option>').join('');
+
+let ZOOM = null;   // { box, rect, i, t, c }
+let hitT;
+
+function majPanel(i){
+  const card = C().cards[i];
+  if (!card) return;
+  const o = pos(i), owned = !!card[RAR];
+  el('pName').textContent = card[NOM];
+  el('pCm').href = '/api/collection/cardmarket?nom=' + encodeURIComponent(card[NOM]);
+  el('pStat').innerHTML = esc(T().label) + ' · '
+    + (owned ? '<b class="oui">Possédée</b>' : '<b class="non">Non possédée</b>');
+  el('pCoord').innerHTML = [['Classeur', C().n], ['Page', o.page],
+      ['Face', o.face === 'recto' ? 'R' : 'V'], ['Emplacement', o.slot]]
+    .map(kv => '<div class="cbox"><div class="k">' + kv[0] + '</div><div class="v">'
+      + kv[1] + '</div></div>').join('');
+  el('pRar').innerHTML = optionsRarete(card);
+  el('pRar').value = card[RAR] && CODES.indexOf(card[RAR]) >= 0 ? card[RAR] : 'C';
+  /* « Commune » n'est pas toujours proposée - une carte jamais parue en
+     Commune : le menu retombe alors sur sa première rareté plutôt que de
+     rester vide, ce que fait un select dont la valeur n'existe pas. */
+  if (el('pRar').selectedIndex < 0) el('pRar').selectedIndex = 0;
+  el('pQual').value = card[ETAT] || 3;
+  el('pSave').textContent = owned ? 'Enregistrer' : 'Ajouter au classeur';
+  el('pSave').hidden = !CAN_WRITE;
+  el('pDel').hidden = !owned || !CAN_WRITE;
+}
+
+function rectCible(){
+  const marge = narrow() ? 12 : 22;
+  const ph = el('panel').offsetHeight || 120;
+  const dispoW = innerWidth - marge * 2;
+  const dispoH = innerHeight - ph - marge * 2;
+  const h = Math.max(120, Math.min(dispoH, dispoW * 86 / 59));
+  const w = h * 59 / 86;
+  return { w:w, h:h, x:(innerWidth - w) / 2, y:marge + (dispoH - h) / 2 };
+}
+
+/* La carte agrandie montre son illustration même quand on ne la possède
+   pas : c'est la carte qu'on cherche, pas la pochette. Elle est alors
+   grisée et cerclée de pointillés (voir .bigcard.absente). */
+function bigArtHTML(card){
+  const src = artworkDe(card);
+  return src ? '<img class="bigart" alt="" decoding="async" data-art="' + esc(card[ART])
+             + '" src="' + esc(src) + '">' : '';
+}
+function grandeCarteHTML(card){
+  const owned = !!card[RAR];
+  const rc = codeRar(card);
+  const art = bigArtHTML(card);
+  const cls = ['bigcard'];
+  if (art) cls.push('art');
+  if (!owned) cls.push('absente');
+  if (rc){ cls.push('r-' + rc); if (brille(rc)) cls.push('brille'); }
+  return '<div class="' + cls.join(' ') + '" style="--c:' + couleurSure(T().color) + ';--d:.35s">'
+    + art
+    + '<div class="bigfb"><span>' + esc(card[NOM]) + '</span></div>'
+    + (owned ? FOIL : '')
+    + (owned ? '<span class="bigrar">' + esc(card[RAR]) + '</span>'
+             : '<span class="bigmiss">Non possédée</span>')
+    + '</div>';
+}
+function majGrandeCarte(){
+  if (!ZOOM) return;
+  const card = C().cards[ZOOM.i];
+  if (!card) return;
+  const big = ZOOM.box.querySelector('.bigcard');
+  if (!big){ ZOOM.box.innerHTML = grandeCarteHTML(card); return; }
+  const owned = !!card[RAR];
+  big.classList.toggle('absente', !owned);
+  /* l'illustration correspond peut-être encore à la carte précédente : on la
+     remplace si le fichier ne correspond plus (navigation entre cartes) */
+  const neuf = card[ART] || '';
+  const vieille = big.querySelector('.bigart');
+  if ((vieille ? vieille.dataset.art : '') !== neuf){
+    if (vieille) vieille.remove();
+    big.classList.remove('art');
+    const html = bigArtHTML(card);
+    if (html){ big.insertAdjacentHTML('afterbegin', html); big.classList.add('art'); }
+  }
+  /* la rareté vient peut-être de changer dans le panneau : on refait le vernis */
+  CODES.forEach(c => big.classList.remove('r-' + c));
+  big.classList.remove('brille');
+  const rc = codeRar(card);
+  if (rc){ big.classList.add('r-' + rc); if (brille(rc)) big.classList.add('brille'); }
+  const f = big.querySelector('.foil');
+  if (owned && !f) big.insertAdjacentHTML('beforeend', FOIL);
+  else if (!owned && f) f.remove();
+  const vieux = big.querySelector('.bigrar') || big.querySelector('.bigmiss');
+  if (vieux) vieux.remove();
+  big.insertAdjacentHTML('beforeend', owned
+    ? '<span class="bigrar">' + esc(card[RAR]) + '</span>'
+    : '<span class="bigmiss">Non possédée</span>');
+}
+
+function poserRect(box, r){
+  box.style.left = r.x + 'px';
+  box.style.top = r.y + 'px';
+  box.style.width = r.w + 'px';
+  box.style.height = r.h + 'px';
+}
+
+/* la carte sort de la pochette, avance vers nous et grandit */
+function animEntree(box, s, r){
+  let dx = 0, dy = 50, sc = .82, depuisPochette = false;
+  if (s && s.width > 4){
+    sc = s.width / r.w;
+    dx = (s.left + s.width / 2) - (r.x + r.w / 2);
+    dy = (s.top + s.height / 2) - (r.y + r.h / 2);
+    depuisPochette = true;
+  }
+  const mid = sc + (1 - sc) * .8;
+  return box.animate([
+    { offset:0, opacity: depuisPochette ? .45 : 0,
+      transform:'translate3d(' + dx + 'px,' + dy + 'px,0) rotateY(-26deg) rotateX(7deg) scale(' + sc + ')' },
+    { offset:.62, opacity:1,
+      transform:'translate3d(' + (dx * .2) + 'px,' + (dy * .2) + 'px,110px) rotateY(-8deg) rotateX(2deg) scale(' + mid + ')' },
+    { offset:1, opacity:1, transform:'translate3d(0,0,0) rotateY(0deg) rotateX(0deg) scale(1)' }
+  ], { duration: reduce() ? 1 : 540, easing:'cubic-bezier(.24,.68,.26,1)', fill:'both' });
+}
+
+/* la carte repart vers sa pochette et s'y glisse */
+function animSortie(box, s, r, owned){
+  let dx = 0, dy = 60, sc = .8, versPochette = false;
+  if (s && s.width > 4){
+    sc = s.width / r.w;
+    dx = (s.left + s.width / 2) - (r.x + r.w / 2);
+    dy = (s.top + s.height / 2) - (r.y + r.h / 2);
+    versPochette = true;
+  }
+  const mid = sc + (1 - sc) * .72;
+  return box.animate([
+    { offset:0, opacity:1, transform:'translate3d(0,0,0) rotateY(0deg) rotateX(0deg) scale(1)' },
+    { offset:.42, opacity:1,
+      transform:'translate3d(' + (dx * .24) + 'px,' + (dy * .24) + 'px,70px) rotateY(-10deg) rotateX(3deg) scale(' + mid + ')' },
+    { offset:1, opacity: versPochette && owned ? .92 : 0,
+      transform:'translate3d(' + dx + 'px,' + dy + 'px,0) rotateY(-20deg) rotateX(6deg) scale(' + (sc * .97) + ')' }
+  ], { duration: reduce() ? 1 : 470, easing:'cubic-bezier(.42,.02,.28,1)', fill:'both' });
+}
+
+function ouvrir(i, src){
+  const card = C().cards[i];
+  if (!card) return;
+  if (flip){ landFlip(); render(); }
+  if (ZOOM) fermerNet();
+  const cible = slotEl(i) || src || null;
+  const depart = cible ? cible.getBoundingClientRect() : null;
+  S.sel = i; S.zoom = true; S.zt = S.t; S.zc = S.c;
+  majPanel(i);
+  el('panel').classList.add('open');
+  el('scrim').classList.add('on');
+  el('zPrev').hidden = false; el('zNext').hidden = false;
+  majNavZoom();
+
+  const r = rectCible();
+  const box = document.createElement('div');
+  box.className = 'zoomwrap';
+  poserRect(box, r);
+  box.innerHTML = grandeCarteHTML(card);
+  el('zoom').appendChild(box);
+  ZOOM = { box:box, rect:r, i:i, t:S.t, c:S.c };
+
+  if (cible) cible.classList.add('sortie');   // la pochette se vide, sans tout redessiner
+  const a = animEntree(box, depart, r);
+  a.onfinish = () => { try { a.cancel(); } catch(e){} };
+}
+
+/* fermeture animée ; insertion = true après un ajout (la carte se range) */
+function fermer(insertion){
+  el('panel').classList.remove('open');
+  el('scrim').classList.remove('on');
+  el('zPrev').hidden = true; el('zNext').hidden = true;
+  if (!ZOOM){ S.sel = null; S.zoom = false; return; }
+
+  const z = ZOOM;
+  const dstEl = (S.t === z.t && S.c === z.c) ? slotEl(z.i) : null;
+  const dst = dstEl ? dstEl.getBoundingClientRect() : null;
+  const card = (DATA.types[z.t] && DATA.types[z.t].classeurs[z.c])
+    ? DATA.types[z.t].classeurs[z.c].cards[z.i] : null;
+  const owned = !!(card && card[RAR]);
+  ZOOM = null;
+
+  let fait = false;
+  const fini = () => {
+    if (fait) return;
+    fait = true;
+    z.box.remove();
+    S.zoom = false; S.sel = null;
+    if (insertion && owned){
+      S.pose = { c:z.c, i:z.i };
+      setTimeout(() => { S.pose = null; }, 700);
+    }
+    majSlot(z.i);
+  };
+  const a = animSortie(z.box, dst, z.rect, owned);
+  a.onfinish = fini;
+  if (reduce()) setTimeout(fini, 20);
+}
+/* fermeture sans animation (changement d'onglet, changement de classeur...) */
+function fermerNet(){
+  if (ZOOM){ ZOOM.box.remove(); ZOOM = null; }
+  el('panel').classList.remove('open');
+  el('scrim').classList.remove('on');
+  el('zPrev').hidden = true; el('zNext').hidden = true;
+  S.sel = null; S.zoom = false;
+  const out = el('binder').querySelectorAll('.slot.sortie');
+  for (let k = 0; k < out.length; k++) out[k].classList.remove('sortie');
+}
+
+/* ---------------- naviguer entre les cartes, carte agrandie ouverte ---------------- */
+/* cherche la carte suivante/précédente, en sautant au classeur voisin si on
+   arrive au bout de celui en cours ; renvoie null s'il n'y a rien de plus */
+function carteAdjacente(dir){
+  const classeurs = T().classeurs;
+  let ci = S.zc, i = S.sel + dir;
+  while (true){
+    const cartes = (classeurs[ci] || { cards: [] }).cards;
+    if (i >= 0 && i < cartes.length) return { ci: ci, i: i };
+    ci += dir;
+    if (ci < 0 || ci >= classeurs.length) return null;
+    i = dir > 0 ? 0 : classeurs[ci].cards.length - 1;
+  }
+}
+function majNavZoom(){
+  el('zPrev').disabled = !carteAdjacente(-1);
+  el('zNext').disabled = !carteAdjacente(1);
+}
+function navCarte(dir){
+  if (!ZOOM) return;
+  const cible = carteAdjacente(dir);
+  if (!cible) return;
+  landFlip();
+  const change = cible.ci !== S.c;
+  S.c = cible.ci; S.zc = cible.ci; S.sel = cible.i;
+  const o = pos(cible.i);
+  S.spread = o.face === 'recto' ? o.page - 1 : o.page;
+  if (change) renderClasseurs();
+  render();
+  ZOOM.i = cible.i; ZOOM.c = cible.ci; ZOOM.t = S.t;
+  majPanel(cible.i);
+  majGrandeCarte();
+  majNavZoom();
+}
+el('zPrev').onclick = () => navCarte(-1);
+el('zNext').onclick = () => navCarte(1);
+
+/* « Autre rareté… » redéploie les treize. Un select ne se rouvre pas par
+   programme : le toast dit donc ce qui vient de changer, plutôt que de
+   laisser un menu qui s'est refermé sur rien. */
+el('pRar').addEventListener('change', () => {
+  if (el('pRar').value !== AUTRES) return;
+  const card = S.sel === null ? null : C().cards[S.sel];
+  el('pRar').innerHTML = optionsRarete(card, true);
+  el('pRar').value = (card && card[RAR]) || 'C';
+  if (el('pRar').selectedIndex < 0) el('pRar').selectedIndex = 0;
+  toast('Toutes les raretés sont proposées.');
+});
+
+el('pSave').onclick = async () => {
+  if (S.sel === null) return;
+  const card = C().cards[S.sel];
+  if (!card) return;
+  /* la liste vient d'être redéployée et rien n'a encore été choisi : il n'y
+     a pas de rareté « Autre » à enregistrer */
+  if (el('pRar').value === AUTRES) return;
+  const avait = !!card[RAR];
+  el('pSave').disabled = true;
+  const ok = await poser(card, el('pRar').value, Number(el('pQual').value));
+  el('pSave').disabled = false;
+  renderMeter();
+  if (ok && !avait){ fermer(true); return; }   // ajout : la carte se glisse dans la pochette
+  majPanel(S.sel); majGrandeCarte(); majSlot(S.sel);
+};
+el('pDel').onclick = async () => {
+  if (S.sel === null) return;
+  const card = C().cards[S.sel];
+  if (!card) return;
+  el('pDel').disabled = true;
+  await poser(card, null, null);
+  el('pDel').disabled = false;
+  renderMeter();
+  majPanel(S.sel); majGrandeCarte(); majSlot(S.sel);  // la carte reste en main
+};
+el('pClose').onclick = () => fermer();
+el('scrim').onclick = () => fermer();
+
+/* ---------------- recherche d'une carte dans le classeur ouvert ---------------- */
+let cursor = -1, hits = [];
+el('q').addEventListener('input', e => {
+  cursor = -1;
+  /* les mots peuvent être donnés dans le désordre, il faut juste qu'ils y soient tous */
+  const mots = motsCle(e.target.value);
+  if (!mots.length || mots.join('').length < 2){ el('res').hidden = true; return; }
+  hits = [];
+  DATA.types.forEach((t, ti) => t.classeurs.forEach((c, ci) => c.cards.forEach((x, i) => {
+    if (hits.length >= 40) return;
+    const k = cle(x[NOM]);
+    if (mots.every(m => k.indexOf(m) >= 0)){
+      hits.push({ ti:ti, ci:ci, i:i, nm:x[NOM], own:!!x[RAR], cl:c.n });
+    }
+  })));
+  el('res').hidden = false;
+  el('res').innerHTML = hits.length
+    ? hits.map((h, k) => '<button data-k="' + k + '"><span class="nm ' + (h.own ? '' : 'miss') + '">'
+        + esc(h.nm) + '</span><span class="co">' + esc(DATA.types[h.ti].label)
+        + '</span><span class="co">' + (h.own ? '✓' : '-') + '</span></button>').join('')
+    : '<div class="empty-res">Aucune carte trouvée...</div>';
+});
+el('res').addEventListener('click', e => {
+  const b = e.target.closest('button[data-k]'); if (!b) return;
+  const h = hits[+b.dataset.k];
+  el('res').hidden = true; el('q').value = h.nm;
+  goToCard(h.ti, h.ci, h.i);
+});
+el('q').addEventListener('keydown', e => {
+  if (el('res').hidden || !hits.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault();
+    cursor = (cursor + (e.key === 'ArrowDown' ? 1 : hits.length - 1)) % hits.length;
+    const kids = el('res').children;
+    for (let k = 0; k < kids.length; k++){
+      if (kids[k].classList) kids[k].classList.toggle('on', k === cursor);
+    }
+    if (kids[cursor]) kids[cursor].scrollIntoView({ block:'nearest' });
+  }
+  if (e.key === 'Enter' && cursor >= 0){
+    const h = hits[cursor];
+    el('res').hidden = true; el('q').value = h.nm;
+    goToCard(h.ti, h.ci, h.i);
+  }
+  if (e.key === 'Escape') el('res').hidden = true;
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search')) el('res').hidden = true;
+});
+
+/* ---------------- événements ---------------- */
+el('tabs').onclick = e => {
+  const b = e.target.closest('[data-t]'); if (!b) return;
+  landFlip(); fermerNet();
+  S.t = +b.dataset.t; S.c = 0; S.spread = 0; S.hit = null; S.pose = null;
+  redrawAll();
+};
+el('classeurs').onclick = e => {
+  const b = e.target.closest('[data-c]'); if (!b) return;
+  landFlip(); fermerNet();
+  const c = +b.dataset.c;
+  // le classeur déjà ouvert : on revient juste à sa première page
+  if (c === S.c){ S.spread = 0; S.hit = null; S.pose = null; render(); return; }
+  changeClasseur(c, c > S.c ? 1 : -1, true);   // toujours à la première page
+};
+el('binder').addEventListener('click', e => {
+  const s = e.target.closest('.slot[data-i]');
+  if (s) ouvrir(+s.dataset.i, s);
+});
+el('prev').onclick = () => turn(-1);
+el('next').onclick = () => turn(1);
+
+/* ---------------- gestes du doigt ----------------
+   Sur un téléphone, les flèches du classeur sont deux petits ronds posés en
+   haut et en bas d'une page qui prend tout l'écran ; le classeur, lui,
+   s'ouvre à plat sous le pouce. On le feuillette donc comme un vrai : le
+   doigt pousse la page vers la gauche pour aller à la suivante.
+
+   Les trois gestes doublent des boutons qui restent là - les flèches du
+   classeur, celles de la carte agrandie, la croix du panneau. Rien ne
+   devient inatteignable faute de les connaître. Voir static/commun/gestes.js.
+
+   La feuille de style pose les touch-action qui vont avec : pan-y sur le
+   classeur, pour que le doigt laisse le défilement vertical de la page au
+   navigateur et nous rende l'horizontal ; none sur la carte agrandie et sur
+   le panneau, qui n'ont rien à faire défiler. */
+glissement(el('binder'), { gauche: () => turn(1), droite: () => turn(-1) });
+/* Écoute posée sur #zoom, qui ne bouge jamais, plutôt que sur la carte
+   elle-même : ouvrir() en construit une neuve à chaque fois. */
+glissement(el('zoom'), {
+  gauche: () => navCarte(1),
+  droite: () => navCarte(-1),
+  bas:    () => fermer(),
+});
+glissement(el('panel'), { bas: () => fermer() });
+
+el('goPage').addEventListener('change', () => {
+  const p = parseInt(el('goPage').value, 10);
+  if (!isNaN(p)) goToSpread(Math.max(1, Math.min(sheets(), p)) - 1);
+});
+el('goPage').addEventListener('keydown', e => { if (e.key === 'Enter') el('goPage').blur(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){
+    if (el('modal').classList.contains('open')){ fermerModale(); return; }
+    if (!el('recherche').hidden){ fermerRecherche(); return; }
+    if (!el('menu').hidden){ closeMenu(); return; }
+    if (ZOOM){ fermer(); return; }
+  }
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT') return;
+  if (ZOOM){                               // carte ouverte : les flèches changent de carte
+    if (e.key === 'ArrowLeft'){ e.preventDefault(); navCarte(-1); }
+    if (e.key === 'ArrowRight'){ e.preventDefault(); navCarte(1); }
+    return;
+  }
+  if (e.key === 'ArrowLeft') turn(-1);
+  if (e.key === 'ArrowRight') turn(1);
+});
+
+let resizeT;
+addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => {
+    fit();
+    if (DATA.types.length && !el('app').hidden) render();
+    if (ZOOM){ ZOOM.rect = rectCible(); poserRect(ZOOM.box, ZOOM.rect); }
+  }, 120);
+});
+
+/* ---------------- le menu de l'engrenage ---------------- */
+function closeMenu(){
+  el('menu').hidden = true;
+  el('gear').setAttribute('aria-expanded', 'false');
+}
+function toggleMenu(){
+  const m = el('menu'), ouvert = m.hidden;
+  if (ouvert) fermerRecherche();                   // un seul panneau ouvert à la fois
+  m.hidden = !ouvert;
+  el('gear').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+}
+el('gear').onclick = e => { e.stopPropagation(); toggleMenu(); };
+/* Une sélection de texte commencée dans le menu et relâchée dehors ne doit
+   pas le fermer : on ne ferme que si le clic ET le mousedown qui l'a précédé
+   visaient tous les deux en dehors. */
+let HORS_COG = false;
+document.addEventListener('mousedown', e => { HORS_COG = !e.target.closest('.cog-wrap'); });
+document.addEventListener('click', e => {
+  if (HORS_COG && !el('menu').hidden && !e.target.closest('.cog-wrap')) closeMenu();
+});
+
+el('gRetry').onclick = () => charger();
+el('inviteCreate').onclick = creerMonClasseur;
+el('homeBtn').onclick = () => { closeMenu(); fermerRecherche(); ouvrirLeMien(); };
+el('unlock').onclick = () => {
+  closeMenu();
+  /* Pas connecté : direction Abyss, sur sa fenêtre de connexion - atterrir
+     sur le hub laisserait le bouton à retrouver, un clic de plus pour la
+     seule chose qu'on venait faire. Connecté avec un classeur : on l'ouvre.
+     Connecté sans classeur : on lui en crée un et on l'y emmène. */
+  if (!MOI.connecte){ location.href = '/abyss?connexion=1'; return; }
+  if (MOI.pseudo){ ouvrirLeMien(); return; }
+  creerMonClasseur();
+};
+
+/* ---------------- modales ---------------- */
+function ouvrirModale(html){
+  el('sheetbox').innerHTML = html;
+  el('modal').classList.add('open');
+}
+function fermerModale(){
+  el('modal').classList.remove('open');
+  el('sheetbox').innerHTML = '';
+}
+el('modal').addEventListener('click', e => {
+  if (e.target === el('modal')) fermerModale();
+});
+
+/* =========================================================
+   Exporter le classeur
+
+   Tout est deja en memoire : pas de requete, juste mettre en forme et
+   declencher un telechargement. Ouvert a n'importe quel classeur affiche,
+   comme dans l'Archive -- c'est deja ce qu'on regarde, pas besoin d'en etre
+   le proprietaire pour en garder une copie.
+
+   Le nom de la carte et sa famille partent toujours : sans eux le fichier ne
+   dit rien. Tout le reste se choisit, y compris la question qui n'a pas
+   d'equivalent dans l'Archive -- les pochettes vides. Un classeur est fait
+   d'emplacements dont la plupart sont vides ; exporter les deux mille
+   pochettes quand on en possede six cents, c'est un fichier qui parle surtout
+   de ce qu'on n'a pas. D'ou le choix, et « Possedees » par defaut.
+
+   Le troisieme format, Cardmarket, ne telecharge rien : il fait des listes
+   de souhaits a coller, voir « la liste de souhaits Cardmarket » plus bas.
+   ========================================================= */
+function telecharge(contenu, type, nom){
+  const blob = new Blob([contenu], { type: type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nom; a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // laisse le temps au téléchargement de démarrer avant de libérer l'URL
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function slug(n){
+  return String(n == null ? '' : n).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+}
+
+const CHAMPS_EXPORT = [
+  ['rarete', 'Rareté'], ['etat', 'État'], ['classeur', 'Classeur'],
+  ['page', 'Page'], ['face', 'Face'], ['place', 'Emplacement'],
+];
+const LIBELLE_ETAT = { 3:'Bon', 2:'Moyen', 1:'Mauvais' };
+
+/* Une carte, mise a plat : ce que l'export sait ecrire d'elle. `i` est sa
+   place dans le classeur, d'ou se deduisent la page, la face et
+   l'emplacement -- les memes quatre nombres que le panneau affiche sous son
+   nom, et sous les memes noms. */
+function carteAplat(t, classeur, card, i){
+  const o = pos(i, t);
+  return {
+    famille: t.label, nom: card[NOM],
+    rarete: card[RAR] || '', etat: LIBELLE_ETAT[card[ETAT]] || '',
+    classeur: classeur.n, page: o.page,
+    face: o.face === 'recto' ? 'R' : 'V', place: o.slot,
+  };
+}
+/* Les cartes retenues par la selection en cours de la fenetre. */
+function choixExport(){
+  const b = el('sheetbox');
+  if (!b) return [];
+  const familles = new Set(Array.from(b.querySelectorAll('#expFamilles input:checked'))
+    .map(c => c.value));
+  const quoi = b.querySelector('.exp-quoi .exp-btn.on').dataset.quoi;
+  const sortie = [];
+  DATA.types.forEach(t => {
+    if (!familles.has(t.key)) return;
+    t.classeurs.forEach(classeur => classeur.cards.forEach((card, i) => {
+      if (quoi === 'possedees' && !card[RAR]) return;
+      if (quoi === 'manquantes' && card[RAR]) return;
+      sortie.push(carteAplat(t, classeur, card, i));
+    }));
+  });
+  return sortie;
+}
+/* Combien de cartes partiraient : un retour immediat, plutot que de le
+   decouvrir dans le fichier telecharge. */
+function majExportInfo(){
+  const n = choixExport().length, k = Math.ceil(n / CM_MAXI);
+  el('expInfo').innerHTML = '<b>' + n + '</b> carte' + (n > 1 ? 's' : '')
+    + ' avec cette sélection'
+    + (formatExport() === 'cardmarket' && n
+        ? ', soit <b>' + k + '</b> liste' + (k > 1 ? 's' : '') + ' de souhaits' : '');
+}
+function formatExport(){
+  return el('sheetbox').querySelector('.exp-quel .exp-btn.on').dataset.format;
+}
+/* Cardmarket n'emporte que des noms : la section « Données » n'a rien à y
+   dire. Et une liste de souhaits, c'est ce qui manque : on le choisit pour
+   soi en passant sur ce format, sans l'interdire d'en changer ensuite. */
+function majFormat(){
+  const cm = formatExport() === 'cardmarket';
+  el('expDonnees').hidden = cm;
+  if (cm) el('sheetbox').querySelectorAll('.exp-quoi .exp-btn').forEach(x =>
+    x.classList.toggle('on', x.dataset.quoi === 'manquantes'));
+}
+function ouvrirExport(){
+  closeMenu();
+  if (!DATA.types.length){ toast('Ce classeur est vide : rien à exporter.', true); return; }
+  const s = source();
+  const familles = DATA.types.map(t =>
+    '<label class="exp-case"><input type="checkbox" value="' + esc(t.key) + '" checked>'
+    + '<span>' + esc(t.label) + '</span></label>').join('');
+  const champs = CHAMPS_EXPORT.map(c =>
+    '<label class="exp-case"><input type="checkbox" value="' + c[0] + '" checked>'
+    + '<span>' + esc(c[1]) + '</span></label>').join('');
+  ouvrirModale(
+    '<h2>Exporter le classeur</h2>'
+    + '<p>' + esc(s && s.nom ? 'Le classeur de ' + s.nom : 'Ce classeur')
+    + ', tel qu\'il est à l\'écran.</p>'
+    + '<div class="exp-format exp-quel" role="group" aria-label="Format du fichier">'
+    +   '<button type="button" class="exp-btn on" data-format="json">JSON</button>'
+    +   '<button type="button" class="exp-btn" data-format="csv">CSV</button>'
+    +   '<button type="button" class="exp-btn" data-format="cardmarket">Cardmarket</button></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Familles</span></div>'
+    +   '<div class="exp-grille" id="expFamilles">' + familles + '</div></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Quelles pochettes</span></div>'
+    +   '<div class="exp-format exp-quoi" role="group" aria-label="Quelles pochettes">'
+    +     '<button type="button" class="exp-btn on" data-quoi="possedees">Possédées</button>'
+    +     '<button type="button" class="exp-btn" data-quoi="manquantes">Manquantes</button>'
+    +     '<button type="button" class="exp-btn" data-quoi="tout">Tout le classeur</button>'
+    +   '</div></div>'
+    + '<div class="exp-section" id="expDonnees"><div class="exp-tete">'
+    +   '<span class="exp-titre">Données</span>'
+    +   '<span class="exp-note">nom et famille toujours inclus</span></div>'
+    +   '<div class="exp-grille" id="expChamps">' + champs + '</div></div>'
+    + '<p class="exp-info" id="expInfo"></p>'
+    + '<div class="row"><button class="act ghost" id="expAnnuler">Annuler</button>'
+    + '<button class="act" id="expGo">Exporter</button></div>');
+
+  const b = el('sheetbox');
+  el('expAnnuler').onclick = fermerModale;
+  el('expGo').onclick = lancerExport;
+  /* Deux bascules a deux boutons, et non des cases : ce sont des choix
+     exclusifs, et une case a cocher promettrait de pouvoir n'en prendre
+     aucun. Le meme geste des deux cotes, donc le meme dessin. */
+  b.querySelectorAll('.exp-format').forEach(groupe => {
+    groupe.querySelectorAll('.exp-btn').forEach(btn => btn.onclick = () => {
+      groupe.querySelectorAll('.exp-btn').forEach(x => x.classList.remove('on'));
+      btn.classList.add('on');
+      if (groupe.classList.contains('exp-quel')) majFormat();
+      majExportInfo();
+    });
+  });
+  b.querySelectorAll('#expFamilles input').forEach(c =>
+    c.addEventListener('change', majExportInfo));
+  majExportInfo();
+}
+function lancerExport(){
+  const b = el('sheetbox');
+  const format = b.querySelector('.exp-quel .exp-btn.on').dataset.format;
+  const champs = Array.from(b.querySelectorAll('#expChamps input:checked')).map(c => c.value);
+  const cartes = choixExport();
+  if (!cartes.length){ toast('Rien à exporter avec cette sélection.', true); return; }
+  if (format === 'cardmarket'){ listesCardmarket(cartes); return; }
+  const nom = 'classeur-' + (slug(source() && source().nom) || 'yugioh');
+  const colonnes = ['famille', 'nom'].concat(champs);
+  if (format === 'json'){
+    const sortie = cartes.map(c => {
+      const o = {};
+      colonnes.forEach(k => { o[k] = c[k]; });
+      return o;
+    });
+    telecharge(JSON.stringify(sortie, null, 2), 'application/json', nom + '.json');
+  } else {
+    const lignes = cartes.map(c => colonnes.map(k => celluleCSV(c[k])).join(','));
+    // BOM UTF-8 : sans lui, Excel lit les accents de travers en ouvrant le fichier
+    const csv = '\uFEFF' + colonnes.join(',') + '\n' + lignes.join('\n');
+    telecharge(csv, 'text/csv;charset=utf-8', nom + '.csv');
+  }
+  fermerModale();
+}
+/* Une valeur par cellule CSV : guillemets doubles, et la cellule entiere
+   entre guillemets des qu'elle contient une virgule, un guillemet ou un
+   retour a la ligne -- un nom de carte peut porter les trois. */
+function celluleCSV(v){
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+el('exportBtn').onclick = ouvrirExport;
+
+/* =========================================================
+   Les cartes favorites
+
+   Trois cartes choisies parmi toutes celles du jeu -- pas seulement celles
+   du classeur : une favorite est une carte qu'on aime, pas une carte qu'on
+   a. L'accueil d'Abyss les montre en éventail sur la vignette de la
+   Collection, de gauche à droite dans l'ordre des trois places ; sans
+   elles, il montre les siennes.
+
+   La recherche se fait côté serveur (/api/collection/catalogue) : le
+   catalogue entier pèse 570 Ko, et la page n'en a jamais besoin que de
+   vingt-quatre lignes à la fois. Rien n'est écrit avant « Enregistrer ».
+   ========================================================= */
+const FAV_MAXI = 3;
+const FAV = { cartes: [], vignettes: '/collection/vignette/', minuteur: null, jeton: 0 };
+
+async function apiFav(chemin, corps){
+  const r = await fetch('/api/collection' + chemin, corps ? {
+    method: 'PUT', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(corps),
+  } : { credentials: 'same-origin' });
+  const d = await r.json().catch(() => null);
+  if (!r.ok || !d || !d.ok) throw new Error((d && d.message) || 'http ' + r.status);
+  if (d.vignettes) FAV.vignettes = d.vignettes;
+  return d;
+}
+
+function vignetteFav(c){
+  return '<img src="' + esc(FAV.vignettes + c.fichier) + '" alt="" loading="lazy" decoding="async">';
+}
+
+async function ouvrirFavorites(){
+  closeMenu();
+  FAV.cartes = [];
+  ouvrirModale(
+    '<h2>Cartes favorites</h2>'
+    + '<div class="fav-places" id="favPlaces"></div>'
+    + '<input class="fav-champ" id="favChamp" type="search" autocomplete="off" spellcheck="false"'
+    + ' placeholder="Chercher une carte…" aria-label="Chercher une carte du jeu">'
+    + '<div class="fav-resultats" id="favResultats"></div>'
+    + '<div class="row"><button class="act ghost" id="favAnnuler">Annuler</button>'
+    + '<button class="act" id="favGo">Enregistrer</button></div>');
+  el('favAnnuler').onclick = fermerModale;
+  el('favGo').onclick = enregistrerFavorites;
+  el('favChamp').addEventListener('input', () => {
+    clearTimeout(FAV.minuteur);
+    FAV.minuteur = setTimeout(chercherFavorites, 250);
+  });
+  dessinePlaces();
+  dessineResultats(null);
+  el('favChamp').focus();
+  try {
+    const d = await apiFav('/favorites');
+    FAV.cartes = d.cartes || [];
+    if (el('favPlaces')) dessinePlaces();
+  } catch (e) {
+    toast('Favorites illisibles : ' + e.message, true);
+  }
+}
+
+/* Les trois places : la carte, ou un emplacement vide qui dit son rang. */
+function dessinePlaces(){
+  const zone = el('favPlaces');
+  if (!zone) return;
+  let html = '';
+  for (let i = 0; i < FAV_MAXI; i++){
+    const c = FAV.cartes[i];
+    html += c
+      ? '<div class="fav-place pleine">' + vignetteFav(c)
+        + '<span class="fav-nom">' + esc(c.nom) + '</span>'
+        + '<button type="button" class="fav-retirer" data-i="' + i + '" aria-label="Retirer '
+        + esc(c.nom) + '">&#10005;</button></div>'
+      : '<div class="fav-place"><span class="fav-rang">' + (i + 1) + '</span></div>';
+  }
+  zone.innerHTML = html;
+  zone.querySelectorAll('.fav-retirer').forEach(b => b.onclick = () => {
+    FAV.cartes.splice(+b.dataset.i, 1);
+    dessinePlaces();
+    marqueResultats();
+  });
+}
+
+async function chercherFavorites(){
+  const q = el('favChamp') ? el('favChamp').value.trim() : '';
+  const jeton = ++FAV.jeton;
+  if (q.length < 2){ dessineResultats(null); return; }
+  try {
+    const d = await apiFav('/catalogue?q=' + encodeURIComponent(q));
+    if (jeton === FAV.jeton) dessineResultats(d.cartes || []);   // pas une réponse en retard
+  } catch (e) {
+    if (jeton === FAV.jeton) el('favResultats').innerHTML =
+      '<p class="fav-info">La recherche n\'a pas répondu.</p>';
+  }
+}
+
+function dessineResultats(cartes){
+  const zone = el('favResultats');
+  if (!zone) return;
+  if (cartes === null){ zone.innerHTML = ''; return; }
+  if (!cartes.length){
+    zone.innerHTML = '<p class="fav-info">Aucune carte ne porte ce nom.</p>';
+    return;
+  }
+  zone.innerHTML = cartes.map(c =>
+    '<button type="button" class="fav-carte" data-passcode="' + esc(c.passcode) + '">'
+    + vignetteFav(c) + '<span>' + esc(c.nom) + '</span></button>').join('');
+  zone.querySelectorAll('.fav-carte').forEach((b, i) => b.onclick = () => choisirFavorite(cartes[i]));
+  marqueResultats();
+}
+
+/* Une carte déjà choisie se voit dans les résultats : un second clic la
+   retire, plutôt que de la poser deux fois. */
+function marqueResultats(){
+  const choisies = new Set(FAV.cartes.map(c => c.passcode));
+  document.querySelectorAll('#favResultats .fav-carte').forEach(b =>
+    b.classList.toggle('on', choisies.has(b.dataset.passcode)));
+}
+
+function choisirFavorite(c){
+  const i = FAV.cartes.findIndex(x => x.passcode === c.passcode);
+  if (i >= 0) FAV.cartes.splice(i, 1);
+  else if (FAV.cartes.length >= FAV_MAXI){
+    toast('Trois favorites au plus : retires-en une avant.', true);
+    return;
+  } else FAV.cartes.push(c);
+  dessinePlaces();
+  marqueResultats();
+}
+
+async function enregistrerFavorites(){
+  const b = el('favGo');
+  b.disabled = true;
+  try {
+    await apiFav('/favorites', { cartes: FAV.cartes.map(c => c.passcode) });
+    fermerModale();
+    toast(FAV.cartes.length ? 'Favorites enregistrées.' : 'Favorites retirées.');
+  } catch (e) {
+    toast('Pas enregistrées : ' + e.message, true);
+    b.disabled = false;
+  }
+}
+el('favBtn').onclick = ouvrirFavorites;
+
+/* =========================================================
+   Le format du classeur
+
+   Combien de pochettes par face, en colonnes et en rangées, et combien de
+   pages par classeur : de quoi faire du classeur à l'écran celui qu'on a
+   sur l'étagère. Il se règle onglet par onglet, sur celui qu'on regarde.
+   L'aperçu de la double-page suit les choix, et la ligne du bas dit ce
+   qu'ils donnent.
+
+   Rien ne bouge en base : les cartes gardent leur ordre, seule la mise en
+   page change (voir relie()). Réglé par le propriétaire, vu de tous - un
+   visiteur feuillette le classeur tel qu'il est vraiment.
+   ========================================================= */
+const FMT = { choix: null, cle: null };
+const borneFormat = (k, v) => Math.max(FORMAT_BORNES[k][0], Math.min(FORMAT_BORNES[k][1], v));
+
+function ouvrirFormat(){
+  closeMenu();
+  if (!DATA.types.length) return;
+  FMT.choix = Object.assign({}, fmt());
+  FMT.cle = T().key;
+  const bascule = (k, titre) => {
+    let boutons = '';
+    for (let v = FORMAT_BORNES[k][0]; v <= FORMAT_BORNES[k][1]; v++){
+      boutons += '<button type="button" class="exp-btn" data-v="' + v + '">' + v + '</button>';
+    }
+    return '<div class="fmt-axe"><span class="fmt-mot">' + titre + '</span>'
+      + '<div class="exp-format" role="group" aria-label="' + titre + '" data-k="' + k + '">'
+      + boutons + '</div></div>';
+  };
+  ouvrirModale(
+    '<h2>Personnaliser le classeur ' + esc(T().label) + '</h2>'
+    + '<div class="fmt-apercu" id="fmtApercu" aria-hidden="true"></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Pochettes par face</span></div>'
+    +   '<div class="fmt-axes">' + bascule('colonnes', 'Colonnes')
+    +   bascule('rangees', 'Rangées') + '</div></div>'
+    + '<div class="exp-section"><div class="exp-tete">'
+    +   '<span class="exp-titre">Pages</span><span class="exp-note">recto verso</span></div>'
+    +   '<div class="fmt-pages">'
+    +     '<button type="button" class="fmt-pas" data-pas="-1" aria-label="Une page de moins">&minus;</button>'
+    +     '<input id="fmtPages" type="number" inputmode="numeric" min="' + FORMAT_BORNES.pages[0]
+    +     '" max="' + FORMAT_BORNES.pages[1] + '" aria-label="Nombre de pages">'
+    +     '<button type="button" class="fmt-pas" data-pas="1" aria-label="Une page de plus">+</button>'
+    +   '</div></div>'
+    + '<p class="exp-info" id="fmtInfo"></p>'
+    + '<div class="row"><button class="act ghost" id="fmtAnnuler">Annuler</button>'
+    + '<button class="act" id="fmtGo">Enregistrer</button></div>');
+
+  const b = el('sheetbox'), champ = el('fmtPages');
+  el('fmtAnnuler').onclick = fermerModale;
+  el('fmtGo').onclick = enregistrerFormat;
+  b.querySelectorAll('.fmt-axe .exp-format').forEach(g =>
+    g.querySelectorAll('.exp-btn').forEach(x => x.onclick = () => {
+      FMT.choix[g.dataset.k] = +x.dataset.v;
+      dessineFormat();
+    }));
+  /* Pendant la frappe, seul un nombre dans les bornes compte : « 1 » en
+     route vers « 12 » ne doit pas faire sauter l'aperçu à cinq pages. Le
+     champ est remis d'aplomb en le quittant. */
+  champ.value = FMT.choix.pages;
+  champ.addEventListener('input', () => {
+    const v = parseInt(champ.value, 10);
+    if (v === borneFormat('pages', v)){ FMT.choix.pages = v; dessineFormat(); }
+  });
+  champ.addEventListener('change', () => {
+    const v = parseInt(champ.value, 10);
+    if (!isNaN(v)) FMT.choix.pages = borneFormat('pages', v);
+    champ.value = FMT.choix.pages;
+    dessineFormat();
+  });
+  champ.addEventListener('keydown', e => { if (e.key === 'Enter') champ.blur(); });
+  b.querySelectorAll('.fmt-pas').forEach(x => x.onclick = () => {
+    FMT.choix.pages = borneFormat('pages', FMT.choix.pages + Number(x.dataset.pas));
+    champ.value = FMT.choix.pages;
+    dessineFormat();
+  });
+  dessineFormat();
+}
+
+function dessineFormat(){
+  const f = FMT.choix, b = el('sheetbox');
+  if (!f || !el('fmtApercu')) return;
+  b.querySelectorAll('.fmt-axe .exp-format').forEach(g =>
+    g.querySelectorAll('.exp-btn').forEach(x => {
+      const on = +x.dataset.v === f[g.dataset.k];
+      x.classList.toggle('on', on);
+      x.setAttribute('aria-pressed', on);
+    }));
+  b.querySelectorAll('.fmt-pas').forEach(x => {
+    x.disabled = borneFormat('pages', f.pages + Number(x.dataset.pas)) === f.pages;
+  });
+  /* Une hauteur fixe pour les pochettes d'une face, quel que soit le nombre
+     de rangées : l'aperçu ne fait pas sauter la fenêtre d'un choix à
+     l'autre, et chaque pochette garde les proportions d'une carte. */
+  const haut = 78, ecart = 3;
+  const h = (haut - (f.rangees - 1) * ecart) / f.rangees;
+  const a = el('fmtApercu');
+  a.style.setProperty('--fc', f.colonnes);
+  a.style.setProperty('--fh', h.toFixed(2) + 'px');
+  a.style.setProperty('--fw', (h * 59 / 86).toFixed(2) + 'px');
+  const face = '<div class="fmt-face">' + '<i></i>'.repeat(f.colonnes * f.rangees) + '</div>';
+  a.innerHTML = face + '<span class="fmt-dos"></span>' + face;
+  const place = 2 * f.colonnes * f.rangees * f.pages;
+  const tomes = Math.max(1, Math.ceil(
+    T().classeurs.reduce((a, c) => a + c.cards.length, 0) / place));
+  el('fmtInfo').innerHTML = '<b>' + place.toLocaleString('fr-FR') + '</b> cartes par classeur, soit <b>'
+    + tomes + '</b> classeur' + (tomes > 1 ? 's' : '');
+}
+
+async function enregistrerFormat(){
+  const f = FMT.choix;
+  const t = DATA.types.find(x => x.key === FMT.cle);
+  if (!t || Object.keys(FORMAT_DEFAUT).every(k => f[k] === fmt(t)[k])){ fermerModale(); return; }
+  const b = el('fmtGo');
+  b.disabled = true;
+  let d = null, pourquoi = '';
+  try {
+    const r = await fetch('/api/collection/format', {
+      method: 'PUT', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ cle: t.key }, f)),
+    });
+    d = await r.json().catch(() => null);
+    if (!r.ok || !d || !d.ok) pourquoi = (d && d.message) || 'réponse HTTP ' + r.status;
+  } catch(e){ pourquoi = 'serveur injoignable'; }
+  if (pourquoi){
+    toast('Pas enregistré : ' + pourquoi, true);
+    b.disabled = false;
+    return;
+  }
+  fermerModale();
+  reformate(t, formatSur(d.format));
+  toast('Format enregistré.');
+}
+
+/* L'onglet repris à son nouveau format, à la même carte : la première
+   pochette de la double-page affichée reste sous les yeux, où que le
+   nouveau découpage l'envoie. Les tomes sont tous pleins sauf le dernier
+   (voir relie()), d'où le rang de la carte tiré du seul numéro de tome. */
+function reformate(t, f){
+  landFlip(); fermerNet();
+  const ici = t === T();
+  const debut = S.spread === 0 ? 0 : (S.spread - 1) * parPage(t) + parFace(t);
+  const rang = S.c * parClasseur(t) + debut;
+  t.format = f;
+  relie();
+  if (ici){
+    S.c = Math.min(Math.floor(rang / parClasseur(t)), t.classeurs.length - 1);
+    const o = pos(rang - S.c * parClasseur(t), t);
+    S.spread = Math.min(sheets(), o.face === 'recto' ? o.page - 1 : o.page);
+  }
+  S.hit = null; S.pose = null;
+  ecrireCache(source().url, DATA);
+  redrawAll();
+}
+el('formatBtn').onclick = ouvrirFormat;
+
+/* ---------------- la liste de souhaits Cardmarket ----------------
+   Cardmarket prend une decklist collée en texte : une carte par ligne, la
+   quantité devant, le nom anglais - « 1 Dark Magician ». Une liste de
+   souhaits y tient cent cinquante cartes au plus, d'où les paquets de cent
+   cinquante, à copier un par un dans autant de listes.
+
+   Le classeur ne connaît que les noms français : le serveur les traduit
+   (voir /carte/anglais dans collection.py). Ce qu'il ne sait pas traduire
+   à coup sûr - une carte inconnue du fichier, un nom français qui recouvre
+   deux cartes anglaises - reste hors des listes et s'affiche à part, pour
+   être ajouté à la main plutôt que deviné. */
+const CM_MAXI = 150;
+
+/* Copier dans le presse-papier, avec le même repli que la fiche de
+   l'Archive (voir copier() dans archive-fiche.js) : navigator.clipboard
+   n'existe qu'en https, et le site se consulte aussi en http depuis le
+   réseau de la maison. */
+async function copier(texte){
+  try {
+    if (window.isSecureContext && navigator.clipboard){
+      await navigator.clipboard.writeText(texte);
+      return true;
+    }
+  } catch(e){}
+  try {
+    const zone = document.createElement('textarea');
+    zone.value = texte;
+    zone.setAttribute('readonly', '');
+    zone.style.cssText = 'position:fixed;top:-1000px;left:0;opacity:0';
+    document.body.appendChild(zone);
+    zone.select();
+    const ok = document.execCommand('copy');
+    zone.remove();
+    return ok;
+  } catch(e){ return false; }
+}
+
+async function listesCardmarket(cartes){
+  el('expGo').disabled = true;
+  let data = null, pourquoi = '';
+  try {
+    const r = await fetch('/api/collection/carte/anglais', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noms: cartes.map(c => c.nom) }),
+    });
+    try { data = await r.json(); } catch(e){}
+    if (!r.ok) pourquoi = (data && data.message) || ('réponse HTTP ' + r.status);
+  } catch(e){ pourquoi = 'serveur injoignable'; }
+  // fenêtre refermée pendant la traduction : ne pas la rouvrir dans le dos
+  if (!el('expGo')) return;
+  if (!data || data.ok === false || !Array.isArray(data.noms)){
+    toast('Échec de la traduction : ' + (pourquoi || 'erreur inconnue'), true);
+    el('expGo').disabled = false;
+    return;
+  }
+
+  /* Une ligne par carte anglaise, dans l'ordre du classeur. Deux pochettes
+     qui reviennent à la même carte font une seule ligne, quantité 2. */
+  const quantites = new Map(), aPart = [];
+  cartes.forEach((c, i) => {
+    const en = data.noms[i];
+    if (typeof en === 'string') quantites.set(en, (quantites.get(en) || 0) + 1);
+    else aPart.push({ fr: c.nom, en: Array.isArray(en) ? en : null });
+  });
+  const lignes = Array.from(quantites, ([en, n]) => n + ' ' + en);
+  const listes = [];
+  for (let i = 0; i < lignes.length; i += CM_MAXI) listes.push(lignes.slice(i, i + CM_MAXI));
+
+  const n = lignes.length, k = listes.length;
+  const tuiles = listes.map((l, i) =>
+    '<button type="button" class="cm-liste" data-i="' + i + '">'
+    + '<b>Liste ' + (i + 1) + '</b>'
+    + '<span>' + (i * CM_MAXI + 1) + ' – ' + (i * CM_MAXI + l.length) + '</span></button>').join('');
+  const apart = aPart.map(c => '<li>' + esc(c.fr) + ' <i>— '
+    + (c.en ? c.en.map(esc).join(' ou ') : 'nom anglais inconnu') + '</i></li>').join('');
+  ouvrirModale(
+    '<h2>Listes Cardmarket</h2>'
+    + (n
+        ? '<p><b>' + n + '</b> carte' + (n > 1 ? 's' : '') + ' en <b>' + k + '</b> liste'
+          + (k > 1 ? 's' : '') + ' de ' + CM_MAXI + ' au plus.</p>'
+          + '<div class="cm-listes">' + tuiles + '</div>'
+          + '<textarea class="cm-texte" id="cmTexte" readonly spellcheck="false"'
+          + ' aria-label="Contenu de la liste"></textarea>'
+        : '<p>Aucune de ces cartes n\'a de nom anglais sûr : rien à mettre en liste.</p>')
+    + (aPart.length
+        ? '<div class="exp-section"><div class="exp-tete">'
+          + '<span class="exp-titre">À ajouter à la main</span>'
+          + '<span class="exp-note">' + aPart.length + ' carte' + (aPart.length > 1 ? 's' : '')
+          + '</span></div><ul class="cm-apart">' + apart + '</ul></div>'
+        : '')
+    + '<div class="row"><button class="act ghost" id="cmFermer">Fermer</button></div>');
+  el('cmFermer').onclick = fermerModale;
+  if (!n) return;
+
+  const tuilesEl = el('sheetbox').querySelectorAll('.cm-liste');
+  const montre = i => {
+    tuilesEl.forEach(t => t.classList.toggle('on', +t.dataset.i === i));
+    el('cmTexte').value = listes[i].join('\n');
+  };
+  /* Les listes déjà copiées gardent leur coche : dix allers-retours
+     entre deux onglets, c'est assez pour perdre le compte. La zone de texte
+     montre ce qui vient de partir, et sert de repli si la copie échoue. */
+  tuilesEl.forEach(t => t.onclick = async () => {
+    const i = +t.dataset.i;
+    montre(i);
+    if (await copier(listes[i].join('\n'))){
+      t.classList.add('fait');
+      toast('Liste ' + (i + 1) + ' copiée : ' + listes[i].length + ' carte'
+            + (listes[i].length > 1 ? 's' : '') + '.');
+    } else {
+      el('cmTexte').select();
+      toast('La copie n\'a pas pris : le texte est sélectionné juste en dessous.', true);
+    }
+  });
+  montre(0);
+}
+
+/* ---------------- suggestion / bug ----------------
+   Le bouton menait à /abyss?suggestion=collection : signaler un bug du
+   classeur faisait quitter le classeur - avec la page où l'on était et la
+   carte qu'on regardait - pour revenir à la main une fois le message parti.
+   La fenêtre s'ouvre maintenant ici, habillée comme le reste de la page
+   (voir .sg-* dans la feuille de style). Le lien reste dans le HTML et reste
+   vrai : c'est ce qui se passe si le script n'arrive pas. */
+if (window.Suggestion){
+  Suggestion.branche({
+    bouton: 'suggBtn',
+    projet: 'collection',
+    estConnecte: () => MOI.connecte,
+    toast: (txt, mauvais) => toast(txt, mauvais),
+  });
+}
+
+/* ---------------- bascule des reflets ---------------- */
+let REFLETS = true;
+try { REFLETS = localStorage.getItem('classeur-reflets') !== '0'; } catch(e){}
+function majReflets(){
+  document.body.classList.toggle('sansreflets', !REFLETS);
+  const b = el('shine');
+  b.classList.toggle('off', !REFLETS);
+  b.setAttribute('aria-pressed', REFLETS ? 'true' : 'false');
+}
+el('shine').onclick = () => {
+  REFLETS = !REFLETS;
+  try { localStorage.setItem('classeur-reflets', REFLETS ? '1' : '0'); } catch(e){}
+  majReflets();
+};
+majReflets();
+
+/* =========================================================
+   Le stock de cartes
+
+   Une série paraît et trois choses manquent d'un coup : le nom français de
+   ses cartes, leurs artworks, et les vues dont le Yu-Gi-Quiz tire ses niveaux
+   de difficulté. C'étaient trois scripts à lancer à la main, dans le bon
+   ordre, depuis un dossier à part ; c'est maintenant ce bouton.
+
+   Rien ne part sans un clic, et pour la même raison que la mise à jour depuis
+   IGDB de l'Archive : ce qui s'écrit ici ne sert pas qu'au classeur affiché.
+   Les noms et les artworks nourrissent le Yu-Gi-Quiz et les classeurs de tout
+   le monde. L'analyse est donc un rapport, les images se choisissent une par
+   une, et l'écriture n'arrive qu'après.
+
+   Une carte que l'on refuse trois fois n'a pas à être reproposée à chaque
+   série : « Ne plus proposer » l'écrit dans cartes-ignorees.json, et elle
+   disparaît des rapports suivants. L'onglet « Liste noire » les montre, et
+   rend celle qu'on veut revoir.
+   ========================================================= */
+let ST = null;
+
+async function apiStock(chemin, corps){
+  const r = await fetch('/api/cartes' + chemin, corps ? {
+    method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(corps),
+  } : { credentials: 'same-origin' });
+  const d = await r.json().catch(() => null);
+  /* 404 est la réponse du serveur à qui n'administre pas : le dire tel quel
+     vaut mieux qu'un « erreur inconnue » - voir reserve() dans cartes.py. */
+  if (r.status === 404) throw new Error("réservé à l'administration");
+  if (!r.ok || !d || !d.ok) throw new Error((d && d.message) || 'http ' + r.status);
+  return d;
+}
+
+function stockEcran(titre, html){
+  ouvrirModale('<h2>' + esc(titre) + '</h2><div class="st-corps">' + html + '</div>');
+}
+
+function stockPanne(titre, souci, reprendre){
+  stockEcran(titre,
+    '<div class="st-erreur">' + esc(souci) + '</div>'
+    + '<div class="row"><button class="act ghost" id="stFermer">Fermer</button>'
+    + (reprendre ? '<button class="act" id="stEncore">Réessayer</button>' : '') + '</div>');
+  el('stFermer').onclick = fermerModale;
+  if (reprendre) el('stEncore').onclick = reprendre;
+}
+
+const stockPluriel = n => n > 1 ? 's' : '';
+
+/* ---------- étape 1 : quelle série ---------- */
+function ouvrirStock(){
+  closeMenu();
+  if (!MOI.admin){ toast("Le stock est réservé à l'administration.", true); return; }
+  ST = { jeton: 0, code: '', file: [], fi: 0, gardees: [], groupes: [], gi: 0, vues: 0,
+         compte: { images: 0, passees: 0, ignorees: 0 }, echecs: [], types: null, ti: 0,
+         langue: 'fr', noire: [] };
+  stockSeries();
+}
+
+/* Les onglets du premier écran : compléter le stock à partir d'une série,
+   lister les cartes sorties d'un type, revoir la liste noire. Ils restent là
+   pendant les chargements - changer d'onglet relève le jeton, et la réponse
+   de l'autre arrive pour rien. */
+const STOCK_VUES = { series: () => stockSeries(), types: () => stockTypes(),
+                     noire: () => stockNoire() };
+function stockOnglets(actif){
+  const b = (vue, texte) => '<button type="button" class="exp-btn' + (vue === actif ? ' on' : '')
+    + '" data-vue="' + vue + '" aria-pressed="' + (vue === actif) + '">' + texte + '</button>';
+  return '<div class="exp-format exp-quel st-onglets" role="group" aria-label="Que faire">'
+    + b('series', 'Séries') + b('types', 'Liste par type') + b('noire', 'Liste noire') + '</div>';
+}
+function brancheOnglets(){
+  el('sheetbox').querySelectorAll('.st-onglets .exp-btn').forEach(b => {
+    b.onclick = () => {
+      if (!b.classList.contains('on')) STOCK_VUES[b.dataset.vue]();
+    };
+  });
+}
+
+async function stockSeries(){
+  const jeton = ++ST.jeton;
+  stockEcran('Mettre à jour le stock',
+    stockOnglets('series') + '<p class="st-info">Lecture des séries parues…</p>');
+  brancheOnglets();
+  let series = [];
+  try { series = (await apiStock('/series')).series || []; }
+  catch(e){
+    if (jeton !== ST.jeton) return;
+    stockPanne('Mettre à jour le stock',
+               "La liste des séries n'a pas pu être lue — " + e.message, stockSeries);
+    return;
+  }
+  if (jeton !== ST.jeton) return;
+  /* Les douze dernières suffisent : on vient ici quand une série paraît, pas
+     pour fouiller vingt ans de catalogue. Le champ reste là pour les autres. */
+  const liste = series.slice(0, 12).map(s =>
+    '<button type="button" class="aj-opt" data-code="' + esc(s.code) + '">'
+    + '<span class="st-tag">' + esc(s.code) + '</span>'
+    + '<span>' + esc(s.nom) + '</span></button>').join('');
+  stockEcran('Mettre à jour le stock',
+    stockOnglets('series')
+    + '<div class="exp-section"><div class="exp-tete"><span class="exp-titre">Série</span>'
+    +   '<span class="exp-note">les douze dernières parues</span></div>'
+    /* Un catalogue qui ne remonte rien laissait un encadré vide et muet : le
+       dire, plutôt que de laisser croire à la panne d'affichage que c'était
+       vraiment avant (voir .st-series dans la feuille de style). */
+    +   (liste
+          ? '<div class="aj-liste st-series">' + liste + '</div>'
+          : '<p class="st-info" style="margin:0">Aucune série n\'est remontée du'
+            + ' catalogue. Son code, juste en dessous, marche quand même.</p>')
+    + '</div>'
+    + '<div class="exp-section"><div class="exp-tete"><span class="exp-titre">Ou son code</span></div>'
+    +   '<div class="aj-champ"><input id="stCode" type="text" maxlength="5" autocomplete="off"'
+    +   ' spellcheck="false" aria-label="Code de la série"></div></div>'
+    + '<div class="row"><button class="act ghost" id="stAnnuler">Annuler</button>'
+    + '<button class="act" id="stGo">Analyser</button></div>');
+  brancheOnglets();
+  el('sheetbox').querySelectorAll('.st-series .aj-opt').forEach(b => {
+    b.onclick = () => stockAnalyse(b.dataset.code);
+  });
+  el('stAnnuler').onclick = fermerModale;
+  el('stGo').onclick = () => stockAnalyse(el('stCode').value.trim());
+  el('stCode').addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); stockAnalyse(el('stCode').value.trim()); }
+  });
+}
+
+/* ---------- l'autre onglet : les cartes sorties, par type ----------
+   Toutes les cartes sorties d'un type, de la plus ancienne à la plus
+   récente, dans l'ordre que la relecture propose : date de sortie, puis
+   numéro dans la série (voir listes_par_type dans cartes.py). De quoi
+   préparer un classeur qui n'existe pas encore - Rituel, Pendule - ou
+   repasser sur un autre.
+
+   Rien ne s'écrit ici. Le texte se copie tel quel : « Type - N cartes »,
+   puis une carte par ligne. Les six listes arrivent d'un coup, chacune en
+   français et en anglais - Cardmarket ne connaît pas tous les noms
+   français -, et passer d'un type ou d'une langue à l'autre ne redemande
+   rien au serveur. */
+async function stockTypes(){
+  const jeton = ++ST.jeton;
+  if (!ST.types || !ST.types.length){
+    stockEcran('Mettre à jour le stock',
+      stockOnglets('types') + '<p class="st-info">Lecture du catalogue…</p>');
+    brancheOnglets();
+    let types;
+    try { types = (await apiStock('/types')).types || []; }
+    catch(e){
+      if (jeton !== ST.jeton) return;
+      stockPanne('Liste par type', "Le catalogue n'a pas pu être lu — " + e.message, stockTypes);
+      return;
+    }
+    if (jeton !== ST.jeton) return;
+    ST.types = types;
+  }
+  stockDessineType();
+}
+
+/* les noms anglais, si on les a demandés et que le serveur les a donnés */
+const nomsDuType = t => ST.langue === 'en' && Array.isArray(t.anglais) ? t.anglais : t.cartes;
+
+function texteDuType(t){
+  const n = t.cartes.length;
+  return t.label + ' - ' + n + ' carte' + stockPluriel(n) + '\n\n' + nomsDuType(t).join('\n');
+}
+
+function stockDessineType(){
+  const types = ST.types;
+  if (!types.length){
+    stockPanne('Liste par type', "Le catalogue n'a renvoyé aucun type de carte.", stockTypes);
+    return;
+  }
+  ST.ti = Math.max(0, Math.min(ST.ti, types.length - 1));
+  const t = types[ST.ti];
+  const boutons = types.map((x, i) =>
+    '<button type="button" class="exp-btn' + (i === ST.ti ? ' on' : '') + '" data-ti="' + i
+    + '" aria-pressed="' + (i === ST.ti) + '">' + esc(x.label) + '</button>').join('');
+  /* Ce qui n'est pas dans la liste, et ce qui y est sous un autre nom : dit
+     sous le texte plutôt que dedans, pour que la copie reste propre. */
+  const pluriel = (n, un, plusieurs) => '<b>' + n + '</b> ' + (n > 1 ? plusieurs : un);
+  const langues = [['fr', 'Français'], ['en', 'Anglais']].map(l =>
+    '<button type="button" class="exp-btn' + (l[0] === ST.langue ? ' on' : '') + '" data-langue="'
+    + l[0] + '" aria-pressed="' + (l[0] === ST.langue) + '">' + l[1] + '</button>').join('');
+  const notes = [
+    /* en anglais, toutes le sont : la note ne dirait plus rien */
+    ST.langue === 'fr' && t.en_anglais
+      && pluriel(t.en_anglais, 'carte sans nom français, listée sous son nom anglais.',
+                 'cartes sans nom français, listées sous leur nom anglais.'),
+    t.hors_tcg && pluriel(t.hors_tcg, 'carte jamais sortie en TCG (OCG seulement) écartée.',
+                          'cartes jamais sorties en TCG (OCG seulement) écartées.'),
+    t.lots && pluriel(t.lots, 'carte de lot de tournoi écartée.',
+                      'cartes de lot de tournoi écartées.'),
+    t.a_venir && pluriel(t.a_venir, 'carte annoncée, pas encore sortie.',
+                         'cartes annoncées, pas encore sorties.'),
+  ].filter(Boolean);
+  stockEcran('Mettre à jour le stock',
+    stockOnglets('types')
+    + '<div class="exp-section"><div class="exp-tete"><span class="exp-titre">Type</span>'
+    +   '<span class="exp-note">par date de sortie</span></div>'
+    +   '<div class="exp-format exp-quel" role="group" aria-label="Type de carte">' + boutons + '</div>'
+    + '</div>'
+    + '<div class="exp-section"><div class="exp-tete"><span class="exp-titre">Noms</span>'
+    +   '<span class="exp-note">l\'anglais pour Cardmarket</span></div>'
+    +   '<div class="exp-format" role="group" aria-label="Langue des noms">' + langues + '</div>'
+    + '</div>'
+    + '<textarea class="cm-texte st-texte" id="stTexte" readonly spellcheck="false"'
+    +   ' aria-label="Liste des cartes ' + esc(t.label) + '"></textarea>'
+    + (notes.length ? '<p class="st-info st-notes">' + notes.join('<br>') + '</p>' : '')
+    + '<div class="row"><button class="act ghost" id="stFermer">Fermer</button>'
+    + '<button class="act" id="stCopier">Copier</button></div>');
+  brancheOnglets();
+  el('stTexte').value = texteDuType(t);
+  el('sheetbox').querySelectorAll('[data-ti]').forEach(b => {
+    b.onclick = () => { ST.ti = +b.dataset.ti; stockDessineType(); };
+  });
+  el('sheetbox').querySelectorAll('[data-langue]').forEach(b => {
+    b.onclick = () => { ST.langue = b.dataset.langue; stockDessineType(); };
+  });
+  el('stFermer').onclick = fermerModale;
+  el('stCopier').onclick = async () => {
+    if (await copier(el('stTexte').value)){
+      toast('Liste ' + t.label + ' copiée : ' + t.cartes.length + ' carte'
+            + stockPluriel(t.cartes.length) + '.');
+    } else {
+      el('stTexte').select();
+      toast('La copie n\'a pas pris : le texte est sélectionné, prêt à copier.', true);
+    }
+  };
+}
+
+/* ---------- le troisième onglet : la liste noire ----------
+   Ce que « Ne plus proposer » a écarté, carte par carte. La reprendre ne
+   télécharge rien : elle redevient une carte comme une autre, que la
+   prochaine analyse proposera si elle manque encore.
+
+   La plupart des refus sont des doublons - ygoprodeck renumérote une carte
+   que le stock connaît déjà - et la reprendre en ferait un double dans le
+   Yu-Gi-Quiz. La ligne le dit, pour qu'on ne la reprenne pas par mégarde. */
+async function stockNoire(){
+  const jeton = ++ST.jeton;
+  stockEcran('Mettre à jour le stock',
+    stockOnglets('noire') + '<p class="st-info">Lecture de la liste noire…</p>');
+  brancheOnglets();
+  let cartes;
+  try { cartes = (await apiStock('/ecartees')).cartes || []; }
+  catch(e){
+    if (jeton !== ST.jeton) return;
+    stockPanne('Liste noire', "La liste noire n'a pas pu être lue — " + e.message, stockNoire);
+    return;
+  }
+  if (jeton !== ST.jeton) return;
+  ST.noire = cartes;
+  stockDessineNoire();
+}
+
+function stockDessineNoire(){
+  const cartes = ST.noire, n = cartes.length;
+  const lignes = cartes.map((c, i) =>
+    '<div class="st-ligne">'
+    + (c.image ? '<img class="st-vignette" src="' + esc(c.image) + '" alt="" loading="lazy" decoding="async">'
+               : '<span class="st-vignette"></span>')
+    + '<span class="st-noms"><b>' + esc(c.fr || 'Carte n°' + c.id) + '</b>'
+    +   '<small>' + esc([c.en !== c.fr ? c.en : '', c.type].filter(Boolean).join(' · ')
+                        || 'inconnue du catalogue') + '</small>'
+    +   (c.doublon ? '<small class="st-doublon">déjà au stock sous un autre numéro</small>' : '')
+    + '</span>'
+    + '<button type="button" class="act ghost st-reprendre" data-i="' + i + '">Reprendre</button>'
+    + '</div>').join('');
+  stockEcran('Mettre à jour le stock',
+    stockOnglets('noire')
+    + (n
+        ? '<p class="st-info"><b>' + n + '</b> carte' + stockPluriel(n) + ' écartée'
+          + stockPluriel(n) + ' par « Ne plus proposer ». En reprendre une la fait revenir'
+          + ' dans les analyses suivantes ; rien n\'est téléchargé ni écrit d\'autre.</p>'
+          + '<div class="st-liste">' + lignes + '</div>'
+        : '<p class="st-info">La liste noire est vide : aucune carte n\'est écartée.</p>')
+    + '<div class="row"><button class="act ghost" id="stFermer">Fermer</button></div>');
+  brancheOnglets();
+  el('stFermer').onclick = fermerModale;
+  el('sheetbox').querySelectorAll('.st-reprendre').forEach(b => {
+    b.onclick = () => stockReprend(cartes[+b.dataset.i], b);
+  });
+}
+
+async function stockReprend(c, bouton){
+  const jeton = ST.jeton;
+  bouton.disabled = true;
+  try { await apiStock('/reprendre', { id: c.id }); }
+  catch(e){
+    toast("La carte n'a pas pu être reprise — " + e.message, true);
+    if (jeton === ST.jeton) bouton.disabled = false;
+    return;
+  }
+  ST.noire = ST.noire.filter(x => x !== c);
+  toast('« ' + (c.fr || 'Carte n°' + c.id) + ' » sera de nouveau proposée.');
+  if (jeton === ST.jeton) stockDessineNoire();   // pas si l'on a changé d'onglet entre-temps
+}
+
+/* ---------- étape 2 : ce qui manque ---------- */
+async function stockAnalyse(code){
+  const jeton = ++ST.jeton;
+  ST.code = String(code || '').toUpperCase();
+  stockEcran('Analyse',
+    '<p class="st-info">Lecture du catalogue' + (ST.code ? ' pour <b>' + esc(ST.code) + '</b>' : '')
+    + '…<br>Le premier passage télécharge les deux catalogues, ce qui prend quelques secondes.</p>');
+  let r;
+  try { r = await apiStock('/analyse', { code: ST.code }); }
+  catch(e){
+    if (jeton !== ST.jeton) return;
+    stockPanne('Analyse', "L'analyse n'a pas abouti — " + e.message, stockSeries);
+    return;
+  }
+  if (jeton !== ST.jeton) return;
+
+  /* Les cartes dont on ne connaît pas encore le nom français doivent d'abord
+     être lues chez Konami, une fiche à la fois. On le fait ici, avant de
+     montrer quoi que ce soit : un rapport qui annoncerait « 0 carte » parce
+     que les noms ne sont pas encore arrivés serait faux. */
+  if ((r.a_resoudre || []).length) {
+    r = await stockNomme(r.a_resoudre, jeton);
+    if (!r) return;
+  }
+
+  /* Deux sortes de cartes à compléter, et une seule mérite qu'on s'arrête
+     dessus. Celle dont l'artwork manque, qu'on regarde avant de télécharger ;
+     celle qui a déjà son image et à qui il ne manque que son nom français,
+     qu'il n'y a aucune raison de faire valider une par une. */
+  ST.file = (r.manquantes || []).filter(c => !c.a_limage);
+  /* Les cartes entières, et non leurs seuls identifiants : la relecture a
+     besoin du nom, de l'onglet et de la date pour montrer ce qu'elle range. */
+  ST.gardees = (r.manquantes || []).filter(c => c.a_limage);
+  ST.fi = 0;
+  const n = ST.file.length, noms = ST.gardees.length;
+
+  stockEcran('Analyse' + (ST.code ? ' — ' + esc(ST.code) : ''),
+    '<div class="st-chiffres">'
+    +   '<span class="st-chiffre"><b>' + r.total + '</b><u>carte' + stockPluriel(r.total)
+    +     (ST.code ? ' dans la série' : ' au catalogue') + '</u></span>'
+    +   '<span class="st-chiffre"><b>' + n + '</b><u>artwork' + stockPluriel(n) + ' à récupérer</u></span>'
+    +   '<span class="st-chiffre"><b>' + noms + '</b><u>nom' + stockPluriel(noms) + ' à compléter</u></span>'
+    + '</div>'
+    + '<p class="st-info">'
+    + (r.completes ? '<b>' + r.completes + '</b> carte' + stockPluriel(r.completes)
+        + ' déjà complète' + stockPluriel(r.completes) + '. ' : '')
+    + (r.sans_fr ? '<b>' + r.sans_fr + '</b> carte' + stockPluriel(r.sans_fr)
+        + (r.sans_fr > 1 ? " n'ont pas encore de nom français et sont laissées"
+            : " n'a pas encore de nom français et est laissée")
+        + ' de côté : elles seront reproposées quand la traduction paraîtra. ' : '')
+    + (r.sans_image ? '<b>' + r.sans_image + '</b> carte' + stockPluriel(r.sans_image)
+        + " sans artwork chez ygoprodeck : le téléchargement y a déjà échoué,"
+        + ' elles seront retentées dans une semaine. ' : '')
+    + (r.ignorees ? '<b>' + r.ignorees + '</b> écartée' + stockPluriel(r.ignorees)
+        + ' (ne plus proposer). ' : '')
+    + (r.a_venir ? '<b>' + r.a_venir + '</b> carte' + stockPluriel(r.a_venir)
+        + (r.a_venir > 1 ? ' pas encore sorties : elles seront proposées le jour de leur sortie. '
+            : ' pas encore sortie : elle sera proposée le jour de sa sortie. ') : '')
+    + (!n && !noms ? "Il n'y a rien à faire." : '') + '</p>'
+    + '<div class="row"><button class="act ghost" id="stRetour">Retour</button>'
+    + '<button class="act" id="stGo"' + (!n && !noms ? ' disabled' : '') + '>'
+    + (n ? 'Voir les ' + n + ' carte' + stockPluriel(n) : 'Écrire') + '</button></div>');
+  el('stRetour').onclick = stockSeries;
+  /* Vers la relecture dans les deux cas, jamais vers l'écriture directe.
+     Sans artwork à choisir (n === 0) il reste les cartes qui ont déjà leur
+     image et à qui il ne manque que leur nom : elles ont un onglet, donc
+     elles reçoivent des pochettes, donc elles se relisent comme les autres.
+     Ce raccourci-là écrivait dans le classeur sans que rien n'ait été
+     montré. stockRelecture() enchaîne de lui-même quand il n'y a aucune
+     pochette à poser. */
+  el('stGo').onclick = () => n ? stockCarte() : stockRelecture();
+}
+
+/* ---------- étape 2 bis : lire les noms français chez Konami ----------
+   L'API d'ygoprodeck publie bien des noms français, mais avec plus de deux
+   ans de retard : elle ignorait les cent cartes de Chaos Origins. Les noms
+   viennent donc de la base officielle de l'éditeur, une fiche à la fois -
+   environ deux secondes chacune, soit quelques minutes pour une série.
+
+   D'où cette étape à part, avec sa jauge : bloquer la fenêtre trois minutes
+   sans rien dire donnerait l'impression d'un plantage. Les noms lus sont
+   gardés sur le disque, donc un second passage sur la même série est
+   immédiat.
+
+   On s'arrête si un tour ne fait plus descendre le compteur : une fiche qui
+   échoue reste à faire, et il ne sert à rien de tourner en rond dessus. */
+async function stockNomme(ids, jeton) {
+  const total = ids.length;
+  let restants = total, soucis = [];
+  while (restants > 0) {
+    const fait = total - restants;
+    stockEcran('Noms français',
+      '<p class="st-info">Lecture de la base officielle Konami : <b>' + fait
+      + '</b> / ' + total + ' carte' + stockPluriel(total) + '.<br>'
+      + "Environ deux secondes par carte, et c'est gardé pour la prochaine fois.</p>"
+      + '<div class="st-jauge"><i style="width:' + Math.round(fait / total * 100) + '%"></i></div>'
+      + '<div class="row">'
+      + '<button class="act ghost" id="stStop">Arrêter là</button></div>');
+    el('stStop').onclick = () => { ST.jeton++; fermerModale(); };
+    let d;
+    try { d = await apiStock('/noms', { ids: ids }); }
+    catch (e) {
+      if (jeton !== ST.jeton) return null;
+      stockPanne('Noms français', 'La base Konami n\'a pas répondu — ' + e.message,
+                 () => stockAnalyse(ST.code));
+      return null;
+    }
+    if (jeton !== ST.jeton) return null;
+    soucis = d.soucis || [];
+    /* Pas de progrès : inutile d'insister, on passe à la suite avec ce
+       qu'on a. Les cartes non résolues seront simplement comptées comme
+       « pas encore traduites ». */
+    if (d.restants >= restants) break;
+    restants = d.restants;
+  }
+  if (soucis.length) toast(soucis[0], true);
+  /* L'analyse est refaite : elle seule sait répartir les cartes entre ce
+     qu'on télécharge, ce qui attend une traduction et ce qui est complet. */
+  let r;
+  try { r = await apiStock('/analyse', { code: ST.code }); }
+  catch (e) {
+    stockPanne('Analyse', "L'analyse n'a pas abouti — " + e.message, stockSeries);
+    return null;
+  }
+  return (jeton === ST.jeton) ? r : null;
+}
+
+/* ---------- étape 3 : les cartes, une par une ---------- */
+function stockCarte(){
+  if (ST.fi >= ST.file.length){ stockRelecture(); return; }
+  const c = ST.file[ST.fi];
+  const avance = Math.round(ST.fi / ST.file.length * 100);
+  stockEcran('Carte ' + (ST.fi + 1) + ' / ' + ST.file.length,
+    '<div class="st-jauge"><i style="width:' + avance + '%"></i></div>'
+    + '<div class="st-carte">'
+    +   '<img src="' + esc(c.image) + '" alt="" loading="lazy" decoding="async">'
+    +   '<div class="st-quoi"><h3>' + esc(c.fr) + '</h3>'
+    +     '<p class="st-en">' + esc(c.en) + '</p>'
+    +     '<span class="st-tag">' + esc(c.type) + '</span>'
+    +     (c.famille
+        ? '<span class="st-tag onglet">onglet ' + esc(c.famille) + '</span>'
+        : '<span class="st-tag">hors classeur</span>')
+    +     '<p class="st-info" style="margin-top:10px">'
+    +       (c.famille
+          ? 'Elle ira au bout de son onglet, pochette vide, dans tous les classeurs.'
+          : "Aucun onglet ne l'accueille : elle ne sert qu'au Yu-Gi-Quiz.")
+    +     '</p></div></div>'
+    + '<div class="row"><button class="act ghost" id="stNon">Passer</button>'
+    + '<button class="act ghost" id="stJamais">Ne plus proposer</button>'
+    + '<button class="act" id="stOui">Télécharger</button></div>');
+  el('stOui').onclick = () => stockPrend(c);
+  el('stNon').onclick = () => { ST.compte.passees++; ST.fi++; stockCarte(); };
+  el('stJamais').onclick = () => stockJamais(c);
+}
+
+async function stockPrend(c){
+  const jeton = ST.jeton;
+  el('stOui').disabled = el('stNon').disabled = el('stJamais').disabled = true;
+  el('stOui').textContent = 'Téléchargement…';
+  try {
+    await apiStock('/image', { id: c.id });
+    ST.gardees.push(c);
+    ST.compte.images++;
+  } catch(e){
+    ST.echecs.push(c.fr + ' — ' + e.message);
+    toast('Téléchargement impossible — ' + e.message, true);
+  }
+  if (jeton !== ST.jeton) return;    // la fenêtre a été fermée entre-temps
+  ST.fi++;
+  stockCarte();
+}
+
+async function stockJamais(c){
+  const jeton = ST.jeton;
+  try { await apiStock('/ignorer', { id: c.id }); ST.compte.ignorees++; }
+  catch(e){ toast("La carte n'a pas pu être écartée — " + e.message, true); }
+  if (jeton !== ST.jeton) return;
+  ST.fi++;
+  stockCarte();
+}
+
+/* ---------- étape 4 : la relecture, avant d'écrire ----------
+   L'ordre des pochettes compte : le classeur suit l'ordre de parution, et une
+   carte posée au mauvais endroit décale tout ce qui la suit - page, face et
+   emplacement de cartes déjà rangées.
+
+   La page propose donc un ordre - date de sortie, puis numéro dans la série -
+   et le montre avant d'écrire quoi que ce soit. Proposé, jamais imposé : le
+   classeur contient des dizaines de cartes placées à la main qu'aucune
+   formule ne reproduit. Les flèches corrigent, et /ecrire suit l'ordre
+   affiché sans jamais le recalculer.
+
+   Un onglet par fenêtre, et non tout d'un bloc : une série pose des Fusion,
+   des Synchro et des Lien d'un seul coup, et une liste unique donnait
+   plusieurs classements entremêlés - deux lignes voisines à l'écran partent en réalité
+   au bout de deux onglets différents, à des dizaines de pages l'une de
+   l'autre. Chaque onglet se relit donc pour lui-même, dans l'ordre des
+   onglets du classeur, et l'écriture n'a lieu qu'au bout du dernier.
+
+   L'ordre d'un onglet à l'autre n'a aucune importance - chaque carte se pose
+   au bout du sien (voir pose_pochettes dans cartes.py) - ce qui est
+   exactement ce qui permet de les découper ainsi.
+
+   Seules les cartes qui vont dans un onglet apparaissent ici. Une Magie, un
+   Piège, un monstre de deck principal n'ont pas de pochette : ils comptent
+   pour le Yu-Gi-Quiz, pas pour le classeur. */
+function stockRelecture(){
+  ST.etape = 'relecture';
+  const pochettes = ST.gardees.filter(c => c.famille);
+  if (!pochettes.length){ ST.groupes = []; stockEcrire(); return; }
+  /* Retriées ici : celles qui avaient déjà leur image ouvraient la liste, et
+     les téléchargées s'y ajoutaient au fil des clics. */
+  pochettes.sort((a, b) =>
+    a.ordre[0] < b.ordre[0] ? -1 : a.ordre[0] > b.ordre[0] ? 1 : a.ordre[1] - b.ordre[1]);
+  /* Les onglets défilent dans l'ordre du classeur affiché - Fusion,
+     Synchro, Xyz, Lien - et non dans celui où les cartes sont
+     arrivées. Un onglet que ce classeur-là n'a pas passe à la fin, sous sa
+     clé : l'écriture, elle, sert tous les classeurs. */
+  const rang = {}, libelle = {};
+  (DATA.types || []).forEach((t, i) => { rang[t.key] = i; libelle[t.key] = t.label; });
+  const par = new Map();
+  pochettes.forEach(c => {
+    if (!par.has(c.famille)) par.set(c.famille, []);
+    par.get(c.famille).push(c);
+  });
+  ST.groupes = Array.from(par, ([cle, cartes]) => ({
+    cle: cle, cartes: cartes, label: libelle[cle] || cle,
+    rang: rang[cle] === undefined ? 99 : rang[cle],
+  })).sort((a, b) => a.rang - b.rang);
+  ST.gi = 0;
+  stockDessineRelecture();
+}
+
+function stockDessineRelecture(){
+  const g = ST.groupes[ST.gi];
+  if (!g){ stockEcrire(); return; }
+  const p = g.cartes;
+  const total = ST.groupes.length, dernier = ST.gi === total - 1;
+  const restantes = ST.groupes.slice(ST.gi + 1)
+    .reduce((n, x) => n + x.cartes.length, 0);
+  stockEcran('Relecture — ' + g.label,
+    '<div class="st-jauge"><i style="width:' + Math.round(ST.gi / total * 100)
+    + '%"></i></div>'
+    + '<p class="st-info">Onglet <b>' + (ST.gi + 1) + '</b> / ' + total
+    + ' · <b>' + p.length + '</b> pochette' + stockPluriel(p.length)
+    + ' au bout de l\'onglet <b>' + esc(g.label) + '</b>.'
+    + ' Les flèches corrigent ce que la date de parution ne devine pas.</p>'
+    + '<div class="st-liste">' + p.map((c, i) =>
+        '<div class="st-ligne">'
+        + '<span class="st-rang">' + (i + 1) + '</span>'
+        + '<span class="st-nom">' + esc(c.fr) + '</span>'
+        + '<span class="st-date">' + esc(c.ordre[0]) + ' · n°' + esc(c.ordre[1]) + '</span>'
+        + '<span class="st-fleches">'
+        +   '<button type="button" aria-label="Monter" data-h="' + i + '"'
+        +     (i ? '' : ' disabled') + '>&#8593;</button>'
+        +   '<button type="button" aria-label="Descendre" data-b="' + i + '"'
+        +     (i < p.length - 1 ? '' : ' disabled') + '>&#8595;</button>'
+        + '</span></div>').join('')
+    + '</div>'
+    + (dernier ? '' : '<p class="st-info" style="margin:12px 0 0">Encore <b>'
+        + restantes + '</b> pochette' + stockPluriel(restantes) + ' dans '
+        + (total - ST.gi - 1) + ' autre' + stockPluriel(total - ST.gi - 1)
+        + ' onglet' + stockPluriel(total - ST.gi - 1)
+        + '. Rien n\'est écrit avant le dernier.</p>')
+    + '<div class="row"><button class="act ghost" id="stAnnuler">'
+    + (ST.gi ? 'Onglet précédent' : 'Annuler') + '</button>'
+    + '<button class="act" id="stEcrire">'
+    + (dernier ? 'Écrire' : 'Onglet suivant') + '</button></div>');
+  el('sheetbox').querySelectorAll('.st-fleches button').forEach(b => {
+    b.onclick = () => {
+      const haut = b.dataset.h;
+      const i = +(haut !== undefined ? haut : b.dataset.b);
+      const j = haut !== undefined ? i - 1 : i + 1;
+      const t = p[i]; p[i] = p[j]; p[j] = t;
+      stockDessineRelecture();
+    };
+  });
+  /* Revenir sur l'onglet précédent plutôt que fermer : l'ordre corrigé deux
+     écrans plus tôt est encore là, rien n'a été écrit. */
+  el('stAnnuler').onclick = () => {
+    if (!ST.gi){ fermerModale(); return; }
+    ST.gi--;
+    stockDessineRelecture();
+  };
+  el('stEcrire').onclick = () => {
+    if (dernier){ stockEcrire(); return; }
+    ST.gi++;
+    stockDessineRelecture();
+  };
+}
+
+/* ---------- étape 5 : l'écriture, puis le bilan ---------- */
+async function stockEcrire(){
+  const jeton = ++ST.jeton;
+  if (!ST.gardees.length){ stockBilan(null); return; }
+  /* Les pochettes d'abord, dans l'ordre relu ; le reste ensuite - ces
+     cartes-là n'ont pas d'onglet, leur rang n'a donc aucune importance. */
+  const ordonnes = (ST.groupes || []).reduce((t, g) => t.concat(g.cartes), [])
+    .map(c => c.id)
+    .concat(ST.gardees.filter(c => !c.famille).map(c => c.id));
+  stockEcran('Écriture',
+    '<p class="st-info">Les noms, les vues et les pochettes…</p>');
+  let bilan = null;
+  try { bilan = await apiStock('/ecrire', { ids: ordonnes }); }
+  catch(e){
+    if (jeton !== ST.jeton) return;
+    stockPanne('Écriture', "Les fichiers n'ont pas pu être écrits — " + e.message, stockEcrire);
+    return;
+  }
+  if (jeton !== ST.jeton) return;
+  stockBilan(bilan);
+}
+
+function stockBilan(bilan){
+  const c = ST.compte;
+  stockEcran('Stock à jour',
+    '<div class="st-chiffres">'
+    +   '<span class="st-chiffre"><b>' + c.images + '</b><u>artwork' + stockPluriel(c.images)
+    +     ' récupéré' + stockPluriel(c.images) + '</u></span>'
+    +   '<span class="st-chiffre"><b>' + (bilan ? bilan.noms_fr : 0) + '</b><u>nom'
+    +     stockPluriel(bilan ? bilan.noms_fr : 0) + ' français ajouté' + '</u></span>'
+    +   '<span class="st-chiffre"><b>' + (bilan ? bilan.pochettes : 0) + '</b><u>pochette'
+    +     stockPluriel(bilan ? bilan.pochettes : 0) + ' posée' + '</u></span>'
+    + '</div>'
+    + (c.ignorees ? '<p class="st-info"><b>' + c.ignorees + '</b> carte'
+        + stockPluriel(c.ignorees) + ' ne sera plus proposée.</p>' : '')
+    /* Un renommage touche une pochette déjà rangée : ça se dit. Ces cartes
+       portaient leur nom anglais, faute de traduction au moment de l'import ;
+       la pochette a suivi le nom plutôt que d'être doublée. */
+    + (bilan && bilan.renommees ? '<p class="st-info"><b>' + bilan.renommees
+        + '</b> pochette' + stockPluriel(bilan.renommees) + ' renommée'
+        + stockPluriel(bilan.renommees) + ' : elle'
+        + (bilan.renommees > 1 ? 's portaient' : ' portait')
+        + ' leur nom anglais.</p>' : '')
+    + (ST.echecs.length ? '<div class="st-erreur">' + ST.echecs.map(esc).join('<br>') + '</div>' : '')
+    + '<div class="row">'
+    + (ST.code ? '<button class="act ghost" id="stReste">Continuer sur le reste</button>' : '')
+    + '<button class="act" id="stFin">Fermer</button></div>');
+  /* Le classeur affiché date d'avant : des pochettes viennent d'y être
+     posées. On le relit plutôt que de laisser une page qui ment. */
+  el('stFin').onclick = () => {
+    fermerModale();
+    if (bilan && bilan.pochettes) ouvreClasseurAffiche();
+  };
+  /* La série est faite ; le reste du site, lui, a toujours ses trous - des
+     cartes d'avant dont l'artwork n'est jamais arrivé. C'est la même analyse,
+     sans code. */
+  if (el('stReste')) el('stReste').onclick = () => {
+    ST.compte = { images: 0, passees: 0, ignorees: 0 };
+    ST.echecs = [];
+    stockAnalyse('');
+  };
+}
+
+el('stockBtn').onclick = ouvrirStock;
+
+/* ---------------- démarrage ----------------
+   L'annuaire vient avant tout : sans lui on ne sait même pas quel classeur
+   ouvrir, ni qui regarde. C'est le seul temps d'attente incompressible. */
+(async function demarrer(){
+  setSync('offline', 'connexion...');
+  try { await chargeAnnuaire(); }
+  catch(e){
+    showGate("<b>Serveur injoignable.</b> Le hub Abyss ne répond pas.");
+    return;
+  }
+
+  /* Une adresse /collection/<pseudo> passe avant tout le reste : elle dit
+     exactement quel classeur ouvrir, et c'est pour ça qu'on l'a suivie. Elle
+     court-circuite donc l'écran d'accueil - un lien partagé doit montrer ce
+     qu'il promet, pas une invitation à se connecter. */
+  const demande = pseudoDeURL();
+  /* Sa propre adresse, avant d'avoir un classeur : le serveur dirait
+     « n'existe pas », et rien ne mènerait plus loin. C'est l'invitation à
+     le créer qu'on attend ici, la même que sur /collection. */
+  if (demande && !MOI.pseudo && MOI.compte && norm(demande) === norm(MOI.compte)){
+    showInvite(); return;
+  }
+  if (demande){
+    SRC = rangDuClasseur(demande);
+  } else if (!MOI.connecte){
+    showAccueil(); return;
+  } else if (!MOI.pseudo){
+    showInvite(); return;
+  } else {
+    // le sien : chargeAnnuaire() l'a placé en tête de SOURCES
+    SRC = 0;
+  }
+  majAdresse();
+  majEntete();
+  ouvreClasseurAffiche();
+})();

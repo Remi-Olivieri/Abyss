@@ -119,7 +119,7 @@
         .then((d) => {
           // refaite depuis l'ouverture de la page, la lecture libre ne
           // cite plus les mots aux mêmes rangs
-          if (d.version !== api.LIBRE.version) throw new Error("La lecture libre a changé : recharge la page.");
+          if (d.version !== api.LIBRE.version) throw new Error("La lecture libre a changé : recharge la page.");
           return d;
         });
       p.catch(() => PAQUETS.delete(nom));

@@ -808,7 +808,7 @@ def _debit_ou_refus(u) -> None:
     """
     cle = f"commentaire:{u['id']}"
     if comptes.trop_d_essais(cle):
-        raise Refus("debit", "Doucement : trop de commentaires d'un coup.", 429)
+        raise Refus("debit", "Doucement : trop de commentaires d'un coup.", 429)
     comptes.note_essai(cle)
 
 

@@ -126,7 +126,7 @@ const AN_L = 640, AN_H = 360, AN_MG = 46, AN_MB = 34, AN_MT = 12, AN_MR = 12;
    jeu » dans « la note monte avec... ». */
 function nuageHTML(titre, points, uniteX, sujet, fmtX, sous, log){
   if(points.length < 3){
-    return carteAnalyse(titre, 'Moins de trois jeux renseignés : rien à tracer.', '');
+    return carteAnalyse(titre, 'Moins de trois jeux renseignés : rien à tracer.', '');
   }
   const xMax = Math.max(...points.map(p => p.x));
   const py = v => AN_MT + (1 - v/10) * (AN_H - AN_MT - AN_MB);
@@ -260,7 +260,7 @@ function renderAnalyse(){
       <div class="an-entete"><h2>Statistiques</h2>${choix}</div>
       <p class="an-rien">${onglet === 'all'
         ? 'Aucun jeu terminé et noté.'
-        : esc(`Aucun jeu noté dans « ${onglet} ».`)}</p>`;
+        : esc(`Aucun jeu noté dans « ${onglet} ».`)}</p>`;
     brancheChoixAnalyse();
     return;
   }
@@ -277,7 +277,7 @@ function renderAnalyse(){
   const moyenne = l => l.reduce((s,x)=>s+x.rating,0) / l.length;
   const prix = payants.map(x => ({x: x.paid, y: x.rating, nom: x.name}));
   const compare = (offerts.length >= ANALYSE_MINI && payants.length >= ANALYSE_MINI)
-    ? `${offerts.length} jeux obtenus sans payer : ${fr(moyenne(offerts),2)} de moyenne, contre ${
+    ? `${offerts.length} jeux obtenus sans payer : ${fr(moyenne(offerts),2)} de moyenne, contre ${
         fr(moyenne(payants),2)} pour les payants`
     : '';
 
@@ -286,7 +286,7 @@ function renderAnalyse(){
       <h2>Statistiques</h2>
       ${choix}
       <p>Sur ${jeux.length} jeu${jeux.length>1?'x':''} terminé${jeux.length>1?'s':''} et noté${
-        jeux.length>1?'s':''}${onglet === 'all' ? ' du classeur' : esc(` de « ${onglet} »`)}.</p>
+        jeux.length>1?'s':''}${onglet === 'all' ? ' du classeur' : esc(` de « ${onglet} »`)}.</p>
     </div>
     <div class="an-grille2">
       ${nuageHTML('Note et temps de jeu', heures, 'heures de jeu', 'le temps de jeu',

@@ -275,7 +275,7 @@ def verifie_periode(page_id, periode) -> str:
         raise Refus("periode", "Il faut dire dans quel onglet ranger le jeu.")
     if periode_valide(p) or p in periodes_existantes(page_id):
         return p
-    raise Refus("periode", "Un onglet s'écrit « 2019 », « Avant 2019 »,"
+    raise Refus("periode", "Un onglet s'écrit « 2019 », « Avant 2019 »,"
                            " « Après 2019 » ou « Entre 2015 et 2019 ».")
 
 
@@ -898,11 +898,11 @@ def renomme_periode():
     avant = str(d.get("avant") or "").strip()
     apres = str(d.get("apres") or "").strip()[:60]
     if avant in STATUTS or apres in STATUTS:
-        raise Refus("periode", "« En cours » et « Wishlist » ne se renomment pas.")
+        raise Refus("periode", "« En cours » et « Wishlist » ne se renomment pas.")
     if not avant or avant not in periodes_existantes(page["id"]):
         raise Refus("periode", "Cet onglet n'existe pas.", 404)
     if not periode_valide(apres):
-        raise Refus("periode", "Un onglet s'écrit « 2019 », « Avant 2019 »,"
+        raise Refus("periode", "Un onglet s'écrit « 2019 », « Avant 2019 »,"
                                " « Après 2019 » ou « Entre 2015 et 2019 ».")
     if apres == avant:
         return reponse(contenu(page, u))
@@ -1087,7 +1087,7 @@ def jeux_du_site():
 
     `nuit` dit ou en est l'analyse de nuit (voir entretien.py) : de quand
     date son dernier rapport, et si une analyse tourne. Le rapport lui-meme
-    est sur la route suivante, lu seulement si on choisit de le relire.
+    est sur la route suivante, que la fenetre lit juste apres celle-ci.
     """
     admin_ou_refus()
     lignes = cx().execute(
@@ -1143,7 +1143,7 @@ def lot_general():
         valeurs = valeurs if isinstance(valeurs, dict) else {}
         inconnus = [k for k in valeurs if k not in CHAMPS_IGDB]
         if inconnus:
-            raise Refus("champ", f"Champ hors mise a jour IGDB : {inconnus[0]}.")
+            raise Refus("champ", f"Champ hors mise a jour IGDB : {inconnus[0]}.")
         jeu, page = jeu_ou_qu_il_soit(int(m.get("id", 0)))
         modifie(jeu, page, None, valeurs, None)
 

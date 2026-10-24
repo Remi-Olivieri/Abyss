@@ -88,7 +88,7 @@ function majExportInfo(){
 }
 function ouvrirExport(){
   closeMenu();
-  if(!GAMES.length){ toast('Ce journal est vide : rien à exporter.', true); return; }
+  if(!GAMES.length){ toast('Ce journal est vide : rien à exporter.', true); return; }
   const host = $('export');
   host.innerHTML = exportHTML();
   host.hidden = false;
@@ -125,7 +125,7 @@ function lancerExport(){
     .map(c => c.value));
   const champs = Array.from(host.querySelectorAll('#exportChamps input:checked')).map(c => c.value);
   const jeux = GAMES.filter(g => categories.has(g.bucket));
-  if(!jeux.length){ toast('Aucune catégorie choisie : rien à exporter.', true); return; }
+  if(!jeux.length){ toast('Aucune catégorie choisie : rien à exporter.', true); return; }
   if(format === 'json') exporteJSON(jeux, champs);
   else exporteCSV(jeux, champs);
   fermerExport();
@@ -184,11 +184,11 @@ function detailHTML(g){
       aria-label="Plus d'informations sur ${esc(g.name)}">
     <div class="sheet-tools">
       <!-- Le titre se coupe quand il est trop long pour la ligne (voir
-           .detail-sheet .fhead). Pas d'infobulle pour rendre le reste : le
+           .detail-sheet .fhead). Pas d'infobulle pour rendre le reste : le
            site n'en affiche aucune. L'aria-label de la fenetre le donne
            entier a la voix. -->
       <span class="grp"><b class="fhead">${esc(g.name)}</b></span>
-      <!-- Les deux actions, sur la ligne du titre : c'est le jeu qu'elles
+      <!-- Les deux actions, sur la ligne du titre : c'est le jeu qu'elles
            concernent, et le titre est ce qui le nomme. Plus bas, elles
            auraient flotté au-dessus d'une description qui ne parle pas
            d'elles. Remplies par peintDetail() quand la fiche a répondu -
@@ -392,7 +392,7 @@ async function ajouteALaWishlist(g, data, btn){
       MES_JEUX.noms.add(slug(g.name || ''));
       if(g.idIgdb) MES_JEUX.ids.add(String(g.idIgdb));
     }
-    toast(`« ${g.name} » ajouté à la wishlist`);
+    toast(`« ${g.name} » ajouté à la wishlist`);
     /* C'est MON journal qui vient de changer. S'il est justement celui qu'on
        regarde, le serveur vient de le relire en entier : on le remplace,
        plutot que de laisser un mur qui ne connait pas encore ce jeu. */
@@ -470,7 +470,7 @@ function peintDetail(data, g){
      pouvoir le convoiter quand même. */
   brancheActions(g, data);
   if(!data.ok){
-    zone.innerHTML = `<p class="detail-etat">Informations injoignables : ${
+    zone.innerHTML = `<p class="detail-etat">Informations injoignables : ${
       esc(data.message || data.raison || 'pas de r\u00E9ponse')}</p>`;
     return;
   }
@@ -634,7 +634,7 @@ function peintStudio(data, nom){
     return;
   }
   if(etat !== 'ok'){
-    zone.innerHTML = `<p class="detail-etat">Jeux du studio injoignables : ${
+    zone.innerHTML = `<p class="detail-etat">Jeux du studio injoignables : ${
       esc((data && data.raison) || 'pas de r\u00E9ponse')}</p>`;
     return;
   }

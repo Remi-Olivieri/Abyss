@@ -193,7 +193,7 @@ def _description_classeur(page) -> str:
         "SELECT nom FROM carte WHERE page_id = ? AND rarete IS NOT NULL"
         " ORDER BY maj_le DESC, id DESC LIMIT 1", (page["id"],)).fetchone()
     if derniere:
-        morceaux.append(f"dernière arrivée : {derniere['nom']}")
+        morceaux.append(f"dernière arrivée : {derniere['nom']}")
     return " · ".join(morceaux)
 
 

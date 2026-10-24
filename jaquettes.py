@@ -57,15 +57,16 @@ API de boutique. Consequence a connaitre : un jeu qui n'est pas sur Steam
 (exclusivite Nintendo, PlayStation, jeu physique...) n'a pas de prix ici,
 et la case reste vide. Rien n'est devine.
 
-Mise a jour de tout le journal
-------------------------------
-Le menu des reglages de la page peut relancer la recherche sur chaque jeu
-deja enregistre, pour corriger les dates de sortie, rattraper les prix et
-proposer les jaquettes manquantes. C'est /api/jeu/maj qui repond, un jeu
+Mise a jour de toute la base
+----------------------------
+Chaque nuit, entretien.py relance la recherche sur chaque jeu deja
+enregistre, pour corriger les dates de sortie, rattraper les prix et
+proposer les jaquettes manquantes. C'est rapport_maj qui repond, un jeu
 par appel : une seule recherche IGDB sert a la fois a identifier la fiche
-(date, prix) et a lister les jaquettes possibles.
+(date, prix) et a lister les jaquettes possibles. /api/jeu/maj en donne le
+meme rapport a la page, pour le rattrapage des fiches d'un journal.
 
-Cette route ne decide rien toute seule. Elle renvoie ce qu'IGDB dit, avec
+Rien n'y est decide tout seul. Le rapport dit ce qu'IGDB repond, avec
 sa « surete » -- titre identique et annee qui colle, titre identique seul,
 ou simple ressemblance -- et c'est la page qui montre la liste avant que
 quoi que ce soit ne parte dans le classeur.
@@ -698,51 +699,85 @@ def retenue_pour(fiches, annee):
 # --------------------------------------------------------------------------
 #   Prix : IGDB donne le lien Steam, Steam donne le prix
 # --------------------------------------------------------------------------
-CHAMPS_BOUTIQUE = "external_games.category, external_games.uid, external_games.url"
+CHAMPS_BOUTIQUE = ("name, external_games.category, external_games.uid, "
+                   "external_games.url, external_games.name")
+
+# Ce qu'IGDB range parmi les liens Steam d'un jeu sans que ce soit le jeu :
+# l'appli multijoueur a part des vieux Call of Duty, la beta de Black Ops
+# III, le playtest de PlateUp!... En octobre 2026, 26 fiches de la base sur
+# 734 avaient plusieurs liens Steam, et le premier, le seul qu'on lisait,
+# etait parfois celui-la : Modern Warfare 3 restait sans prix, Steam ne
+# disant rien de son multijoueur.
+A_COTE_DU_JEU = {"multiplayer", "multijoueur", "beta", "playtest", "demo",
+                 "soundtrack", "ost", "server", "benchmark", "sdk"}
 
 
-def _appid_dans(liens):
-    """L'appid Steam dans une liste external_games, ou "" s'il n'y en a pas.
+def _appids_dans(liens, titre=""):
+    """Les appids Steam d'une liste external_games, le plus probable en tete.
 
     La categorie 1 designe Steam ; IGDB l'a marquee obsolete au profit
     d'external_game_source, d'ou le repli sur l'adresse, qui porte l'appid
-    en clair. Deux appelants s'en servent : boutique_steam pour le prix, et
-    detail_complet pour le lien vers la boutique.
+    en clair.
+
+    Un lien dont le nom ajoute au titre du jeu un mot d'A_COTE_DU_JEU
+    (« Call of Duty: Ghosts - Multiplayer ») n'est garde que s'il n'y a
+    rien d'autre. Parmi les autres, celui qui porte le titre exact passe
+    devant, puis l'ordre d'IGDB.
     """
-    for lien in liens or []:
+    jeu = _comparable(titre)
+    candidats, vus = [], set()
+    for rang, lien in enumerate(liens or []):
+        appid = ""
         if lien.get("category") == 1 and str(lien.get("uid") or "").isdigit():
-            return str(lien["uid"])
-    for lien in liens or []:
-        trouve = re.search(r"store\.steampowered\.com/app/(\d+)",
-                           str(lien.get("url") or ""))
-        if trouve:
-            return trouve.group(1)
-    return ""
+            appid = str(lien["uid"])
+        else:
+            trouve = re.search(r"store\.steampowered\.com/app/(\d+)",
+                               str(lien.get("url") or ""))
+            appid = trouve.group(1) if trouve else ""
+        if not appid or appid in vus:
+            continue
+        vus.add(appid)
+        nom = _comparable(lien.get("name"))
+        a_cote = bool((set(nom.split()) - set(jeu.split())) & A_COTE_DU_JEU)
+        candidats.append((a_cote, not (jeu and nom == jeu), rang, appid))
+    candidats.sort()
+    if any(not c[0] for c in candidats):
+        candidats = [c for c in candidats if not c[0]]
+    return [c[3] for c in candidats]
+
+
+def _appid_dans(liens, titre=""):
+    """Le plus probable des appids d'_appids_dans, ou "" s'il n'y en a pas :
+    celui du lien vers la boutique, dans detail_complet."""
+    appids = _appids_dans(liens, titre)
+    return appids[0] if appids else ""
 
 
 def boutique_steam(id_igdb):
-    """L'identifiant Steam de ce jeu IGDB. Renvoie (appid, souci).
+    """Les identifiants Steam de ce jeu IGDB, le plus probable en tete.
+    Renvoie (appids, souci).
 
-    ("", None) veut dire « pas sur Steam » : ce n'est pas une panne, c'est
+    ([], None) veut dire « pas sur Steam » : ce n'est pas une panne, c'est
     une reponse. La requete est rejouee sans le champ category si IGDB la
-    refuse -- voir _appid_dans pour pourquoi il est en sursis.
+    refuse -- voir _appids_dans pour pourquoi il est en sursis.
     """
     try:
         numero = int(id_igdb)
     except (TypeError, ValueError):
-        return "", "identifiant IGDB invalide"
+        return [], "identifiant IGDB invalide"
 
     souci = None
     resultats = []
-    for champs in (CHAMPS_BOUTIQUE, "external_games.uid, external_games.url"):
+    for champs in (CHAMPS_BOUTIQUE,
+                   "name, external_games.uid, external_games.url, external_games.name"):
         resultats, souci = interroge(f"fields {champs}; where id = {numero}; limit 1;")
         if not souci:
             break
     if souci:
-        return "", souci
+        return [], souci
     if not resultats:
-        return "", None
-    return _appid_dans(resultats[0].get("external_games")), None
+        return [], None
+    return _appids_dans(resultats[0].get("external_games"), resultats[0].get("name")), None
 
 
 # Steam limite le nombre d'appels par quart d'heure, et un prix ne bouge
@@ -794,13 +829,42 @@ def _tarif(plein, actuel, remise):
     return {"plein": plein, "actuel": actuel, "remise": remise}
 
 
+def _libelle(texte):
+    """Le nom d'une option d'achat, sans son prix ni son balisage.
+
+    « Tomb Raider - 19,99€ » donne « Tomb Raider », et le prix barre d'une
+    edition en promotion part avec le reste. Le prix est le dernier
+    morceau apres « - » : le nom peut en contenir un lui-meme (« REMATCH -
+    Pro Edition »).
+    """
+    texte = re.sub(r"<[^>]*>", "", str(texte or ""))
+    nom, _, prix = texte.rpartition(" - ")
+    return nom if nom and re.search(r"\d", prix) else texte
+
+
+def _comparable(titre):
+    """Un titre de la boutique reduit a ce qui le distingue.
+
+    Sans ponctuation ni symboles (slug : « Call of Duty® - Black Ops II »
+    et « Call of Duty®: Black Ops II » sont le meme jeu), sans balisage
+    (« <i>Monkey Island</i> 2 », dans un lien d'IGDB), sans ce qui est
+    entre parentheses ou crochets (« (2009) », « (ROW) », « (Classic) »),
+    et sans « Standard Edition », qui n'est que le nom du jeu seul quand
+    il a d'autres editions.
+    """
+    texte = re.sub(r"<[^>]*>", "", str(titre or ""))
+    texte = slug(re.sub(r"\([^)]*\)|\[[^\]]*\]", " ", texte), " ")
+    texte = re.sub(r"\b(?:standard edition|edition standard|standard)\b", " ", texte)
+    return " ".join(texte.split())
+
+
 def _editions(donnees):
-    """Le tarif de chaque edition qu'on peut acheter sur la page Steam.
+    """Chaque edition qu'on peut acheter sur la page Steam, avec son nom :
+    une liste de (nom, tarif).
 
     Ce sont les options du bloc « Acheter » : le jeu seul, la Deluxe, la
-    Gold... price_overview ne parle que de la premiere, et Steam la met en
-    tete a sa guise -- pour Clair Obscur, c'est la Deluxe, si bien que la
-    colonne « Prix de base » recevait 59,99 € pour un jeu a 49,99 €.
+    Gold, mais aussi tout ce que Steam range a cote -- la licence
+    commerciale, le livre numerique, le season pass, le pack de quatre.
 
     Chaque option donne son prix du jour en centimes. Le prix fort, lui,
     n'est ecrit que dans le libelle, barre, quand l'edition est en
@@ -824,7 +888,7 @@ def _editions(donnees):
             plein = _euros_texte(barre.group(1)) if barre else None
             if not plein:
                 plein = round(actuel / (1 - remise / 100), 2) if 0 < remise < 100 else actuel
-            editions.append(_tarif(plein, actuel, remise))
+            editions.append((_libelle(option.get("option_text")), _tarif(plein, actuel, remise)))
     return editions
 
 
@@ -835,21 +899,11 @@ def tarif_steam(appid):
         tarif = {"plein": 59.99, "actuel": 23.99, "remise": 60}
 
     « plein » est le prix hors promotion, « actuel » celui du jour, et la
-    remise le pourcentage.
-
-    La version de base est l'edition la moins chere au prix fort : le jeu
-    seul coute toujours moins que lui-meme accompagne de ses bonus. Au prix
-    fort et pas au prix du jour, parce qu'une Deluxe en promotion peut
-    passer sous le jeu seul vendu plein tarif (47,99 € contre 49,99 € pour
-    Clair Obscur, en octobre 2026) sans en devenir la version de base. Les
-    editions viennent de la meme reponse que price_overview, sans un appel
-    de plus ; price_overview ne sert plus que de repli, pour une page qui
-    ne liste aucune option d'achat.
+    remise le pourcentage. Voir tarif_de_base pour l'edition retenue.
 
     (None, None) veut dire que Steam n'annonce pas de prix pour ce pays :
-    jeu retire, precommande sans tarif, edition regionale, jeu gratuit (la
-    reponse ne dit pas qu'il l'est)... La case reste vide, ce qui vaut
-    mieux qu'un chiffre invente.
+    jeu gratuit, jeu retire, precommande sans tarif, edition regionale...
+    La case reste vide, ce qui vaut mieux qu'un chiffre invente.
     """
     if not re.fullmatch(r"\d+", appid or ""):
         return None, "identifiant Steam invalide"
@@ -861,8 +915,10 @@ def tarif_steam(appid):
     parametres = urllib.parse.urlencode({
         "appids": appid, "cc": PAYS, "l": "fr",
         # package_groups n'est renvoye que si packages est demande avec lui
-        # (verifie en octobre 2026), et is_free ne l'est jamais sous ce filtre
-        "filters": "price_overview,packages,package_groups",
+        # (verifie en octobre 2026). basic pour le nom du jeu, qui designe
+        # son edition seule (voir tarif_de_base) : le filtre « name » est
+        # ignore, il faut prendre tout le bloc, une dizaine de kilo-octets.
+        "filters": "basic,price_overview,packages,package_groups",
     })
     _patiente("steam")
     brut, _, souci = _appelle(f"{STEAM_URL}?{parametres}", ENTETES_STEAM, service="steam")
@@ -885,21 +941,50 @@ def tarif_steam(appid):
 def tarif_de_base(donnees):
     """Le tarif de la version de base dans une reponse appdetails, ou None.
 
-    A part de tarif_steam pour se verifier sans reseau : c'est ici que se
-    decide quelle edition compte (voir tarif_steam).
+    La version de base est l'option d'achat qui porte le nom du jeu, et
+    rien de plus : « Terraria », pas « Terraria - Commercial License » ni
+    « Terraria 4-Pack ». A defaut, une option dont le nom est le debut de
+    celui du jeu (« Tomb Raider » sur la page « Tomb Raider Game of the
+    Year »).
+
+    Ni l'edition la moins chere, ni celle que Steam met en tete. La moins
+    chere, c'etait la regle d'avant, et elle tombait sur tout ce que la page
+    vend a cote du jeu : 1,59 € pour Portal 2 et Tomb Raider (leur livre
+    numerique), 8,19 € pour Terraria (la licence commerciale), 29,99 € pour
+    Black Ops II (le season pass). Celle de tete, c'est price_overview, et
+    Steam y met volontiers l'edition en promotion : la Deluxe de Clair
+    Obscur, 59,99 € pour un jeu a 49,99 €. Elle ne sert que de repli, quand
+    aucune option ne porte le nom du jeu -- Titanfall 2, qui ne se vend
+    plus qu'en Ultimate Edition. L'edition la moins chere reste le dernier
+    recours, pour une page sans price_overview -- sauf pour un jeu gratuit :
+    les options de Brawlhalla ne sont que des packs (39,99 €), et sa case
+    reste vide comme celle des autres jeux gratuits.
+
+    Au prix fort, jamais au prix du jour : la remise est dans « actuel ».
+    A part de tarif_steam pour se verifier sans reseau.
     """
     editions = _editions(donnees)
-    if editions:
-        return min(editions, key=lambda e: (e["plein"], e["actuel"]))
+    jeu = _comparable(donnees.get("name"))
+    if jeu:
+        exactes = [t for nom, t in editions if _comparable(nom) == jeu]
+        debuts = [t for nom, t in editions
+                  if _comparable(nom) and jeu.startswith(_comparable(nom) + " ")]
+        for lot in (exactes, debuts):
+            if lot:
+                return min(lot, key=lambda t: (t["plein"], t["actuel"]))
+    if donnees.get("is_free"):
+        return None
     apercu = donnees.get("price_overview") or {}
     plein = _euros(apercu.get("initial"))
-    if plein is None:
-        return None
-    try:
-        remise = int(apercu.get("discount_percent") or 0)
-    except (TypeError, ValueError):
-        remise = 0
-    return _tarif(plein, _euros(apercu.get("final")), remise)
+    if plein is not None:
+        try:
+            remise = int(apercu.get("discount_percent") or 0)
+        except (TypeError, ValueError):
+            remise = 0
+        return _tarif(plein, _euros(apercu.get("final")), remise)
+    if editions:
+        return min((t for _, t in editions), key=lambda t: (t["plein"], t["actuel"]))
+    return None
 
 
 def prix_steam(appid):
@@ -919,13 +1004,29 @@ def tarif_du_jeu(id_igdb):
     remise. Les trois viennent du meme appel, il n'y a rien a economiser en
     n'en demandant qu'un.
     """
-    appid, souci = boutique_steam(id_igdb)
+    appids, souci = boutique_steam(id_igdb)
     if souci:
         return None, "", souci
-    if not appid:
-        return None, "", None
-    tarif, souci = tarif_steam(appid)
-    return tarif, appid, souci
+    return tarif_parmi(appids)
+
+
+def tarif_parmi(appids):
+    """Le tarif du premier de ces appids dont Steam annonce un prix.
+    Renvoie (tarif, appid, souci).
+
+    Le suivant n'est demande que si le precedent ne donne rien : un appel de
+    plus, et seulement pour les quelques jeux qu'IGDB lie a plusieurs pages
+    Steam. Sans prix nulle part, c'est le premier appid qui est rendu, avec
+    le premier souci rencontre : une panne reste une panne, meme si un
+    autre lien a repondu « pas de prix ».
+    """
+    premier_souci = None
+    for appid in appids:
+        tarif, souci = tarif_steam(appid)
+        if tarif:
+            return tarif, appid, None
+        premier_souci = premier_souci or souci
+    return None, (appids[0] if appids else ""), premier_souci
 
 
 def prix_du_jeu(id_igdb):
@@ -1198,8 +1299,9 @@ def images_larges(ids):
 CHAMPS_DETAIL = ("platforms.name, involved_companies.company.name, "
                   "involved_companies.developer, genres.name, themes.name, summary, "
                   "screenshots.image_id, videos.video_id, aggregated_rating, "
-                  "first_release_date, url, cover.image_id, "
-                  "external_games.category, external_games.uid, external_games.url")
+                  "first_release_date, url, cover.image_id, name, "
+                  "external_games.category, external_games.uid, external_games.url, "
+                  "external_games.name")
 CAPTURES_MAX = 8
 
 # La plateforme, le developpeur, les genres et les themes d'un jeu ne
@@ -1278,7 +1380,7 @@ def detail_complet(id_igdb):
     date, annee, iso = _date_fr(jeu.get("first_release_date"))
     # l'appid sort de la meme requete : le lien boutique ne coute donc rien
     # de plus, la ou le prix demanderait en plus d'aller interroger Steam
-    appid = _appid_dans(jeu.get("external_games"))
+    appid = _appid_dans(jeu.get("external_games"), jeu.get("name"))
     detail = {
         "plateforme": _colonne(plateformes),
         "developpeur": _colonne(developpeurs),
@@ -1331,30 +1433,31 @@ def temps_hltb(nom):
     }, None
 
 
-def appid_du_nom(nom, sortie=None):
-    """L'identifiant Steam d'un jeu designe par son nom. Renvoie (appid, souci).
+def appids_du_nom(nom, sortie=None):
+    """Les identifiants Steam d'un jeu designe par son nom, le plus probable
+    en tete (voir boutique_steam). Renvoie (appids, souci).
 
-    ("", None) veut dire « pas sur Steam ». C'est une reponse, pas un echec,
+    ([], None) veut dire « pas sur Steam ». C'est une reponse, pas un echec,
     et elle est gardee comme les autres : inutile d'y revenir a chaque fois.
     """
     cle = slug(nom)
     if not cle:
-        return "", None
+        return [], None
     garde = _APPID.get(cle)
     if garde and time.time() - garde[1] < DUREE_APPID:
         return garde[0], None
 
     fiches, souci = toutes_les_fiches(nom)
     if souci:
-        return "", souci
+        return [], souci
     choix, _surete = retenue_pour(fiches, _annee(sortie))
     if not choix:
-        return "", None
-    appid, souci = boutique_steam(choix["id"])
+        return [], None
+    appids, souci = boutique_steam(choix["id"])
     if souci:
-        return "", souci
-    _APPID[cle] = (appid, time.time())
-    return appid, None
+        return [], souci
+    _APPID[cle] = (appids, time.time())
+    return appids, None
 
 
 # --------------------------------------------------------------------------
@@ -1927,10 +2030,10 @@ def blueprint_jaquettes(dossier, url_publique="/static/archive/Cover/", sur_jaqu
                 nom = str(jeu.get("nom") or "").strip()
                 if not nom:
                     continue
-                appid, souci = appid_du_nom(nom, jeu.get("sortie"))
-                if souci or not appid:
+                appids, souci = appids_du_nom(nom, jeu.get("sortie"))
+                if souci or not appids:
                     continue
-                tarif, souci = tarif_steam(appid)
+                tarif, appid, souci = tarif_parmi(appids)
                 if souci or not tarif:
                     continue
                 tarifs[nom] = dict(tarif, appid=appid)

@@ -1,20 +1,19 @@
 """L'analyse IGDB de toute la base, chaque nuit.
 
-La mise a jour depuis IGDB (archive-igdb.js) interroge IGDB et Steam jeu par
-jeu, depuis la page : sur toute la base, avec les jeux deja complets, c'est
-une demi-heure a garder la fenetre ouverte. Ce module fait la meme analyse
-sur le serveur, a minuit (heure de Paris), et garde le resultat dans
-donnees/entretien-igdb.json. Le matin, la fenetre propose de relire ce
-rapport : il ne reste qu'a verifier puis ecrire.
+L'analyse du jour : ce qu'IGDB et Steam disent de chaque jeu de la base.
+C'est la seule : la page ne la fait plus elle-meme (sur toute la base, avec
+les jeux deja complets, c'etait une demi-heure a garder la fenetre ouverte).
+Ce module la fait sur le serveur, a minuit (heure de Paris), et garde le
+resultat dans donnees/entretien-igdb.json. Le bouton « Analyse du jour »
+(archive-igdb.js) ouvre ce rapport : il ne reste qu'a verifier puis ecrire.
 
-Rien n'est ecrit dans les journaux ici. Comme l'analyse de la page, c'est un
-rapport ; l'ecriture reste un second geste, fait a la main apres relecture,
-par la meme route d'administration (/api/journal/admin/lot).
+Rien n'est ecrit dans les journaux ici. C'est un rapport ; l'ecriture reste
+un second geste, fait a la main apres relecture, par la route
+d'administration (/api/journal/admin/lot).
 
 Le rapport garde les reponses d'IGDB, pas les ecarts : c'est la page qui
-les compare a la base telle qu'elle est quand on l'ouvre, avec le code de
-l'analyse manuelle. Un jeu corrige a la main dans la matinee ne revient
-donc pas, et rien n'est compare deux fois de deux facons differentes.
+les compare a la base telle qu'elle est quand on l'ouvre. Un jeu corrige a
+la main dans la matinee ne revient donc pas.
 
 Une seule question par jeu : la meme fiche IGDB tenue dans trois journaux
 ne coute qu'un passage. Les appels sont espaces au-dela de la cadence de
@@ -165,7 +164,7 @@ def _ecrit(rapport) -> None:
 
 def rapport():
     """Le dernier rapport ecrit, ou None s'il n'y en a pas (ou qu'il est
-    illisible : la fenetre proposera simplement l'analyse manuelle)."""
+    illisible : la fenetre dit alors qu'il faut attendre la nuit)."""
     try:
         return json.loads(fichier().read_text(encoding="utf-8"))
     except (OSError, ValueError):

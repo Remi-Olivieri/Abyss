@@ -39,10 +39,10 @@
   /* Les projets, dans l'ordre de changements.txt (voir SECTIONS dans
      suggestions.py). `reserve` reprend RESERVEES du meme fichier : un projet
      pas encore ouvert n'a pas a se faire nommer ici alors que sa tuile ne
-     s'affiche pas. Le quiz puis Nihongo l'ont ete tant qu'ils etaient en
-     chantier, et les laisser reserves ensuite interdisait de signaler un
-     bug sur la seule page ou l'on pouvait en voir. La collection Pokemon
-     l'est, le temps du sien.
+     s'affiche pas. Le quiz, Nihongo puis la collection Pokemon l'ont ete
+     tant qu'ils etaient en chantier, et les laisser reserves ensuite
+     interdisait de signaler un bug sur la seule page ou l'on pouvait en
+     voir.
 
      Le serveur refuse de son cote : les deux listes doivent dire la meme
      chose, sinon la fenetre propose un choix qu'il rejette. */
@@ -54,7 +54,8 @@
     { cle: "chainz", nom: "L'Atelier Chainz" },
     { cle: "nihongo", nom: "Nihongo" },
     { cle: "yugiquiz", nom: "Yu-Gi-Quiz!" },
-    { cle: "pokemon", nom: "Collection Pokémon", reserve: true },
+    { cle: "pokemon", nom: "Collection Pokémon" },
+    { cle: "survivor", nom: "Yu-Gi-Oh! Survivor", reserve: true },
   ];
 
   const echappe = (s) => String(s === null || s === undefined ? "" : s)
@@ -93,7 +94,7 @@
     FOND.innerHTML = `
       <div class="sg-boite" role="dialog" aria-modal="true" aria-labelledby="sgTitre">
         <div class="sg-tete">
-          <h2 class="sg-titre" id="sgTitre">Une idée, un bug ?</h2>
+          <h2 class="sg-titre" id="sgTitre">Une idée, un bug ?</h2>
           <button type="button" class="sg-x" id="sgX" aria-label="Fermer">&times;</button>
         </div>
         <form class="sg-form" id="sgForm">

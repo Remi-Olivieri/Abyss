@@ -99,7 +99,8 @@ FENETRE_INSCRIPTIONS = timedelta(hours=24)
 
 # Les identifiants de projets masquables. Ils doivent correspondre aux `id`
 # du tableau PROJETS dans abyss/accueil.html.
-PROJETS = ("jeux-videos", "collection", "pokemon", "chainz", "quiz", "nihongo", "yugiquiz")
+PROJETS = ("jeux-videos", "collection", "pokemon", "chainz", "quiz", "nihongo", "yugiquiz",
+           "survivor")
 
 # 3 a 20 caracteres, ni tiret ni souligne aux extremites : le pseudo finira
 # dans une URL (/jeux-videos/jokrem), autant qu'il reste lisible.
@@ -108,11 +109,11 @@ MOTIF_PSEUDO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{1,18}[A-Za-z0-9]$")
 # Ces mots occuperaient un segment d'URL deja pris : un compte nomme "api"
 # rendrait /jeux-videos/api ambigu.
 RESERVES = {
-    "abyss", "accueil", "admin", "api", "archive", "cartes", "catalogue",
+    "abyss", "accueil", "admin", "api", "archive", "cardmarket", "cartes", "catalogue",
     "collection", "compte", "connexion", "cover", "deconnexion", "favorites",
     "feed", "inscription", "index",
     "jaquettes", "jeux-videos", "login", "moi", "nihongo", "pokemon", "profil", "quiz",
-    "reinitialiser", "social", "static", "templates", "www", "yugiquiz",
+    "reinitialiser", "social", "static", "survivor", "templates", "www", "yugiquiz",
 }
 
 MDP_MINI = 8
@@ -130,6 +131,12 @@ COOKIE = "abyss_session"
 # renvoye. On suit donc le protocole reellement vu, avec possibilite de
 # forcer en production.
 FORCE_SECURE = os.environ.get("ABYSS_COOKIE_SECURE", "").strip() in ("1", "oui", "true")
+
+# L'adresse du site dans le lien de reinitialisation, la meme qu'alertes.py.
+# Jamais tiree de la requete : son en-tete Host vient du navigateur, et
+# quelqu'un qui demanderait le lien d'un autre compte avec « Host:
+# son-site » ferait recevoir a sa victime un lien vers ce site, jeton compris.
+URL_PUBLIQUE = os.environ.get("ABYSS_URL_PUBLIQUE", "https://jokrem.fr").strip().rstrip("/")
 
 # Serveur SMTP pour le lien de reinitialisation. Sans ABYSS_SMTP_HOTE, rien
 # n'est configure : le lien part sur la console au lieu d'un vrai mail,
@@ -799,6 +806,56 @@ CREATE TABLE pokemon_format(
 );
 """
 
+# Migration 31 : Yu-Gi-Oh! Survivor. Voir survivor.py.
+#
+# Ce que chacun garde d'une partie a l'autre : ses Points de Duel, les
+# cartes qu'il a achetees (pas la collection de depart, qui vient de
+# static/survivor/cartes.json et suit le jeu sans migration), le deck qu'il
+# emporte (NULL : celui de depart) et le jeton de la partie en cours, qui
+# ne paie qu'une fois. L'Extra Deck est venu apres : migration 32.
+SURVIVOR = """
+CREATE TABLE survivor_profil(
+  utilisateur_id INTEGER PRIMARY KEY REFERENCES utilisateur(id) ON DELETE CASCADE,
+  dp       INTEGER NOT NULL DEFAULT 0,
+  achats   TEXT NOT NULL DEFAULT '[]',   -- liste JSON d'identifiants de cartes
+  deck     TEXT,                         -- liste JSON, ou NULL : le deck de depart
+  partie   TEXT,                         -- le jeton de la partie en cours
+  parties  INTEGER NOT NULL DEFAULT 0,
+  maj_le   TEXT NOT NULL
+);
+"""
+
+# Migration 32 : l'Extra Deck de Yu-Gi-Oh! Survivor, les fusions que
+# Polymerisation peut sortir (liste JSON, NULL : celui de depart). A part de
+# la 31, deja jouee en ligne quand il est arrive.
+SURVIVOR_EXTRA = """
+ALTER TABLE survivor_profil ADD COLUMN extra TEXT;
+"""
+
+# Migration 33 : la boutique de Yu-Gi-Oh! Survivor vend des boosters et une
+# pioche du jour (cinq cartes, une seule a acheter) : le jour de la pioche,
+# ses cartes (liste JSON) et celle qu'on y a prise ce jour-la.
+SURVIVOR_BOUTIQUE = """
+ALTER TABLE survivor_profil ADD COLUMN jour TEXT;
+ALTER TABLE survivor_profil ADD COLUMN offres_jour TEXT;
+ALTER TABLE survivor_profil ADD COLUMN jour_pris TEXT;
+"""
+
+# Migration 34 : les duellistes de Yu-Gi-Oh! Survivor. Joey se debloque
+# quand Yugi a battu Obelisk : les duellistes qui ont gagne une partie
+# (liste JSON de cles, NULL : aucun), et celui de la partie en cours.
+SURVIVOR_DUELLISTES = """
+ALTER TABLE survivor_profil ADD COLUMN victoires TEXT;
+ALTER TABLE survivor_profil ADD COLUMN duelliste TEXT;
+"""
+
+# Migration 35 : les succes de Yu-Gi-Oh! Survivor (liste JSON de cles,
+# NULL : aucun). Un succes ouvre des cartes, des Points de Duel, un
+# duelliste : Joey s'ouvre desormais par le sien.
+SURVIVOR_SUCCES = """
+ALTER TABLE survivor_profil ADD COLUMN succes TEXT;
+"""
+
 # Les couleurs qu'on peut choisir, 5 x 5, rangees par teinte : du jaune au
 # rouge, du rose au violet, du bleu au vert, puis quelques douces et les
 # neutres. Des couleurs franches et bien distinctes -- une premiere palette
@@ -824,7 +881,8 @@ MIGRATIONS = [SCHEMA, PAGES, REINIT, AVATAR, DETAIL_JEU, RATTRAPAGE,
               CLASSEUR, SOCIAL, DISCUSSION, FIL, SPOILER, FIL_VU,
               ALERTES_SORTIE, COULEUR, PRESENCE, VISITE_HUMAINE,
               NIHONGO, NIHONGO_LECTURE, FAVORITES, FORMAT_CLASSEUR,
-              FORMAT_PAR_FAMILLE, POKEMON]
+              FORMAT_PAR_FAMILLE, POKEMON, SURVIVOR, SURVIVOR_EXTRA, SURVIVOR_BOUTIQUE,
+              SURVIVOR_DUELLISTES, SURVIVOR_SUCCES]
 
 _local = threading.local()
 
@@ -903,7 +961,7 @@ def normalise(pseudo) -> str:
 def verifie_pseudo(pseudo) -> str:
     pseudo = (pseudo or "").strip()
     if not MOTIF_PSEUDO.match(pseudo):
-        raise Refus("pseudo", "Le pseudo fait 3 a 20 caracteres : lettres, chiffres, "
+        raise Refus("pseudo", "Le pseudo fait 3 a 20 caracteres : lettres, chiffres, "
                               "tiret ou souligne, sans tiret au debut ni a la fin.")
     if normalise(pseudo) in RESERVES:
         raise Refus("pseudo", "Ce pseudo est reserve par le site.")
@@ -1078,7 +1136,7 @@ def demande_reinitialisation(identifiant) -> None:
     # rejoint templates/abyss/ avec les autres pages du hub. L'ancienne
     # adresse reste servie (voir app.py), sinon les liens deja partis
     # dans une boite mail tomberaient sur un 404.
-    lien = f"{request.host_url}abyss/reinitialiser?jeton={jeton}"
+    lien = f"{URL_PUBLIQUE}/abyss/reinitialiser?jeton={jeton}"
     corps = (
         f"Bonjour {u['pseudo']},\n\n"
         "Quelqu'un (toi, on espère) a demandé à réinitialiser le mot de passe "
@@ -1099,7 +1157,7 @@ def demande_reinitialisation(identifiant) -> None:
     <p style="margin:0 0 22px">
       <a href="{lien_html}" style="display:inline-block;background:#2e6f96;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-size:15px">Choisir un nouveau mot de passe</a>
     </p>
-    <p style="margin:0 0 8px;font-size:13px;color:#5b6773">Le lien est valable une heure. S'il ne s'ouvre pas, copie cette adresse :</p>
+    <p style="margin:0 0 8px;font-size:13px;color:#5b6773">Le lien est valable une heure. S'il ne s'ouvre pas, copie cette adresse :</p>
     <p style="margin:0 0 22px;font-size:12px;word-break:break-all;color:#5b6773">{lien_html}</p>
     <p style="margin:0;font-size:13px;color:#5b6773">Si ce n'est pas toi qui as fait cette demande, tu peux ignorer ce message.</p>
   </div>
@@ -1637,7 +1695,7 @@ def preferences():
         return echec("connexion", "Il faut etre connecte.", 401)
     demande = corps().get("masques", [])
     if not isinstance(demande, list):
-        return echec("format", "« masques » doit etre une liste.", 400)
+        return echec("format", "« masques » doit etre une liste.", 400)
     return reponse({"ok": True, "masques": enregistre_masques(u["id"], demande)})
 
 

@@ -70,7 +70,7 @@ function formHTML(g){
     <div class="sheet-tools">
       <span class="grp"><b class="fhead">${g ? 'Modifier un jeu' : 'Ajouter un jeu'}</b></span>
       <!-- Réduire, puis fermer. Dans cet ordre parce que c'est celui du
-           risque : la flèche met de côté, la croix jette. -->
+           risque : la flèche met de côté, la croix jette. -->
       <span class="grp">
         <button class="sbtn form-reduire" aria-label="Réduire, pour aller voir le journal">${ICONE_REDUIRE}</button>
         <button class="sbtn form-x" aria-label="Fermer">×</button></span>
@@ -99,10 +99,10 @@ function formHTML(g){
         <label class="fld fcheck wish">
           <input id="f_wish" type="checkbox">
           <span>Wishlist</span></label>
-        <!-- Pourquoi les deux cases sont figées, quand elles le sont : un jeu
+        <!-- Pourquoi les deux cases sont figées, quand elles le sont : un jeu
              qui n'est pas sorti ne se termine pas et ne se joue pas non plus.
              Voir syncSortie() plus bas. Le bandeau reprend le dessin de
-             l'avis de doublon, deux lignes plus haut : ce sont les deux
+             l'avis de doublon, deux lignes plus haut : ce sont les deux
              mêmes mots posés au même endroit pour la même raison. -->
         <p class="fld full doublon-avis" id="f_sortie" hidden></p>
         <div class="fld full" id="f_bucketwrap">
@@ -120,22 +120,22 @@ function formHTML(g){
           <input id="f_base" type="text" inputmode="decimal" value="${esc(numText(g?g.base:null))}"></label>
         <label class="fld" id="f_paidwrap"><u>Prix payé (€)</u>
           <input id="f_paid" type="text" inputmode="decimal" value="${esc(numText(g?g.paid:null))}"></label>
-        <!-- La date de sortie ne se saisit plus : elle vient de la fiche IGDB
+        <!-- La date de sortie ne se saisit plus : elle vient de la fiche IGDB
              retenue (voir alignePick) et s'affiche déjà sous le nom du jeu sur
              la fiche. Le champ reste, caché, parce que c'est encore lui qui
              porte la valeur entre le choix d'une jaquette et l'enregistrement. -->
         <input id="f_release" type="hidden" value="${esc(isoDate(g?g.release:''))}"
                data-orig="${esc(g&&g.release?g.release:'')}">
-        <!-- Un <div> et non un <label> comme les autres champs : il y a
-             maintenant deux commandes ici, l'avis et la case « spoiler ». Un
+        <!-- Un <div> et non un <label> comme les autres champs : il y a
+             maintenant deux commandes ici, l'avis et la case « spoiler ». Un
              label qui en enveloppe deux ne sait plus laquelle il désigne, et
-             cliquer sur « Avis » aurait coché la case. D'où l'attribut
+             cliquer sur « Avis » aurait coché la case. D'où l'attribut
              for= explicite, comme pour le nom du jeu (.acw plus haut). -->
         <div class="fld full" id="f_reviewwrap">
           <div class="favis-tete">
             <label for="f_review"><u>Avis (Commencer par + ou -)</u></label>
             <!-- La case vit sur la ligne du titre, contre le champ qu'elle
-                 qualifie : c'est de CET avis qu'elle parle, pas du jeu. -->
+                 qualifie : c'est de CET avis qu'elle parle, pas du jeu. -->
             <label class="fspoil">
               <input id="f_spoiler" type="checkbox"${g && g.spoiler ? ' checked' : ''}>
               <span>Marquer en tant que spoiler</span></label>
@@ -746,11 +746,11 @@ function demandeFermerForm(){
   const x = host.querySelector('.form-x');
   if(x){
     x.classList.add('armed');
-    x.textContent = 'Abandonner ?';
+    x.textContent = 'Abandonner ?';
     x.setAttribute('aria-label', 'Abandonner les modifications');
   }
   const annule = $('f_cancel');
-  if(annule){ annule.classList.add('armed'); annule.textContent = 'Abandonner ?'; }
+  if(annule){ annule.classList.add('armed'); annule.textContent = 'Abandonner ?'; }
   /* Le relevé exact, et non « cinq secondes se sont-elles écoulées » : la
      minuterie se réveille pile à l'échéance, où la soustraction tombait
      tantôt à 4999 tantôt à 5000 - un désarmement sur deux ne se faisait
@@ -1010,8 +1010,8 @@ async function submitForm(){
   if(doublon && !btn.classList.contains('armed')){
     champErr('f_name', true);
     btn.classList.add('armed');
-    btn.textContent = 'Ajouter quand même ?';
-    toast(`« ${doublon.name} » est déjà dans ton journal. Reclique pour l'ajouter quand même.`, true);
+    btn.textContent = 'Ajouter quand même ?';
+    toast(`« ${doublon.name} » est déjà dans ton journal. Reclique pour l'ajouter quand même.`, true);
     setTimeout(()=>{
       if(btn.isConnected && btn.classList.contains('armed')){
         btn.classList.remove('armed'); btn.textContent = texte;
@@ -1039,7 +1039,7 @@ async function submitForm(){
       S.bucket = charge.periode; S.range = null;
     }
     closeForm(); render();
-    toast(ajout ? `« ${charge.values.name} » ajouté` : `« ${charge.values.name} » mis à jour`);
+    toast(ajout ? `« ${charge.values.name} » ajouté` : `« ${charge.values.name} » mis à jour`);
     /* Une jaquette désignée dans le formulaire l'emporte, même en
        modification : c'est un geste explicite, pas une récupération
        automatique. Sinon, et seulement à l'ajout, on cherche - modifier un
@@ -1059,7 +1059,7 @@ async function supprimerJeu(btn){
     const data = await envoyer('DELETE', '/api/journal/jeu/' + id);
     cacheStore.set(source().url, data);
     applyData(data, true); closeForm(); render();
-    toast(`« ${nom} » retiré du journal`);
+    toast(`« ${nom} » retiré du journal`);
   }catch(e){
     toast(e.message, true);
     btn.disabled = false; btn.classList.remove('armed'); btn.textContent = 'Supprimer ce jeu';
